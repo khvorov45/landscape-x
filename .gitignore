@@ -1,0 +1,4 @@
+*.bin
+.vscode
+copy.sh
+data-raw
