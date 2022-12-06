@@ -14,7 +14,7 @@ static void
 printObjList(prb_Arena* arena, const char* title, prb_String* objs) {
     i32 objsLen = arrlen(objs);
     qsort(objs, objsLen, sizeof(*objs), strcmpSort);
-    prb_fmtAndPrintln(arena, "\n%s: %d", title, objsLen);
+    prb_writelnToStdout(prb_fmt(arena, "\n%s: %d", title, objsLen));
     for (i32 index = 0; index < objsLen; index++) {
         prb_writelnToStdout(objs[index]);
     }
@@ -53,36 +53,33 @@ main() {
     prb_createDirIfNotExists(&arena, objDir);
     prb_PathFindIterator sourceIter = prb_createPathFindIter((prb_PathFindSpec) {.arena = &arena, .dir = coreDir, .mode = prb_PathFindMode_Glob, .glob.pattern = prb_STR("*.c")});
     prb_ProcessHandle*   objProccesses = 0;
-    prb_LastModResult    objLastMod = {.success = true};
+    prb_Multitime        objMultitime = prb_createMultitime();
     while (prb_pathFindIterNext(&sourceIter)) {
         prb_String inname = prb_getLastEntryInPath(sourceIter.curPath);
         if (notIn(inname, srcFilesNoObj, prb_arrayLength(srcFilesNoObj))) {
             prb_String        outname = prb_replaceExt(&arena, inname, prb_STR("obj"));
             prb_String        outpath = prb_pathJoin(&arena, objDir, outname);
-            prb_LastModResult lastModIn = prb_getLastModifiedFromPath(&arena, sourceIter.curPath);
-            prb_assert(lastModIn.success);
-            prb_LastModResult lastModOut = prb_getLastModifiedFromPath(&arena, outpath);
+            prb_FileTimestamp lastModIn = prb_getLastModified(&arena, sourceIter.curPath);
+            prb_assert(lastModIn.valid);
+            prb_FileTimestamp lastModOut = prb_getLastModified(&arena, outpath);
+            prb_multitimeAdd(&objMultitime, lastModOut);
 
-            if (objLastMod.success && lastModOut.success) {
-                objLastMod.timestamp = prb_max(objLastMod.timestamp, lastModOut.timestamp);
-            } else if (!lastModOut.success) {
-                objLastMod.success = false;
-            }
-
-            if (!lastModOut.success || lastModOut.timestamp < lastModIn.timestamp) {
-                prb_String cmd = prb_fmtAndPrintln(
+            if (!lastModOut.valid || lastModOut.timestamp < lastModIn.timestamp) {
+                prb_String cmd = prb_fmt(
                     &arena,
                     "clang -g -Denablemultithread -Werror %.*s -c -o %.*s",
                     prb_LIT(sourceIter.curPath),
                     prb_LIT(outpath)
                 );
+                prb_writelnToStdout(cmd);
                 prb_ProcessHandle cmdProcess = prb_execCmd(&arena, cmd, prb_ProcessFlag_DontWait, (prb_String) {});
                 prb_assert(cmdProcess.status == prb_ProcessStatus_Launched);
                 arrput(objProccesses, cmdProcess);
             }
 
-            prb_Bytes            fileContent = prb_readEntireFile(&arena, sourceIter.curPath);
-            prb_String           fileContentStr = (prb_String) {(const char*)fileContent.data, fileContent.len};
+            prb_ReadEntireFileResult fileRead = prb_readEntireFile(&arena, sourceIter.curPath);
+            prb_assert(fileRead.success);
+            prb_String           fileContentStr = prb_strFromBytes(fileRead.content);
             prb_StringFindResult mainFound = prb_strFind((prb_StringFindSpec) {.str = fileContentStr, .pattern = prb_STR("main("), .mode = prb_StringFindMode_Exact});
             if (mainFound.found) {
                 arrput(objsWithMain, outpath);
@@ -120,10 +117,10 @@ main() {
             prb_String exePath = prb_pathJoin(&arena, exeDir, exeName);
 
             bool shouldRecompile = true;
-            if (objLastMod.success) {
-                prb_LastModResult exeLastMod = prb_getLastModifiedFromPath(&arena, exePath);
-                if (exeLastMod.success) {
-                    shouldRecompile = exeLastMod.timestamp < objLastMod.timestamp;
+            if (objMultitime.invalidAddedTimestampsCount == 0) {
+                prb_FileTimestamp exeLastMod = prb_getLastModified(&arena, exePath);
+                if (exeLastMod.valid) {
+                    shouldRecompile = exeLastMod.timestamp < objMultitime.timeLatest;
                 }
             }
 
@@ -159,9 +156,10 @@ main() {
     // NOTE(sen) My mafft
     prb_String mymafftPath = prb_pathJoin(&arena, rootDir, prb_STR("rewrite/mafft.c"));
     prb_String mymafftExe = prb_pathJoin(&arena, outDir, prb_STR("mafft.bin"));
-    prb_String mymafftCompile = prb_fmtAndPrintln(&arena, "clang -g -Wall -Wextra -Werror %.*s -o %.*s", prb_LIT(mymafftPath), prb_LIT(mymafftExe));
+    prb_String mymafftCompile = prb_fmt(&arena, "clang -g -Wall -Wextra -Werror %.*s -o %.*s", prb_LIT(mymafftPath), prb_LIT(mymafftExe));
+    prb_writelnToStdout(mymafftCompile);
     prb_assert(prb_execCmd(&arena, mymafftCompile, 0, (prb_String) {}).status == prb_ProcessStatus_CompletedSuccess);
 
-    prb_fmtAndPrintln(&arena, "total: %.2fms", prb_getMsFrom(scriptStart));
+    prb_writelnToStdout(prb_fmt(&arena, "total: %.2fms", prb_getMsFrom(scriptStart)));
     return 0;
 }
