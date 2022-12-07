@@ -1794,6 +1794,19 @@ preparepartmtx(int nseq) {
     return (val);
 }
 
+// "$prefix/tbfast" _  -u $unalignlevel $localparam -C $numthreads $seqtype
+// $model  -g $lexp -f $lgop -Q $spfactor -h $laof -L $usenaivepairscore
+// $focusarg _ -+ $iterate -W $minimumweight -V "-"$gopdist -s $unalignlevel
+// $legacygapopt $mergearg $termgapopt $outnum $addarg $add2ndhalfarg -C
+// $numthreadstb $rnaopt $weightopt $treeinopt $treeoutopt $distoutopt $seqtype
+// $model -f "-"$gop -Q $spfactor -h $aof  $param_fft $localparam   $algopt
+// $treealg $scoreoutarg $focusarg < infile   > /dev/null 2>>"$progressfile" ||
+// exit 1
+
+// tbfast _ -u 0.0 -l 2.7 -C 0 -b 62 -g -0.100 -f -2.00 -Q 100.0 -h 0.1 -L _ -+
+// 16 -W 0.00001 -V -1.53 -s 0.0 -O -C 0 -b 62 -f -1.53 -Q 100.0 -h 0 -F -l 2.7
+// -X 0.1
+
 int
 main(int argc, char* argv[]) {
     static int*     nlen = NULL;
@@ -2935,36 +2948,36 @@ main(int argc, char* argv[]) {
 					}
 				}
 			}
-#elif 0  // 2017/Jan/19 ??    
-			for( i=0; i<njob-1; i++ )
-			{
-//				reporterr( "Looking for samemember, %d-%d/%d\n", j, i, njob );
-				localmem[0][0] = -1;
-				posinmem = 0;
-				topolorder( localmem[0], &posinmem, topol, dep, i, 0 );
-				localmem[1][0] = -1;
-				posinmem = 0;
-				topolorder( localmem[1], &posinmem, topol, dep, i, 1 );
+#elif 0  // 2017/Jan/19 ??
+            for (i = 0; i < njob - 1; i++) {
+                //				reporterr( "Looking for samemember, %d-%d/%d\n", j, i, njob );
+                localmem[0][0] = -1;
+                posinmem = 0;
+                topolorder(localmem[0], &posinmem, topol, dep, i, 0);
+                localmem[1][0] = -1;
+                posinmem = 0;
+                topolorder(localmem[1], &posinmem, topol, dep, i, 1);
 
-				for( j=njob-nadd; j<njob; j++ )
-				{
-					addmem[0] = j;
-					addmem[1] = -1;
+                for (j = njob - nadd; j < njob; j++) {
+                    addmem[0] = j;
+                    addmem[1] = -1;
 
-					if( samemembern( localmem[0], addmem, 1 ) ) // arieru
-					{
-//						reporterr(       "HIT!\n" );
-						if( mergeoralign[i] != 'n' ) mergeoralign[i] = 'w';
-						else mergeoralign[i] = '1';
-					}
-					else if( samemembern( localmem[1], addmem, 1 ) )
-					{
-//						reporterr(       "HIT!\n" );
-						if( mergeoralign[i] != 'n' ) mergeoralign[i] = 'w';
-						else mergeoralign[i] = '2';
-					}
-				}
-			}
+                    if (samemembern(localmem[0], addmem, 1))  // arieru
+                    {
+                        //						reporterr(       "HIT!\n" );
+                        if (mergeoralign[i] != 'n')
+                            mergeoralign[i] = 'w';
+                        else
+                            mergeoralign[i] = '1';
+                    } else if (samemembern(localmem[1], addmem, 1)) {
+                        //						reporterr(       "HIT!\n" );
+                        if (mergeoralign[i] != 'n')
+                            mergeoralign[i] = 'w';
+                        else
+                            mergeoralign[i] = '2';
+                    }
+                }
+            }
 #endif
             for (i = 0; i < nadd; i++)
                 addmem[i] = njob - nadd + i;
