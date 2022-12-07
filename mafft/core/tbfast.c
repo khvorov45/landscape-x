@@ -1794,6 +1794,8 @@ preparepartmtx(int nseq) {
     return (val);
 }
 
+// Local (L-INS-i)
+
 // "$prefix/tbfast" _  -u $unalignlevel $localparam -C $numthreads $seqtype
 // $model  -g $lexp -f $lgop -Q $spfactor -h $laof -L $usenaivepairscore
 // $focusarg _ -+ $iterate -W $minimumweight -V "-"$gopdist -s $unalignlevel
@@ -1806,6 +1808,20 @@ preparepartmtx(int nseq) {
 // tbfast _ -u 0.0 -l 2.7 -C 0 -b 62 -g -0.100 -f -2.00 -Q 100.0 -h 0.1 -L _ -+
 // 16 -W 0.00001 -V -1.53 -s 0.0 -O -C 0 -b 62 -f -1.53 -Q 100.0 -h 0 -F -l 2.7
 // -X 0.1
+
+// Global (G-INS-i)
+
+//"$prefix/tbfast" _  -u $unalignlevel $localparam  -C $numthreads $seqtype
+// $model -g $pgexp -f $pggop -Q $spfactor -h $pgaof  -A $usenaivepairscore
+// $focusarg  _ -+ $iterate -W $minimumweight -V "-"$gopdist -s $unalignlevel
+// $legacygapopt $mergearg $outnum $addarg $add2ndhalfarg -C $numthreadstb
+// $rnaopt $weightopt $treeinopt $treeoutopt $distoutopt $seqtype $model -f
+// "-"$gop -Q $spfactor -h $aof  $param_fft $localparam   $algopt $treealg
+// $scoreoutarg $focusarg < in1file   > /dev/null 2>>"$progressfile" || exit 1
+
+// tbfast _ -u 0.0 -l 2.7 -C 0 -b 62 -g -0.100 -f -2.00 -Q 100.0 -h 0.1 -A _ -+
+// 16 -W 0.00001 -V -1.53 -s 0.0 -C 0 -b 62 -f -1.53 -Q 100.0 -h 0 -F -l 2.7 -X
+// 0.1
 
 int
 main(int argc, char* argv[]) {

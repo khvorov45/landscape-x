@@ -2,3 +2,4 @@
 .vscode
 copy.sh
 data-raw
+*.pdf
