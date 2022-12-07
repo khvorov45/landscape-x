@@ -154,8 +154,8 @@ main() {
     prb_assert(prb_waitForProcesses(exeProcesses, arrlen(exeProcesses)) == prb_Success);
 
     // NOTE(sen) My mafft
-    prb_String mymafftPath = prb_pathJoin(&arena, rootDir, prb_STR("rewrite/mafft.c"));
-    prb_String mymafftExe = prb_pathJoin(&arena, outDir, prb_STR("mafft.bin"));
+    prb_String mymafftPath = prb_pathJoin(&arena, rootDir, prb_STR("rewrite/mafft_cli.c"));
+    prb_String mymafftExe = prb_pathJoin(&arena, outDir, prb_STR("mafft_cli.bin"));
     prb_String mymafftCompile = prb_fmt(&arena, "clang -g -Wall -Wextra -Werror %.*s -o %.*s", prb_LIT(mymafftPath), prb_LIT(mymafftExe));
     prb_writelnToStdout(mymafftCompile);
     prb_assert(prb_execCmd(&arena, mymafftCompile, 0, (prb_String) {}).status == prb_ProcessStatus_CompletedSuccess);
