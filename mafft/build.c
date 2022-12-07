@@ -42,6 +42,16 @@ main() {
     prb_createDirIfNotExists(&arena, outDir);
     // prb_clearDirectory(&arena, outDir);
 
+    // NOTE(sen) Source last modified
+    prb_Multitime        srcMultitime = prb_createMultitime();
+    prb_PathFindSpec     srcIterSpec = {.arena = &arena, .dir = coreDir, .mode = prb_PathFindMode_Glob, .glob.pattern = prb_STR("*.c")};
+    prb_PathFindIterator sourceIter = prb_createPathFindIter(srcIterSpec);
+    while (prb_pathFindIterNext(&sourceIter)) {
+        prb_FileTimestamp srcLastMod = prb_getLastModified(&arena, sourceIter.curPath);
+        prb_multitimeAdd(&srcMultitime, srcLastMod);
+    }
+    prb_assert(srcMultitime.validAddedTimestampsCount > 0 && srcMultitime.invalidAddedTimestampsCount == 0);
+
     // NOTE(sen) Objs
     prb_String srcFilesNoObj[] = {
         prb_STR("JTT.c"),
@@ -51,20 +61,18 @@ main() {
     prb_String* objsWithoutMain = 0;
     prb_String  objDir = prb_pathJoin(&arena, outDir, prb_STR("objs"));
     prb_createDirIfNotExists(&arena, objDir);
-    prb_PathFindIterator sourceIter = prb_createPathFindIter((prb_PathFindSpec) {.arena = &arena, .dir = coreDir, .mode = prb_PathFindMode_Glob, .glob.pattern = prb_STR("*.c")});
-    prb_ProcessHandle*   objProccesses = 0;
-    prb_Multitime        objMultitime = prb_createMultitime();
+    prb_ProcessHandle* objProccesses = 0;
+    sourceIter = prb_createPathFindIter(srcIterSpec);
+    bool anyObjRecompiled = false;
     while (prb_pathFindIterNext(&sourceIter)) {
         prb_String inname = prb_getLastEntryInPath(sourceIter.curPath);
         if (notIn(inname, srcFilesNoObj, prb_arrayLength(srcFilesNoObj))) {
             prb_String        outname = prb_replaceExt(&arena, inname, prb_STR("obj"));
             prb_String        outpath = prb_pathJoin(&arena, objDir, outname);
-            prb_FileTimestamp lastModIn = prb_getLastModified(&arena, sourceIter.curPath);
-            prb_assert(lastModIn.valid);
             prb_FileTimestamp lastModOut = prb_getLastModified(&arena, outpath);
-            prb_multitimeAdd(&objMultitime, lastModOut);
 
-            if (!lastModOut.valid || lastModOut.timestamp < lastModIn.timestamp) {
+            if (!lastModOut.valid || lastModOut.timestamp < srcMultitime.timeLatest) {
+                anyObjRecompiled = true;
                 prb_String cmd = prb_fmt(
                     &arena,
                     "clang -g -Denablemultithread -Werror %.*s -c -o %.*s",
@@ -116,15 +124,7 @@ main() {
             exeName.len = dotFind.matchByteIndex;
             prb_String exePath = prb_pathJoin(&arena, exeDir, exeName);
 
-            bool shouldRecompile = true;
-            if (objMultitime.invalidAddedTimestampsCount == 0) {
-                prb_FileTimestamp exeLastMod = prb_getLastModified(&arena, exePath);
-                if (exeLastMod.valid) {
-                    shouldRecompile = exeLastMod.timestamp < objMultitime.timeLatest;
-                }
-            }
-
-            if (shouldRecompile) {
+            if (anyObjRecompiled) {
                 prb_GrowingString gstr = prb_beginString(&arena);
                 prb_addStringSegment(&gstr, "clang %.*s", prb_LIT(objWithMain));
                 for (i32 withoutMainIndex = 0; withoutMainIndex < arrlen(objsWithoutMain); withoutMainIndex++) {
@@ -152,13 +152,6 @@ main() {
         }
     }
     prb_assert(prb_waitForProcesses(exeProcesses, arrlen(exeProcesses)) == prb_Success);
-
-    // NOTE(sen) My mafft
-    prb_String mymafftPath = prb_pathJoin(&arena, rootDir, prb_STR("rewrite/mafft_cli.c"));
-    prb_String mymafftExe = prb_pathJoin(&arena, outDir, prb_STR("mafft_cli.bin"));
-    prb_String mymafftCompile = prb_fmt(&arena, "clang -g -Wall -Wextra -Werror %.*s -o %.*s", prb_LIT(mymafftPath), prb_LIT(mymafftExe));
-    prb_writelnToStdout(mymafftCompile);
-    prb_assert(prb_execCmd(&arena, mymafftCompile, 0, (prb_String) {}).status == prb_ProcessStatus_CompletedSuccess);
 
     prb_writelnToStdout(prb_fmt(&arena, "total: %.2fms", prb_getMsFrom(scriptStart)));
     return 0;
