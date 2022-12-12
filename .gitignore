@@ -3,3 +3,6 @@
 copy.sh
 data-raw
 *.pdf
+build-*
+tmp
+temp*
