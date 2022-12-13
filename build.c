@@ -62,15 +62,8 @@ main() {
     };
     prb_String mafftSuppressedWarningsStr = prb_stringsJoin(arena, mafftSuppressedWarnings, prb_arrayLength(mafftSuppressedWarnings), prb_STR(" "));
 
-    // NOTE(sen) Source last modified
-    prb_Multitime        srcMultitime = prb_createMultitime();
-    prb_PathFindSpec     srcIterSpec = {.arena = arena, .dir = coreDir, .mode = prb_PathFindMode_Glob, .pattern = prb_STR("*.c")};
-    prb_PathFindIterator sourceIter = prb_createPathFindIter(srcIterSpec);
-    while (prb_pathFindIterNext(&sourceIter)) {
-        prb_FileTimestamp srcLastMod = prb_getLastModified(arena, sourceIter.curPath);
-        prb_multitimeAdd(&srcMultitime, srcLastMod);
-    }
-    prb_assert(srcMultitime.validAddedTimestampsCount > 0 && srcMultitime.invalidAddedTimestampsCount == 0);
+    prb_String logfilePath = prb_pathJoin(arena, coreDir, prb_STR("logfile.txt"));
+    prb_removeFileIfExists(arena, logfilePath);
 
     // NOTE(sen) Objs
     prb_String srcFilesNoObj[] = {
@@ -81,39 +74,125 @@ main() {
     prb_String* objsWithoutMain = 0;
     prb_String  objDir = prb_pathJoin(arena, outDir, prb_STR("objs"));
     prb_createDirIfNotExists(arena, objDir);
-    prb_ProcessHandle* objProccesses = 0;
-    sourceIter = prb_createPathFindIter(srcIterSpec);
-    bool anyObjRecompiled = false;
+    prb_clearDirectory(arena, objDir);
+    prb_ProcessHandle*   objProccesses = 0;
+    prb_PathFindSpec     srcIterSpec = {.arena = arena, .dir = coreDir, .mode = prb_PathFindMode_Glob, .pattern = prb_STR("*.c")};
+    prb_PathFindIterator sourceIter = prb_createPathFindIter(srcIterSpec);
+    bool                 anyObjRecompiled = false;
     while (prb_pathFindIterNext(&sourceIter)) {
         prb_String inname = prb_getLastEntryInPath(sourceIter.curPath);
         if (notIn(inname, srcFilesNoObj, prb_arrayLength(srcFilesNoObj))) {
-            prb_String        outname = prb_replaceExt(arena, inname, prb_STR("obj"));
-            prb_String        outpath = prb_pathJoin(arena, objDir, outname);
-            prb_FileTimestamp lastModOut = prb_getLastModified(arena, outpath);
+            prb_String outname = prb_replaceExt(arena, inname, prb_STR("obj"));
+            prb_String outpath = prb_pathJoin(arena, objDir, outname);
 
-            if (!lastModOut.valid || lastModOut.timestamp < srcMultitime.timeLatest) {
+            prb_ReadEntireFileResult fileRead = prb_readEntireFile(arena, sourceIter.curPath);
+            prb_assert(fileRead.success);
+            prb_String           fileContentStr = prb_strFromBytes(fileRead.content);
+            prb_StringFindResult mainFound = prb_strFind((prb_StringFindSpec) {.str = fileContentStr, .pattern = prb_STR("main("), .mode = prb_StringFindMode_Exact});
+            prb_String           srcPath = sourceIter.curPath;
+            if (mainFound.found) {
+                arrput(objsWithMain, outpath);
+
+                bool       mainTakesArgs = false;
+                prb_String mainArgcName = {};
+                prb_String mainArgvName = {};
+                {
+                    prb_String       fromMain = prb_strSliceForward(fileContentStr, mainFound.matchByteIndex);
+                    prb_LineIterator iter = prb_createLineIter(fromMain);
+                    prb_assert(prb_lineIterNext(&iter) == prb_Success);
+                    prb_StringFindResult intFound = prb_strFind((prb_StringFindSpec) {.str = iter.curLine, .pattern = prb_STR("int"), .mode = prb_StringFindMode_Exact});
+                    mainTakesArgs = intFound.found;
+                    if (intFound.found) {
+                        prb_String           postInt = prb_strSliceForward(iter.curLine, intFound.matchByteIndex + intFound.matchLen);
+                        prb_StringFindResult commaFound = prb_strFind((prb_StringFindSpec) {.str = postInt, .pattern = prb_STR(","), .mode = prb_StringFindMode_AnyChar});
+                        prb_assert(commaFound.found);
+                        mainArgcName = postInt;
+                        mainArgcName.len = commaFound.matchByteIndex;
+                        mainArgcName = prb_strTrim(mainArgcName);
+
+                        bool insideAlpha = false;
+                        i32  lastAlpha = 0;
+                        i32  firstAlpha = 0;
+                        for (i32 lineIndex = iter.curLine.len - 1; lineIndex >= 0; lineIndex--) {
+                            char ch = iter.curLine.ptr[lineIndex];
+                            bool isAlpha = (ch >= 'a' && ch <= 'z') || ((ch >= 'A' && ch <= 'Z'));
+                            if (isAlpha && !insideAlpha) {
+                                lastAlpha = lineIndex;
+                                insideAlpha = true;
+                            } else if (!isAlpha && insideAlpha) {
+                                firstAlpha = lineIndex + 1;
+                                break;
+                            }
+                        }
+
+                        mainArgvName = prb_strSliceBetween(iter.curLine, firstAlpha, lastAlpha + 1);
+                    }
+                }
+
+                if (mainTakesArgs) {
+                    // NOTE(sen) Generate alternative file where main is modified
+                    i32 mainLineStart = 0;
+                    {
+                        prb_String toMain = fileContentStr;
+                        toMain.len = mainFound.matchByteIndex;
+                        prb_StringFindResult res = prb_strFind((prb_StringFindSpec) {.str = toMain, .pattern = prb_STR("\r\n"), .direction = prb_StringDirection_FromEnd, .mode = prb_StringFindMode_AnyChar});
+                        prb_assert(res.found);
+                        mainLineStart = res.matchByteIndex;
+                    }
+
+                    i32 mainLineEnd = 0;
+                    {
+                        prb_String           fromMain = prb_strSliceForward(fileContentStr, mainFound.matchByteIndex);
+                        prb_StringFindResult res = prb_strFind((prb_StringFindSpec) {.str = fromMain, .pattern = prb_STR("{"), .direction = prb_StringDirection_FromStart, .mode = prb_StringFindMode_AnyChar});
+                        prb_assert(res.found);
+                        mainLineEnd = res.matchByteIndex + mainFound.matchByteIndex + 1;
+                    }
+
+                    if (true) {
+                        prb_writelnToStdout(prb_strSliceBetween(fileContentStr, mainLineStart, mainLineEnd));
+                        prb_writelnToStdout(mainArgcName);
+                        prb_writelnToStdout(mainArgvName);
+                    }
+
+                    prb_GrowingString gstr = prb_beginString(arena);
+                    prb_String        fromMainEnd = prb_strSliceForward(fileContentStr, mainLineEnd);
+                    prb_addStringSegment(&gstr, "%.*s\n", mainLineEnd, fileContentStr.ptr);
+                    prb_addStringSegment(&gstr, "{\n");
+                    prb_addStringSegment(&gstr, "FILE* logfile = fopen(\"%.*s\", \"a\");\n", prb_LIT(logfilePath));
+                    prb_addStringSegment(&gstr, "for (int argIndex = 0; argIndex < %.*s; argIndex++) {\n", prb_LIT(mainArgcName));
+                    prb_addStringSegment(&gstr, "char* arg = %.*s[argIndex];\n", prb_LIT(mainArgvName));
+                    prb_addStringSegment(&gstr, "fwrite(arg, strlen(arg), 1, logfile);\n");
+                    prb_addStringSegment(&gstr, "fwrite(\" \", 1, 1, logfile);\n");
+                    prb_addStringSegment(&gstr, "}\n");
+                    prb_addStringSegment(&gstr, "fwrite(\"\\n\", 1, 1, logfile);\n");
+                    prb_addStringSegment(&gstr, "fclose(logfile);\n");
+                    prb_addStringSegment(&gstr, "}\n");
+                    prb_addStringSegment(&gstr, "%.*s", prb_LIT(fromMainEnd));
+
+                    prb_String newMainContent = prb_endString(&gstr);
+                    prb_String newMainPath = prb_fmt(arena, "%.*s.new", prb_LIT(sourceIter.curPath));
+                    prb_assert(prb_writeEntireFile(arena, newMainPath, newMainContent.ptr, newMainContent.len));
+
+                    srcPath = newMainPath;
+                }
+
+            } else {
+                arrput(objsWithoutMain, outpath);
+            }
+
+            if (!prb_isFile(arena, outpath)) {
                 anyObjRecompiled = true;
                 prb_String cmd = prb_fmt(
                     arena,
-                    "clang -g -Denablemultithread -Werror -Wfatal-errors %.*s %.*s -c -o %.*s",
+                    "clang -g -Denablemultithread -Werror -Wfatal-errors %.*s -x c %.*s -c -o %.*s",
                     prb_LIT(mafftSuppressedWarningsStr),
-                    prb_LIT(sourceIter.curPath),
+                    prb_LIT(srcPath),
                     prb_LIT(outpath)
                 );
                 prb_writelnToStdout(cmd);
                 prb_ProcessHandle cmdProcess = prb_execCmd(arena, cmd, prb_ProcessFlag_DontWait, (prb_String) {});
                 prb_assert(cmdProcess.status == prb_ProcessStatus_Launched);
                 arrput(objProccesses, cmdProcess);
-            }
-
-            prb_ReadEntireFileResult fileRead = prb_readEntireFile(arena, sourceIter.curPath);
-            prb_assert(fileRead.success);
-            prb_String           fileContentStr = prb_strFromBytes(fileRead.content);
-            prb_StringFindResult mainFound = prb_strFind((prb_StringFindSpec) {.str = fileContentStr, .pattern = prb_STR("main("), .mode = prb_StringFindMode_Exact});
-            if (mainFound.found) {
-                arrput(objsWithMain, outpath);
-            } else {
-                arrput(objsWithoutMain, outpath);
             }
         }
     }
