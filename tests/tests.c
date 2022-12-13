@@ -94,6 +94,31 @@ generateSequences(prb_Arena* arena, Rng* rng, char* choices, i32 choicesCount, i
     return result;
 }
 
+function prb_String*
+alignWithMafft(prb_Arena* arena, prb_String mafftExe, prb_String inputPath, prb_String mafftOuputPath) {
+    {
+        prb_String cmd = prb_fmt(arena, "%.*s --globalpair --maxiterate 1000 %.*s", prb_LIT(mafftExe), prb_LIT(inputPath));
+        prb_writelnToStdout(cmd);
+        prb_ProcessHandle proc = prb_execCmd(arena, cmd, prb_ProcessFlag_RedirectStdout, mafftOuputPath);
+        prb_assert(proc.status == prb_ProcessStatus_CompletedSuccess);
+    }
+
+    prb_String* mafftAlignedSeqs = 0;
+    {
+        prb_ReadEntireFileResult mafftOutput = prb_readEntireFile(arena, mafftOuputPath);
+        prb_assert(mafftOutput.success);
+        prb_String       mafftContentLeft = prb_strFromBytes(mafftOutput.content);
+        prb_LineIterator lineIter = prb_createLineIter(mafftContentLeft);
+        while (prb_lineIterNext(&lineIter) == prb_Success) {
+            prb_assert(lineIter.curLine.ptr[0] == '>');
+            prb_assert(prb_lineIterNext(&lineIter) == prb_Success);
+            arrput(mafftAlignedSeqs, lineIter.curLine);
+        }
+    }
+
+    return mafftAlignedSeqs;
+}
+
 int
 main() {
     prb_TimeStart testsStart = prb_timeStart();
@@ -102,6 +127,7 @@ main() {
     Rng           rng_ = createRng(1, 3);
     Rng*          rng = &rng_;
     prb_String    testsDir = prb_getParentDir(arena, prb_STR(__FILE__));
+    prb_String    rootDir = prb_getParentDir(arena, testsDir);
 
     GenerateSequencesResult genSeq = {};
     {
@@ -125,30 +151,21 @@ main() {
         prb_writeEntireFile(arena, fastaOutputPath, fastaContent.ptr, fastaContent.len);
     }
 
-    prb_String mafftOuputPath = prb_pathJoin(arena, testsDir, prb_STR("mafft-testseqs.fasta"));
-    {
-        prb_String        cmd = prb_fmt(arena, "mafft --globalpair --maxiterate 1000 %.*s", prb_LIT(fastaOutputPath));
-        prb_ProcessHandle proc = prb_execCmd(arena, cmd, prb_ProcessFlag_RedirectStdout, mafftOuputPath);
-        prb_assert(proc.status == prb_ProcessStatus_CompletedSuccess);
-    }
+// TODO(sen) Need to set different env variables for global/local maffts
+#if 0
+    prb_String  mafftOuputPath = prb_pathJoin(arena, testsDir, prb_STR("mafft-testseqs.fasta"));
+    prb_String* mafftAlignedSeqs = alignWithMafft(arena, prb_STR("mafft"), fastaOutputPath, mafftOuputPath);
+    prb_assert(arrlen(mafftAlignedSeqs) == genSeq.seqCount);
 
-    prb_String* mafftAlignedSeqs = prb_arenaAllocArray(arena, prb_String, genSeq.seqCount);
-    {
-        prb_ReadEntireFileResult mafftOutput = prb_readEntireFile(arena, mafftOuputPath);
-        prb_assert(mafftOutput.success);
-        prb_String       mafftContentLeft = prb_strFromBytes(mafftOutput.content);
-        prb_LineIterator lineIter = prb_createLineIter(mafftContentLeft);
-        for (i32 seqIndex = 0; seqIndex < genSeq.seqCount; seqIndex++) {
-            prb_assert(prb_lineIterNext(&lineIter));
-            prb_assert(lineIter.curLine.ptr[0] == '>');
-            prb_assert(prb_lineIterNext(&lineIter));
-            mafftAlignedSeqs[seqIndex] = lineIter.curLine;
-        }
-    }
-
-    for (i32 seqIndex = 0; seqIndex < genSeq.seqCount; seqIndex++) {
+    for (i32 seqIndex = 0; seqIndex < arrlen(mafftAlignedSeqs); seqIndex++) {
         prb_writelnToStdout(mafftAlignedSeqs[seqIndex]);
     }
+#endif
+
+    prb_String  localMafftExe = prb_pathJoin(arena, rootDir, prb_STR("mafft/core/mafft.tmpl"));
+    prb_String  localMafftOuputPath = prb_pathJoin(arena, testsDir, prb_STR("localmafft-testseqs.fasta"));
+    prb_String* localMafftAlignedSeqs = alignWithMafft(arena, localMafftExe, fastaOutputPath, localMafftOuputPath);
+    prb_assert(arrlen(localMafftAlignedSeqs) == genSeq.seqCount);
 
     prb_writelnToStdout(prb_fmt(arena, "tests took %.2fms", prb_getMsFrom(testsStart)));
     return 0;

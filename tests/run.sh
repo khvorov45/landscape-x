@@ -1,1 +1,1 @@
-clang -g -Wall -Wextra -Werror ./mafft/tests/tests.c -o ./mafft/tests/tests.bin -lpthread && ./mafft/tests/tests.bin
+clang -g -Wall -Wextra -Werror -Wfatal-errors ./tests/tests.c -o ./tests/tests.bin -lpthread && ./tests/tests.bin
