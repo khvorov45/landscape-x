@@ -1,1 +1,3 @@
-clang -g -Wall -Wextra -Werror ./mafft/build.c -o ./mafft/build.bin -lpthread && ./mafft/build.bin
+SCRIPT_DIR=$(dirname $0)
+RUN_BIN=$SCRIPT_DIR/build.bin
+clang -g -Wall -Wextra -Werror $SCRIPT_DIR/build.c -o $RUN_BIN -lpthread && $RUN_BIN
