@@ -101,10 +101,25 @@ getSeqsFromFile(prb_Arena* arena, prb_String filepath) {
     prb_assert(readRes.success);
     prb_String       contentLeft = prb_strFromBytes(readRes.content);
     prb_LineIterator lineIter = prb_createLineIter(contentLeft);
-    while (prb_lineIterNext(&lineIter) == prb_Success) {
+    for (;;) {
+        if (prb_lineIterNext(&lineIter) == prb_Failure) {
+            break;
+        }
         prb_assert(lineIter.curLine.ptr[0] == '>');
-        prb_assert(prb_lineIterNext(&lineIter) == prb_Success);
-        arrput(seqs, lineIter.curLine);
+        prb_GrowingString gstr = prb_beginString(arena);
+        for (;;) {
+            prb_LineIterator lineIterCopy = lineIter;
+            if (prb_lineIterNext(&lineIterCopy) == prb_Failure) {
+                break;
+            }
+            if (lineIterCopy.curLine.ptr[0] == '>') {
+                break;
+            }
+            lineIter = lineIterCopy;
+            prb_addStringSegment(&gstr, "%.*s", prb_LIT(lineIter.curLine));
+        }
+        prb_String seq = prb_endString(&gstr);
+        arrput(seqs, seq);
     }
     return seqs;
 }
@@ -138,7 +153,7 @@ main() {
         char aminoAcids[] = {'A', 'R', 'N', 'D', 'C', 'E', 'Q', 'G', 'H', 'I', 'L', 'K', 'M', 'F', 'P', 'S', 'T', 'W', 'Y', 'V'};
         i32  aminoAcidsCount = prb_arrayLength(aminoAcids);
         prb_assert(aminoAcidsCount == 20);
-        genSeq = generateSequences(arena, rng, aminoAcids, aminoAcidsCount, 10, 3);
+        genSeq = generateSequences(arena, rng, aminoAcids, aminoAcidsCount, 100, 3);
         prb_writelnToStdout(genSeq.full);
         for (i32 seqIndex = 0; seqIndex < genSeq.seqCount; seqIndex++) {
             prb_writelnToStdout(genSeq.seqs[seqIndex]);
