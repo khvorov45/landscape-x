@@ -7,7 +7,6 @@
 
 #define REPORTCOSTS 0
 
-static int topin;
 static int treeout;
 static int distout;
 static int noalign;
@@ -96,7 +95,6 @@ arguments(int argc, char* argv[], int* pac, char** pav, int* tac, char** tav)  /
     outnumber = 0;
     scoreout = 0;
     spscoreout = 0;
-    topin = 0;
     rnaprediction = 'm';
     rnakozo = 0;
     nevermemsave = 0;
@@ -440,11 +438,6 @@ arguments(int argc, char* argv[], int* pac, char** pav, int* tac, char** tav)  /
                 case 'U':
                     opts.treein = 1;
                     break;
-#if 0
-				case 'V':
-					topin = 1;
-					break;
-#endif
                 case 'u':
                     tbrweight = 0;
                     weight = 0;
@@ -480,11 +473,6 @@ arguments(int argc, char* argv[], int* pac, char** pav, int* tac, char** tav)  /
                     //					fprintf( stderr, "minimumweight = %f\n", minimumweight );
                     --argc;
                     goto nextoption;
-#if 0
-				case 'Z':
-					checkC = 1;
-					break;
-#endif
                 case 'Y':
                     keeplength = 1;
                     break;
@@ -2687,15 +2675,7 @@ tbfast_main(int argc, char* argv[]) {
             }
         }
 
-        //		fprintf( stderr, "Constructing a UPGMA tree ... " );
-        //		fflush( stderr );
-        if (topin) {
-            fprintf(stderr, "--topin has been disabled\n");
-            exit(1);
-            //			fprintf( stderr, "Loading a topology ... " );
-            //			loadtop( njob, iscore, topol, len );
-            //			fprintf( stderr, "\ndone.\n\n" );
-        } else if (subalignment)  // merge ha localmem ni mitaiou
+        if (subalignment)  // merge ha localmem ni mitaiou
         {
             fprintf(stderr, "Constructing a UPGMA tree ... ");
             fixed_supg_double_realloc_nobk_halfmtx_treeout_constrained(njob, iscore, topol, len, name, nlen, dep, nsubalignments, subtable, 1);
