@@ -151,16 +151,15 @@ main() {
         prb_writeEntireFile(arena, fastaOutputPath, fastaContent.ptr, fastaContent.len);
     }
 
-// TODO(sen) Need to set different env variables for global/local maffts
-#if 0
+    // TODO(sen) Change to portable when available
+    prb_String mafftBinEnvName = prb_STR("MAFFT_BINARIES");
+    char*      oldMafftBin = getenv(mafftBinEnvName.ptr);
+    prb_assert(oldMafftBin);
+    prb_assert(unsetenv(mafftBinEnvName.ptr) == 0);
     prb_String  mafftOuputPath = prb_pathJoin(arena, testsDir, prb_STR("mafft-testseqs.fasta"));
     prb_String* mafftAlignedSeqs = alignWithMafft(arena, prb_STR("mafft"), fastaOutputPath, mafftOuputPath);
     prb_assert(arrlen(mafftAlignedSeqs) == genSeq.seqCount);
-
-    for (i32 seqIndex = 0; seqIndex < arrlen(mafftAlignedSeqs); seqIndex++) {
-        prb_writelnToStdout(mafftAlignedSeqs[seqIndex]);
-    }
-#endif
+    prb_assert(setenv(mafftBinEnvName.ptr, oldMafftBin, 1) == 0);
 
     prb_String  localMafftExe = prb_pathJoin(arena, rootDir, prb_STR("mafft/core/mafft.tmpl"));
     prb_String  localMafftOuputPath = prb_pathJoin(arena, testsDir, prb_STR("localmafft-testseqs.fasta"));
