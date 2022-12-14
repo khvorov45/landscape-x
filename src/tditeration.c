@@ -983,21 +983,11 @@ athread(void* arg) {
                         exit(1);
                     }
                 } else if (use_fft) {
-#if 0
-					if( alg == 'd' )
-					{
-						D__align_variousdist( whichmtx, scoringmatrices, NULL, mseq1, mseq2, effarr1, effarr2, eff1s, eff2s, clus1, clus2, alloclen, NULL, &dumdb, NULL, NULL, NULL, NULL, subgenerationpt, subgenerationatfirst, &chudanres, 1, 1 );
-					}
-					else
-#endif
                     {
-                        double totalwm;
                         chudanres = 0;
-                        //						totalwm = Falign( smalldistmtx, NULL, n_dis_consweight_multi, mseq1, mseq2, effarr1, effarr2, NULL, NULL, clus1, clus2, alloclen, &intdum, subgenerationpt, subgenerationatfirst, &chudanres );
-                        totalwm = Falign(whichmtx, scoringmatrices, n_dis_consweight_multi, mseq1, mseq2, effarr1, effarr2, eff1s, eff2s, clus1, clus2, alloclen, &intdum, subgenerationpt, subgenerationatfirst, &chudanres);
+                        Falign(whichmtx, scoringmatrices, n_dis_consweight_multi, mseq1, mseq2, effarr1, effarr2, eff1s, eff2s, clus1, clus2, alloclen, &intdum, subgenerationpt, subgenerationatfirst, &chudanres);
                     }
                     if (chudanres && parallelizationstrategy == BAATARI2) {
-                        //						fprintf( stderr, "#### yarinaoshi!!! FFT-NS-i\n" );
                         goto yarinaoshi;
                     }
 
@@ -1972,26 +1962,11 @@ TreeDependentIteration(int locnjob, char** name, int nlen[M], char** aseq, char*
                             exit(1);
                         }
                     } else if (use_fft) {
-                        double totalwm;
-#if 0
-						double dumdb;
-						// D ha Falign wo toshite yobareru.
-						if( alg == 'd' )
-						{
-							D__align_variousdist( whichmtx, scoringmatrices, NULL, mseq1, mseq2, effarr1, effarr2, eff1s, eff2s, clus1, clus2, alloclen, NULL, &dumdb, NULL, NULL, NULL, NULL, NULL, 0, NULL, 1, 1 );
-						}
-						else
-#endif
-                        {
-                            totalwm = Falign(whichmtx, scoringmatrices, n_dis_consweight_multi, mseq1, mseq2, effarr1, effarr2, eff1s, eff2s, clus1, clus2, alloclen, &intdum, NULL, 0, NULL);
-
-                            //						fprintf( stderr, "totalwm = %f\n", totalwm );
-                        }
+                        Falign(whichmtx, scoringmatrices, n_dis_consweight_multi, mseq1, mseq2, effarr1, effarr2, eff1s, eff2s, clus1, clus2, alloclen, &intdum, NULL, 0, NULL);
                     } else {
                         fprintf(stderr, "\n\nUnexpected error.  Please contact katoh@ifrec.osaka-u.ac.jp\n\n\n");
                         exit(1);
                     }
-                    //				fprintf( stderr, "## impmatch = %f\n", impmatch );
 
                     if (checkC) {
                         extern double DSPscore(int, char**);

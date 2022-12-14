@@ -298,10 +298,10 @@ main() {
             prb_String outname = prb_replaceExt(arena, inname, prb_STR("obj"));
             prb_String outpath = prb_pathJoin(arena, srcOutDir, outname);
             arrput(srcObjPaths, outpath);
-            prb_String cmd = prb_fmt(arena, "clang -g -Werror -Wfatal-errors -Denablemultithread -c %.*s -o %.*s", prb_LIT(sourceIter.curPath), prb_LIT(outpath));
+            prb_String cmd = prb_fmt(arena, "clang -g -Wall -Werror -Wfatal-errors -Denablemultithread -c %.*s -o %.*s", prb_LIT(sourceIter.curPath), prb_LIT(outpath));
             prb_writelnToStdout(cmd);
-            prb_ProcessHandle proc = prb_execCmd(arena, cmd, prb_ProcessFlag_DontWait, (prb_String) {});
-            prb_assert(proc.status == prb_ProcessStatus_Launched);
+            prb_ProcessHandle proc = prb_execCmd(arena, cmd, 0, (prb_String) {});
+            prb_assert(proc.status == prb_ProcessStatus_CompletedSuccess);
             arrput(srcCompileProcs, proc);
         }
     }

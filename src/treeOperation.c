@@ -490,7 +490,7 @@ branchWeightToPairWeight(int locnseq, int*** topol, double** pw, double** bw) {
 static void
 distFromABranch_rec(double* result, Node* ob, Node* op) {
     int i, n, count;
-    int dir_ch[3], dir_pa;
+    int dir_ch[3];
 
 #if DEBUG
     fprintf(stderr, "In distFromABranch_rec, ob = %d\n", ob - stopol_g);
@@ -500,8 +500,6 @@ distFromABranch_rec(double* result, Node* ob, Node* op) {
     for (i = 0, count = 0; i < 3; i++) {
         if (ob->children[i] != op)
             dir_ch[count++] = i;
-        else
-            dir_pa = i;
     }
     if (count != 2) {
 #if DEBUG
@@ -568,7 +566,7 @@ distFromABranch(int nseq, double* result, Node* stopol, int*** topol, double** l
 static void
 weightFromABranch_rec(double* result, Node* ob, Node* op) {
     int i, n, count;
-    int dir_ch[3], dir_pa;
+    int dir_ch[3];
 
 #if DEBUG
     fprintf(stderr, "In weightFromABranch_rec, ob = %d\n", ob - stopol_g);
@@ -578,8 +576,6 @@ weightFromABranch_rec(double* result, Node* ob, Node* op) {
     for (i = 0, count = 0; i < 3; i++) {
         if (ob->children[i] != op)
             dir_ch[count++] = i;
-        else
-            dir_pa = i;
     }
     if (count != 2) {
 #if DEBUG
@@ -635,7 +631,7 @@ weightFromABranch(int nseq, double* result, Node* stopol, int*** topol, int step
 void
 assignstrweight_rec(double* strweight, Node* ob, Node* op, char* kozoari, double* seqweight) {
     int    i, n, count, lastkozo;
-    int    dir_ch[3], dir_pa;
+    int    dir_ch[3];
     double sumweight;
 
 #if DEBUG
@@ -648,8 +644,6 @@ assignstrweight_rec(double* strweight, Node* ob, Node* op, char* kozoari, double
     for (i = 0, count = 0; i < 3; i++) {
         if (ob->children[i] != op)
             dir_ch[count++] = i;
-        else
-            dir_pa = i;
     }
     if (count != 2) {
 #if DEBUG

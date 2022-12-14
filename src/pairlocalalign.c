@@ -284,14 +284,13 @@ recallpairfoldalign(char** mseq1, char** mseq2, int m1, int m2, int* of1pt, int*
 
 static void
 block2reg(char* block, Reg* reg1, Reg* reg2, int start1, int start2) {
-    Reg * rpt1, *rpt2;
+    Reg * rpt1;
     char *tpt, *npt;
     int   pos1, pos2;
     int   len, glen1, glen2;
     pos1 = start1;
     pos2 = start2;
     rpt1 = reg1;
-    rpt2 = reg2;
     while (block) {
         block++;
         //		fprintf( stderr, "block = %s\n", block );
@@ -322,7 +321,6 @@ block2reg(char* block, Reg* reg1, Reg* reg2, int start1, int start2) {
         //		fprintf( stderr, "reg1: %d-%d\n", rpt1->start, rpt1->end );
         //		fprintf( stderr, "reg2: %d-%d\n", rpt2->start, rpt2->end );
         rpt1++;
-        rpt2++;
     }
     //	*apt1 = *apt2 = 0;
     //	fprintf( stderr, "aln1 = %s\n", aln1 );

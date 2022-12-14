@@ -7,7 +7,7 @@
 #define DEFAULTPAMN 200
 
 void
-JTTmtx(double** rsr, double* freq, unsigned char locamino[26], char locgrp[26], int isTM) {
+JTTmtx(double** rsr, double* freq, unsigned char* locamino, char* locgrp, int isTM) {
     int    i, j;
     double r[20][20];
     //	char locamino0[] = "ARNDCQEGHILKMFPSTWYVBZX.-U";

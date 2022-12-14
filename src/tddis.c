@@ -626,36 +626,24 @@ int
 conjuction(char** pair, int s, char** seq, char** aseq, double* peff, double* eff, char** name, char** aname, char* d) {
     int    m, k;
     char   b[B];
-    double total;
 
 #if DEBUG
     fprintf(stderr, "s = %d\n", s);
 #endif
 
-    total = 0.0;
     d[0] = 0;
     for (m = s, k = 0; m < njob; m++) {
         if (pair[s][m] != 0) {
             sprintf(b, " %d", m + 1);
-#if 1
-            if (strlen(d) < 100)
+            if (strlen(d) < 100) {
                 strcat(d, b);
-#else
-            strcat(d, b);
-#endif
+            }
             aseq[k] = seq[m];
             peff[k] = eff[m];
-            total += peff[k];
-#if 0
-			strcpy( aname[k], name[m] );
-#endif
             k++;
         }
     }
-#if 0
-	for( m=0; m<k; m++ )
-		peff[m] /= total;
-#endif
+
     return (k);
 }
 

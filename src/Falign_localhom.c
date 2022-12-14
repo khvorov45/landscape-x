@@ -162,7 +162,7 @@ Falign_localhom(int** whichmtx, double*** scoringmatrices, double** n_dynamicmtx
     // tditeration.c deha alloclen ha huhen nanode
     // prevalloclen ha iranai.
     int               i, j, k, l, m, maxk;
-    int               nlen, nlen2, nlen4;
+    int               nlen, nlen2;
     static TLS int    crossscoresize = 0;
     static TLS char** tmpseq1 = NULL;
     static TLS char** tmpseq2 = NULL;
@@ -260,12 +260,8 @@ Falign_localhom(int** whichmtx, double*** scoringmatrices, double** n_dynamicmtx
     nlen = 1;
     while (nlentmp >= nlen)
         nlen <<= 1;
-#if 0
-	fprintf( stderr, "###   nlen    = %d\n", nlen );
-#endif
 
     nlen2 = nlen / 2;
-    nlen4 = nlen2 / 2;
 
 #if DEBUG
     fprintf(stderr, "len1 = %d, len2 = %d\n", len1, len2);

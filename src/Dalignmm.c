@@ -1146,8 +1146,8 @@ calcpfac_gap_noidatend(Gaplen** gaplen1, Gaplen** gaplen2, int newgaplen, int i,
 
 #else
 
-    double  pfac, pfac1, pfac10, pfac2;
-    int     k, l, pos1, pos2, id1, id2;
+    double pfac, pfac1, pfac10, pfac2;
+    int k, l, pos1, pos2, id1, id2;
     Gaplen *gaplen1i, *gaplen2j;
 
 #if 0  // .len no shouryaku ni taiou shiteinai
@@ -1494,8 +1494,7 @@ calcpfac(Gaplen** gaplen1, Gaplen** gaplen2, int i, int j, char* seq1, char* seq
 
 static double
 calcpfac_gapex_noidatend(Gaplen** gaplen1, Gaplen** gaplen2, int i, int j, int newgaplen, char* seq1, char* seq2, int disp) {
-#if 1
-    double  pfac, pfac1, pfac2, pfac10;
+    double  pfac, pfac1, pfac10;
     int     k, l, pos1, pos2;
     Gaplen *gaplen1i, *gaplen2j, *g1, *g2;
 
@@ -1503,7 +1502,6 @@ calcpfac_gapex_noidatend(Gaplen** gaplen1, Gaplen** gaplen2, int i, int j, int n
     gaplen2j = gaplen2[j];
 
     pfac = 0.0;
-    pfac2 = 0.0;
     if (gaplen2j)
         for (k = 0; (g2 = gaplen2j + k)->idatnext != -1; k++) {
 #if DEBUG
@@ -1530,79 +1528,16 @@ calcpfac_gapex_noidatend(Gaplen** gaplen1, Gaplen** gaplen2, int i, int j, int n
 #endif
                     if (newgaplen + g1->len - (pos1) > g2->len - (pos2))
                         pfac1 -= g1->freq;
-                    //			reporterr( "pfac1 = %f\n", pfac1 );
                 }
             pfac += pfac1 * g2->freq;
 
-            /* ???? */
             if (newgaplen >= g2->len - (pos2 - 1))  // >= or >??
             {
                 pfac -= pfac10 * g2->freq;
-                //			reporterr( "Hit! pfac1 = %f\n", pfac1 );
             }
-            /* ???? */
-
-            //		if( gaplen2[j][k].relend == -1 ) pfac += gaplen2[j][k].freq;
         }
 
     return (pfac);
-#else
-    double  pfac, pfac1, pfac2, pfac10;
-    int     k, l, id1, id2, pos1, pos2;
-    Gaplen *gaplen1i, *gaplen2j;
-
-    gaplen1i = gaplen1[i];
-    gaplen2j = gaplen2[j];
-
-    pfac = 0.0;
-    pfac2 = 0.0;
-    //	for( k=0; gaplen2[j]&&(gl=gaplen2[j][k].len)!=-1; k++ ) // ososugi!  hash ni atode henkou
-    if (gaplen2j)
-        for (k = 0; (gaplen2j[k].idatnext) != -1; k++)  // ososugi!  hash ni atode henkou
-        {
-#if DEBUG
-            int gl;
-            pos2 = gaplen2j[k].relend;
-            gl = gaplen2j[k].len;
-            if (disp)
-                reporterr("gaplen2[][].len=%d, .relend=%d, .freq=%f\n", gaplen2[j][k].len, gaplen2[j][k].relend, gaplen2[j][k].freq);
-            if (disp)
-                reporterr("gl = %d, newgaplen=%d\n", gl, newgaplen);
-#endif
-            if ((pos2 = gaplen2[j][k].relend) != 0)
-                continue;
-
-            pfac1 = 1.0;
-            pfac10 = 1.0;
-            if (gaplen1i)
-                for (l = 0; (gaplen1i[l].idatnext) != -1; l++)  // ososugi!  hash ni atode henkou
-                {
-                    pos1 = gaplen1i[l].relend;
-                    pfac10 -= gaplen1i[l].freq;
-#if DEBUG
-                    if (disp)
-                        reporterr("gaplen1[][].len=%d, .relend=%d, .freq=%f\n", gaplen1[i][l].len, gaplen1[i][l].relend, gaplen1[i][l].freq);
-#endif
-                    if (newgaplen + gaplen1i[l].len - (pos1) > gaplen2j[k].len - (pos2))
-                        pfac1 -= gaplen1i[l].freq;
-                    //			reporterr( "pfac1 = %f\n", pfac1 );
-                }
-            pfac += pfac1 * gaplen2j[k].freq;
-
-            /* ???? */
-            if (newgaplen >= gaplen2j[k].len - (pos2 - 1))  // >= or >??
-            {
-                pfac -= pfac10 * gaplen2j[k].freq;
-                //			reporterr( "Hit! pfac1 = %f\n", pfac1 );
-            }
-            /* ???? */
-
-            //		if( gaplen2[j][k].relend == -1 ) pfac += gaplen2[j][k].freq;
-        }
-
-    return (pfac);
-
-#endif
 }
 
 static double

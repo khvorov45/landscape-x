@@ -196,7 +196,7 @@ extern double input_new(FILE* fp, int d);
 extern void   PreRead(FILE* fp, int* locnjob, int* locnlenmax);
 extern int    allSpace(char* str);
 extern void   Read(char name[M][B], int nlen[M], char** seq);
-extern void   FRead(FILE* fp, char name[][B], int nlen[], char** seq);
+extern void   FRead(FILE* fp, char** name, int nlen[], char** seq);
 extern void   kake2hiku(char* str);
 extern int    copydatafromgui(char** namegui, char** seqgui, char** name, int* nlen, char** seq);
 extern void   readDataforgaln(FILE* fp, char** name, int* nlen, char** seq);

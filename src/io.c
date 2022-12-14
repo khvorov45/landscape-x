@@ -518,7 +518,6 @@ putlocalhom_ext(char* al1, char* al2, LocalHom* localhompt, int off1, int off2, 
     int       pos1, pos2, start1, start2, end1, end2;
     char *    pt1, *pt2;
     int       iscore;
-    int       isumscore;
     int       sumoverlap;
     LocalHom* tmppt = localhompt;
     int       nlocalhom = 0;
@@ -528,7 +527,6 @@ putlocalhom_ext(char* al1, char* al2, LocalHom* localhompt, int off1, int off2, 
     pos1 = off1;
     pos2 = off2;
 
-    isumscore = 0;
     sumoverlap = 0;
     start1 = 0;  // by D.Mathog, a guess
     start2 = 0;  // by D.Mathog, a guess
@@ -536,7 +534,6 @@ putlocalhom_ext(char* al1, char* al2, LocalHom* localhompt, int off1, int off2, 
     st = 0;
     iscore = 0;
     while (*pt1 != 0) {
-        //		fprintf( stderr, "pt = %c, %c, st=%d\n", *pt1, *pt2, st );
         if (st == 1 && (*pt1 == '-' || *pt2 == '-')) {
             end1 = pos1 - 1;
             end2 = pos2 - 1;
@@ -554,7 +551,6 @@ putlocalhom_ext(char* al1, char* al2, LocalHom* localhompt, int off1, int off2, 
             tmppt->end2 = end2;
             tmppt->korh = korh;
 
-#if 1
             if (divpairscore) {
                 tmppt->overlapaa = end2 - start2 + 1;
                 if (tmppt->overlapaa > 0)
@@ -562,19 +558,9 @@ putlocalhom_ext(char* al1, char* al2, LocalHom* localhompt, int off1, int off2, 
                 else
                     tmppt->opt = -1.0;
             } else {
-                isumscore += iscore;
                 sumoverlap += end2 - start2 + 1;
             }
-#else
-            tmppt->overlapaa = overlapaa;
-            tmppt->opt = (double)opt;
-#endif
 
-#if 0
-			fprintf( stderr, "iscore (1)= %d\n", iscore );
-			fprintf( stderr, "al1: %d - %d\n", start1, end1 );
-			fprintf( stderr, "al2: %d - %d\n", start2, end2 );
-#endif
             iscore = 0;
             st = 0;
         } else if (*pt1 != '-' && *pt2 != '-') {
@@ -607,7 +593,6 @@ putlocalhom_ext(char* al1, char* al2, LocalHom* localhompt, int off1, int off2, 
         tmppt->end2 = end2;
         tmppt->korh = korh;
 
-#if 1
         if (divpairscore) {
             tmppt->overlapaa = end2 - start2 + 1;
             if (tmppt->overlapaa > 0)
@@ -615,27 +600,14 @@ putlocalhom_ext(char* al1, char* al2, LocalHom* localhompt, int off1, int off2, 
             else
                 tmppt->opt = -1.0;
         } else {
-            isumscore += iscore;
             sumoverlap += end2 - start2 + 1;
         }
-#else
-        tmppt->overlapaa = overlapaa;
-        tmppt->opt = (double)opt;
-#endif
-
-#if 0
-		fprintf( stderr, "iscore (2)= %d\n", iscore );
-		fprintf( stderr, "al1: %d - %d\n", start1, end1 );
-		fprintf( stderr, "al2: %d - %d\n", start2, end2 );
-#endif
     }
 
     if (!divpairscore) {
         for (tmppt = localhompt; tmppt; tmppt = tmppt->next) {
             tmppt->overlapaa = sumoverlap;
-            //			tmppt->opt = (double)isumscore * 5.8 / ( 600 * sumoverlap );
             tmppt->opt = (double)600 * 5.8 / 600;
-            //			fprintf( stderr, "tmpptr->opt = %f\n", tmppt->opt );
         }
     }
 }
@@ -644,8 +616,6 @@ void
 putlocalhom_str(char* al1, char* al2, double* equiv, double scale, LocalHom* localhompt, int off1, int off2, int opt, int overlapaa, char korh) {
     int       posinaln, pos1, pos2, start1, start2, end1, end2;
     char *    pt1, *pt2;
-    int       isumscore;
-    int       sumoverlap;
     LocalHom* tmppt = localhompt;
     int       nlocalhom = 0;
     //	int st;
@@ -654,8 +624,6 @@ putlocalhom_str(char* al1, char* al2, double* equiv, double scale, LocalHom* loc
     pos1 = off1;
     pos2 = off2;
 
-    isumscore = 0;
-    sumoverlap = 0;
     start1 = 0;  // by D.Mathog, a guess
     start2 = 0;  // by D.Mathog, a guess
 
@@ -1110,12 +1078,12 @@ allSpace(char* str) {
 
 void
 Read(char name[M][B], int nlen[M], char** seq) {
-    extern void FRead(FILE * x, char y[M][B], int z[M], char** w);
-    FRead(stdin, name, nlen, seq);
+    extern void FRead(FILE * x, char** y, int* z, char** w);
+    FRead(stdin, (char**)name, nlen, seq);
 }
 
 void
-FRead(FILE* fp, char name[][B], int nlen[], char** seq) {
+FRead(FILE* fp, char** name, int nlen[], char** seq) {
     int  i, j;
     char b[B];
 
@@ -3071,10 +3039,8 @@ ReadBlastm7_avscore(FILE* fp, double* dis, int nin) {
     int*        junban;
     double      score, sumscore;
     double      len, sumlen;
-    int         qstart, qend, tstart, tend;
     double      scorepersite;
     static char qal[N], tal[N], al[N];
-    int         nlocalhom;
 
     junban = calloc(nin, sizeof(int));
 
@@ -3095,7 +3061,6 @@ ReadBlastm7_avscore(FILE* fp, double* dis, int nin) {
 
         if (!strncmp("          <Hit_def>", b, 19)) {
             junban[count] = atoi(b + 31);
-            nlocalhom = 0;
         }
 
         while (fgets(b, B - 1, fp))
@@ -3109,25 +3074,21 @@ ReadBlastm7_avscore(FILE* fp, double* dis, int nin) {
             if (!strncmp("              <Hsp_query-from>", b, 30))
                 break;
         pt = b + 30;
-        qstart = atoi(pt) - 1;
 
         while (fgets(b, B - 1, fp))
             if (!strncmp("              <Hsp_query-to>", b, 28))
                 break;
         pt = b + 28;
-        qend = atoi(pt) - 1;
 
         while (fgets(b, B - 1, fp))
             if (!strncmp("              <Hsp_hit-from>", b, 28))
                 break;
         pt = b + 28;
-        tstart = atoi(pt) - 1;
 
         while (fgets(b, B - 1, fp))
             if (!strncmp("              <Hsp_hit-to>", b, 26))
                 break;
         pt = b + 26;
-        tend = atoi(pt) - 1;
 
         while (fgets(b, B - 1, fp))
             if (!strncmp("              <Hsp_align-len>", b, 29))
@@ -3190,11 +3151,8 @@ ReadBlastm7_scoreonly(FILE* fp, double* dis, int nin) {
     char        b[B];
     char*       pt;
     int*        junban;
-    int         overlapaa;
     double      score, sumscore;
-    int         qstart, qend, tstart, tend;
     static char qal[N], tal[N], al[N];
-    int         nlocalhom;
 
     junban = calloc(nin, sizeof(int));
 
@@ -3212,7 +3170,6 @@ ReadBlastm7_scoreonly(FILE* fp, double* dis, int nin) {
 
         if (!strncmp("          <Hit_def>", b, 19)) {
             junban[count] = atoi(b + 31);
-            nlocalhom = 0;
         }
 
         while (fgets(b, B - 1, fp))
@@ -3226,31 +3183,26 @@ ReadBlastm7_scoreonly(FILE* fp, double* dis, int nin) {
             if (!strncmp("              <Hsp_query-from>", b, 30))
                 break;
         pt = b + 30;
-        qstart = atoi(pt) - 1;
 
         while (fgets(b, B - 1, fp))
             if (!strncmp("              <Hsp_query-to>", b, 28))
                 break;
         pt = b + 28;
-        qend = atoi(pt) - 1;
 
         while (fgets(b, B - 1, fp))
             if (!strncmp("              <Hsp_hit-from>", b, 28))
                 break;
         pt = b + 28;
-        tstart = atoi(pt) - 1;
 
         while (fgets(b, B - 1, fp))
             if (!strncmp("              <Hsp_hit-to>", b, 26))
                 break;
         pt = b + 26;
-        tend = atoi(pt) - 1;
 
         while (fgets(b, B - 1, fp))
             if (!strncmp("              <Hsp_align-len>", b, 29))
                 break;
         pt = b + 29;
-        overlapaa = atoi(pt);
 
         while (fgets(al, N - 100, fp))
             if (!strncmp("              <Hsp_qseq>", al, 24))
@@ -3305,7 +3257,7 @@ ReadBlastm7(FILE* fp, double* dis, int qmem, char** name, LocalHom* localhomlist
     static int  junban[M];
     int         overlapaa;
     double      score, sumscore;
-    int         qstart, qend, tstart, tend;
+    int         qstart, tstart;
     static char qal[N], tal[N], al[N];
     int         nlocalhom;
 
@@ -3344,7 +3296,6 @@ ReadBlastm7(FILE* fp, double* dis, int qmem, char** name, LocalHom* localhomlist
             if (!strncmp("              <Hsp_query-to>", b, 28))
                 break;
         pt = b + 28;
-        qend = atoi(pt) - 1;
 
         while (fgets(b, B - 1, fp))
             if (!strncmp("              <Hsp_hit-from>", b, 28))
@@ -3356,7 +3307,6 @@ ReadBlastm7(FILE* fp, double* dis, int qmem, char** name, LocalHom* localhomlist
             if (!strncmp("              <Hsp_hit-to>", b, 26))
                 break;
         pt = b + 26;
-        tend = atoi(pt) - 1;
 
         while (fgets(b, B - 1, fp))
             if (!strncmp("              <Hsp_align-len>", b, 29))
@@ -6116,7 +6066,7 @@ nuc2id(char nuc) {
 
 int
 codon2id(char* codon) {
-    int id0, id1, id2, id;
+    int id0, id1, id2;
     id0 = nuc2id(codon[0]);
     id1 = nuc2id(codon[1]);
     id2 = nuc2id(codon[2]);

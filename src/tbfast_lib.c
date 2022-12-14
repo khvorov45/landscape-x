@@ -1,3 +1,6 @@
+#include <stdint.h>
+#include <stdbool.h>
+
 #include "mltaln.h"
 
 #define DEBUG 0
@@ -647,7 +650,6 @@ treebasethread(void* arg)  // seed && compacttree==3 niha taioushinai.
     RNApair ***grouprna1 = NULL, ***grouprna2 = NULL;
     double**   dynamicmtx;
     int**      localmem = NULL;
-    int        posinmem;
 #if REPORTCOSTS
     time_t starttime, startclock;
     starttime = time(NULL);
@@ -781,9 +783,9 @@ treebasethread(void* arg)  // seed && compacttree==3 niha taioushinai.
         }
 
         localmem[0][0] = -1;
-        posinmem = topolorderz(localmem[0], topol, dep, l, 0) - localmem[0];
+        topolorderz(localmem[0], topol, dep, l, 0);
         localmem[1][0] = -1;
-        posinmem = topolorderz(localmem[1], topol, dep, l, 1) - localmem[1];
+        topolorderz(localmem[1], topol, dep, l, 1);
         for (i = 0; (j = localmem[0][i]) != -1; i++) {
             localcopy[j] = calloc(*alloclen, sizeof(char));
             strcpy(localcopy[j], aseq[j]);
@@ -887,9 +889,10 @@ treebasethread(void* arg)  // seed && compacttree==3 niha taioushinai.
 
         nlen[m1] = 0.5 * (nlen[m1] + nlen[m2]);
 
-#if SCOREOUT
-        fprintf(stderr, "score = %10.2f\n", pscore);
-#endif
+        bool scoreout = false;
+        if (scoreout) {
+            fprintf(stderr, "score = %10.2f\n", pscore);
+        }
 
         if (disp)
             display(localcopy, njob);
@@ -925,7 +928,7 @@ treebasethread(void* arg)  // seed && compacttree==3 niha taioushinai.
 void
 treebase(TbfastOpts opts, int* nlen, char** aseq, int nadd, char* mergeoralign, char** mseq1, char** mseq2, int*** topol, Treedep* dep, double* effarr, int* alloclen, LocalHom** localhomtable, RNApair*** singlerna, double* effarr_kozo, int* targetmap, int* targetmapr, int ntarget, int* uselh, int nseed, int* nfilesfornode) {
     int             i, l, m;
-    int             len1nocommongap, len2nocommongap;
+    int             len1nocommongap;
     int             len1, len2;
     int             clus1, clus2;
     double          pscore, tscore;
@@ -949,7 +952,6 @@ treebase(TbfastOpts opts, int* nlen, char** aseq, int nadd, char* mergeoralign, 
     static double** dynamicmtx;
     int             gapmaplen;
     int**           localmem = NULL;
-    int             posinmem;
     int             nfiles;
     double***       cpmxhist = NULL;
     int**           memhist = NULL;
@@ -1118,12 +1120,10 @@ treebase(TbfastOpts opts, int* nlen, char** aseq, int nadd, char* mergeoralign, 
             newgapstr = "-";
 
         len1nocommongap = len1;
-        len2nocommongap = len2;
         if (mergeoralign[l] == '1')  // nai
         {
             findcommongaps(clus2, mseq2, gapmap);
             commongappick(clus2, mseq2);
-            len2nocommongap = strlen(mseq2[0]);
         } else if (mergeoralign[l] == '2') {
             findcommongaps(clus1, mseq1, gapmap);
             commongappick(clus1, mseq1);
@@ -1293,9 +1293,11 @@ treebase(TbfastOpts opts, int* nlen, char** aseq, int nadd, char* mergeoralign, 
     free(memhist);
     memhist = NULL;
 
-#if SCOREOUT
-    fprintf(stderr, "totalscore = %10.2f\n\n", tscore);
-#endif
+    bool scoreout = false;
+    if (scoreout) {
+        fprintf(stderr, "totalscore = %10.2f\n\n", tscore);
+    }
+
     if (rnakozo && rnaprediction == 'm') {
         if (grouprna1)
             free(grouprna1);  // nakami ha?
@@ -1418,19 +1420,8 @@ WriteOptions(FILE* fp) {
 
 static double**
 preparepartmtx(int nseq) {
-    int      i;
-    double** val;
-    double   size;
-
-    val = (double**)calloc(nseq, sizeof(double*));
-    ;
-    size = 0;
-
-    {
-        for (i = 0; i < nseq; i++)
-            val[i] = NULL;  // nen no tame
-    }
-    return (val);
+    double** val = (double**)calloc(nseq, sizeof(double*));
+    return val;
 }
 
 int
@@ -1468,14 +1459,13 @@ tbfast_main(int argc, char* argv[]) {
     GapPos** deletelist = NULL;
     FILE*    dlf = NULL;
     int**    localmem = NULL;
-    int      posinmem;
     int      includememberres0, includememberres1;
     int*     mindistfrom = NULL;
     double*  mindist = NULL;
     double** partmtx = NULL;
 
     char         c;
-    int          alloclen;
+    int          alloclen = 0;
     LocalHom**   localhomtable = NULL;
     LocalHom*    tmpptr;
     RNApair***   singlerna = NULL;
@@ -2248,7 +2238,7 @@ tbfast_main(int argc, char* argv[]) {
     }
 
     localmem[0][0] = -1;
-    posinmem = topolorderz(localmem[0], topol, dep, njob - 2, 2) - localmem[0];
+    topolorderz(localmem[0], topol, dep, njob - 2, 2);
 
     orderfp = fopen("order", "w");
     if (!orderfp) {
@@ -2344,16 +2334,14 @@ tbfast_main(int argc, char* argv[]) {
             foundthebranch = 0;
             for (i = 0; i < njob - 1; i++) {
                 localmem[0][0] = -1;
-                posinmem = topolorderz(localmem[0], topol, dep, i, 0) - localmem[0];
+                topolorderz(localmem[0], topol, dep, i, 0);
                 localmem[1][0] = -1;
-                posinmem = topolorderz(localmem[1], topol, dep, i, 1) - localmem[1];
+                topolorderz(localmem[1], topol, dep, i, 1);
 
-                if (samemember(localmem[0], addmem))  // jissainiha nai
-                {
+                if (samemember(localmem[0], addmem)) {
                     mergeoralign[i] = '1';
                     foundthebranch = 1;
-                } else if (samemember(localmem[1], addmem))  // samemembern ni henkou kanou
-                {
+                } else if (samemember(localmem[1], addmem)) {
                     mergeoralign[i] = '2';
                     foundthebranch = 1;
                 } else {
@@ -2380,13 +2368,12 @@ tbfast_main(int argc, char* argv[]) {
             addmem[nadd] = -1;
             for (i = 0; i < njob - 1; i++) {
                 localmem[0][0] = -1;
-                posinmem = topolorderz(localmem[0], topol, dep, i, 0) - localmem[0];
+                topolorderz(localmem[0], topol, dep, i, 0);
                 localmem[1][0] = -1;
-                posinmem = topolorderz(localmem[1], topol, dep, i, 1) - localmem[1];
+                topolorderz(localmem[1], topol, dep, i, 1);
 
                 includememberres0 = includemember(localmem[0], addmem);
                 includememberres1 = includemember(localmem[1], addmem);
-                //				if( includemember( topol[i][0], addmem ) && includemember( topol[i][1], addmem ) )
                 if (includememberres0 && includememberres1) {
                     mergeoralign[i] = 'w';
                 } else if (includememberres0) {

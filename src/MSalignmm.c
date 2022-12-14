@@ -49,7 +49,7 @@ match_calc_add(double** scoringmtx, double* match, double** cpmx1, double** cpmx
             scarr[l] += scoringmtx[k][l] * cpmx1[i1][k];
         }
     }
-#if 0 /* ¤³¤ì¤ò»È¤¦¤È¤­¤Ïdoublework¤Î¥¢¥í¥±¡¼¥È¤òµÕ¤Ë¤¹¤ë */
+#if 0 /* ï¿½ï¿½ï¿½ï¿½ï¿½È¤ï¿½ï¿½È¤ï¿½ï¿½ï¿½doubleworkï¿½Î¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¤ï¿½Õ¤Ë¤ï¿½ï¿½ï¿½ */
 	{
 		double *fpt, **fptpt, *fpt2;
 		int *ipt, **iptpt;
@@ -129,7 +129,7 @@ static void match_calc( double **n_dynamicmtx, double *match, double **cpmx1, do
 			scarr[l] += n_dynamicmtx[k][l] * cpmx1[i1][k];
 		}
 	}
-#if 0 /* ¤³¤ì¤ò»È¤¦¤È¤­¤Ïdoublework¤Î¥¢¥í¥±¡¼¥È¤òµÕ¤Ë¤¹¤ë */
+#if 0 /* ï¿½ï¿½ï¿½ï¿½ï¿½È¤ï¿½ï¿½È¤ï¿½ï¿½ï¿½doubleworkï¿½Î¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¤ï¿½Õ¤Ë¤ï¿½ï¿½ï¿½ */
 	{
 		double *fpt, **fptpt, *fpt2;
 		int *ipt, **iptpt;
@@ -923,7 +923,7 @@ MSalignmm_rec(double** n_dynamicmtx, int icyc, int jcyc, double* eff1, double* e
     register int i, j;
     char **      aseq1, **aseq2, *agt1, *agt2;
     int          ll1, ll2, l, len;
-    int          lasti, lastj, imid;
+    int          lastj, imid;
     int          jmid = 0;  // by D.Mathog, a guess
     double       wm = 0.0; /* int ?????? */
     double       g;
@@ -1189,7 +1189,6 @@ MSalignmm_rec(double** n_dynamicmtx, int icyc, int jcyc, double* eff1, double* e
     imid = lgth1 * 0.5;
 
     jumpi = 0;  // atode kawaru.
-    lasti = lgth1 + 1;
 #if STOREWM
     for (i = 1; i < lasti; i++)
 #else
@@ -2771,7 +2770,7 @@ MSalignmm_rec_variousdist(double*** matrices, int icyc, int jcyc, char** seq1, c
     register int i, j, c;
     char **      aseq1, **aseq2;
     int          ll1, ll2, l, len;
-    int          lasti, lastj, imid;
+    int          lastj, imid;
     int          jmid = 0;  // by D.Mathog, a guess
     double       wm = 0.0; /* int ?????? */
     double       g;
@@ -3027,7 +3026,6 @@ MSalignmm_rec_variousdist(double*** matrices, int icyc, int jcyc, char** seq1, c
     imid = lgth1 * 0.5;
 
     jumpi = 0;  // atode kawaru.
-    lasti = lgth1 + 1;
 #if STOREWM
     for (i = 1; i < lasti; i++)
 #else

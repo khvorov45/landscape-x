@@ -35,15 +35,14 @@ eqpick(char* aseq, char* seq) {
 void
 profilealignment2(int n0, int n2, char** aln0, char** aln2, int alloclen, char alg)  // n1 ha allgap
 {
-    int     i, newlen;
+    int     i;
     double *effarr0, *effarr2;
     int *   allgap0, *allgap2;
     double  dumdb;
     int     alcount0, alcount2;
 
     if (aln0[0][1] == 0 && aln2[0][1] == 0)
-        return;  // --allowshift no tokiha...
-    //	reporterr( "profilealignment!\n" );
+        return;
 
     commongappick(n0, aln0);
     commongappick(n2, aln2);
@@ -53,7 +52,6 @@ profilealignment2(int n0, int n2, char** aln0, char** aln2, int alloclen, char a
     allgap0 = AllocateIntVec(n0);
     allgap2 = AllocateIntVec(n2);
 
-#if 1  // new weight 2015/Jun
     alcount0 = 0;
     for (i = 0; i < n0; i++) {
         if (isallgap(aln0[i]))
@@ -80,50 +78,12 @@ profilealignment2(int n0, int n2, char** aln0, char** aln2, int alloclen, char a
     for (i = 0; i < n2; i++)
         if (!allgap2[i])
             effarr2[i] = 1.0 / (double)(alcount2);
-#else
-    eff = 1.0 / (double)n0;
-    for (i = 0; i < n0; i++)
-        effarr0[i] = eff;
-    eff = 1.0 / (double)n2;
-    for (i = 0; i < n2; i++)
-        effarr2[i] = eff;
-#endif
 
     newgapstr = "-";
     if (alg == 'M')
         MSalignmm(n_dis_consweight_multi, aln0, aln2, effarr0, effarr2, n0, n2, alloclen, NULL, NULL, NULL, NULL, NULL, 0, NULL, 1, 1, NULL, NULL, NULL, 0.0, 0.0);  //outgap=1, 2014/Dec/1
     else
         A__align(n_dis_consweight_multi, penalty, penalty_ex, aln0, aln2, effarr0, effarr2, n0, n2, alloclen, 0, &dumdb, NULL, NULL, NULL, NULL, NULL, 0, NULL, 1, 1, -1, -1, NULL, NULL, NULL, 0.0, 0.0);  //outgap=1, 2014/Dec/1
-
-    newlen = strlen(aln0[0]);
-
-#if 0  // tabun hitsuyou
-	for( j=0; j<newlen; j++ )
-	{
-//		fprintf( stderr, "j=%d\n", j );
-		for( i=0; i<n0; i++ )
-		{
-			if( aln0[i][j] != '-' ) break;
-		}
-		if( i == n0 ) 
-		{
-			for( i=0; i<n1; i++ ) 
-			{
-				if( aln1[i][j] != '-' ) break;
-			}
-		}
-		else i = -1;
-
-		if( i == n1 ) 
-		{
-			for( i=0; i<n1; i++ ) aln1[i][j] = '=';
-		}
-	}
-	fprintf( stderr, "in profilealignment,\n" );
-	for( i=0; i<n0; i++ ) fprintf( stderr, "\n>aln0[%d] = \n%s\n", i, aln0[i] );
-	for( i=0; i<n1; i++ ) fprintf( stderr, "\n>aln1[%d] = \n%s\n", i, aln1[i] );
-	for( i=0; i<n2; i++ ) fprintf( stderr, "\n>aln2[%d] = \n%s\n", i, aln2[i] );
-#endif
 
     free(effarr0);
     free(effarr2);
@@ -1881,7 +1841,7 @@ maskoriginalgaps(char* repseq, char* originallygapped) {
 
 void
 restoregaponlysites(char* originallygapped, int n1, int n2, char** s1, char** s2, int rep) {
-    int   i, j, p;
+    int   i, p;
     char* tmpnew;
     int   len;
     reporterr("originallygapped = %s\n", originallygapped);

@@ -80,7 +80,6 @@ nj(int nseq, double** omtx, int*** topol, double** dis) {
     double r[M];
     double t;
     double s, sm;
-    double totallen = 0.0;
     int    im = 0, jm = 0;
     double len1, len2;
 #if 1
@@ -141,8 +140,6 @@ nj(int nseq, double** omtx, int*** topol, double** dis) {
         fprintf(stderr, "          %3d: L = %5.5f\n", jm + 1, len2);
 #endif
 
-        totallen += len1;
-        totallen += len2;
 
         dis[m][0] = len1;
         dis[m][1] = len2;
@@ -168,11 +165,6 @@ nj(int nseq, double** omtx, int*** topol, double** dis) {
         if (i != im && i != jm && mtx[MIN(i, im)][MAX(i, im)] < 9999.9)
             break;
     len2 = (mtx[MIN(i, im)][MAX(i, im)] - r[im] + r[i]) / 2;
-
-    /*
-    printf("          %3d: L = %5.5f\n", i+1, len2 );
-*/
-    totallen += len2;
 
     dis[m][0] = len2;
     dis[m][1] = 0.0;

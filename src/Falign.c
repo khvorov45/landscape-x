@@ -201,7 +201,7 @@ Fgetlag(
     int      alloclen
 ) {
     int               i, j, k, l, m;
-    int               nlen, nlen2, nlen4;
+    int               nlen, nlen2;
     static TLS int    crossscoresize = 0;
     static TLS char** tmpseq1 = NULL;
     static TLS char** tmpseq2 = NULL;
@@ -251,7 +251,6 @@ Fgetlag(
 #endif
 
     nlen2 = nlen / 2;
-    nlen4 = nlen2 / 2;
 
 #if DEBUG
     fprintf(stderr, "len1 = %d, len2 = %d\n", len1, len2);
@@ -758,7 +757,7 @@ system( "/usr/bin/gnuplot list.plot" );
 double
 Falign(int** whichmtx, double*** scoringmatrices, double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int clus1, int clus2, int alloclen, int* fftlog, int* chudanpt, int chudanref, int* chudanres) {
     int            i, j, k, l, m, maxk;
-    int            nlen, nlen2, nlen4;
+    int            nlen, nlen2;
     static TLS int crossscoresize = 0;
     char**         tmpseq1 = NULL;
     char**         tmpseq2 = NULL;
@@ -855,12 +854,8 @@ Falign(int** whichmtx, double*** scoringmatrices, double** n_dynamicmtx, char** 
     nlen = 1;
     while (nlentmp >= nlen)
         nlen <<= 1;
-#if 0
-	fprintf( stderr, "###   nlen    = %d\n", nlen );
-#endif
 
     nlen2 = nlen / 2;
-    nlen4 = nlen2 / 2;
 
 #if DEBUG
     fprintf(stderr, "len1 = %d, len2 = %d\n", len1, len2);
@@ -910,10 +905,8 @@ Falign(int** whichmtx, double*** scoringmatrices, double** n_dynamicmtx, char** 
 
         gstart = NULL;
         gend = NULL;
-        if (codonpos)  // gstart to gend ha sudeni allocate sareteiru kamo
-        {
+        if (codonpos) {
             FILE* cfp;
-            int   p;
             char* buf = calloc(sizeof(char), 1000);
 
             if (dorp != 'd') {
@@ -1850,7 +1843,7 @@ static int nogapmargin( int n, char **s, int start, int end, int m )
 double
 Falign_givenanchors(ExtAnch* pairanch, int** whichmtx, double*** scoringmatrices, double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int clus1, int clus2, int alloclen, int* fftlog) {
     int            i, j;
-    int            nlen, nlen2, nlen4;
+    int            nlen;
     static TLS int prevalloclen = 0;
     //static TLS int crossscoresize = 0;
     //static TLS char **tmpseq1 = NULL;
@@ -1957,17 +1950,6 @@ Falign_givenanchors(ExtAnch* pairanch, int** whichmtx, double*** scoringmatrices
     nlen = 1;
     while (nlentmp >= nlen)
         nlen <<= 1;
-#if 0
-	fprintf( stderr, "###   nlen    = %d\n", nlen );
-#endif
-
-    nlen2 = nlen / 2;
-    nlen4 = nlen2 / 2;
-
-#if 0
-	fprintf( stderr, "len1 = %d, len2 = %d\n", len1, len2 );
-	fprintf( stderr, "nlentmp = %d, nlen = %d\n", nlentmp, nlen );
-#endif
 
     if (prevalloclen != alloclen)  // Falign_noudp mo kaeru
     {
@@ -2863,7 +2845,7 @@ Falign_udpari_long(
     int*      fftlog
 ) {
     int            i, j, k, l, m, maxk;
-    int            nlen, nlen2, nlen4;
+    int            nlen, nlen2;
     static TLS int crossscoresize = 0;
     char**         tmpseq1 = NULL;
     char**         tmpseq2 = NULL;
@@ -2955,7 +2937,6 @@ Falign_udpari_long(
 #endif
 
     nlen2 = nlen / 2;
-    nlen4 = nlen2 / 2;
 
 #if 0
 	fprintf( stderr, "len1 = %d, len2 = %d\n", len1, len2 );

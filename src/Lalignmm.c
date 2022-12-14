@@ -47,7 +47,7 @@ match_ribosum(double* match, double** cpmx1, double** cpmx2, int i1, int lgth2, 
             scarr[l] += ribosumdis[k][l] * cpmx1[i1][k];
         }
     }
-#if 0 /* ¤³¤ì¤ò»È¤¦¤È¤­¤Ïdoublework¤Î¥¢¥í¥±¡¼¥È¤òµÕ¤Ë¤¹¤ë */
+#if 0 /* ï¿½ï¿½ï¿½ï¿½ï¿½È¤ï¿½ï¿½È¤ï¿½ï¿½ï¿½doubleworkï¿½Î¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¤ï¿½Õ¤Ë¤ï¿½ï¿½ï¿½ */
 	{
 		double *fpt, **fptpt, *fpt2;
 		int *ipt, **iptpt;
@@ -118,7 +118,7 @@ match_calc(double* match, double** cpmx1, double** cpmx2, int i1, int lgth2, dou
             scarr[l] += (n_dis[k][l] - RNAthr) * cpmx1[i1][k];
         }
     }
-#if 0 /* ¤³¤ì¤ò»È¤¦¤È¤­¤Ïdoublework¤Î¥¢¥í¥±¡¼¥È¤òµÕ¤Ë¤¹¤ë */
+#if 0 /* ï¿½ï¿½ï¿½ï¿½ï¿½È¤ï¿½ï¿½È¤ï¿½ï¿½ï¿½doubleworkï¿½Î¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¤ï¿½Õ¤Ë¤ï¿½ï¿½ï¿½ */
 	{
 		double *fpt, **fptpt, *fpt2;
 		int *ipt, **iptpt;
@@ -196,7 +196,7 @@ static void match_add( double *match, double **cpmx1, double **cpmx2, int i1, in
 			scarr[l] += n_dis[k][l] * cpmx1[i1][k];
 		}
 	}
-#if 0 /* ¤³¤ì¤ò»È¤¦¤È¤­¤Ïdoublework¤Î¥¢¥í¥±¡¼¥È¤òµÕ¤Ë¤¹¤ë */
+#if 0 /* ï¿½ï¿½ï¿½ï¿½ï¿½È¤ï¿½ï¿½È¤ï¿½ï¿½ï¿½doubleworkï¿½Î¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¤ï¿½Õ¤Ë¤ï¿½ï¿½ï¿½ */
 	{
 		double *fpt, **fptpt, *fpt2;
 		int *ipt, **iptpt;
@@ -376,7 +376,6 @@ MSalign2m2m_rec(int icyc, int jcyc, double* eff1, double* eff2, char** seq1, cha
     int*    jumpdummi;  //muda
     int*    jumpdummj;  //muda
     int     jumpi, jumpj = 0;
-    char*   gaps;
     int     ijpi, ijpj;
     double* ogcp1;
     double* fgcp1;
@@ -499,7 +498,7 @@ MSalign2m2m_rec(int icyc, int jcyc, double* eff1, double* eff2, char** seq1, cha
 
     m = AllocateFloatVec(ll2 + 2);
     mp = AllocateIntVec(ll2 + 2);
-    gaps = AllocateCharVec(MAX(ll1, ll2) + 2);
+    AllocateCharVec(MAX(ll1, ll2) + 2);
 
     doublework = AllocateFloatMtx(MAX(ll1, ll2) + 2, nalphabets);
     intwork = AllocateIntMtx(MAX(ll1, ll2) + 2, nalphabets);
@@ -2055,15 +2054,14 @@ Lalignmm_hmout(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, i
     double** gapinfo;
     //	double fpenalty;
     double fpenalty = (double)RNApenalty;
-    int    nglen1, nglen2;
 
 #if 0
 	fprintf( stderr, "eff in SA+++align\n" );
 	for( i=0; i<icyc; i++ ) fprintf( stderr, "eff1[%d] = %f\n", i, eff1[i] );
 #endif
 
-    nglen1 = seqlen(seq1[0]);
-    nglen2 = seqlen(seq2[0]);
+    seqlen(seq1[0]);
+    seqlen(seq2[0]);
 
     lgth1 = strlen(seq1[0]);
     lgth2 = strlen(seq2[0]);
@@ -2143,47 +2141,12 @@ Lalignmm_hmout(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, i
     gapinfo[3] = fgcp2;
 #endif
 
-#if 0
-	fprintf( stdout, "in MSalignmm.c\n" );
-	for( i=0; i<icyc; i++ )
-	{
-		fprintf( stdout, ">%d of GROUP1\n", i );
-		fprintf( stdout, "%s\n", seq1[i] );
-	}
-	for( i=0; i<jcyc; i++ )
-	{
-		fprintf( stdout, ">%d of GROUP2\n", i );
-		fprintf( stdout, "%s\n", seq2[i] );
-	}
-	fflush( stdout );
-#endif
-
     wm = MSalignmm_rec(icyc, jcyc, eff1, eff2, seq1, seq2, cpmx1, cpmx2, 0, lgth1 - 1, 0, lgth2 - 1, alloclen, mseq1, mseq2, 0, gapinfo, map);
 #if DEBUG
     fprintf(stderr, " seq1[0] = %s\n", seq1[0]);
     fprintf(stderr, " seq2[0] = %s\n", seq2[0]);
     fprintf(stderr, "mseq1[0] = %s\n", mseq1[0]);
     fprintf(stderr, "mseq2[0] = %s\n", mseq2[0]);
-#endif
-
-    //	fprintf( stderr, "wm = %f\n", wm );
-
-#if 0
-
-	for( i=0; i<icyc; i++ ) strcpy( seq1[i], mseq1[i] );
-	for( i=0; i<jcyc; i++ ) strcpy( seq2[i], mseq2[i] );
-
-	if( seqlen( seq1[0] ) != nglen1 )
-	{
-		fprintf( stderr, "bug! hairetsu ga kowareta! (nglen1) seqlen(seq1[0])=%d but nglen1=%d\n", seqlen( seq1[0] ), nglen1 );
-		fprintf( stderr, "seq1[0] = %s\n", seq1[0] );
-		exit( 1 );
-	}
-	if( seqlen( seq2[0] ) != nglen2 )
-	{
-		fprintf( stderr, "bug! hairetsu ga kowareta! (nglen2) seqlen(seq2[0])=%d but nglen2=%d\n", seqlen( seq2[0] ), nglen2 );
-		exit( 1 );
-	}
 #endif
 
     FreeFloatVec(ogcp1);
@@ -2236,15 +2199,14 @@ Lalign2m2m_hmout(char** seq1, char** seq2, char** seq1r, char** seq2r, char* dir
     double** cpmx2;
     double** gapinfo;
     double   fpenalty = (double)penalty;
-    int      nglen1, nglen2;
 
 #if 0
 	fprintf( stderr, "eff in SA+++align\n" );
 	for( i=0; i<icyc; i++ ) fprintf( stderr, "eff1[%d] = %f\n", i, eff1[i] );
 #endif
 
-    nglen1 = seqlen(seq1[0]);
-    nglen2 = seqlen(seq2[0]);
+    seqlen(seq1[0]);
+    seqlen(seq2[0]);
 
     lgth1 = strlen(seq1[0]);
     lgth2 = strlen(seq2[0]);

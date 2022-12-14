@@ -477,7 +477,7 @@ Atracking_localhom(double* impwmpt, double* lasthorizontalw, double* lastvertica
 
 static double
 Atracking(double* lasthorizontalw, double* lastverticalw, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int icyc, int jcyc, int* warpis, int* warpjs, int warpbase) {
-    int i, j, l, iin, jin, ifi, jfi, lgth1, lgth2, k, lastk, limk;
+    int i, j, l, iin, jin, ifi, jfi, lgth1, lgth2, k, limk;
     //	char gap[] = "-";
     char* gap;
     gap = newgapstr;
@@ -531,7 +531,6 @@ Atracking(double* lasthorizontalw, double* lastverticalw, char** seq1, char** se
     }
     iin = lgth1;
     jin = lgth2;
-    lastk = lgth1 + lgth2;
     limk = lgth1 + lgth2 + 1;
     for (k = 0; k < limk; k++) {
         if (ijp[iin][jin] >= warpbase) {

@@ -119,7 +119,6 @@ backdp(double** WMMTX, double wmmax, double* maxinw, double* maxinh, int lgth1, 
 #endif
     double *currentw, *previousw, *wtmp;
     double  mi;
-    int     mpi;
     int*    mpjpt;
     double *mjpt, *prept, *curpt;
     double  wm = 0.0;
@@ -184,7 +183,6 @@ backdp(double** WMMTX, double wmmax, double* maxinw, double* maxinh, int lgth1, 
         currentw[lgth2 - 1] = initverticalw[i];
 
         mi = previousw[lgth2 - 1];
-        mpi = lgth2 - 1;  //iranai
 
         mjpt = m + lgth2 - 2;
         prept = previousw + lgth2 - 1;
@@ -204,7 +202,6 @@ backdp(double** WMMTX, double wmmax, double* maxinw, double* maxinh, int lgth1, 
             g = *prept;
             if (g >= mi) {
                 mi = g;
-                mpi = j + 1;  //iranai
             }
 #if USE_PENALTY_EX
             mi += fpenalty_ex;
