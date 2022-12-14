@@ -95,6 +95,21 @@ generateSequences(prb_Arena* arena, Rng* rng, char* choices, i32 choicesCount, i
 }
 
 function prb_String*
+getSeqsFromFile(prb_Arena* arena, prb_String filepath) {
+    prb_String*              seqs = 0;
+    prb_ReadEntireFileResult readRes = prb_readEntireFile(arena, filepath);
+    prb_assert(readRes.success);
+    prb_String       contentLeft = prb_strFromBytes(readRes.content);
+    prb_LineIterator lineIter = prb_createLineIter(contentLeft);
+    while (prb_lineIterNext(&lineIter) == prb_Success) {
+        prb_assert(lineIter.curLine.ptr[0] == '>');
+        prb_assert(prb_lineIterNext(&lineIter) == prb_Success);
+        arrput(seqs, lineIter.curLine);
+    }
+    return seqs;
+}
+
+function prb_String*
 alignWithMafft(prb_Arena* arena, prb_String mafftExe, prb_String inputPath, prb_String mafftOuputPath) {
     {
         prb_String cmd = prb_fmt(arena, "%.*s --globalpair --maxiterate 1000 %.*s", prb_LIT(mafftExe), prb_LIT(inputPath));
@@ -102,20 +117,7 @@ alignWithMafft(prb_Arena* arena, prb_String mafftExe, prb_String inputPath, prb_
         prb_ProcessHandle proc = prb_execCmd(arena, cmd, prb_ProcessFlag_RedirectStdout, mafftOuputPath);
         prb_assert(proc.status == prb_ProcessStatus_CompletedSuccess);
     }
-
-    prb_String* mafftAlignedSeqs = 0;
-    {
-        prb_ReadEntireFileResult mafftOutput = prb_readEntireFile(arena, mafftOuputPath);
-        prb_assert(mafftOutput.success);
-        prb_String       mafftContentLeft = prb_strFromBytes(mafftOutput.content);
-        prb_LineIterator lineIter = prb_createLineIter(mafftContentLeft);
-        while (prb_lineIterNext(&lineIter) == prb_Success) {
-            prb_assert(lineIter.curLine.ptr[0] == '>');
-            prb_assert(prb_lineIterNext(&lineIter) == prb_Success);
-            arrput(mafftAlignedSeqs, lineIter.curLine);
-        }
-    }
-
+    prb_String* mafftAlignedSeqs = getSeqsFromFile(arena, mafftOuputPath);
     return mafftAlignedSeqs;
 }
 
@@ -175,8 +177,19 @@ main() {
     }
 
     // NOTE(sen) Call what I pulled out directly
+    prb_String tempDir = prb_pathJoin(arena, testsDir, prb_STR("tmp"));
+    prb_assert(prb_clearDirectory(arena, tempDir));
+    prb_String cwd = prb_getWorkingDir(arena);
+    prb_assert(prb_setWorkingDir(arena, tempDir));
     const char** tbfastArgs = prb_getArgArrayFromString(arena, prb_fmt(arena, "/home/khvorova/Projects/sequencebox/build-debug/mafft/exes/tbfast _ -u 0.0 -l 2.7 -C 0 -b 62 -g -0.10 -f -2.00 -Q 100.0 -h 0.1 -A _ -+ 16 -W 0.00001 -V -1.53 -s 0.0 -C 0 -b 62 -f -1.53 -Q 100.0 -h 0 -F -l 2.7 -X 0.1 -i %.*s", prb_LIT(fastaOutputPath)));
     tbfast_main(arrlen(tbfastArgs), (char**)tbfastArgs);
+    prb_assert(prb_setWorkingDir(arena, cwd));
+
+    prb_String* tbfastDirectAlignedSeqs = getSeqsFromFile(arena, prb_pathJoin(arena, tempDir, prb_STR("pre")));
+    prb_assert(arrlen(tbfastDirectAlignedSeqs) == genSeq.seqCount);
+    for (i32 seqIndex = 0; seqIndex < genSeq.seqCount; seqIndex++) {
+        prb_assert(prb_streq(mafftAlignedSeqs[seqIndex], tbfastDirectAlignedSeqs[seqIndex]));
+    }
 
     prb_writelnToStdout(prb_fmt(arena, "tests took %.2fms", prb_getMsFrom(testsStart)));
     return 0;
