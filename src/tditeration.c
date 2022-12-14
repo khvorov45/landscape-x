@@ -2164,15 +2164,10 @@ int TreeDependentIteration( int locnjob, char **name, int nlen[M],
 								
 						if( checkC )
 						{
-							extern double DSPscore();
-							extern double SSPscore();
+							extern double DSPscore(int, char**);
 							static double cur;
 							static double pre;
 		
-	/*
-							pre = SSPscore( locnjob, bseq );
-							cur = SSPscore( locnjob, aseq );
-	*/
 							pre = DSPscore( locnjob, bseq );
 							cur = DSPscore( locnjob, aseq );
 		

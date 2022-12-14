@@ -710,7 +710,7 @@ void constants( int nseq, char **seq )
 			freq1 = datafreq;
 		}
 #if 1
-		if( userdefined ) if( i=checkscoremtx( n_distmp, nseq, seq ) )
+		if( userdefined ) if( (i=checkscoremtx( n_distmp, nseq, seq )) )
 		{
 			reporterr( "\n\nAlphabet %c (0x%x) is used in the sequence file but no score involving this alphabet is given in the matrix file.\n", i, i  );
 			reporterr( "Check if the data is as intended.\n\n\n" );
@@ -809,7 +809,7 @@ void constants( int nseq, char **seq )
 		}
 #endif
 #if 0
-/* Ãí°Õ ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª */
+/* ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ */
 			penalty -= offset;
 #endif
 
@@ -1026,7 +1026,7 @@ void constants( int nseq, char **seq )
 		}
 #endif
 #if 0
-/* Ãí°Õ ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª */
+/* ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ */
 			penalty -= offset;
 #endif
 
@@ -1337,7 +1337,7 @@ void constants( int nseq, char **seq )
 		}
 #endif
 #if 0
-/* Ãí°Õ ¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª¡ª */
+/* ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ */
 			penalty -= offset;
 #endif
 

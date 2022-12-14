@@ -212,8 +212,8 @@ double Falign_localhom( int **whichmtx, double ***scoringmatrices, double **n_dy
 	double totalscore;
 	double impmatch;
 
-	extern Fukusosuu   *AllocateFukusosuuVec();
-	extern Fukusosuu  **AllocateFukusosuuMtx();
+	extern Fukusosuu   *AllocateFukusosuuVec(int);
+	extern Fukusosuu  **AllocateFukusosuuMtx(int, int);
 
 	if( seq1 == NULL )
 	{
