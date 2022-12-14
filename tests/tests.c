@@ -151,6 +151,8 @@ main() {
         prb_writeEntireFile(arena, fastaOutputPath, fastaContent.ptr, fastaContent.len);
     }
 
+    prb_assert(prb_removeFileIfExists(arena, prb_pathJoin(arena, rootDir, prb_STR("mafft/core/logfile.txt"))) == prb_Success);
+
     // TODO(sen) Change to portable when available
     prb_String mafftBinEnvName = prb_STR("MAFFT_BINARIES");
     char*      oldMafftBin = getenv(mafftBinEnvName.ptr);
@@ -165,6 +167,10 @@ main() {
     prb_String  localMafftOuputPath = prb_pathJoin(arena, testsDir, prb_STR("localmafft-testseqs.fasta"));
     prb_String* localMafftAlignedSeqs = alignWithMafft(arena, localMafftExe, fastaOutputPath, localMafftOuputPath);
     prb_assert(arrlen(localMafftAlignedSeqs) == genSeq.seqCount);
+
+    for (i32 seqIndex = 0; seqIndex < genSeq.seqCount; seqIndex++) {
+        prb_assert(prb_streq(mafftAlignedSeqs[seqIndex], localMafftAlignedSeqs[seqIndex]));
+    }
 
     prb_writelnToStdout(prb_fmt(arena, "tests took %.2fms", prb_getMsFrom(testsStart)));
     return 0;
