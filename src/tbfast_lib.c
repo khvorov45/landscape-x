@@ -7,7 +7,6 @@
 
 #define REPORTCOSTS 0
 
-static int treeout;
 static int distout;
 static int noalign;
 static int multidist;
@@ -79,6 +78,7 @@ typedef struct _treebasethread_arg {
 
 typedef struct TbfastOpts {
     int32_t treein;
+    int32_t treeout;
 } TbfastOpts;
 
 static TbfastOpts
@@ -334,10 +334,10 @@ arguments(int argc, char* argv[], int* pac, char** pav, int* tac, char** tav)  /
                     distout = 1;
                     break;
                 case 't':
-                    treeout = 1;
+                    opts.treeout = 1;
                     break;
                 case '^':
-                    treeout = 2;
+                    opts.treeout = 2;
                     break;
                 case 'T':
                     noalign = 1;
@@ -1967,7 +1967,7 @@ tbfast_main(int argc, char* argv[]) {
 #endif
     if (opts.treein) {
 #if 1  // pairlocalalign() yori mae ni hitsuyou, specificityconsideration>0.0 && usertree no toki.
-        loadtree(njob, topol, len, name, nlen, dep, treeout);
+        loadtree(njob, topol, len, name, nlen, dep, opts.treeout);
         //		loadtop( njob, topol, len, name, NULL, dep ); // 2015/Jan/13, not yet checked
         fprintf(stderr, "\ndone.\n\n");
         //		for( i=0; i<njob-1; i++ ) reporterr( "%d-%d, %f-%f\n", topol[i][0][0], topol[i][1][0], len[i][0], len[i][1] );
@@ -2329,7 +2329,7 @@ tbfast_main(int argc, char* argv[]) {
 
     WriteOptions(trap_g);
 
-    if (distout && !treeout && noalign)  // 2016Jul31. Free ha mada fukanzen.
+    if (distout && !opts.treeout && noalign)  // 2016Jul31. Free ha mada fukanzen.
     {
         writeData_pointer(prep_g, njob, name, nlen, seq);
         fprintf(stderr, "\n");
@@ -2364,15 +2364,7 @@ tbfast_main(int argc, char* argv[]) {
         addbk = NULL;
     }
 
-    if (opts.treein) {
-#if 0  // pairlocalalign() yori mae ni idou, 2021/Jun.
-		loadtree( njob, topol, len, name, nlen, dep, treeout );
-//		loadtop( njob, topol, len, name, NULL, dep ); // 2015/Jan/13, not yet checked
-		fprintf( stderr, "\ndone.\n\n" );
-		for( i=0; i<njob-1; i++ ) reporterr( "%d-%d, %f-%f\n", topol[i][0][0], topol[i][1][0], len[i][0], len[i][1] );
-		exit( 1 );
-#endif
-    } else {
+    if (!opts.treein) {
         reporterr("tbutree = %d, compacttree = %d\n", tbutree, compacttree);
         if (compacttree == 3)  // use nodepair
         {
@@ -2697,8 +2689,7 @@ tbfast_main(int argc, char* argv[]) {
         } else if (tbutree == 0 && compacttree)  // tbutree != 0 no toki (aln->mtx) ha, 6merdistance -> disttbfast.c; dp distance -> muzukashii
         {
             reporterr("Constructing a tree ... nthread=%d", nthread);
-            compacttree_memsaveselectable(njob, partmtx, mindistfrom, mindist, NULL, selfscore, seq, skiptable, topol, len, name, NULL, dep, treeout, compacttree, 1);
-            //			compacttreegivendist( njob, mindist, mindistfrom, topol, len, name, dep, treeout );
+            compacttree_memsaveselectable(njob, partmtx, mindistfrom, mindist, NULL, selfscore, seq, skiptable, topol, len, name, NULL, dep, opts.treeout, compacttree, 1);
 
             if (mindistfrom)
                 free(mindistfrom);
@@ -2712,9 +2703,9 @@ tbfast_main(int argc, char* argv[]) {
                 FreeIntMtx(skiptable);
             skiptable = NULL;  // nikaime dake
             free(partmtx);
-        } else if (treeout) {
+        } else if (opts.treeout) {
             fprintf(stderr, "Constructing a UPGMA tree ... ");
-            fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(njob, iscore, topol, len, name, nlen, dep, 1, treeout);  // _memsave demo iihazu
+            fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(njob, iscore, topol, len, name, nlen, dep, 1, opts.treeout);  // _memsave demo iihazu
         } else {
             fprintf(stderr, "Constructing a UPGMA tree ... ");
             fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(njob, iscore, topol, len, dep, 1, 1);  // _memsave demo iihazu
@@ -2756,7 +2747,7 @@ tbfast_main(int argc, char* argv[]) {
 #endif
     fclose(orderfp);
 
-    if (treeout && noalign) {
+    if (opts.treeout && noalign) {
         writeData_pointer(prep_g, njob, name, nlen, seq);
         fprintf(stderr, "\n");
         SHOWVERSION;
