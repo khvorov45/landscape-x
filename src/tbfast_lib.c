@@ -7,7 +7,6 @@
 
 #define REPORTCOSTS 0
 
-static int treein;
 static int topin;
 static int treeout;
 static int distout;
@@ -79,9 +78,15 @@ typedef struct _treebasethread_arg {
 } treebasethread_arg_t;
 #endif
 
-static void
+typedef struct TbfastOpts {
+    int32_t treein;
+} TbfastOpts;
+
+static TbfastOpts
 arguments(int argc, char* argv[], int* pac, char** pav, int* tac, char** tav)  // 2 kai yobaremasu.
 {
+    TbfastOpts opts = {};
+
     int c;
     int i;
 
@@ -91,7 +96,6 @@ arguments(int argc, char* argv[], int* pac, char** pav, int* tac, char** tav)  /
     outnumber = 0;
     scoreout = 0;
     spscoreout = 0;
-    treein = 0;
     topin = 0;
     rnaprediction = 'm';
     rnakozo = 0;
@@ -434,7 +438,7 @@ arguments(int argc, char* argv[], int* pac, char** pav, int* tac, char** tav)  /
                     use_fft = 1;
                     break;
                 case 'U':
-                    treein = 1;
+                    opts.treein = 1;
                     break;
 #if 0
 				case 'V':
@@ -532,6 +536,8 @@ arguments(int argc, char* argv[], int* pac, char** pav, int* tac, char** tav)  /
         fprintf(stderr, "conflicting options : C, o\n");
         exit(1);
     }
+
+    return opts;
 }
 
 #if 0
@@ -1796,41 +1802,41 @@ preparepartmtx(int nseq) {
 
 int
 tbfast_main(int argc, char* argv[]) {
-    static int*     nlen = NULL;
-    static int*     selfscore = NULL;
-    int             nogaplen;
-    static char **  name = NULL, **seq = NULL;
-    static char **  mseq1 = NULL, **mseq2 = NULL;
-    static char**   bseq = NULL;
-    static double **iscore = NULL, **iscore_kozo = NULL;
-    int**           skiptable;
-    static double * eff = NULL, *eff_kozo = NULL, *eff_kozo_mapped = NULL;
-    int             i, j, k, ien, ik, jk;
-    static int ***  topol = NULL, ***topol_kozo = NULL;
-    double**        expdist = NULL;
-    static int*     addmem;
-    static Treedep* dep = NULL;
-    static double **len = NULL, **len_kozo = NULL;
-    FILE*           prep = NULL;
-    FILE*           infp = NULL;
-    FILE*           orderfp = NULL;
-    FILE*           hat2p = NULL;
-    double          unweightedspscore;
-    int             alignmentlength;
-    char*           mergeoralign = NULL;
-    int             foundthebranch;
-    int             nsubalignments, maxmem;
-    int**           subtable;
-    int*            insubtable;
-    int*            preservegaps;
-    char***         subalnpt;
-    char*           originalgaps = NULL;
-    char**          addbk = NULL;
-    GapPos**        deletelist = NULL;
-    FILE*           dlf = NULL;
-    int**           localmem = NULL;
-    int             posinmem;
-    int             includememberres0, includememberres1;
+    int*     nlen = NULL;
+    int*     selfscore = NULL;
+    int      nogaplen;
+    char **  name = NULL, **seq = NULL;
+    char **  mseq1 = NULL, **mseq2 = NULL;
+    char**   bseq = NULL;
+    double **iscore = NULL, **iscore_kozo = NULL;
+    int**    skiptable;
+    double * eff = NULL, *eff_kozo = NULL, *eff_kozo_mapped = NULL;
+    int      i, j, k, ien, ik, jk;
+    int ***  topol = NULL, ***topol_kozo = NULL;
+    double** expdist = NULL;
+    int*     addmem;
+    Treedep* dep = NULL;
+    double **len = NULL, **len_kozo = NULL;
+    FILE*    prep = NULL;
+    FILE*    infp = NULL;
+    FILE*    orderfp = NULL;
+    FILE*    hat2p = NULL;
+    double   unweightedspscore;
+    int      alignmentlength;
+    char*    mergeoralign = NULL;
+    int      foundthebranch;
+    int      nsubalignments, maxmem;
+    int**    subtable;
+    int*     insubtable;
+    int*     preservegaps;
+    char***  subalnpt;
+    char*    originalgaps = NULL;
+    char**   addbk = NULL;
+    GapPos** deletelist = NULL;
+    FILE*    dlf = NULL;
+    int**    localmem = NULL;
+    int      posinmem;
+    int      includememberres0, includememberres1;
     // for compacttree
     int*     mindistfrom = NULL;
     double*  mindist = NULL;
@@ -1848,36 +1854,35 @@ tbfast_main(int argc, char* argv[]) {
     int          ntarget;
     int *        targetmap = NULL, *targetmapr = NULL;
     int          ilim, jst, jj;
-    int          pac, tac;
-    char **      pav, **tav;
-    FILE*        fp;
-    int*         uselh = NULL;
-    int          nseed = 0;
-    int*         nfilesfornode = NULL;
 
-    pav = calloc(argc, sizeof(char*));
-    tav = calloc(argc, sizeof(char*));
+    FILE* fp;
+    int*  uselh = NULL;
+    int   nseed = 0;
+    int*  nfilesfornode = NULL;
 
-    arguments(argc, argv, &pac, pav, &tac, tav);
+    char** pav = calloc(argc, sizeof(char*));
+    char** tav = calloc(argc, sizeof(char*));
 
-    if (treein) {
+    int pac = 0; 
+    int tac = 0;
+    TbfastOpts opts = arguments(argc, argv, &pac, pav, &tac, tav);
+
+    if (opts.treein) {
         int    dumx, dumy;
         double dumz;
-        treein = check_guidetreefile(&dumx, &dumy, &dumz);
-        if (treein == 'C') {
+        opts.treein = check_guidetreefile(&dumx, &dumy, &dumz);
+        if (opts.treein == 'C') {
             compacttree = 2;
-            treein = 0;
+            opts.treein = 0;
             use_fft = 0;  // kankeinai?
-        } else if (treein == 'n') {
+        } else if (opts.treein == 'n') {
             compacttree = 3;
-            treein = 0;
+            opts.treein = 0;
             use_fft = 0;  // kankeinai?
         }
-
-        // else treein = 1 no mama
     }
 
-    reporterr("treein = %d\n", treein);
+    reporterr("treein = %d\n", opts.treein);
     reporterr("compacttree = %d\n", compacttree);
 
     if (fastathreshold < 0.0001)
@@ -1972,7 +1977,7 @@ tbfast_main(int argc, char* argv[]) {
     readData_pointer(infp, name, nlen, seq);
     fclose(infp);
 #endif
-    if (treein) {
+    if (opts.treein) {
 #if 1  // pairlocalalign() yori mae ni hitsuyou, specificityconsideration>0.0 && usertree no toki.
         loadtree(njob, topol, len, name, nlen, dep, treeout);
         //		loadtop( njob, topol, len, name, NULL, dep ); // 2015/Jan/13, not yet checked
@@ -2371,7 +2376,7 @@ tbfast_main(int argc, char* argv[]) {
         addbk = NULL;
     }
 
-    if (treein) {
+    if (opts.treein) {
 #if 0  // pairlocalalign() yori mae ni idou, 2021/Jun.
 		loadtree( njob, topol, len, name, nlen, dep, treeout );
 //		loadtop( njob, topol, len, name, NULL, dep ); // 2015/Jan/13, not yet checked
