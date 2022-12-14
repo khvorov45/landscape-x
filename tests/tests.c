@@ -119,6 +119,8 @@ alignWithMafft(prb_Arena* arena, prb_String mafftExe, prb_String inputPath, prb_
     return mafftAlignedSeqs;
 }
 
+int tbfast_main(int argc, char** argv);
+
 int
 main() {
     prb_TimeStart testsStart = prb_timeStart();
@@ -171,6 +173,10 @@ main() {
     for (i32 seqIndex = 0; seqIndex < genSeq.seqCount; seqIndex++) {
         prb_assert(prb_streq(mafftAlignedSeqs[seqIndex], localMafftAlignedSeqs[seqIndex]));
     }
+
+    // NOTE(sen) Call what I pulled out directly
+    const char** tbfastArgs = prb_getArgArrayFromString(arena, prb_STR("/home/khvorova/Projects/sequencebox/build-debug/mafft/exes/tbfast _ -u 0.0 -l 2.7 -C 0 -b 62 -g -0.10 -f -2.00 -Q 100.0 -h 0.1 -A _ -+ 16 -W 0.00001 -V -1.53 -s 0.0 -C 0 -b 62 -f -1.53 -Q 100.0 -h 0 -F -l 2.7 -X 0.1 "));
+    tbfast_main(arrlen(tbfastArgs), (char**)tbfastArgs);
 
     prb_writelnToStdout(prb_fmt(arena, "tests took %.2fms", prb_getMsFrom(testsStart)));
     return 0;

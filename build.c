@@ -31,12 +31,24 @@ notIn(prb_String val, prb_String* arr, i32 arrLen) {
     return result;
 }
 
+static void
+copyFile(prb_Arena* arena, prb_String path, prb_String dir) {
+    prb_String               copyPath = prb_pathJoin(arena, dir, prb_getLastEntryInPath(path));
+    prb_ReadEntireFileResult fileContent = prb_readEntireFile(arena, path);
+    prb_assert(fileContent.success);
+    prb_assert(prb_writeEntireFile(arena, copyPath, fileContent.content.data, fileContent.content.len) == prb_Success);
+}
+
 int
 main() {
     prb_TimeStart scriptStart = prb_timeStart();
     prb_Arena     arena_ = prb_createArenaFromVmem(1 * prb_GIGABYTE);
     prb_Arena*    arena = &arena_;
     prb_String    rootDir = prb_getParentDir(arena, prb_STR(__FILE__));
+    prb_String    srcDir = prb_pathJoin(arena, rootDir, prb_STR("src"));
+    prb_String    outDir = prb_pathJoin(arena, rootDir, prb_STR("build-debug"));
+    prb_assert(prb_createDirIfNotExists(arena, outDir) == prb_Success);
+    // prb_assert(prb_clearDirectory(arena, outDir) == prb_Success);
 
     // NOTE(sen) Get mafft
     prb_String mafftDir = prb_pathJoin(arena, rootDir, prb_STR("mafft"));
@@ -45,10 +57,6 @@ main() {
         prb_writelnToStdout(cmd);
         prb_execCmd(arena, cmd, 0, (prb_String) {});
     }
-
-    prb_String outDir = prb_pathJoin(arena, rootDir, prb_STR("build-debug"));
-    prb_createDirIfNotExists(arena, outDir);
-    // prb_clearDirectory(arena, outDir);
 
     // NOTE(sen) Compile mafft
     prb_String coreDir = prb_pathJoin(arena, mafftDir, prb_STR("core"));
@@ -69,12 +77,15 @@ main() {
     prb_String srcFilesNoObj[] = {
         prb_STR("JTT.c"),
         prb_STR("blosum.c"),
-        prb_STR("iteration.c")};
+        prb_STR("iteration.c"),
+    };
     prb_String* objsWithMain = 0;
     prb_String* objsWithoutMain = 0;
-    prb_String  objDir = prb_pathJoin(arena, outDir, prb_STR("objs"));
-    prb_createDirIfNotExists(arena, objDir);
-    prb_clearDirectory(arena, objDir);
+    prb_String  mafftOutDir = prb_pathJoin(arena, outDir, prb_STR("mafft"));
+    prb_assert(prb_createDirIfNotExists(arena, mafftOutDir) == prb_Success);
+    prb_String mafftObjDir = prb_pathJoin(arena, mafftOutDir, prb_STR("objs"));
+    prb_assert(prb_createDirIfNotExists(arena, mafftObjDir) == prb_Success);
+    // prb_assert(prb_clearDirectory(arena, mafftObjDir) == prb_Success);
     prb_ProcessHandle*   objProccesses = 0;
     prb_PathFindSpec     srcIterSpec = {.arena = arena, .dir = coreDir, .mode = prb_PathFindMode_Glob, .pattern = prb_STR("*.c")};
     prb_PathFindIterator sourceIter = prb_createPathFindIter(srcIterSpec);
@@ -83,7 +94,7 @@ main() {
         prb_String inname = prb_getLastEntryInPath(sourceIter.curPath);
         if (notIn(inname, srcFilesNoObj, prb_arrayLength(srcFilesNoObj))) {
             prb_String outname = prb_replaceExt(arena, inname, prb_STR("obj"));
-            prb_String outpath = prb_pathJoin(arena, objDir, outname);
+            prb_String outpath = prb_pathJoin(arena, mafftObjDir, outname);
 
             prb_ReadEntireFileResult fileRead = prb_readEntireFile(arena, sourceIter.curPath);
             prb_assert(fileRead.success);
@@ -148,7 +159,7 @@ main() {
                         mainLineEnd = res.matchByteIndex + mainFound.matchByteIndex + 1;
                     }
 
-                    if (true) {
+                    if (false) {
                         prb_writelnToStdout(prb_strSliceBetween(fileContentStr, mainLineStart, mainLineEnd));
                         prb_writelnToStdout(mainArgcName);
                         prb_writelnToStdout(mainArgvName);
@@ -206,9 +217,9 @@ main() {
         printObjList(arena, "Without main", objsWithoutMain);
     }
     prb_ProcessHandle* exeProcesses = 0;
-    prb_String         exeDir = prb_pathJoin(arena, outDir, prb_STR("exes"));
-    prb_createDirIfNotExists(arena, exeDir);
-    // prb_clearDirectory(arena, exeDir);
+    prb_String         exeDir = prb_pathJoin(arena, mafftOutDir, prb_STR("exes"));
+    prb_assert(prb_createDirIfNotExists(arena, exeDir) == prb_Success);
+    // prb_assert(prb_clearDirectory(arena, exeDir) == prb_Success);
     for (i32 withMainIndex = 0; withMainIndex < arrlen(objsWithMain); withMainIndex++) {
         prb_String objWithMain = objsWithMain[withMainIndex];
         prb_String objWithMainName = prb_getLastEntryInPath(objWithMain);
@@ -252,6 +263,58 @@ main() {
         }
     }
     prb_assert(prb_waitForProcesses(exeProcesses, arrlen(exeProcesses)) == prb_Success);
+
+    // NOTE(sen) Copy from mafft if necessary
+    if (false) {
+        for (i32 index = 0; index < arrlen(objsWithoutMain); index++) {
+            prb_String ogsrcname = prb_replaceExt(arena, prb_getLastEntryInPath(objsWithoutMain[index]), prb_STR("c"));
+            prb_String ogsrcpath = prb_pathJoin(arena, coreDir, ogsrcname);
+            copyFile(arena, ogsrcpath, srcDir);
+        }
+
+        prb_PathFindSpec headerSpec = srcIterSpec;
+        headerSpec.pattern = prb_STR("*.h");
+        prb_PathFindIterator headerIter = prb_createPathFindIter(headerSpec);
+        while (prb_pathFindIterNext(&headerIter)) {
+            copyFile(arena, headerIter.curPath, srcDir);
+        }
+
+        for (i32 index = 0; index < prb_arrayLength(srcFilesNoObj); index++) {
+            copyFile(arena, prb_pathJoin(arena, coreDir, srcFilesNoObj[index]), srcDir);
+        }
+    }
+
+    // NOTE(sen) Compile what I pulled out
+    prb_String srcOutDir = prb_pathJoin(arena, outDir, prb_STR("src"));
+    prb_assert(prb_createDirIfNotExists(arena, srcOutDir));
+    prb_assert(prb_clearDirectory(arena, srcOutDir));
+    srcIterSpec.dir = srcDir;
+    sourceIter = prb_createPathFindIter(srcIterSpec);
+    prb_ProcessHandle* srcCompileProcs = 0;
+    prb_String* srcObjPaths = 0;
+    while (prb_pathFindIterNext(&sourceIter)) {
+        prb_String inname = prb_getLastEntryInPath(sourceIter.curPath);
+        if (notIn(inname, srcFilesNoObj, prb_arrayLength(srcFilesNoObj))) {
+            prb_String outname = prb_replaceExt(arena, inname, prb_STR("obj"));
+            prb_String outpath = prb_pathJoin(arena, srcOutDir, outname);
+            arrput(srcObjPaths, outpath);
+            prb_String cmd = prb_fmt(arena, "clang -g -Wfatal-errors %.*s -Denablemultithread -c %.*s -o %.*s", prb_LIT(mafftSuppressedWarningsStr), prb_LIT(sourceIter.curPath), prb_LIT(outpath));
+            prb_writelnToStdout(cmd);
+            prb_ProcessHandle proc = prb_execCmd(arena, cmd, prb_ProcessFlag_DontWait, (prb_String) {});
+            prb_assert(proc.status == prb_ProcessStatus_Launched);
+            arrput(srcCompileProcs, proc);
+        }
+    }
+    prb_assert(prb_waitForProcesses(srcCompileProcs, arrlen(srcCompileProcs)));
+
+    {
+        prb_String srcLibPath = prb_pathJoin(arena, srcOutDir, prb_STR("align.a"));
+        prb_String srcObjsStr = prb_stringsJoin(arena, srcObjPaths, arrlen(srcObjPaths), prb_STR(" "));
+        prb_String cmd = prb_fmt(arena, "ar rcs %.*s %.*s", prb_LIT(srcLibPath), prb_LIT(srcObjsStr));
+        prb_writelnToStdout(cmd);
+        prb_ProcessHandle proc = prb_execCmd(arena, cmd, 0, (prb_String) {});
+        prb_assert(proc.status == prb_ProcessStatus_CompletedSuccess);
+    }
 
     prb_writelnToStdout(prb_fmt(arena, "total: %.2fms", prb_getMsFrom(scriptStart)));
     return 0;
