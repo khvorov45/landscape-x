@@ -7,19 +7,6 @@
 
 #define REPORTCOSTS 0
 
-static int distout;
-static int noalign;
-static int multidist;
-static int subalignment;
-static int subalignmentoffset;
-static int keeplength;
-static int ndeleted;
-static int mapout;
-static int smoothing;
-static int callpairlocalalign;
-static int outputhat23;
-static int nthreadtb;
-
 typedef struct _jobtable {
     int i;
     int j;
@@ -79,6 +66,18 @@ typedef struct _treebasethread_arg {
 typedef struct TbfastOpts {
     int32_t treein;
     int32_t treeout;
+    int32_t distout;
+    int32_t noalign;
+    int32_t multidist;
+    int32_t subalignment;
+    int32_t subalignmentoffset;
+    int32_t keeplength;
+    int32_t ndeleted;
+    int32_t mapout;
+    int32_t smoothing;
+    int32_t callpairlocalalign;
+    int32_t outputhat23;
+    int32_t nthreadtb;
 } TbfastOpts;
 
 static TbfastOpts
@@ -90,7 +89,7 @@ arguments(int argc, char* argv[], int* pac, char** pav, int* tac, char** tav)  /
     int i;
 
     nthread = 1;
-    nthreadtb = 1;
+    opts.nthreadtb = 1;
     nthreadpair = 1;
     outnumber = 0;
     scoreout = 0;
@@ -132,7 +131,6 @@ arguments(int argc, char* argv[], int* pac, char** pav, int* tac, char** tav)  /
     contin = 0;
     scoremtx = 1;
     kobetsubunkatsu = 0;
-    //	dorp = NOTSPECIFIED;
     ppenalty_dist = NOTSPECIFIED;
     ppenalty = NOTSPECIFIED;
     penalty_shift_factor = 1000.0;
@@ -149,17 +147,9 @@ arguments(int argc, char* argv[], int* pac, char** pav, int* tac, char** tav)  /
     TMorJTT = JTT;
     consweight_multi = 1.0;
     consweight_rna = 0.0;
-    multidist = 0;
-    subalignment = 0;
-    subalignmentoffset = 0;
     legacygapcost = 0;
     specificityconsideration = 0.0;
-    keeplength = 0;
-    mapout = 0;
-    smoothing = 0;
     specifictarget = 0;
-    callpairlocalalign = 0;
-    outputhat23 = 0;
     nwildcard = 0;
     nadd = 0;
 
@@ -171,12 +161,10 @@ arguments(int argc, char* argv[], int* pac, char** pav, int* tac, char** tav)  /
 
         for (i = 0; i < argc; i++) {
             if (argv[i][0] == '_') {
-                callpairlocalalign = 1;
-                //				reporterr( "start\n" );
+                opts.callpairlocalalign = 1;
 
                 for (i++; i < argc; i++) {
                     if (argv[i][0] == '_') {
-                        //						reporterr( "end\n" );
                         argc -= 2;
                         argv += 2;
 
@@ -184,7 +172,6 @@ arguments(int argc, char* argv[], int* pac, char** pav, int* tac, char** tav)  /
                     }
                     pav[*pac] = argv[i];
                     *pac += 1;
-                    //					reporterr( "%s\n", argv[i] );
                 }
             }
         }
@@ -196,44 +183,19 @@ arguments(int argc, char* argv[], int* pac, char** pav, int* tac, char** tav)  /
             *tac += 1;
         }
 
-        //		argc -= *pac + 1; // bug
-        //		argv += *pac + 1; // bug
-
         argc -= *pac - 1;
         argv += *pac - 1;
-
-#if 0
-		reporterr( "*pac in tbfast = %d\n", *pac );
-		reporterr( "*pav in tbfast = \n", *pac );
-		for( i=0; i<*pac; i++ ) reporterr( "%d, %s\n", i, pav[i] );
-
-		reporterr( "*tac in tbfast = %d\n", *tac );
-		reporterr( "*tav in tbfast = \n", *tac );
-		for( i=0; i<*tac; i++ ) reporterr( "%d, %s\n", i, tav[i] );
-
-		reporterr( "argc in tbfast = %d\n", argc );
-		reporterr( "argv in tbfast = \n", argv );
-		for( i=0; i<argc; i++ ) reporterr( "%d, %s\n", i, argv[i] );
-#endif
-    } else {
-        //		reporterr( "SECOND TIME\n" );
     }
 
-    //	reporterr( "*argv = %s\n", *argv );
-
     while (--argc > 0 && (*++argv)[0] == '-') {
-        //		reporterr( "(*argv)[0] = %s\n", (*argv) );
         while ((c = *++argv[0])) {
-            //			reporterr( "c=%c\n", c );
             switch (c) {
                 case 'i':
                     inputfile = *++argv;
-                    //					fprintf( stderr, "inputfile = %s\n", inputfile );
                     --argc;
                     goto nextoption;
                 case 'I':
                     nadd = myatoi(*++argv);
-                    //					fprintf( stderr, "nadd = %d\n", nadd );
                     --argc;
                     goto nextoption;
                 case 'e':
@@ -246,12 +208,10 @@ arguments(int argc, char* argv[], int* pac, char** pav, int* tac, char** tav)  /
                     goto nextoption;
                 case 'V':
                     ppenalty_dist = (int)(atof(*++argv) * 1000 - 0.5);
-                    //					fprintf( stderr, "ppenalty = %d\n", ppenalty );
                     --argc;
                     goto nextoption;
                 case 'f':
                     ppenalty = (int)(atof(*++argv) * 1000 - 0.5);
-                    //					fprintf( stderr, "ppenalty = %d\n", ppenalty );
                     --argc;
                     goto nextoption;
                 case 'Q':
@@ -260,7 +220,6 @@ arguments(int argc, char* argv[], int* pac, char** pav, int* tac, char** tav)  /
                     goto nextoption;
                 case 'g':
                     ppenalty_ex = (int)(atof(*++argv) * 1000 - 0.5);
-                    //					fprintf( stderr, "ppenalty_ex = %d\n", ppenalty_ex );
                     --argc;
                     goto nextoption;
                 case 'h':
@@ -331,7 +290,7 @@ arguments(int argc, char* argv[], int* pac, char** pav, int* tac, char** tav)  /
                     addprofile = 0;
                     break;
                 case 'y':
-                    distout = 1;
+                    opts.distout = 1;
                     break;
                 case 't':
                     opts.treeout = 1;
@@ -340,7 +299,7 @@ arguments(int argc, char* argv[], int* pac, char** pav, int* tac, char** tav)  /
                     opts.treeout = 2;
                     break;
                 case 'T':
-                    noalign = 1;
+                    opts.noalign = 1;
                     break;
                 case 'D':
                     dorp = 'd';
@@ -370,8 +329,8 @@ arguments(int argc, char* argv[], int* pac, char** pav, int* tac, char** tav)  /
                     break;
 #endif
                 case 'H':
-                    subalignment = 1;
-                    subalignmentoffset = myatoi(*++argv);
+                    opts.subalignment = 1;
+                    opts.subalignmentoffset = myatoi(*++argv);
                     --argc;
                     goto nextoption;
 #if 0
@@ -446,7 +405,7 @@ arguments(int argc, char* argv[], int* pac, char** pav, int* tac, char** tav)  /
                     tbrweight = 3;
                     break;
                 case 'd':
-                    multidist = 1;
+                    opts.multidist = 1;
                     break;
 #if 0
 				case 'd':
@@ -474,16 +433,16 @@ arguments(int argc, char* argv[], int* pac, char** pav, int* tac, char** tav)  /
                     --argc;
                     goto nextoption;
                 case 'Y':
-                    keeplength = 1;
+                    opts.keeplength = 1;
                     break;
                 case 'z':
-                    mapout = 2;
+                    opts.mapout = 2;
                     break;
                 case 'Z':
-                    mapout = 1;
+                    opts.mapout = 1;
                     break;
                 case 'p':
-                    smoothing = 1;
+                    opts.smoothing = 1;
                     break;
                 case '=':
                     specifictarget = 1;
@@ -492,11 +451,12 @@ arguments(int argc, char* argv[], int* pac, char** pav, int* tac, char** tav)  /
                     nwildcard = 1;
                     break;
                 case '+':
-                    outputhat23 = myatoi(*++argv);
-                    reporterr("outputhat23=%d\n", outputhat23);
+                    opts.outputhat23 = myatoi(*++argv);
+                    reporterr("outputhat23=%d\n", opts.outputhat23);
                     --argc;
                     goto nextoption;
                 default:
+                    // TODO(sen) This needs to be fixed
                     fprintf(stderr, "illegal option %c\n", c);
                     argc = 0;
                     break;
@@ -505,8 +465,6 @@ arguments(int argc, char* argv[], int* pac, char** pav, int* tac, char** tav)  /
     nextoption:
         ;
     }
-
-    //	reporterr( "argc=%d\n", argc );
 
     if (argc == 1) {
         cut = atof((*argv));
@@ -528,51 +486,8 @@ arguments(int argc, char* argv[], int* pac, char** pav, int* tac, char** tav)  /
     return opts;
 }
 
-#if 0
-static void *distancematrixthread2( void *arg )
-{
-	distancematrixthread_arg_t *targ = (distancematrixthread_arg_t *)arg;
-	int njob = targ->njob;
-	int thread_no = targ->thread_no;
-	double *selfscore = targ->selfscore;
-	double **iscore = targ->iscore;
-	char **seq = targ->seq;
-	Jobtable *jobpospt = targ->jobpospt;
-
-	double ssi, ssj, bunbo;
-	int i, j;
-
-	while( 1 )
-	{
-		pthread_mutex_lock( targ->mutex );
-		i = jobpospt->i;
-		i++;
-		if( i == njob-1 )
-		{
-			pthread_mutex_unlock( targ->mutex );
-			return( NULL );
-		}
-		jobpospt->i = i;
-		pthread_mutex_unlock( targ->mutex );
-
-		ssi = selfscore[i];
-		if( i % 10 == 0 ) fprintf( stderr, "\r% 5d / %d (thread %4d)", i, njob, thread_no );
-		for( j=i+1; j<njob; j++ )
-		{
-			ssj = selfscore[j];
-			bunbo = MIN( ssi, ssj );
-			if( bunbo == 0.0 )
-				iscore[i][j-i] = 1.0;
-			else
-				iscore[i][j-i] = 1.0 - naivepairscore11( seq[i], seq[j], penalty_dist ) / bunbo;
-		}
-	}
-}
-#endif
-
 static double
-preferenceval(int ori, int pos, int max)  // for debug
-{
+preferenceval(int ori, int pos, int max) {
     pos -= ori;
     if (pos < 0)
         pos += max;
@@ -580,8 +495,7 @@ preferenceval(int ori, int pos, int max)  // for debug
 }
 
 static void*
-msacompactdisthalfmtxthread(void* arg)  // disttbfast.c no toha chigaimasu.
-{
+msacompactdisthalfmtxthread(void* arg) {
     msacompactdistmtxthread_arg_t* targ = (msacompactdistmtxthread_arg_t*)arg;
     int                            njob = targ->njob;
     int                            thread_no = targ->thread_no;
@@ -648,55 +562,6 @@ msacompactdisthalfmtxthread(void* arg)  // disttbfast.c no toha chigaimasu.
 }
 
 #ifdef enablemultithread
-#if 0
-static void *distancematrixthread( void *arg ) // v7.2 ijou deha tsukawanaihazu
-{
-	distancematrixthread_arg_t *targ = (distancematrixthread_arg_t *)arg;
-	int njob = targ->njob;
-	int thread_no = targ->thread_no;
-	double *selfscore = targ->selfscore;
-	double **iscore = targ->iscore;
-	char **seq = targ->seq;
-	int **skiptable = targ->skiptable;
-	Jobtable *jobpospt = targ->jobpospt;
-
-	double ssi, ssj, bunbo;
-	int i, j;
-
-	while( 1 )
-	{
-		pthread_mutex_lock( targ->mutex );
-		j = jobpospt->j;
-		i = jobpospt->i;
-		j++;
-		if( j == njob )
-		{
-			i++;
-			j = i + 1;
-			if( i == njob-1 )
-			{
-				pthread_mutex_unlock( targ->mutex );
-				return( NULL );
-			}
-		}
-		jobpospt->j = j;
-		jobpospt->i = i;
-		pthread_mutex_unlock( targ->mutex );
-
-
-		if( j==i+1 && i % 10 == 0 ) fprintf( stderr, "\r% 5d / %d (thread %4d)", i, njob, thread_no );
-		ssi = selfscore[i];
-		ssj = selfscore[j];
-		bunbo = MIN( ssi, ssj );
-		if( bunbo == 0.0 )
-			iscore[i][j-i] = 2.0; // 2013/Oct/17
-		else
-//			iscore[i][j-i] = ( 1.0 - naivepairscore11( seq[i], seq[j], penalty_dist ) / bunbo ) * 2.0; // 2013/Oct/17
-			iscore[i][j-i] = ( 1.0 - naivepairscorefast( seq[i], seq[j], skiptable[i], skiptable[j], penalty_dist ) / bunbo ) * 2.0; // 2014/Aug/15 fast
-		if( iscore[i][j-i] > 10 ) iscore[i][j-i] = 10.0; // 2015/Mar/17
-	}
-}
-#else
 static void*
 distancematrixthread(void* arg)  // v7.2 ijou deha tsukawanaihazu
 {
@@ -739,7 +604,6 @@ distancematrixthread(void* arg)  // v7.2 ijou deha tsukawanaihazu
         }
     }
 }
-#endif
 
 static void*
 treebasethread(void* arg)  // seed && compacttree==3 niha taioushinai.
@@ -835,22 +699,6 @@ treebasethread(void* arg)  // seed && compacttree==3 niha taioushinai.
     for (i = 0; i < njob; i++)
         effarr2_kozo[i] = 0.0;
 
-#if 0
-#endif
-
-#if 0
-	for( i=0; i<njob; i++ )
-		fprintf( stderr, "TBFAST effarr[%d] = %f\n", i, effarr[i] );
-#endif
-
-#if 0  //-> main thread
-	if( constraint )
-		calcimportance( njob, effarr, aseq, localhomtable );
-#endif
-
-    //	writePre( njob, name, nlen, aseq, 0 );
-
-    //	for( l=0; l<njob-1; l++ )
     while (1) {
         pthread_mutex_lock(targ->mutex);
         l = *jobpospt;
@@ -908,34 +756,20 @@ treebasethread(void* arg)  // seed && compacttree==3 niha taioushinai.
             while (dep[dep[l].child1].done == 0)
                 pthread_cond_wait(targ->treecond, targ->mutex);
         }
-        //		while( *nrunpt >= nthread )
-        //			pthread_cond_wait( targ->treecond, targ->mutex ); // iranai no??
         (*nrunpt)++;
 
-        //		pthread_mutex_unlock( targ->mutex );
-
         if (mergeoralign[l] == 'n') {
-            //			fprintf( stderr, "SKIP!\n" );
             dep[l].done = 1;
             (*nrunpt)--;
             pthread_cond_broadcast(targ->treecond);
-            //			free( topol[l][0] );
-            //			free( topol[l][1] );
-            //			free( topol[l] );
             pthread_mutex_unlock(targ->mutex);
-            //			free( localmem[0] );
-            //			free( localmem[1] );
             continue;
         }
 
         m1 = topol[l][0][0];
         m2 = topol[l][1][0];
 
-        //		fprintf( stderr, "\ndistfromtip = %f\n", dep[l].distfromtip );
-        //		makedynamicmtx( dynamicmtx, n_dis_consweight_multi, dep[l].distfromtip - 0.5 );
         makedynamicmtx(dynamicmtx, n_dis_consweight_multi, dep[l].distfromtip);
-
-        //		pthread_mutex_lock( targ->mutex );
 
         len1 = strlen(aseq[m1]);
         len2 = strlen(aseq[m2]);
@@ -963,78 +797,29 @@ treebasethread(void* arg)  // seed && compacttree==3 niha taioushinai.
         if (effarr_kozo) {
             clus1 = fastconjuction_noname_kozo(localmem[0], localcopy, mseq1, effarr1, effarr, effarr1_kozo, effarr_kozo, indication1);
             clus2 = fastconjuction_noname_kozo(localmem[1], localcopy, mseq2, effarr2, effarr, effarr2_kozo, effarr_kozo, indication2);
-        }
-#if 0
-		else if( specifictarget )
-		{
-			clus1 = fastconjuction_target( topol[l][0], localcopy, mseq1, effarr1, effarr, indication1, minimumweight, targetmap );
-			clus2 = fastconjuction_target( topol[l][1], localcopy, mseq2, effarr2, effarr, indication2, minimumweight, targetmap );
-		}
-#endif
-        else {
+        } else {
             clus1 = fastconjuction_noname(localmem[0], localcopy, mseq1, effarr1, effarr, indication1, minimumweight, NULL);
             clus2 = fastconjuction_noname(localmem[1], localcopy, mseq2, effarr2, effarr, indication2, minimumweight, NULL);
         }
 
-#if 1
         if (l < 1000 || l % 100 == 0)
             fprintf(stderr, "\rSTEP % 5d /%d (thread %4d) ", l + 1, njob - 1, thread_no);
-#else
-        fprintf(stderr, "STEP %d /%d (thread %d) \n", l + 1, njob - 1, thread_no);
-        fprintf(stderr, "group1 = %.66s", indication1);
-        if (strlen(indication1) > 66)
-            fprintf(stderr, "...");
-        fprintf(stderr, ", child1 = %d\n", dep[l].child0);
-        fprintf(stderr, "group2 = %.66s", indication2);
-        if (strlen(indication2) > 66)
-            fprintf(stderr, "...");
-        fprintf(stderr, ", child2 = %d\n", dep[l].child1);
 
-        fprintf(stderr, "Group1's lengths = ");
-        for (i = 0; i < clus1; i++)
-            fprintf(stderr, "%d ", strlen(mseq1[i]));
-        fprintf(stderr, "\n");
-        fprintf(stderr, "Group2's lengths = ");
-        for (i = 0; i < clus2; i++)
-            fprintf(stderr, "%d ", strlen(mseq2[i]));
-        fprintf(stderr, "\n");
-
-#endif
 #if REPORTCOSTS
         if (l < 1000 || l % 100 == 0)
             reporterr("\nclus1=%d, clus2=%d\n", clus1, clus2);
 #endif
-
-        //		for( i=0; i<clus1; i++ ) fprintf( stderr, "## STEP%d-eff for mseq1-%d %f\n", l+1, i, effarr1[i] );
 
         if (constraint && compacttree != 3) {
             if (specifictarget)
                 fastshrinklocalhom_target(localmem[0], localmem[1], localhomtable, localhomshrink, swaplist, targetmap);
             else
                 fastshrinklocalhom_half(localmem[0], localmem[1], localhomtable, localhomshrink);
-            //			msfastshrinklocalhom( topol[l][0], topol[l][1], localhomtable, localhomshrink );
-            //			fprintf( stderr, "localhomshrink =\n" );
-            //			outlocalhompt( localhomshrink, clus1, clus2 );
-            //			weightimportance4( clus1, clus2, effarr1, effarr2, localhomshrink );
-            //			fprintf( stderr, "after weight =\n" );
-            //			outlocalhompt( localhomshrink, clus1, clus2 );
         }
         if (rnakozo && rnaprediction == 'm') {
             makegrouprna(grouprna1, singlerna, localmem[0]);
             makegrouprna(grouprna2, singlerna, localmem[1]);
         }
-
-        /*
-		fprintf( stderr, "before align all\n" );
-		display( localcopy, njob );
-		fprintf( stderr, "\n" );
-		fprintf( stderr, "before align 1 %s \n", indication1 );
-		display( mseq1, clus1 );
-		fprintf( stderr, "\n" );
-		fprintf( stderr, "before align 2 %s \n", indication2 );
-		display( mseq2, clus2 );
-		fprintf( stderr, "\n" );
-*/
 
         if (!nevermemsave && (constraint != 2 && alg != 'M' && (len1 > 30000 || len2 > 30000))) {
             fprintf(stderr, "\nlen1=%d, len2=%d, Switching to the memsave mode.\n", len1, len2);
@@ -1046,20 +831,16 @@ treebasethread(void* arg)  // seed && compacttree==3 niha taioushinai.
             commonAlloc2 = 0;
         }
 
-        //		if( fftlog[m1] && fftlog[m2] ) ffttry = ( nlen[m1] > clus1 && nlen[m2] > clus2 );
         if (fftlog[m1] && fftlog[m2])
             ffttry = (nlen[m1] > clus1 && nlen[m2] > clus2 && clus1 < 1000 && clus2 < 1000);
         else
             ffttry = 0;
-        //		ffttry = ( nlen[m1] > clus1 && nlen[m2] > clus2 && clus1 < 5000 && clus2 < 5000 ); // v6.708
-        //		fprintf( stderr, "f=%d, len1/fftlog[m1]=%f, clus1=%d, len2/fftlog[m2]=%f, clus2=%d\n", ffttry, (double)len1/fftlog[m1], clus1, (double)len2/fftlog[m2], clus2 );
-        //		fprintf( stderr, "f=%d, clus1=%d, fftlog[m1]=%d, clus2=%d, fftlog[m2]=%d\n", ffttry, clus1, fftlog[m1], clus2, fftlog[m2] );
+
         if (constraint == 2) {
             if (alg == 'M') {
                 fprintf(stderr, "\n\nMemory saving mode is not supported.\n\n");
                 exit(1);
             }
-            //			fprintf( stderr, "c" );
             if (alg == 'A') {
                 imp_match_init_strict(NULL, clus1, clus2, strlen(mseq1[0]), strlen(mseq2[0]), mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, 1, localmem[0], localmem[1], uselh, NULL, NULL, (compacttree == 3) ? l : -1, 0);  // seedinlh, nfiles ni ha taiou shiteinai
                 if (rnakozo)
@@ -1110,17 +891,6 @@ treebasethread(void* arg)  // seed && compacttree==3 niha taioushinai.
         fprintf(stderr, "score = %10.2f\n", pscore);
 #endif
 
-        /*
-		fprintf( stderr, "after align 1 %s \n", indication1 );
-		display( mseq1, clus1 );
-		fprintf( stderr, "\n" );
-		fprintf( stderr, "after align 2 %s \n", indication2 );
-		display( mseq2, clus2 );
-		fprintf( stderr, "\n" );
-*/
-
-        //		writePre( njob, name, nlen, localcopy, 0 );
-
         if (disp)
             display(localcopy, njob);
 
@@ -1140,9 +910,6 @@ treebasethread(void* arg)  // seed && compacttree==3 niha taioushinai.
             free(localcopy[j]);
         for (i = 0; (j = localmem[1][i]) != -1; i++)
             free(localcopy[j]);
-            //		free( topol[l][0] );
-            //		free( topol[l][1] );
-            //		free( topol[l] );
 
 #if REPORTCOSTS
         if (l < 1000 || l % 100 == 0) {
@@ -1150,33 +917,32 @@ treebasethread(void* arg)  // seed && compacttree==3 niha taioushinai.
             reporterr("real = %f min\n", (float)(time(NULL) - starttime) / 60.0);
             reporterr("user = %f min\n", (float)(clock() - startclock) / CLOCKS_PER_SEC / 60);
         }
-#endif
+#endif  // REPORTCOSTS
     }
 }
-#endif
+#endif  // enablemultithread
 
 void
-treebase(int* nlen, char** aseq, int nadd, char* mergeoralign, char** mseq1, char** mseq2, int*** topol, Treedep* dep, double* effarr, int* alloclen, LocalHom** localhomtable, RNApair*** singlerna, double* effarr_kozo, int* targetmap, int* targetmapr, int ntarget, int* uselh, int nseed, int* nfilesfornode) {
-    int         i, l, m;
-    int         len1nocommongap, len2nocommongap;
-    int         len1, len2;
-    int         clus1, clus2;
-    double      pscore, tscore;
-    char *      indication1, *indication2;
-    double*     effarr1 = NULL;
-    double*     effarr2 = NULL;
-    double*     effarr1_kozo = NULL;
-    double*     effarr2_kozo = NULL;
-    LocalHom*** localhomshrink = NULL;
-    int*        seedinlh1 = NULL;
-    int*        seedinlh2 = NULL;
-    char*       swaplist = NULL;
-    int*        fftlog;
-    int         m1, m2;
-    int*        gaplen;
-    int*        gapmap;
-    int*        alreadyaligned;
-    //	double dumfl = 0.0;
+treebase(TbfastOpts opts, int* nlen, char** aseq, int nadd, char* mergeoralign, char** mseq1, char** mseq2, int*** topol, Treedep* dep, double* effarr, int* alloclen, LocalHom** localhomtable, RNApair*** singlerna, double* effarr_kozo, int* targetmap, int* targetmapr, int ntarget, int* uselh, int nseed, int* nfilesfornode) {
+    int             i, l, m;
+    int             len1nocommongap, len2nocommongap;
+    int             len1, len2;
+    int             clus1, clus2;
+    double          pscore, tscore;
+    char *          indication1, *indication2;
+    double*         effarr1 = NULL;
+    double*         effarr2 = NULL;
+    double*         effarr1_kozo = NULL;
+    double*         effarr2_kozo = NULL;
+    LocalHom***     localhomshrink = NULL;
+    int*            seedinlh1 = NULL;
+    int*            seedinlh2 = NULL;
+    char*           swaplist = NULL;
+    int*            fftlog;
+    int             m1, m2;
+    int*            gaplen;
+    int*            gapmap;
+    int*            alreadyaligned;
     double          dumdb = 0.0;
     int             ffttry;
     RNApair ***     grouprna1 = NULL, ***grouprna2 = NULL;
@@ -1219,37 +985,30 @@ treebase(int* nlen, char** aseq, int nadd, char* mergeoralign, char** mseq1, cha
     memhist = (int**)calloc(njob - 1, sizeof(int*));
     for (i = 0; i < njob - 1; i++)
         memhist[i] = NULL;
-#if 0
-	reporterr( "before allocating localhomshrink (--thread 0), constraint=%d, njob=%d\n", constraint, njob );
-	use_getrusage();
-#endif
+
     swaplist = NULL;
-    //	if( constraint )
     if (constraint && compacttree != 3) {
         if (specifictarget)
             swaplist = calloc(njob, sizeof(char));
-        //		use_getrusage();
         localhomshrink = (LocalHom***)calloc(njob, sizeof(LocalHom**));
         for (i = 0; i < njob; i++) {
             localhomshrink[i] = (LocalHom**)calloc(njob, sizeof(LocalHom*));
         }
-    } else if (constraint && nseed)  // ie, compacttree == 3, constraint >0, nseed > 0
-    {
+    } else if (constraint && nseed) {
         localhomshrink = (LocalHom***)calloc(nseed, sizeof(LocalHom**));
         for (i = 0; i < nseed; i++)
             localhomshrink[i] = (LocalHom**)calloc(nseed, sizeof(LocalHom*));
 
         seedinlh1 = calloc(njob, sizeof(int));
         seedinlh2 = calloc(njob, sizeof(int));
-    } else if (constraint && nseed == 0)  // ie, constraint > 0, compacttree == 3 && nseed == 0
-    {
-        seedinlh1 = NULL;  // nakutemo
-        seedinlh2 = NULL;  // nakutemo
-        localhomshrink = NULL;  // nakutemo
+    } else if (constraint && nseed == 0) {
+        seedinlh1 = NULL;
+        seedinlh2 = NULL;
+        localhomshrink = NULL;
     }
 
-    effarr1_kozo = AllocateDoubleVec(njob);  //tsuneni allocate sareru.
-    effarr2_kozo = AllocateDoubleVec(njob);  //tsuneni allocate sareru.
+    effarr1_kozo = AllocateDoubleVec(njob);
+    effarr2_kozo = AllocateDoubleVec(njob);
     for (i = 0; i < njob; i++)
         effarr1_kozo[i] = 0.0;
     for (i = 0; i < njob; i++)
@@ -1263,40 +1022,25 @@ treebase(int* nlen, char** aseq, int nadd, char* mergeoralign, char** mseq1, cha
     for (l = 0; l < njob; l++)
         fftlog[l] = 1;
 
-#if 0
-	fprintf( stderr, "##### fftwinsize = %d, fftthreshold = %d\n", fftWinSize, fftThreshold );
-#endif
-
-#if 0
-	for( i=0; i<njob; i++ )
-		fprintf( stderr, "TBFAST effarr[%d] = %f\n", i, effarr[i] );
-#endif
-
     if (constraint && compacttree != 3) {
         if (specifictarget)
             calcimportance_target(njob, ntarget, effarr, aseq, localhomtable, targetmap, targetmapr, *alloclen);
-        //			dontcalcimportance_target( njob, effarr, aseq, localhomtable, ntarget ); //CHUUI
         else
             calcimportance_half(njob, effarr, aseq, localhomtable, *alloclen);
-        //			dontcalcimportance_half( njob, effarr, aseq, localhomtable ); //CHUUI
     } else if (constraint && nseed)  // ie, compacttree == 3 && constraint > 0
     {
         dontcalcimportance_half(nseed, effarr, aseq, localhomtable);  //CHUUI
     }
-
-    //	writePre( njob, name, nlen, aseq, 0 );
 
     tscore = 0.0;
     for (l = 0; l < njob - 1; l++) {
         m1 = topol[l][0][0];
         m2 = topol[l][1][0];
 
-        if (effarr_kozo)  // totaleff != 1 nanode sairiyou dekinai
-        {
+        if (effarr_kozo) {
             cpmxchild0 = NULL;
             cpmxchild1 = NULL;
         } else {
-            //			reporterr( "l=%d, dep[l].child0=%d, dep[l].child1=%d\n", l, dep[l].child0, dep[l].child1 );
             if (dep[l].child0 == -1)
                 cpmxchild0 = NULL;
             else
@@ -1305,15 +1049,8 @@ treebase(int* nlen, char** aseq, int nadd, char* mergeoralign, char** mseq1, cha
                 cpmxchild1 = NULL;
             else
                 cpmxchild1 = cpmxhist + dep[l].child1;
-            //			reporterr( "cpmxchild0=%p, cpmxchild1=%p\n", cpmxchild0, cpmxchild1 );
         }
 
-#if 0
-		localmem[0][0] = -1;
-		posinmem = topolorderz( localmem[0], topol, dep, l, 0 ) - localmem[0];
-		localmem[1][0] = -1;
-		posinmem = topolorderz( localmem[1], topol, dep, l, 1 ) - localmem[1];
-#else
         if (dep[l].child0 == -1) {
             localmem[0] = calloc(sizeof(int), 2);
             localmem[0][0] = m1;
@@ -1339,22 +1076,14 @@ treebase(int* nlen, char** aseq, int nadd, char* mergeoralign, char** mseq1, cha
             intcpy(memhist[l] + clus1, localmem[1]);
             memhist[l][clus1 + clus2] = -1;
         }
-#endif
 
-        // moved, 2018/Mar/10. Must be after changing memhist[l]
         if (mergeoralign[l] == 'n') {
-            //			fprintf( stderr, "SKIP!\n" );
-            //			free( topol[l][0] );
-            //			free( topol[l][1] );
-            //			free( topol[l] );
             free(localmem[0]);
             free(localmem[1]);
             continue;
         }
 
-        //		fprintf( stderr, "\ndistfromtip = %f\n", dep[l].distfromtip );
         makedynamicmtx(dynamicmtx, n_dis_consweight_multi, dep[l].distfromtip);
-        //		makedynamicmtx( dynamicmtx, n_dis_consweight_multi, ( dep[l].distfromtip - 0.2 ) * 3 );
 
         len1 = strlen(aseq[m1]);
         len2 = strlen(aseq[m2]);
@@ -1378,21 +1107,12 @@ treebase(int* nlen, char** aseq, int nadd, char* mergeoralign, char** mseq1, cha
         if (effarr_kozo) {
             clus1 = fastconjuction_noname_kozo(localmem[0], aseq, mseq1, effarr1, effarr, effarr1_kozo, effarr_kozo, indication1);
             clus2 = fastconjuction_noname_kozo(localmem[1], aseq, mseq2, effarr2, effarr, effarr2_kozo, effarr_kozo, indication2);
-        }
-#if 0
-		else if( specifictarget )
-		{
-			clus1 = fastconjuction_target( topol[l][0], aseq, mseq1, effarr1, effarr, indication1, minimumweight, targetmap );
-			clus2 = fastconjuction_target( topol[l][1], aseq, mseq2, effarr2, effarr, indication2, minimumweight, targetmap );
-		}
-#endif
-        else {
+        } else {
             clus1 = fastconjuction_noname(localmem[0], aseq, mseq1, effarr1, effarr, indication1, minimumweight, &orieff1);  // orieff tsukau!
             clus2 = fastconjuction_noname(localmem[1], aseq, mseq2, effarr2, effarr, indication2, minimumweight, &orieff2);  // orieff tsukau!
         }
 
-        if (mergeoralign[l] == '1' || mergeoralign[l] == '2')  // only in serial version
-        {
+        if (mergeoralign[l] == '1' || mergeoralign[l] == '2') {
             newgapstr = "=";
         } else
             newgapstr = "-";
@@ -1415,47 +1135,20 @@ treebase(int* nlen, char** aseq, int nadd, char* mergeoralign, char** mseq1, cha
         else
             nfiles = 0;
 
-            //		fprintf( trap_g, "\nSTEP-%d\n", l );
-            //		fprintf( trap_g, "group1 = %s\n", indication1 );
-            //		fprintf( trap_g, "group2 = %s\n", indication2 );
-
-#if 1
         if (l < 1000 || l % 100 == 0)
             fprintf(stderr, "\rSTEP % 5d /%d ", l + 1, njob - 1);
-//		fflush( stderr );
-#else
-        fprintf(stdout, "STEP %d /%d\n", l + 1, njob - 1);
-        fprintf(stderr, "STEP %d /%d\n", l + 1, njob - 1);
-        fprintf(stderr, "group1 = %.66s", indication1);
-        if (strlen(indication1) > 66)
-            fprintf(stderr, "...");
-        fprintf(stderr, "\n");
-        fprintf(stderr, "group2 = %.66s", indication2);
-        if (strlen(indication2) > 66)
-            fprintf(stderr, "...");
-        fprintf(stderr, "\n");
-#endif
 
 #if REPORTCOSTS
         if (l < 1000 || l % 100 == 0)
             reporterr("\nclus1=%d, clus2=%d\n", clus1, clus2);
 #endif
 
-        //		for( i=0; i<clus1; i++ ) fprintf( stderr, "## STEP%d-eff for mseq1-%d %f\n", l+1, i, effarr1[i] );
-
         if (constraint && compacttree != 3) {
             if (specifictarget)
                 fastshrinklocalhom_target(localmem[0], localmem[1], localhomtable, localhomshrink, swaplist, targetmap);
             else
                 fastshrinklocalhom_half(localmem[0], localmem[1], localhomtable, localhomshrink);
-            //			msfastshrinklocalhom( topol[l][0], topol[l][1], localhomtable, localhomshrink );
-            //			fprintf( stderr, "localhomshrink =\n" );
-            //			outlocalhompt( localhomshrink, clus1, clus2 );
-            //			weightimportance4( clus1, clus2, effarr1, effarr2, localhomshrink );
-            //			fprintf( stderr, "after weight =\n" );
-            //			outlocalhompt( localhomshrink, clus1, clus2 );
-        } else if (constraint && nseed)  // ie, constraint > 0 && compacttree == 3 && nseed > 0
-        {
+        } else if (constraint && nseed) {
             fastshrinklocalhom_half_seed(localmem[0], localmem[1], nseed, seedinlh1, seedinlh2, localhomtable, localhomshrink);
             for (i = 0; i < njob; i++)
                 reporterr("seedinlh1[%d]=%d\n", i, seedinlh1[i]);
@@ -1468,18 +1161,6 @@ treebase(int* nlen, char** aseq, int nadd, char* mergeoralign, char** mseq1, cha
             makegrouprna(grouprna2, singlerna, localmem[1]);
         }
 
-        /*
-		fprintf( stderr, "before align all\n" );
-		display( aseq, njob );
-		fprintf( stderr, "\n" );
-		fprintf( stderr, "before align 1 %s \n", indication1 );
-		display( mseq1, clus1 );
-		fprintf( stderr, "\n" );
-		fprintf( stderr, "before align 2 %s \n", indication2 );
-		display( mseq2, clus2 );
-		fprintf( stderr, "\n" );
-*/
-
         if (!nevermemsave && (constraint != 2 && alg != 'M' && (len1 > 30000 || len2 > 30000))) {
             fprintf(stderr, "\nlen1=%d, len2=%d, Switching to the memsave mode.\n", len1, len2);
             alg = 'M';
@@ -1490,7 +1171,6 @@ treebase(int* nlen, char** aseq, int nadd, char* mergeoralign, char** mseq1, cha
             commonAlloc2 = 0;
         }
 
-        //		if( fftlog[m1] && fftlog[m2] ) ffttry = ( nlen[m1] > clus1 && nlen[m2] > clus2 );
         if (fftlog[m1] && fftlog[m2])
             ffttry = (nlen[m1] > clus1 && nlen[m2] > clus2 && clus1 < 1000 && clus2 < 1000);
         else
@@ -1557,32 +1237,18 @@ treebase(int* nlen, char** aseq, int nadd, char* mergeoralign, char** mseq1, cha
         fprintf(stderr, "score = %10.2f\n", pscore);
 #endif
         tscore += pscore;
-        /*
-		fprintf( stderr, "after align 1 %s \n", indication1 );
-		display( mseq1, clus1 );
-		fprintf( stderr, "\n" );
-		fprintf( stderr, "after align 2 %s \n", indication2 );
-		display( mseq2, clus2 );
-		fprintf( stderr, "\n" );
-*/
-
-        //		writePre( njob, name, nlen, aseq, 0 );
 
         if (disp)
             display(aseq, njob);
 
-        if (mergeoralign[l] == '1')  // jissainiha nai. atarashii hairetsu ha saigo dakara.
-        {
+        if (mergeoralign[l] == '1') {
             reporterr("Check source!!\n");
             exit(1);
         }
         if (mergeoralign[l] == '2') {
-            //			fprintf( stderr, ">mseq1[0] = \n%s\n", mseq1[0] );
-            //			fprintf( stderr, ">mseq2[0] = \n%s\n", mseq2[0] );
-            //			if( keeplength ) ndeleted += deletenewinsertions( clus1, clus2, mseq1, mseq2, NULL );
             gapmaplen = strlen(mseq1[0]) - len1nocommongap + len1;
             adjustgapmap(gapmaplen, gapmap, mseq1[0]);
-            if (smoothing) {
+            if (opts.smoothing) {
                 restorecommongapssmoothly(njob, njob - (clus1 + clus2), aseq, localmem[0], localmem[1], gapmap, *alloclen, '-');
                 findnewgaps(clus1, 0, mseq1, gaplen);
                 insertnewgaps_bothorders(njob, alreadyaligned, aseq, localmem[0], localmem[1], gaplen, gapmap, gapmaplen, *alloclen, alg, '-');
@@ -1591,21 +1257,11 @@ treebase(int* nlen, char** aseq, int nadd, char* mergeoralign, char** mseq1, cha
                 findnewgaps(clus1, 0, mseq1, gaplen);
                 insertnewgaps(njob, alreadyaligned, aseq, localmem[0], localmem[1], gaplen, gapmap, *alloclen, alg, '-');
             }
-#if 0
-			for( i=0; i<njob; i++ ) eq2dash( aseq[i] );
-			for( i=0; i<clus1; i++ ) eq2dash( mseq1[i] );
-			for( i=0; i<clus2; i++ ) eq2dash( mseq2[i] );
-#else
             eq2dashmatometehayaku(mseq1, clus1);
             eq2dashmatometehayaku(mseq2, clus2);
-#endif
             for (i = 0; (m = localmem[1][i]) > -1; i++)
                 alreadyaligned[m] = 1;
         }
-
-        //		free( topol[l][0] );
-        //		free( topol[l][1] );
-        //		free( topol[l] );
 
         free(localmem[0]);
         free(localmem[1]);
@@ -1623,11 +1279,9 @@ treebase(int* nlen, char** aseq, int nadd, char* mergeoralign, char** mseq1, cha
     reporterr("user = %f min\n", (float)(clock() - startclock) / CLOCKS_PER_SEC / 60);
 #endif
 
-#if 1  // 2021/Jun/25
     if (cpmxhist) {
         for (i = 0; i < njob - 1; i++) {
             if (cpmxhist[i]) {
-                //				reporterr( "freeing cpmxhist[%d]\n", i );
                 FreeDoubleMtx(cpmxhist[i]);
                 cpmxhist[i] = NULL;
             }
@@ -1635,15 +1289,7 @@ treebase(int* nlen, char** aseq, int nadd, char* mergeoralign, char** mseq1, cha
         free(cpmxhist);
         cpmxhist = NULL;
     }
-#else
-    if (cpmxhist[njob - 2]) {
-        //		reporterr( "freeing cpmxhist[njob-2]\n" );
-        FreeDoubleMtx(cpmxhist[njob - 2]);
-        cpmxhist[njob - 2] = NULL;
-    }
-    free(cpmxhist);
-    cpmxhist = NULL;
-#endif
+
     free(memhist);
     memhist = NULL;
 
@@ -1657,7 +1303,7 @@ treebase(int* nlen, char** aseq, int nadd, char* mergeoralign, char** mseq1, cha
             free(grouprna2);  // nakami ha?
         grouprna1 = grouprna2 = NULL;
     }
-    //	if( constraint && compacttree != 3 )
+
     if (constraint) {
         if (localhomshrink)  // nen no tame
         {
@@ -1680,7 +1326,6 @@ treebase(int* nlen, char** aseq, int nadd, char* mergeoralign, char** mseq1, cha
             free(swaplist);
     }
 
-    //	free( topol );
     free(fftlog);
     free(effarr1);
     free(effarr2);
@@ -1825,11 +1470,9 @@ tbfast_main(int argc, char* argv[]) {
     int**    localmem = NULL;
     int      posinmem;
     int      includememberres0, includememberres1;
-    // for compacttree
     int*     mindistfrom = NULL;
     double*  mindist = NULL;
     double** partmtx = NULL;
-    // for compacttree
 
     char         c;
     int          alloclen;
@@ -1851,8 +1494,8 @@ tbfast_main(int argc, char* argv[]) {
     char** pav = calloc(argc, sizeof(char*));
     char** tav = calloc(argc, sizeof(char*));
 
-    int pac = 0; 
-    int tac = 0;
+    int        pac = 0;
+    int        tac = 0;
     TbfastOpts opts = arguments(argc, argv, &pac, pav, &tac, tav);
 
     if (opts.treein) {
@@ -1862,11 +1505,11 @@ tbfast_main(int argc, char* argv[]) {
         if (opts.treein == 'C') {
             compacttree = 2;
             opts.treein = 0;
-            use_fft = 0;  // kankeinai?
+            use_fft = 0;
         } else if (opts.treein == 'n') {
             compacttree = 3;
             opts.treein = 0;
-            use_fft = 0;  // kankeinai?
+            use_fft = 0;
         }
     }
 
@@ -1908,10 +1551,10 @@ tbfast_main(int argc, char* argv[]) {
     }
 
 #if !defined(mingw) && !defined(_MSC_VER)
-    setstacksize(200 * njob);  // nennnotame. topolorder() de ookime no stack wo shiyou.
+    setstacksize(200 * njob);
 #endif
 
-    if (subalignment) {
+    if (opts.subalignment) {
         readsubalignmentstable(njob, NULL, NULL, &nsubalignments, &maxmem);
         fprintf(stderr, "nsubalignments = %d\n", nsubalignments);
         fprintf(stderr, "maxmem = %d\n", maxmem);
@@ -1955,55 +1598,36 @@ tbfast_main(int argc, char* argv[]) {
 #endif
 
     if (tbutree && compacttree != 3)
-        iscore = AllocateFloatHalfMtx(njob);  // tbutree=0 no toki aln kara mtx wo keisan, compacttree dehanaitoki nomi iscore shiyou.
+        iscore = AllocateFloatHalfMtx(njob);
 
-    ndeleted = 0;
+    opts.ndeleted = 0;
 
-#if 0
-	readData( infp, name, nlen, seq );
-#else
     readData_pointer(infp, name, nlen, seq);
     fclose(infp);
-#endif
+
     if (opts.treein) {
-#if 1  // pairlocalalign() yori mae ni hitsuyou, specificityconsideration>0.0 && usertree no toki.
         loadtree(njob, topol, len, name, nlen, dep, opts.treeout);
-        //		loadtop( njob, topol, len, name, NULL, dep ); // 2015/Jan/13, not yet checked
         fprintf(stderr, "\ndone.\n\n");
-        //		for( i=0; i<njob-1; i++ ) reporterr( "%d-%d, %f-%f\n", topol[i][0][0], topol[i][1][0], len[i][0], len[i][1] );
-        if (callpairlocalalign && specificityconsideration > 0.0) {
+        if (opts.callpairlocalalign && specificityconsideration > 0.0) {
             int* mem0 = calloc(sizeof(int), njob);
             int* mem1 = calloc(sizeof(int), njob);
             expdist = AllocateDoubleMtx(njob, njob);
             for (i = 0; i < njob - 1; i++) {
                 topolorderz(mem0, topol, dep, i, 0);
                 topolorderz(mem1, topol, dep, i, 1);
-#if 0
-				reporterr( "mem0=\n" );
-				for( j=0; mem0[j]!=-1; j++ ) reporterr( "%d ", mem0[j] );
-				reporterr( "\n" );
-				reporterr( "mem1=\n" );
-				for( j=0; mem1[j]!=-1; j++ ) reporterr( "%d ", mem1[j] );
-				reporterr( "\n" );
-#endif
+
                 for (j = 0; mem0[j] != -1; j++)
                     for (k = 0; mem1[k] != -1; k++) {
                         expdist[mem0[j]][mem1[k]] += (len[i][0] + len[i][1]);
                         expdist[mem1[k]][mem0[j]] += (len[i][0] + len[i][1]);
                     }
             }
-#if 0
-			for( i=0; i<njob; i++ ) for( j=0; j<njob; j++ )
-				reporterr( "expdist[%d][%d] = %f\n", i, j, expdist[i][j] );
-#endif
             free(mem0);
             free(mem1);
         }
-#endif
     }
 
-    if (specifictarget && compacttree != 3)  // compacttree == 3 no toki ha hat3dir/uselh no joho wo tsukau, 2016/Jan
-    {
+    if (specifictarget && compacttree != 3) {
         targetmap = calloc(njob, sizeof(int));
         ntarget = 0;
         for (i = 0; i < njob; i++) {
@@ -2024,16 +1648,7 @@ tbfast_main(int argc, char* argv[]) {
             targetmap[i] = targetmapr[i] = i;
     }
 
-#if 0
-	for( i=0; i<njob; i++ )
-		reporterr( "targetmap[%d] = %d\n", i, targetmap[i] );
-	for( i=0; i<ntarget; i++ )
-		reporterr( "targetmapr[%d] = %d\n", i, targetmapr[i] );
-#endif
-
-    //	if( constraint && !noalign ) // 2016mar15 noalign tsuika
-    if (constraint && compacttree != 3)  // 2016Jul31 noalign no toki no shori (l=0.0) ha mafft.tmpl ni idou
-    {
+    if (constraint && compacttree != 3) {
         ilim = njob;
         localhomtable = (LocalHom**)calloc(ntarget, sizeof(LocalHom*));
         for (i = 0; i < ntarget; i++) {
@@ -2056,32 +1671,22 @@ tbfast_main(int argc, char* argv[]) {
                 ilim--;
         }
 
-        //		reporterr( "after allocating localhomtable\n" );
-        //		use_getrusage();
-
-        //		reporterr( "pac=%d\n", pac );
-        //		reporterr( "pav[0]=%s\n", pav[0] );
-        if (callpairlocalalign) {
+        if (opts.callpairlocalalign) {
             pairlocalalign(njob, nlenmax, name, seq, iscore, localhomtable, pac, pav, expdist);
-            arguments(tac, tav, NULL, NULL, NULL, NULL);  // anzen no tame
-            callpairlocalalign = 1;  // wakarinikui.
+            arguments(tac, tav, NULL, NULL, NULL, NULL);
+            opts.callpairlocalalign = 1;
             if (expdist)
                 FreeDoubleMtx(expdist);
             expdist = NULL;
             if (fastathreshold < 0.0001)
                 constraint = 0;
-            //			fprintf( stderr, "blosum %d / kimura 200\n", nblosum );
-            //			fprintf( stderr, "scoremtx=%d\n", scoremtx );
-            //			fprintf( stderr, "fastathreshold=%f\n", fastathreshold );
-            //			fprintf( stderr, "constraing=%d\n", constraint );
-            //exit( 1 );
             if (compacttree != 3) {
                 for (ilim = njob, i = 0; i < ntarget; i++) {
                     for (j = 0; j < ilim; j++) {
                         for (tmpptr = localhomtable[i] + j; tmpptr; tmpptr = tmpptr->next) {
                             if (tmpptr->opt == -1.0)
                                 continue;
-#if SHISHAGONYU  // for debug
+#if SHISHAGONYU
                             char buff[100];
                             sprintf(buff, "%10.5f", tmpptr->opt);
                             tmpptr->opt = 0.0;
@@ -2098,15 +1703,15 @@ tbfast_main(int argc, char* argv[]) {
                 if (prep) {
                     fprintf(stderr, "Loading 'hat3.seed' ... ");
                     if (specifictarget)
-                        readlocalhomtable2_target(prep, njob, localhomtable, kozoarivec, targetmap);  // uwagakisarerukara koredehadame.
+                        readlocalhomtable2_target(prep, njob, localhomtable, kozoarivec, targetmap);
                     else
-                        readlocalhomtable2_half(prep, njob, localhomtable, kozoarivec);  // uwagakisarerukara koredehadame.
+                        readlocalhomtable2_half(prep, njob, localhomtable, kozoarivec);
                     fclose(prep);
                     fprintf(stderr, "\ndone.\n");
                 } else
                     fprintf(stderr, "No hat3.seed. No problem.\n");
 
-                if (outputhat23) {
+                if (opts.outputhat23) {
                     prep = fopen("hat3", "w");
                     if (!prep)
                         ErrorExit("Cannot open hat3 to write.");
@@ -2138,14 +1743,12 @@ tbfast_main(int argc, char* argv[]) {
                     prep = fopen("hat2", "w");
                     WriteFloatHat2_pointer_halfmtx(prep, njob, name, iscore);
                     fclose(prep);
-                } else if (distout)  // choufuku shiterukedo, muda deha nai.
-                {
+                } else if (opts.distout) {
                     prep = fopen("hat2", "w");
                     WriteFloatHat2_pointer_halfmtx(prep, njob, name, iscore);
                     fclose(prep);
                 }
             } else {
-                /* compacttree==3 no toki hat3.seed ha mada yomenai */
                 prep = fopen("hat3.seed", "r");
                 if (prep) {
                     char r;
@@ -2157,9 +1760,7 @@ tbfast_main(int argc, char* argv[]) {
                     fclose(prep);
                 }
             }
-        }
-        //		else if( compacttree != 3 )
-        else {
+        } else {
             fprintf(stderr, "Loading 'hat3' ... ");
             prep = fopen("hat3", "r");
             if (prep == NULL)
@@ -2185,26 +1786,11 @@ tbfast_main(int argc, char* argv[]) {
             eff_kozo = AllocateDoubleVec(nkozo);
             eff_kozo_mapped = AllocateDoubleVec(njob);
         }
-
-#if 0
-		if( specifictarget )
-			outlocalhom_target( localhomtable, ntarget, njob );
-		else
-			outlocalhom_half( localhomtable, njob );
-		exit( 1 );
-#endif
-
-#if 0
-		fprintf( stderr, "Extending localhom ... " );
-		extendlocalhom2( njob, localhomtable );
-		fprintf( stderr, "done.\n" );
-#endif
-    } else if (compacttree != 3)  // constraint == 0
-    {
-        if (callpairlocalalign) {
+    } else if (compacttree != 3) {
+        if (opts.callpairlocalalign) {
             pairlocalalign(njob, nlenmax, name, seq, iscore, NULL, pac, pav, expdist);
-            arguments(tac, tav, NULL, NULL, NULL, NULL);  // anzen no tame
-            callpairlocalalign = 1;  // wakarinikui.
+            arguments(tac, tav, NULL, NULL, NULL, NULL);
+            opts.callpairlocalalign = 1;
             if (expdist)
                 FreeDoubleMtx(expdist);
             expdist = NULL;
@@ -2214,7 +1800,7 @@ tbfast_main(int argc, char* argv[]) {
             fprintf(stderr, "scoremtx=%d\n", scoremtx);
             fprintf(stderr, "fastathreshold=%f\n", fastathreshold);
         }
-        if (distout || outputhat23) {
+        if (opts.distout || opts.outputhat23) {
             reporterr("\nwriting hat2 (1)\n");
             prep = fopen("hat2", "w");
             WriteFloatHat2_pointer_halfmtx(prep, njob, name, iscore);
@@ -2307,30 +1893,18 @@ tbfast_main(int argc, char* argv[]) {
         if (nthreadreadlh == 0)
             nthreadreadlh = 1;
 
-        nthreadtb = 0;
+        opts.nthreadtb = 0;
         nthread = 0;
     } else {
         nthreadreadlh = 1;
-#if 0
-		nthreadtb = 0;  // tbfastthread ha tsukawanai
-		nthread = 0; // to reuse
-#else
-        nthreadtb = nthread;  // tbfastthread wo tsukau kamo
-#endif
+        opts.nthreadtb = nthread;
     }
 
-#if 0
-	fprintf( stderr, "params = %d, %d, %d\n", penalty, penalty_ex, offset );
-#endif
-
     initSignalSM();
-
     initFiles();
-
     WriteOptions(trap_g);
 
-    if (distout && !opts.treeout && noalign)  // 2016Jul31. Free ha mada fukanzen.
-    {
+    if (opts.distout && !opts.treeout && opts.noalign) {
         writeData_pointer(prep_g, njob, name, nlen, seq);
         fprintf(stderr, "\n");
         SHOWVERSION;
@@ -2343,13 +1917,11 @@ tbfast_main(int argc, char* argv[]) {
         exit(1);
     }
 
-    //	writePre( njob, name, nlen, seq, 0 );
-
-    if (nadd && keeplength) {
+    if (nadd && opts.keeplength) {
         originalgaps = (char*)calloc(nlenmax + 1, sizeof(char));
         recordoriginalgaps(originalgaps, njob - nadd, seq);
 
-        if (mapout) {
+        if (opts.mapout) {
             addbk = (char**)calloc(nadd + 1, sizeof(char*));
             for (i = 0; i < nadd; i++) {
                 ien = strlen(seq[njob - nadd + i]);
@@ -2366,25 +1938,19 @@ tbfast_main(int argc, char* argv[]) {
 
     if (!opts.treein) {
         reporterr("tbutree = %d, compacttree = %d\n", tbutree, compacttree);
-        if (compacttree == 3)  // use nodepair
-        {
+        if (compacttree == 3) {
             iscore = NULL;
-        } else if (tbutree == 0 && compacttree)  // compacttree no toki ha treein ha 0 de uwagaki sarete iru.
-        {
-            iscore = NULL;  // tsukawanai
+        } else if (tbutree == 0 && compacttree) {
+            iscore = NULL;
             reporterr("Making a compact tree from msa, step 1.. \n");
             skiptable = AllocateIntMtx(njob, 0);
-            makeskiptable(njob, skiptable, seq);  // allocate suru.
+            makeskiptable(njob, skiptable, seq);
             mindistfrom = (int*)calloc(njob, sizeof(int));
             mindist = (double*)calloc(njob, sizeof(double));
             partmtx = preparepartmtx(njob);
 
-            for (i = 0; i < njob; i++)  // disttbfast deha kokoniha nakatta.
-            {
-                //				selfscore[i] = naivepairscore11( seq[i], seq[i], penalty_dist );
+            for (i = 0; i < njob; i++) {
                 selfscore[i] = (int)naivepairscorefast(seq[i], seq[i], skiptable[i], skiptable[i], penalty_dist);
-                //				fprintf( stderr, "penalty = %d\n", penalty );
-                //				fprintf( stderr, "penalty_dist = %d\n", penalty_dist );
             }
 #ifdef enablemultithread
             if (nthreadpair > 0) {
@@ -2466,25 +2032,15 @@ tbfast_main(int argc, char* argv[]) {
                     targ[0].mindist = mindist;
 
                     msacompactdisthalfmtxthread(targ);
-                    //					msacompactdistmtxthread( targ );
                 }
                 free(targ);
                 for (i = 0; i < njob; i++)
-                    mindist[i] -= preferenceval(i, mindistfrom[i], njob);  // for debug
+                    mindist[i] -= preferenceval(i, mindistfrom[i], njob);
             }
-            //			free( selfscore ); selfscore = NULL; // mada tsukau
-            //			FreeCharMtx( bseq ); bseq = NULL; // mada tsukau
-            //			if( skiptable) FreeIntMtx( skiptable ); skiptable = NULL;
-
-            //			for( i=0; i<njob; i++ ) printf( "mindist[%d] = %f\n", i, mindist[i] );
-            //			exit( 1 );
             reporterr("\rdone.                                          \n");
         } else if (tbutree == 0 && compacttree == 0) {
             reporterr("Making a distance matrix from msa .. \n");
-            //			reporterr( "Bug.  This function should not be used in versions >=7.2.  Please email katoh@ifrec.osaka-u.ac.jp\n" );
-            //			fflush( stderr );
-            //			exit( 1 );
-            iscore = AllocateFloatHalfMtx(njob);  // tbutree == 0 no baai ha allocate sareteinainode
+            iscore = AllocateFloatHalfMtx(njob);
 
             for (i = 1; i < njob; i++) {
                 if (nlen[i] != nlen[0]) {
@@ -2494,13 +2050,10 @@ tbfast_main(int argc, char* argv[]) {
             }
 
             skiptable = AllocateIntMtx(njob, 0);
-            makeskiptable(njob, skiptable, seq);  // allocate suru.
+            makeskiptable(njob, skiptable, seq);
             ien = njob - 1;
             for (i = 0; i < njob; i++) {
-                //				selfscore[i] = naivepairscore11( seq[i], seq[i], penalty_dist );
                 selfscore[i] = (int)naivepairscorefast(seq[i], seq[i], skiptable[i], skiptable[i], penalty_dist);
-                //				fprintf( stderr, "penalty = %d\n", penalty );
-                //				fprintf( stderr, "penalty_dist = %d\n", penalty_dist );
             }
 #ifdef enablemultithread
             if (nthreadpair > 0) {
@@ -2541,28 +2094,17 @@ tbfast_main(int argc, char* argv[]) {
                 for (i = 0; i < ien; i++) {
                     if (i % 10 == 0) {
                         fprintf(stderr, "\r% 5d / %d", i, ien);
-                        //						fflush( stderr );
                     }
                     ssi = selfscore[i];
                     for (j = i + 1; j < njob; j++) {
                         ssj = selfscore[j];
                         bunbo = MIN(ssi, ssj);
                         if (bunbo == 0.0)
-                            iscore[i][j - i] = 2.0;  // 2013/Oct/17 2bai
+                            iscore[i][j - i] = 2.0;
                         else
-                            //							iscore[i][j-i] = 1.0 - naivepairscore11( seq[i], seq[j], penalty_dist ) / MIN( selfscore[i], selfscore[j] );
-                            //							iscore[i][j-i] = ( 1.0 - naivepairscore11( seq[i], seq[j], penalty_dist ) / bunbo ) * 2.0; // 2013/Oct/17 2bai
                             iscore[i][j - i] = (1.0 - naivepairscorefast(seq[i], seq[j], skiptable[i], skiptable[j], penalty_dist) / bunbo) * 2.0;  // 2014/Aug/15 fast
                         if (iscore[i][j - i] > 10)
-                            iscore[i][j - i] = 10.0;  // 2015/Mar/17
-                            //exit( 1 );
-
-#if 0
-						fprintf( stderr, "### ssj = %f\n", ssj );
-						fprintf( stderr, "### selfscore[i] = %f\n", selfscore[i] );
-						fprintf( stderr, "### selfscore[j] = %f\n", selfscore[j] );
-						fprintf( stderr, "### rawscore = %f\n", naivepairscore11( seq[i], seq[j], penalty_dist ) );
-#endif
+                            iscore[i][j - i] = 10.0;
                     }
                 }
             }
@@ -2572,19 +2114,13 @@ tbfast_main(int argc, char* argv[]) {
             reporterr("\rdone.                                           \n");
 
         } else {
-            if (callpairlocalalign) {
-                if (multidist) {
+            if (opts.callpairlocalalign) {
+                if (opts.multidist) {
                     reporterr("Bug in v7.290.  Please email katoh@ifrec.osaka-u.ac.jp\n");
                     exit(1);
                 }
-#if 0
-				prep = fopen( "hat2", "w" );
-				if( !prep ) ErrorExit( "Cannot open hat2." );
-				WriteFloatHat2_pointer_halfmtx( prep, njob, name, iscore ); // jissiha double
-				fclose( prep );
-#endif
             } else {
-                if (multidist) {
+                if (opts.multidist) {
                     fprintf(stderr, "Loading 'hat2n' (aligned sequences - new sequences) ... ");
                     prep = fopen("hat2n", "r");
                     if (prep == NULL)
@@ -2610,19 +2146,16 @@ tbfast_main(int argc, char* argv[]) {
                     fprintf(stderr, "done.\n");
                 }
 
-                if (distout)  // callpairlocalalign == 1 no toki ha ue de shorizumi.
-                {
+                if (opts.distout) {
                     reporterr("\nwriting hat2 (2)\n");
                     hat2p = fopen("hat2", "w");
                     WriteFloatHat2_pointer_halfmtx(hat2p, njob, name, iscore);
                     fclose(hat2p);
                 }
             }
-            //			for( i=0; i<njob-1; i++ ) for( j=i+1; j<njob; j++ ) printf( "dist %d-%d = %f\n", i, j, iscore[i][j-i] );
         }
 
-        if (nkozo && compacttree != 3)  // compacttree == 3 notoki, iscore ha nainode.
-        {
+        if (nkozo && compacttree != 3) {
             ien = njob - 1;
             ik = 0;
             for (i = 0; i < ien; i++) {
@@ -2663,12 +2196,11 @@ tbfast_main(int argc, char* argv[]) {
                 }
                 if (kozoarivec[i])
                     ik++;
-                G__align11_noalign(NULL, 0, 0, NULL, NULL, 0);  // distdp_noalign de tsukatta
+                G__align11_noalign(NULL, 0, 0, NULL, NULL, 0);
             }
         }
 
-        if (subalignment)  // merge ha localmem ni mitaiou
-        {
+        if (opts.subalignment) {
             fprintf(stderr, "Constructing a UPGMA tree ... ");
             fixed_supg_double_realloc_nobk_halfmtx_treeout_constrained(njob, iscore, topol, len, name, nlen, dep, nsubalignments, subtable, 1);
         } else if (compacttree == 3) {
@@ -2696,32 +2228,23 @@ tbfast_main(int argc, char* argv[]) {
             mindistfrom = NULL;
             if (mindist)
                 free(mindist);
-            ;
             mindist = NULL;
-            //			if( selfscore ) free( selfscore ); selfscore = NULL; // matomete free
             if (skiptable)
                 FreeIntMtx(skiptable);
-            skiptable = NULL;  // nikaime dake
+            skiptable = NULL;
             free(partmtx);
         } else if (opts.treeout) {
             fprintf(stderr, "Constructing a UPGMA tree ... ");
-            fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(njob, iscore, topol, len, name, nlen, dep, 1, opts.treeout);  // _memsave demo iihazu
+            fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(njob, iscore, topol, len, name, nlen, dep, 1, opts.treeout);
         } else {
             fprintf(stderr, "Constructing a UPGMA tree ... ");
-            fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(njob, iscore, topol, len, dep, 1, 1);  // _memsave demo iihazu
+            fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(njob, iscore, topol, len, dep, 1, 1);
         }
-        //		else
-        //			ErrorExit( "Incorrect tree\n" );
 
-        if (nkozo)  // atode kakukamo
-        {
-            //			for( i=0; i<nkozo-1; i++ )
-            //				for( j=i+1; j<nkozo; j++ )
-            //					fprintf( stderr, "iscore_kozo[%d][%d] =~ %f\n", i, j, iscore_kozo[i][j-i] );
-            fixed_musclesupg_double_realloc_nobk_halfmtx(nkozo, iscore_kozo, topol_kozo, len_kozo, NULL, 1, 1);  // topol_kozo ha memsave deha nai.
+        if (nkozo) {
+            fixed_musclesupg_double_realloc_nobk_halfmtx(nkozo, iscore_kozo, topol_kozo, len_kozo, NULL, 1, 1);
         }
         fprintf(stderr, "\ndone.\n\n");
-        //		fflush( stderr );
     }
 
     localmem[0][0] = -1;
@@ -2732,63 +2255,33 @@ tbfast_main(int argc, char* argv[]) {
         fprintf(stderr, "Cannot open 'order'\n");
         exit(1);
     }
-#if 0
-	for( i=0; (j=topol[njob-2][0][i])!=-1; i++ )
-	{
-		fprintf( orderfp, "%d\n", j );
-	}
-	for( i=0; (j=topol[njob-2][1][i])!=-1; i++ )
-	{
-		fprintf( orderfp, "%d\n", j );
-	}
-#else
+
     for (i = 0; i < njob; i++)
         fprintf(orderfp, "%d\n", localmem[0][i]);
-#endif
+
     fclose(orderfp);
 
-    if (opts.treeout && noalign) {
+    if (opts.treeout && opts.noalign) {
         writeData_pointer(prep_g, njob, name, nlen, seq);
         fprintf(stderr, "\n");
         SHOWVERSION;
         goto chudan;  // 2016Jul31
     }
 
-    //	countnode( njob, topol, node0 );
     if (tbrweight) {
         weight = 3;
-#if 0
-		utree = 0; counteff( njob, topol, len, eff ); utree = 1;
-#else
-        //		counteff_simple_double_nostatic( njob, topol, len, eff ); // bug in version 7.319!
         counteff_simple_double_nostatic_memsave(njob, topol, len, dep, eff);
         for (i = njob - nadd; i < njob; i++)
             eff[i] /= (double)100;
-
-            //		for( i=0; i<njob; i++ ) reporterr( "eff[%d] = %f\n", i, eff[i] );
-
-#if 0
-		fprintf( stderr, "######  WEIGHT = \n" );
-		for( i=0; i<njob; i++ )
-		{
-			fprintf( stderr, "w[%d] = %f\n", i, eff[i] );
-		}
-		exit( 1 );
-#endif
         if (nkozo) {
-            //			counteff_simple_double( nkozo, topol_kozo, len_kozo, eff_kozo ); // single weight nanode iranai
             for (i = 0, j = 0; i < njob; i++) {
                 if (kozoarivec[i]) {
-                    //					eff_kozo_mapped[i] = eff_kozo[j]; //
                     eff_kozo_mapped[i] = eff[i];  // single weight
                     j++;
                 } else
                     eff_kozo_mapped[i] = 0.0;
-                //				fprintf( stderr, "eff_kozo_mapped[%d] = %f\n", i, eff_kozo_mapped[i] );
-                //				fprintf( stderr, "            eff[%d] = %f\n", i, eff[i] );
             }
         }
-#endif
     } else {
         for (i = 0; i < njob; i++)
             eff[i] = 1.0;
@@ -2882,66 +2375,6 @@ tbfast_main(int argc, char* argv[]) {
         } else {
             for (i = 0; i < njob - 1; i++)
                 mergeoralign[i] = 'n';
-#if 0
-			for( j=njob-nadd; j<njob; j++ )
-			{
-				addmem[0] = j;
-				addmem[1] = -1;
-				for( i=0; i<njob-1; i++ )
-				{
-					reporterr( "Looking for samemember, %d-%d/%d\n", j, i, njob );
-					localmem[0][0] = -1;
-					posinmem = 0;
-					topolorder( localmem[0], &posinmem, topol, dep, i, 0 );
-					localmem[1][0] = -1;
-					posinmem = 0;
-					topolorder( localmem[1], &posinmem, topol, dep, i, 1 );
-
-					if( samemembern( localmem[0], addmem, 1 ) ) // arieru
-					{
-//						reporterr(       "HIT!\n" );
-						if( mergeoralign[i] != 'n' ) mergeoralign[i] = 'w';
-						else mergeoralign[i] = '1';
-					}
-					else if( samemembern( localmem[1], addmem, 1 ) )
-					{
-//						reporterr(       "HIT!\n" );
-						if( mergeoralign[i] != 'n' ) mergeoralign[i] = 'w';
-						else mergeoralign[i] = '2';
-					}
-				}
-			}
-#elseif 0  // 2017/Jan/19 ??    
-			for( i=0; i<njob-1; i++ )
-			{
-//				reporterr( "Looking for samemember, %d-%d/%d\n", j, i, njob );
-				localmem[0][0] = -1;
-				posinmem = 0;
-				topolorder( localmem[0], &posinmem, topol, dep, i, 0 );
-				localmem[1][0] = -1;
-				posinmem = 0;
-				topolorder( localmem[1], &posinmem, topol, dep, i, 1 );
-
-				for( j=njob-nadd; j<njob; j++ )
-				{
-					addmem[0] = j;
-					addmem[1] = -1;
-
-					if( samemembern( localmem[0], addmem, 1 ) ) // arieru
-					{
-//						reporterr(       "HIT!\n" );
-						if( mergeoralign[i] != 'n' ) mergeoralign[i] = 'w';
-						else mergeoralign[i] = '1';
-					}
-					else if( samemembern( localmem[1], addmem, 1 ) )
-					{
-//						reporterr(       "HIT!\n" );
-						if( mergeoralign[i] != 'n' ) mergeoralign[i] = 'w';
-						else mergeoralign[i] = '2';
-					}
-				}
-			}
-#endif
             for (i = 0; i < nadd; i++)
                 addmem[i] = njob - nadd + i;
             addmem[nadd] = -1;
@@ -2962,18 +2395,7 @@ tbfast_main(int argc, char* argv[]) {
                     mergeoralign[i] = '2';
                 }
             }
-#if 0
-			for( i=0; i<njob-1; i++ )
-			{
-				fprintf( stderr, "mem0 = " );
-				for( j=0; topol[i][0][j]>-1; j++ )	fprintf( stderr, "%d ", topol[i][0][j] );
-				fprintf( stderr, "\n" );
-				fprintf( stderr, "mem1 = " );
-				for( j=0; topol[i][1][j]>-1; j++ )	fprintf( stderr, "%d ", topol[i][1][j] );
-				fprintf( stderr, "\n" );
-				fprintf( stderr, "i=%d, mergeoralign[] = %c\n", i, mergeoralign[i] );
-			}
-#endif
+
             for (i = njob - nadd; i < njob; i++)
                 gappick0(bseq[i], seq[i]);
         }
@@ -2981,9 +2403,7 @@ tbfast_main(int argc, char* argv[]) {
         commongappick(njob - nadd, seq);
         for (i = 0; i < njob - nadd; i++)
             strcpy(bseq[i], seq[i]);
-    }
-    //--------------- kokokara ----
-    else if (subalignment) {
+    } else if (opts.subalignment) {
         for (i = 0; i < njob - 1; i++)
             mergeoralign[i] = 'a';
         for (i = 0; i < nsubalignments; i++) {
@@ -3007,12 +2427,12 @@ tbfast_main(int argc, char* argv[]) {
                     fprintf(stderr, "# %d. %-10.10s -> %d letters (including gaps)\n", subtable[i][j] + 1, name[subtable[i][j]] + 1, (int)strlen(seq[subtable[i][j]]));
                     fprintf(stderr, "#\n");
                     fprintf(stderr, "# See http://mafft.cbrc.jp/alignment/software/merge.html for details.\n");
-                    if (subalignmentoffset) {
+                    if (opts.subalignmentoffset) {
                         fprintf(stderr, "#\n");
-                        fprintf(stderr, "# You specified seed alignment(s) consisting of %d sequences.\n", subalignmentoffset);
+                        fprintf(stderr, "# You specified seed alignment(s) consisting of %d sequences.\n", opts.subalignmentoffset);
                         fprintf(stderr, "# In this case, the rule of numbering is:\n");
-                        fprintf(stderr, "#   The aligned seed sequences are numbered as 1 .. %d\n", subalignmentoffset);
-                        fprintf(stderr, "#   The input sequences to be aligned are numbered as %d .. %d\n", subalignmentoffset + 1, subalignmentoffset + njob);
+                        fprintf(stderr, "#   The aligned seed sequences are numbered as 1 .. %d\n", opts.subalignmentoffset);
+                        fprintf(stderr, "#   The input sequences to be aligned are numbered as %d .. %d\n", opts.subalignmentoffset + 1, opts.subalignmentoffset + njob);
                     }
                     fprintf(stderr, "###############################################################################\n");
                     fprintf(stderr, "\n");
@@ -3043,34 +2463,18 @@ tbfast_main(int argc, char* argv[]) {
                 fprintf(stderr, "# If you really want to use this subalignment, pelase give a tree with --treein \n");
                 fprintf(stderr, "# http://mafft.cbrc.jp/alignment/software/treein.html\n");
                 fprintf(stderr, "# http://mafft.cbrc.jp/alignment/software/merge.html\n");
-                if (subalignmentoffset) {
+                if (opts.subalignmentoffset) {
                     fprintf(stderr, "#\n");
-                    fprintf(stderr, "# You specified seed alignment(s) consisting of %d sequences.\n", subalignmentoffset);
+                    fprintf(stderr, "# You specified seed alignment(s) consisting of %d sequences.\n", opts.subalignmentoffset);
                     fprintf(stderr, "# In this case, the rule of numbering is:\n");
-                    fprintf(stderr, "#   The aligned seed sequences are numbered as 1 .. %d\n", subalignmentoffset);
-                    fprintf(stderr, "#   The input sequences to be aligned are numbered as %d .. %d\n", subalignmentoffset + 1, subalignmentoffset + njob);
+                    fprintf(stderr, "#   The aligned seed sequences are numbered as 1 .. %d\n", opts.subalignmentoffset);
+                    fprintf(stderr, "#   The input sequences to be aligned are numbered as %d .. %d\n", opts.subalignmentoffset + 1, opts.subalignmentoffset + njob);
                 }
                 fprintf(stderr, "############################################################################### \n");
                 fprintf(stderr, "\n");
                 exit(1);
             }
-            //			commongappick( seq[subtable[i]], subalignment[i] ); // irukamo
         }
-#if 0
-		for( i=0; i<njob-1; i++ )
-		{
-			fprintf( stderr, "STEP %d\n", i+1 );
-			fprintf( stderr, "group1 = " );
-			for( j=0; topol[i][0][j] != -1; j++ )
-				fprintf( stderr, "%d ", topol[i][0][j]+1 );
-			fprintf( stderr, "\n" );
-			fprintf( stderr, "group2 = " );
-			for( j=0; topol[i][1][j] != -1; j++ )
-				fprintf( stderr, "%d ", topol[i][1][j]+1 );
-			fprintf( stderr, "\n" );
-			fprintf( stderr, "%d -> %c\n\n", i, mergeoralign[i] );
-		}
-#endif
 
         for (i = 0; i < njob; i++) {
             if (insubtable[i])
@@ -3092,9 +2496,7 @@ tbfast_main(int argc, char* argv[]) {
             free(subalnpt[i]);
         free(subalnpt);
         free(preservegaps);
-    }
-    //--------------- kokomade ----
-    else {
+    } else {
         for (i = 0; i < njob; i++)
             gappick0(bseq[i], seq[i]);
         for (i = 0; i < njob - 1; i++)
@@ -3127,7 +2529,7 @@ tbfast_main(int argc, char* argv[]) {
     fprintf(stderr, "Progressive alignment ... \n");
 
 #ifdef enablemultithread
-    if (nthreadtb > 0 && nadd == 0) {
+    if (opts.nthreadtb > 0 && nadd == 0) {
         treebasethread_arg_t* targ;
         int                   jobpos;
         pthread_t*            handle;
@@ -3137,7 +2539,7 @@ tbfast_main(int argc, char* argv[]) {
         int                   nrun;
         int                   nthread_yoyu;
 
-        nthread_yoyu = nthreadtb * 1;
+        nthread_yoyu = opts.nthreadtb * 1;
         nrun = 0;
         jobpos = 0;
         targ = calloc(nthread_yoyu, sizeof(treebasethread_arg_t));
@@ -3197,19 +2599,13 @@ tbfast_main(int argc, char* argv[]) {
         free(handle);
         free(targ);
         free(fftlog);
-        //		free( topol[njob-1][0] );
-        //		free( topol[njob-1][1] );
-        //		free( topol[njob-1] );
-        //		free( topol );
     } else
 #endif
+        treebase(opts, nlen, bseq, nadd, mergeoralign, mseq1, mseq2, topol, dep, eff, &alloclen, localhomtable, singlerna, eff_kozo_mapped, targetmap, targetmapr, ntarget, uselh, nseed, nfilesfornode);
 
-        //	for( i=0; i<njob-1; i++ ) reporterr( "mergeoralign[%d]=%c or %d\n", i, mergeoralign[i], mergeoralign[i] );
-
-        treebase(nlen, bseq, nadd, mergeoralign, mseq1, mseq2, topol, dep, eff, &alloclen, localhomtable, singlerna, eff_kozo_mapped, targetmap, targetmapr, ntarget, uselh, nseed, nfilesfornode);
     fprintf(stderr, "\ndone.\n");
 
-    if (keeplength) {
+    if (opts.keeplength) {
         dlf = fopen("_deletelist", "w");
         deletelist = (GapPos**)calloc(nadd + 1, sizeof(GapPos*));
         for (i = 0; i < nadd; i++) {
@@ -3218,7 +2614,7 @@ tbfast_main(int argc, char* argv[]) {
             deletelist[i][0].len = 0;
         }
         deletelist[nadd] = NULL;
-        ndeleted = deletenewinsertions_whole(njob - nadd, nadd, bseq, bseq + njob - nadd, deletelist);
+        opts.ndeleted = deletenewinsertions_whole(njob - nadd, nadd, bseq, bseq + njob - nadd, deletelist);
 
         for (i = 0; i < nadd; i++) {
             if (deletelist[i])
@@ -3229,11 +2625,11 @@ tbfast_main(int argc, char* argv[]) {
 
         restoreoriginalgaps(njob, bseq, originalgaps);
         free(originalgaps);
-        originalgaps = NULL;  // 2017/Nov/15
+        originalgaps = NULL;
 
-        if (mapout) {
+        if (opts.mapout) {
             dlf = fopen("_deletemap", "w");
-            if (mapout == 1)
+            if (opts.mapout == 1)
                 reconstructdeletemap(nadd, addbk, deletelist, bseq + njob - nadd, dlf, name + njob - nadd);
             else
                 reconstructdeletemap_compact(nadd, addbk, deletelist, seq + njob - nadd, dlf, name + njob - nadd);
@@ -3242,8 +2638,6 @@ tbfast_main(int argc, char* argv[]) {
             fclose(dlf);
         }
 
-        //		FreeIntMtx( deletelist );
-        //		deletelist = NULL;
         for (i = 0; deletelist[i] != NULL; i++)
             free(deletelist[i]);
         free(deletelist);
@@ -3257,30 +2651,7 @@ tbfast_main(int argc, char* argv[]) {
         fprintf(stderr, "\n\n");
     }
 
-#if 0
-	if( constraint )
-	{
-		LocalHom *tmppt1, *tmppt2;
-		for( i=0; i<njob; i++ )
-		{
-			for( j=0; j<njob; j++ )
-			{
-				tmppt1 = localhomtable[i]+j;
-				while( tmppt2 = tmppt1->next )
-				{
-					free( (void *)tmppt1 );
-					tmppt1 = tmppt2;
-				}
-				free( (void *)tmppt1 );
-			}
-			free( (void *)(localhomtable[i]+j) );
-		}
-		free( (void *)localhomtable );
-	}
-#endif
-
     fprintf(trap_g, "done.\n");
-    //	fclose( trap_g );
     free(mergeoralign);
     freeconstants();
 
@@ -3301,11 +2672,7 @@ tbfast_main(int argc, char* argv[]) {
     }
 
     writeData_pointer(prep_g, njob, name, nlen, bseq);
-#if 0
-	writeData( stdout, njob, name, nlen, bseq );
-	writePre( njob, name, nlen, bseq, !contin );
-	writeData_pointer( prep_g, njob, name, nlen, aseq );
-#endif
+
 #if IODEBUG
     fprintf(stderr, "OSHIMAI\n");
 #endif
@@ -3330,11 +2697,11 @@ tbfast_main(int argc, char* argv[]) {
 
     if (spscoreout)
         reporterr("Unweighted sum-of-pairs score = %10.5f\n", sumofpairsscore(njob, bseq));
-    nthread = MAX(nthreadtb, nthreadreadlh);  // toriaezu
+    nthread = MAX(opts.nthreadtb, nthreadreadlh);  // toriaezu
     SHOWVERSION;
-    if (ndeleted > 0) {
-        reporterr("\nTo keep the alignment length, %d letters were DELETED.\n", ndeleted);
-        if (mapout)
+    if (opts.ndeleted > 0) {
+        reporterr("\nTo keep the alignment length, %d letters were DELETED.\n", opts.ndeleted);
+        if (opts.mapout)
             reporterr("The deleted letters are shown in the (filename).map file.\n");
         else
             reporterr("To know the positions of deleted letters, rerun the same command with the --mapout option.\n");
@@ -3352,15 +2719,6 @@ tbfast_main(int argc, char* argv[]) {
 
     FreeIntCub(topol);
     topol = NULL;
-    //	for( i=0; i<njob; i++ )
-    //	{
-    //		free( topol[i][0] );
-    //		free( topol[i][1] );
-    //		free( topol[i] );
-    //	}
-    //	free( topol );
-    //	free( len );
-    //	free( iscore );
     free(eff);
     free(dep);
     if (nfilesfornode)
