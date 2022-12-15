@@ -276,7 +276,7 @@ freelocalarrays(
     commonAlloc1 = 0;
     commonAlloc2 = 0;
     Falign(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL, 0, NULL);
-    Falign_localhom(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, 0, NULL);
+    Falign_localhom(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, 0, NULL);
     D__align(NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0);
     partA__align_variousdist(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL);
 
@@ -972,7 +972,7 @@ athread(void* arg) {
                             D__align(n_dis_consweight_multi, mseq1, mseq2, effarr1, effarr2, clus1, clus2, alloclen, constraint, &impmatchdouble, NULL, NULL, NULL, NULL, subgenerationpt, subgenerationatfirst, &chudanres, 1, 1);
 
                         else
-                            Falign_localhom(whichmtx, scoringmatrices, n_dis_consweight_multi, mseq1, mseq2, effarr1, effarr2, eff1s, eff2s, clus1, clus2, alloclen, constraint, &impmatchdouble, gapmap1, gapmap2, subgenerationpt, subgenerationatfirst, &chudanres);
+                            Falign_localhom(whichmtx, scoringmatrices, mseq1, mseq2, effarr1, effarr2, eff1s, eff2s, clus1, clus2, alloclen, constraint, &impmatchdouble, gapmap1, gapmap2, subgenerationpt, subgenerationatfirst, &chudanres);
                         //						fprintf( stderr, "##### impmatch = %f\n", impmatch );
                         if (chudanres && parallelizationstrategy == BAATARI2) {
                             //							fprintf( stderr, "#### yarinaoshi!!! INS-i\n" );
@@ -1334,7 +1334,7 @@ TreeDependentIteration(int locnjob, char** name, int nlen[M], char** aseq, char*
         //		else if( weight == 4 || weight == 0 )
         else if (locnjob > 2 && (weight == 4 || weight == 0)) {
             treeCnv(stopol, locnjob, topol, len, branchWeight);
-            calcBranchWeight(branchWeight, locnjob, stopol, topol, len);  // IRU!!!
+            calcBranchWeight(branchWeight, locnjob, stopol, topol);  // IRU!!!
         }
     }
 
@@ -1524,7 +1524,7 @@ TreeDependentIteration(int locnjob, char** name, int nlen[M], char** aseq, char*
                 //				else if( weight == 4 || weight == 0 )
                 else if (locnjob > 2 && (weight == 4 || weight == 0)) {
                     treeCnv(stopol, locnjob, topol, len, branchWeight);
-                    calcBranchWeight(branchWeight, locnjob, stopol, topol, len);  // IRU!!!
+                    calcBranchWeight(branchWeight, locnjob, stopol, topol);  // IRU!!!
                 }
                 trap = fopen("hat2", "w");
                 if (!trap)
@@ -1955,7 +1955,7 @@ TreeDependentIteration(int locnjob, char** name, int nlen[M], char** aseq, char*
                                     D__align(n_dis_consweight_multi, mseq1, mseq2, effarr1, effarr2, clus1, clus2, alloclen, constraint, &impmatchdouble, NULL, NULL, NULL, NULL, NULL, 0, NULL, 1, 1);
                                 }
                             } else
-                                Falign_localhom(whichmtx, scoringmatrices, n_dis_consweight_multi, mseq1, mseq2, effarr1, effarr2, eff1s, eff2s, clus1, clus2, alloclen, constraint, &impmatchdouble, gapmap1, gapmap2, NULL, 0, NULL);
+                                Falign_localhom(whichmtx, scoringmatrices, mseq1, mseq2, effarr1, effarr2, eff1s, eff2s, clus1, clus2, alloclen, constraint, &impmatchdouble, gapmap1, gapmap2, NULL, 0, NULL);
                             //						fprintf( stderr, "##### impmatch = %f\n", impmatch );
                         } else {
                             fprintf(stderr, "\n\nUnexpected error.  Please contact katoh@ifrec.osaka-u.ac.jp\n\n\n");

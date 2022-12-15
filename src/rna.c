@@ -319,7 +319,7 @@ utot(int n, int l, char** s) {
 }
 
 void
-foldrna(int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* eff2, RNApair*** grouprna1, RNApair*** grouprna2, double** impmtx, int* gapmap1, int* gapmap2, RNApair* additionalpair) {
+foldrna(int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* eff2, RNApair*** grouprna1, RNApair*** grouprna2, double** impmtx) {
     int i, j;
     //	int ui, uj;
     //	int uiup, ujup;

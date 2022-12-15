@@ -128,7 +128,7 @@ removex(char* d, char* m) {
 }
 
 static void
-putlocalhom_last(char* s1, char* s2, LocalHom* localhompt, Lastresx* lastresx, char korh) {
+putlocalhom_last(char* s1, char* s2, LocalHom* localhompt, Lastresx* lastresx) {
     char *    pt1, *pt2;
     int       naln, nreg;
     int       iscore;
@@ -328,7 +328,7 @@ block2reg(char* block, Reg* reg1, Reg* reg2, int start1, int start2) {
 }
 
 static void
-readlastresx_singleq(FILE* fp, int n1, int nameq, Lastresx** lastresx) {
+readlastresx_singleq(FILE* fp, int nameq, Lastresx** lastresx) {
     char* gett;
     Aln*  tmpaln;
     int   prevnaln, naln, nreg;
@@ -560,7 +560,7 @@ static void readlastresx_group( FILE *fp, Lastresx **lastresx )
 #endif
 
 static void
-readlastresx(FILE* fp, int n1, int n2, Lastresx** lastresx, char** seq1, char** seq2) {
+readlastresx(FILE* fp, Lastresx** lastresx) {
     char* gett;
     Aln*  tmpaln;
     int   prevnaln, naln, nreg;
@@ -878,7 +878,7 @@ lastcallthread(void* arg) {
         }
         //		readlastres( lfp, nd, nq, lastres, dseq, qseq );
         //		fprintf( stderr, "Reading lastres\n" );
-        readlastresx_singleq(lfp, nd, k, lastresx);
+        readlastresx_singleq(lfp, k, lastresx);
         fclose(lfp);
     }
     return (NULL);
@@ -1092,7 +1092,7 @@ calllast_once(int nd, char** dseq, int nq, char** qseq, Lastresx** lastresx) {
     }
     //	readlastres( lfp, nd, nq, lastres, dseq, qseq );
     fprintf(stderr, "Reading lastres\n");
-    readlastresx(lfp, nd, nq, lastresx, dseq, qseq);
+    readlastresx(lfp, lastresx);
     fclose(lfp);
 }
 
@@ -1212,7 +1212,7 @@ recalllara(char** mseq1, char** mseq2, int alloclen) {
 }
 
 static double
-calldafs_giving_bpp(char** mseq1, char** mseq2, char** bpp1, char** bpp2, int alloclen, int i, int j) {
+calldafs_giving_bpp(char** mseq1, char** mseq2, char** bpp1, char** bpp2, int i, int j) {
     FILE*  fp;
     int    res;
     char*  com;
@@ -1322,7 +1322,7 @@ calldafs_giving_bpp(char** mseq1, char** mseq2, char** bpp1, char** bpp2, int al
 }
 
 static double
-callmxscarna_giving_bpp(char** mseq1, char** mseq2, char** bpp1, char** bpp2, int alloclen, int i, int j) {
+callmxscarna_giving_bpp(char** mseq1, char** mseq2, char** bpp1, char** bpp2, int i, int j) {
     FILE*  fp;
     int    res;
     char*  com;
@@ -2144,11 +2144,11 @@ athread(void* arg)  // alg='R', alg='r' -> tsukawarenai.
                     pscore = G__align11_noalign(n_dis_consweight_multi, penalty, penalty_ex, distseq1, distseq2, alloclen);  // tsuneni distseq shiyou
                     break;
                 case ('s'):
-                    pscore = callmxscarna_giving_bpp(mseq1, mseq2, bpp[i], bpp[j], alloclen, i, j);
+                    pscore = callmxscarna_giving_bpp(mseq1, mseq2, bpp[i], bpp[j], i, j);
                     off1 = off2 = 0;
                     break;
                 case ('G'):
-                    pscore = calldafs_giving_bpp(mseq1, mseq2, bpp[i], bpp[j], alloclen, i, j);
+                    pscore = calldafs_giving_bpp(mseq1, mseq2, bpp[i], bpp[j], i, j);
                     off1 = off2 = 0;
                     break;
 #if 0 
@@ -2189,9 +2189,9 @@ athread(void* arg)  // alg='R', alg='r' -> tsukawarenai.
                 else if (specifictarget && targetmap[i] == -1 && targetmap[j] == -1)
                     ;
                 else if (alg == 'R')
-                    putlocalhom_last(mseq1[0], mseq2[0], localhomtable[i] + j, lastresx[i] + j, 'h');
+                    putlocalhom_last(mseq1[0], mseq2[0], localhomtable[i] + j, lastresx[i] + j);
                 else if (alg == 'r')
-                    putlocalhom_last(mseq1[0], mseq2[0], localhomtable[i] + j - (njob - nadd), lastresx[i] + j - (njob - nadd), 'h');  // ?????
+                    putlocalhom_last(mseq1[0], mseq2[0], localhomtable[i] + j - (njob - nadd), lastresx[i] + j - (njob - nadd));
                 else if (alg == 'H')
                     putlocalhom_ext(mseq1[0], mseq2[0], localhomtable[i] + j, off1, off2, (int)pscore, strlen(mseq1[0]), 'h');
                 else if (alg == 'Y')
@@ -2263,7 +2263,7 @@ athread(void* arg)  // alg='R', alg='r' -> tsukawarenai.
 #endif
 
 static void
-pairalign(char** name, int* nlen, char** seq, char** aseq, char** dseq, int* thereisxineachseq, char** mseq1, char** mseq2, int alloclen, Lastresx** lastresx, double** distancemtx, LocalHom** localhomtable, double** expdist, int ngui) {
+pairalign(char** name, char** seq, char** aseq, char** dseq, int* thereisxineachseq, char** mseq1, char** mseq2, int alloclen, Lastresx** lastresx, double** distancemtx, LocalHom** localhomtable, double** expdist, int ngui) {
     int    i, j, ilim, jst, jj;
     int    off1, off2, dum1, dum2, thereisx;
     double pscore = 0.0;  // by D.Mathog
@@ -2714,11 +2714,11 @@ pairalign(char** name, int* nlen, char** seq, char** aseq, char** dseq, int* the
                             off1 = off2 = 0;
                             break;
                         case ('s'):
-                            pscore = callmxscarna_giving_bpp(mseq1, mseq2, bpp[i], bpp[j], alloclen, i, j);
+                            pscore = callmxscarna_giving_bpp(mseq1, mseq2, bpp[i], bpp[j], i, j);
                             off1 = off2 = 0;
                             break;
                         case ('G'):
-                            pscore = calldafs_giving_bpp(mseq1, mseq2, bpp[i], bpp[j], alloclen, i, j);
+                            pscore = calldafs_giving_bpp(mseq1, mseq2, bpp[i], bpp[j], i, j);
                             off1 = off2 = 0;
                             break;
                         case ('M'):
@@ -2741,9 +2741,9 @@ pairalign(char** name, int* nlen, char** seq, char** aseq, char** dseq, int* the
                         else if (specifictarget && targetmap[i] == -1 && targetmap[j] == -1)
                             ;
                         else if (alg == 'R')
-                            putlocalhom_last(mseq1[0], mseq2[0], localhomtable[i] + j, lastresx[i] + j, 'h');
+                            putlocalhom_last(mseq1[0], mseq2[0], localhomtable[i] + j, lastresx[i] + j);
                         else if (alg == 'r')
-                            putlocalhom_last(mseq1[0], mseq2[0], localhomtable[i] + j - (njob - nadd), lastresx[i] + j - (njob - nadd), 'h');  // ?????
+                            putlocalhom_last(mseq1[0], mseq2[0], localhomtable[i] + j - (njob - nadd), lastresx[i] + j - (njob - nadd));
                         else if (alg == 'H')
                             putlocalhom_ext(mseq1[0], mseq2[0], localhomtable[i] + j, off1, off2, (int)pscore, strlen(mseq1[0]), 'h');
                         else if (alg == 'Y')
@@ -2897,7 +2897,7 @@ pairalign(char** name, int* nlen, char** seq, char** aseq, char** dseq, int* the
 }
 
 int
-pairlocalalign(int ngui, int lgui, char** namegui, char** seqgui, double** distancemtx, LocalHom** localhomtable, int argc, char** argv, double** expdist) {
+pairlocalalign(int ngui, char** namegui, char** seqgui, double** distancemtx, LocalHom** localhomtable, int argc, char** argv, double** expdist) {
     int *      nlen, *thereisxineachseq;
     char **    name, **seq;
     char **    mseq1, **mseq2;
@@ -3039,7 +3039,7 @@ pairlocalalign(int ngui, int lgui, char** namegui, char** seqgui, double** dista
         }
     }
 
-    pairalign(name, nlen, bseq, aseq, dseq, thereisxineachseq, mseq1, mseq2, alloclen, lastresx, distancemtx, localhomtable, expdist, ngui);
+    pairalign(name, bseq, aseq, dseq, thereisxineachseq, mseq1, mseq2, alloclen, lastresx, distancemtx, localhomtable, expdist, ngui);
 
     fprintf(trap_g, "done.\n");
 #if DEBUG
@@ -3133,7 +3133,7 @@ pairalign_node(int njob, int nlenmax, char** name, char** seq, int*** topol, dou
     char** bseq;
     char** dseq;
     int    alloclen = nlenmax * 2;
-    int    alignmentlength;
+    size_t    alignmentlength;
     FILE*  fp;
 
     bseq = AllocateCharMtx(njob, alloclen + 10);

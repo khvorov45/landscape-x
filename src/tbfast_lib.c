@@ -710,7 +710,7 @@ treebasethread(void* arg)  // seed && compacttree==3 niha taioushinai.
                 FreeIntMtx(commonIP);
             commonIP = NULL;
             Falign(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL, 0, NULL);
-            Falign_udpari_long(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, NULL);
+            Falign_udpari_long(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, NULL);
             A__align(NULL, 0, 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
             D__align(NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0);
             partA__align(NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL);
@@ -862,7 +862,7 @@ treebasethread(void* arg)  // seed && compacttree==3 niha taioushinai.
             fprintf(stderr, " f\b\b");
             if (alg == 'M') {
                 fprintf(stderr, "m");
-                pscore = Falign_udpari_long(NULL, NULL, dynamicmtx, mseq1, mseq2, effarr1, effarr2, NULL, NULL, clus1, clus2, *alloclen, fftlog + m1);
+                pscore = Falign_udpari_long(NULL, dynamicmtx, mseq1, mseq2, effarr1, effarr2, NULL, NULL, clus1, clus2, *alloclen, fftlog + m1);
             } else
                 pscore = Falign(NULL, NULL, dynamicmtx, mseq1, mseq2, effarr1, effarr2, NULL, NULL, clus1, clus2, *alloclen, fftlog + m1, NULL, 0, NULL);
         } else {
@@ -1031,7 +1031,7 @@ treebase(TbfastOpts opts, int* nlen, char** aseq, int nadd, char* mergeoralign, 
             calcimportance_half(njob, effarr, aseq, localhomtable, *alloclen);
     } else if (constraint && nseed)  // ie, compacttree == 3 && constraint > 0
     {
-        dontcalcimportance_half(nseed, effarr, aseq, localhomtable);  //CHUUI
+        dontcalcimportance_half(nseed, aseq, localhomtable);  //CHUUI
     }
 
     tscore = 0.0;
@@ -1206,7 +1206,7 @@ treebase(TbfastOpts opts, int* nlen, char** aseq, int nadd, char* mergeoralign, 
             fprintf(stderr, " f\b\b");
             if (alg == 'M') {
                 fprintf(stderr, "m");
-                pscore = Falign_udpari_long(NULL, NULL, dynamicmtx, mseq1, mseq2, effarr1, effarr2, NULL, NULL, clus1, clus2, *alloclen, fftlog + m1);
+                pscore = Falign_udpari_long(NULL, dynamicmtx, mseq1, mseq2, effarr1, effarr2, NULL, NULL, clus1, clus2, *alloclen, fftlog + m1);
             } else
                 pscore = Falign(NULL, NULL, dynamicmtx, mseq1, mseq2, effarr1, effarr2, NULL, NULL, clus1, clus2, *alloclen, fftlog + m1, NULL, 0, NULL);
         } else {
@@ -1341,7 +1341,7 @@ treebase(TbfastOpts opts, int* nlen, char** aseq, int nadd, char* mergeoralign, 
     free(effarr1_kozo);
     free(effarr2_kozo);
     Falign(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL, 0, NULL);
-    Falign_udpari_long(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, NULL);
+    Falign_udpari_long(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, NULL);
     D__align(NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0);
     A__align(NULL, 0, 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
     imp_match_init_strictD(NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, 0, 0);
@@ -1596,7 +1596,7 @@ tbfast_main(int argc, char* argv[]) {
     fclose(infp);
 
     if (opts.treein) {
-        loadtree(njob, topol, len, name, nlen, dep, opts.treeout);
+        loadtree(njob, topol, len, name, dep, opts.treeout);
         fprintf(stderr, "\ndone.\n\n");
         if (opts.callpairlocalalign && specificityconsideration > 0.0) {
             int* mem0 = calloc(sizeof(int), njob);
@@ -1662,7 +1662,7 @@ tbfast_main(int argc, char* argv[]) {
         }
 
         if (opts.callpairlocalalign) {
-            pairlocalalign(njob, nlenmax, name, seq, iscore, localhomtable, pac, pav, expdist);
+            pairlocalalign(njob, name, seq, iscore, localhomtable, pac, pav, expdist);
             arguments(tac, tav, NULL, NULL, NULL, NULL);
             opts.callpairlocalalign = 1;
             if (expdist)
@@ -1778,7 +1778,7 @@ tbfast_main(int argc, char* argv[]) {
         }
     } else if (compacttree != 3) {
         if (opts.callpairlocalalign) {
-            pairlocalalign(njob, nlenmax, name, seq, iscore, NULL, pac, pav, expdist);
+            pairlocalalign(njob, name, seq, iscore, NULL, pac, pav, expdist);
             arguments(tac, tav, NULL, NULL, NULL, NULL);
             opts.callpairlocalalign = 1;
             if (expdist)
@@ -2192,7 +2192,7 @@ tbfast_main(int argc, char* argv[]) {
 
         if (opts.subalignment) {
             fprintf(stderr, "Constructing a UPGMA tree ... ");
-            fixed_supg_double_realloc_nobk_halfmtx_treeout_constrained(njob, iscore, topol, len, name, nlen, dep, nsubalignments, subtable, 1);
+            fixed_supg_double_realloc_nobk_halfmtx_treeout_constrained(njob, iscore, topol, len, name, dep, nsubalignments, subtable, 1);
         } else if (compacttree == 3) {
             fp = fopen("hat3dir/tree", "rb");  // windows no tame rb
             treein_bin(fp, njob, topol, len, dep, nfilesfornode);
@@ -2225,7 +2225,7 @@ tbfast_main(int argc, char* argv[]) {
             free(partmtx);
         } else if (opts.treeout) {
             fprintf(stderr, "Constructing a UPGMA tree ... ");
-            fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(njob, iscore, topol, len, name, nlen, dep, 1, opts.treeout);
+            fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(njob, iscore, topol, len, name, dep, 1, opts.treeout);
         } else {
             fprintf(stderr, "Constructing a UPGMA tree ... ");
             fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(njob, iscore, topol, len, dep, 1, 1);

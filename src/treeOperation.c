@@ -409,7 +409,7 @@ calcW(Node* ob, Node* op) {
 }
 
 void
-calcBranchWeight(double** bw, int locnseq, Node* stopol, int*** topol, double** len) {
+calcBranchWeight(double** bw, int locnseq, Node* stopol, int*** topol) {
     NodeInCub parent;
     int       i;
     int       rep;

@@ -531,7 +531,7 @@ tmpscore = score = 0.0;
 }
 
 double
-score_calc4(char** seq, int s, double** eff, int ex) /* method 3 deha nai */
+score_calc4(char** seq, int s, double** eff) /* method 3 deha nai */
 {
     int    i, j, k;
     double c;
@@ -801,7 +801,7 @@ generalmsadistarrthread(void* arg)  // enablemultithread == 0 demo tsukau
 
 #if 1
 static void
-kmerresetnearest(int nseq, Bchain* acpt, double** distfrompt, double* mindisfrompt, int* nearestpt, int pos, int* tselfscore, int** pointt, int* nlen, int* singlettable1, double* result, int* joblist) {
+kmerresetnearest(Bchain* acpt, double** distfrompt, double* mindisfrompt, int* nearestpt, int pos, int* tselfscore, int** pointt, int* nlen, int* singlettable1, double* result, int* joblist) {
     int    i, j;
     double tmpdouble;
     double mindisfrom;
@@ -1015,7 +1015,7 @@ kmerresetnearest(int nseq, Bchain* acpt, double** distfrompt, double* mindisfrom
 
 #if 1
 static void
-msaresetnearest(int nseq, Bchain* acpt, double** distfrompt, double* mindisfrompt, int* nearestpt, int pos, char** seq, int** skiptable, int* tselfscore, double* result, int* joblist) {
+msaresetnearest(Bchain* acpt, double** distfrompt, double* mindisfrompt, int* nearestpt, int pos, char** seq, int** skiptable, int* tselfscore, double* result, int* joblist) {
     int    i, j;
     double tmpdouble;
     double mindisfrom;
@@ -1239,7 +1239,7 @@ getdensest(int* m, double* d) {
 }
 
 static void
-setdensity(int nseq, Bchain* acpt, double** eff, double* density, int pos) {
+setdensity(Bchain* acpt, double** eff, double* density, int pos) {
     int    j;
     double tmpdouble;
     //	double **effptpt;
@@ -1269,7 +1269,7 @@ setdensity(int nseq, Bchain* acpt, double** eff, double* density, int pos) {
 }
 
 static void
-setnearest(int nseq, Bchain* acpt, double** eff, double* mindisfrompt, int* nearestpt, int pos) {
+setnearest(Bchain* acpt, double** eff, double* mindisfrompt, int* nearestpt, int pos) {
     int    j;
     double tmpdouble;
     double mindisfrom;
@@ -1310,7 +1310,7 @@ setnearest(int nseq, Bchain* acpt, double** eff, double* mindisfrompt, int* near
 }
 
 static void
-setnearest_double_fullmtx(int nseq, Bchain* acpt, double** eff, double* mindisfrompt, int* nearestpt, int pos) {
+setnearest_double_fullmtx(Bchain* acpt, double** eff, double* mindisfrompt, int* nearestpt, int pos) {
     int      j;
     double   tmpdouble;
     Bchain*  acptj;
@@ -1367,7 +1367,7 @@ loadtreeoneline(int* ar, double* len, FILE* fp) {
 }
 
 void
-loadtop(int nseq, double** mtx, int*** topol, double** len, char** name, int* nlen, Treedep* dep) {
+loadtop(int nseq, double** mtx, int*** topol, double** len, char** name, Treedep* dep) {
     int     i, j, k, minijm, maxijm;
     int *   intpt, *intpt2;
     int*    hist = NULL;
@@ -1780,7 +1780,7 @@ topolorderz(int* order, int*** topol, Treedep* dep, int pos, int nchild) {
 #if RECURSIVETOP
 #else
 static void
-topolorder_mudaari(int nseq, int* n1, int* n2, int* order1, int* order2, int*** topol, Treedep* dep, int pos)
+topolorder_mudaari(int* n1, int* n2, int* order1, int* order2, int*** topol, Treedep* dep, int pos)
 // memhist[][] wo free sezu, recalcpairs4thread() ni wataseba, kono kansuu ha iranai. -> V7.383
 // memhist[][] no memory shiyou ryou ha, saiaku no baai O(N^2)
 {
@@ -1848,7 +1848,7 @@ topolorder_mudaari(int nseq, int* n1, int* n2, int* order1, int* order2, int*** 
 
 #if CANONICALTREEFORMAT
 void
-createchain(int nseq, int*** topol, double** len, char** name, int* nlen, Treedep* dep, int treeout, int shuffle, int seed) {
+createchain(int nseq, int*** topol, double** len, char** name, Treedep* dep, int treeout, int shuffle, int seed) {
     FILE*  fp;
     int    i, j;
     double l, ll;
@@ -2243,7 +2243,7 @@ createchain(int nseq, int*** topol, double** len, char** name, int* nlen, Treede
 #endif
 
 void
-loadtree(int nseq, int*** topol, double** len, char** name, int* nlen, Treedep* dep, int treeout) {
+loadtree(int nseq, int*** topol, double** len, char** name, Treedep* dep, int treeout) {
     int     i, j, k;
     int *   intpt, *intpt2;
     int*    hist = NULL;
@@ -2773,7 +2773,7 @@ increaseintergroupdistancesfullmtx(double** eff, int ngroup, int** groups, int n
 }
 
 void
-fixed_supg_double_realloc_nobk_halfmtx_treeout_constrained(int nseq, double** eff, int*** topol, double** len, char** name, int* nlen, Treedep* dep, int ngroup, int** groups, int efffree) {
+fixed_supg_double_realloc_nobk_halfmtx_treeout_constrained(int nseq, double** eff, int*** topol, double** len, char** name, Treedep* dep, int ngroup, int** groups, int efffree) {
     int     i, j, k, miniim, maxiim, minijm, maxijm;
     int *   intpt, *intpt2;
     double  tmpdouble;
@@ -2877,7 +2877,7 @@ fixed_supg_double_realloc_nobk_halfmtx_treeout_constrained(int nseq, double** ef
     ac[nseq - 1].next = NULL;
 
     for (i = 0; i < nseq; i++)
-        setnearest(nseq, ac, eff, mindisfrom + i, nearest + i, i);  // muscle
+        setnearest(ac, eff, mindisfrom + i, nearest + i, i);  // muscle
 
     for (i = 0; i < nseq; i++)
         tmptmplen[i] = 0.0;
@@ -3172,7 +3172,7 @@ fixed_supg_double_realloc_nobk_halfmtx_treeout_constrained(int nseq, double** ef
                     maxiim = i;
                 }
                 if (eff[miniim][maxiim - miniim] > mindisfrom[i])
-                    setnearest(nseq, ac, eff, mindisfrom + i, nearest + i, i);
+                    setnearest(ac, eff, mindisfrom + i, nearest + i, i);
             }
         }
 #endif
@@ -3249,7 +3249,6 @@ msaresetnearestthread(void* arg) {
     //	int thread_no = targ->thread_no;
     int      para = targ->para;
     int      im = targ->im;
-    int      nseq = targ->nseq;
     double** partmtx = targ->partmtx;
     double*  mindist = targ->mindist;
     int*     nearest = targ->nearest;
@@ -3288,7 +3287,7 @@ msaresetnearestthread(void* arg) {
         i = acptbk->pos;
         if (nearest[i] == im) {
             if (partmtx[im][i] > mindist[i]) {
-                msaresetnearest(nseq, ac, partmtx, mindist + i, nearest + i, i, seq, skiptable, tselfscore, result, joblist);
+                msaresetnearest(ac, partmtx, mindist + i, nearest + i, i, seq, skiptable, tselfscore, result, joblist);
             }
         }
     }
@@ -3300,7 +3299,6 @@ kmerresetnearestthread(void* arg) {
     //	int thread_no = targ->thread_no;
     int      para = targ->para;
     int      im = targ->im;
-    int      nseq = targ->nseq;
     double** partmtx = targ->partmtx;
     double*  mindist = targ->mindist;
     int*     nearest = targ->nearest;
@@ -3346,7 +3344,7 @@ kmerresetnearestthread(void* arg) {
                     singlettable1 = (int*)calloc(tsize, sizeof(int));
                     makecompositiontable_global(singlettable1, pointt[i]);
                 }
-                kmerresetnearest(nseq, ac, partmtx, mindist + i, nearest + i, i, tselfscore, pointt, nlen, singlettable1, result, joblist);
+                kmerresetnearest(ac, partmtx, mindist + i, nearest + i, i, tselfscore, pointt, nlen, singlettable1, result, joblist);
                 if (pointt)
                     free(singlettable1);
                 singlettable1 = NULL;  // kmer
@@ -4005,6 +4003,7 @@ distdpL(double** scoringmtx, char* s1, char* s2, LocalHom* lh, double selfscore1
 
 static double
 distdpL_noalign(char* s1, char* s2, double selfscore1, double selfscore2, int alloclen) {
+    (void)alloclen;
     double v;
     //	reporterr( "LOCAL noalign\n" );
     v = L__align11_noalign(n_dis_consweight_multi, &s1, &s2);
@@ -4041,7 +4040,7 @@ distdpN_noalign(char* s1, char* s2, double selfscore1, double selfscore2, int al
 }
 
 static void
-writehat3node_noaddress(int n, int i, int j, int ii, int jj, FILE** fpp, int tmpint, LocalHom* lh, int* uselh) {
+writehat3node_noaddress(int n, int i, int j, int ii, int jj, FILE** fpp, LocalHom* lh, int* uselh) {
     //	reporterr( "node=%d (*fpp=%p), i=%d, j=%d\n", n, *fpp, i+1, j+1 );
 
     {
@@ -4375,7 +4374,7 @@ recalcpairs4thread(void* arg)  // no TLS
             mem1[0] = -1;
             n1 = topolorderz(mem1, topol, dep, n, 1) - mem1;
 #else
-            topolorder_mudaari(njob, &n0, &n1, mem0, mem1, topol, dep, n);
+            topolorder_mudaari(&n0, &n1, mem0, mem1, topol, dep, n);
 #endif
 #endif
         }
@@ -4440,7 +4439,7 @@ recalcpairs4thread(void* arg)  // no TLS
 #if N0LOOPFIRST
                 writehat3node_noaddress(n, m0, m1, j, i, &localfp, 'n', localhomtable, uselh);
 #else
-                writehat3node_noaddress(n, m0, m1, i, j, &localfp, 'n', localhomtable, uselh);
+                writehat3node_noaddress(n, m0, m1, i, j, &localfp, localhomtable, uselh);
 #endif
                 freelocalhom1(localhomtable);
             }
@@ -5691,7 +5690,7 @@ compacttree_memsaveselectable(int nseq, double** partmtx, int* nearest, double* 
 }
 
 void
-fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(int nseq, double** eff, int*** topol, double** len, char** name, int* nlen, Treedep* dep, int efffree, int treeout) {
+fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(int nseq, double** eff, int*** topol, double** len, char** name, Treedep* dep, int efffree, int treeout) {
     int     i, j, k, miniim, maxiim, minijm, maxijm;
     int*    intpt;
     double  tmpdouble;
@@ -5783,10 +5782,10 @@ fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(int nseq, double** 
     ac[nseq - 1].next = NULL;
 
     for (i = 0; i < nseq; i++)
-        setnearest(nseq, ac, eff, mindisfrom + i, nearest + i, i);  // muscle
+        setnearest(ac, eff, mindisfrom + i, nearest + i, i);  // muscle
     if (treeout == 2)
         for (i = 0; i < nseq; i++)
-            setdensity(nseq, ac, eff, density + i, i);
+            setdensity(ac, eff, density + i, i);
 
     for (i = 0; i < nseq; i++)
         tmptmplen[i] = 0.0;
@@ -6007,7 +6006,7 @@ fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(int nseq, double** 
                 }
                 if (eff[miniim][maxiim - miniim] > mindisfrom[i]) {
                     //					printf( "go\n" );
-                    setnearest(nseq, ac, eff, mindisfrom + i, nearest + i, i);
+                    setnearest(ac, eff, mindisfrom + i, nearest + i, i);
                 }
             }
         }
@@ -6066,7 +6065,7 @@ fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(int nseq, double** 
 }
 
 void
-fixed_musclesupg_double_realloc_nobk_halfmtx_treeout(int nseq, double** eff, int*** topol, double** len, char** name, int* nlen, Treedep* dep, int efffree) {
+fixed_musclesupg_double_realloc_nobk_halfmtx_treeout(int nseq, double** eff, int*** topol, double** len, char** name, Treedep* dep, int efffree) {
     int     i, j, k, miniim, maxiim, minijm, maxijm;
     int *   intpt, *intpt2;
     double  tmpdouble;
@@ -6155,7 +6154,7 @@ fixed_musclesupg_double_realloc_nobk_halfmtx_treeout(int nseq, double** eff, int
     ac[nseq - 1].next = NULL;
 
     for (i = 0; i < nseq; i++)
-        setnearest(nseq, ac, eff, mindisfrom + i, nearest + i, i);  // muscle
+        setnearest(ac, eff, mindisfrom + i, nearest + i, i);  // muscle
 
     for (i = 0; i < nseq; i++)
         tmptmplen[i] = 0.0;
@@ -6336,7 +6335,7 @@ fixed_musclesupg_double_realloc_nobk_halfmtx_treeout(int nseq, double** eff, int
                     maxiim = i;
                 }
                 if (eff[miniim][maxiim - miniim] > mindisfrom[i])
-                    setnearest(nseq, ac, eff, mindisfrom + i, nearest + i, i);
+                    setnearest(ac, eff, mindisfrom + i, nearest + i, i);
             }
         }
 #else
@@ -6505,7 +6504,7 @@ fixed_musclesupg_double_treeout(int nseq, double** eff, int*** topol, double** l
     ac[nseq - 1].next = NULL;
 
     for (i = 0; i < nseq; i++)
-        setnearest_double_fullmtx(nseq, ac, eff, mindisfrom + i, nearest + i, i);  // muscle
+        setnearest_double_fullmtx(ac, eff, mindisfrom + i, nearest + i, i);  // muscle
 
     for (i = 0; i < nseq; i++)
         tmptmplen[i] = 0.0;
@@ -6676,7 +6675,7 @@ fixed_musclesupg_double_treeout(int nseq, double** eff, int*** topol, double** l
                     maxiim = i;
                 }
                 if (eff[miniim][maxiim] > mindisfrom[i])
-                    setnearest_double_fullmtx(nseq, ac, eff, mindisfrom + i, nearest + i, i);
+                    setnearest_double_fullmtx(ac, eff, mindisfrom + i, nearest + i, i);
             }
         }
 #endif
@@ -6860,7 +6859,7 @@ fixed_supg_double_treeout_constrained(int nseq, double** eff, int*** topol, doub
     ac[nseq - 1].next = NULL;
 
     for (i = 0; i < nseq; i++)
-        setnearest_double_fullmtx(nseq, ac, eff, mindisfrom + i, nearest + i, i);  // muscle
+        setnearest_double_fullmtx(ac, eff, mindisfrom + i, nearest + i, i);  // muscle
 
     for (i = 0; i < nseq; i++)
         tmptmplen[i] = 0.0;
@@ -7149,7 +7148,7 @@ fixed_supg_double_treeout_constrained(int nseq, double** eff, int*** topol, doub
                     maxiim = i;
                 }
                 if (eff[miniim][maxiim] > mindisfrom[i])
-                    setnearest_double_fullmtx(nseq, ac, eff, mindisfrom + i, nearest + i, i);
+                    setnearest_double_fullmtx(ac, eff, mindisfrom + i, nearest + i, i);
             }
         }
 #endif
@@ -7244,7 +7243,7 @@ fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(int nseq, double** eff, int
     ac[nseq - 1].next = NULL;
 
     for (i = 0; i < nseq; i++)
-        setnearest(nseq, ac, eff, mindisfrom + i, nearest + i, i);  // muscle
+        setnearest(ac, eff, mindisfrom + i, nearest + i, i);  // muscle
 
     for (i = 0; i < nseq; i++)
         tmptmplen[i] = 0.0;
@@ -7420,7 +7419,7 @@ fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(int nseq, double** eff, int
                     maxiim = i;
                 }
                 if (eff[miniim][maxiim - miniim] > mindisfrom[i])
-                    setnearest(nseq, ac, eff, mindisfrom + i, nearest + i, i);
+                    setnearest(ac, eff, mindisfrom + i, nearest + i, i);
             }
         }
 #endif
@@ -7497,7 +7496,7 @@ fixed_musclesupg_double_realloc_nobk_halfmtx(int nseq, double** eff, int*** topo
     ac[nseq - 1].next = NULL;
 
     for (i = 0; i < nseq; i++)
-        setnearest(nseq, ac, eff, mindisfrom + i, nearest + i, i);  // muscle
+        setnearest(ac, eff, mindisfrom + i, nearest + i, i);  // muscle
 
     for (i = 0; i < nseq; i++)
         tmptmplen[i] = 0.0;
@@ -7661,7 +7660,7 @@ fixed_musclesupg_double_realloc_nobk_halfmtx(int nseq, double** eff, int*** topo
                     maxiim = i;
                 }
                 if (eff[miniim][maxiim - miniim] > mindisfrom[i])
-                    setnearest(nseq, ac, eff, mindisfrom + i, nearest + i, i);
+                    setnearest(ac, eff, mindisfrom + i, nearest + i, i);
             }
         }
 #endif
@@ -9821,7 +9820,7 @@ score_calc0(char** seq, int s, double** eff, int ex) {
     double tmp;
 
     if (scmtd == 4)
-        tmp = score_calc4(seq, s, eff, ex);
+        tmp = score_calc4(seq, s, eff);
     if (scmtd == 5)
         tmp = score_calc5(seq, s, eff, ex);
     else
@@ -9988,7 +9987,7 @@ strins(char* str1, char* str2) {
 int
 isaligned(int nseq, char** seq) {
     int i;
-    int len = strlen(seq[0]);
+    size_t len = strlen(seq[0]);
     for (i = 1; i < nseq; i++) {
         if (strlen(seq[i]) != len)
             return (0);
@@ -10532,7 +10531,7 @@ searchAnchors(int nseq, char** seq, Segment* seg) {
 }
 
 void
-dontcalcimportance_target(int nseq, double* eff, char** seq, LocalHom** localhom, int ntarget) {
+dontcalcimportance_target(int nseq, char** seq, LocalHom** localhom, int ntarget) {
     int       i, j;
     LocalHom* ptr;
     int*      nogaplen;
@@ -10562,7 +10561,7 @@ dontcalcimportance_target(int nseq, double* eff, char** seq, LocalHom** localhom
 }
 
 void
-dontcalcimportance_half(int nseq, double* eff, char** seq, LocalHom** localhom) {
+dontcalcimportance_half(int nseq, char** seq, LocalHom** localhom) {
     int       i, j;
     LocalHom* ptr;
     int*      nogaplen;
@@ -10594,7 +10593,7 @@ dontcalcimportance_half(int nseq, double* eff, char** seq, LocalHom** localhom) 
 }
 
 void
-dontcalcimportance(int nseq, double* eff, char** seq, LocalHom** localhom) {
+dontcalcimportance(int nseq, char** seq, LocalHom** localhom) {
     int       i, j;
     LocalHom* ptr;
     int*      nogaplen;
@@ -10623,7 +10622,7 @@ dontcalcimportance(int nseq, double* eff, char** seq, LocalHom** localhom) {
 }
 
 void
-dontcalcimportance_firstone(int nseq, double* eff, char** seq, LocalHom** localhom) {
+dontcalcimportance_firstone(int nseq, LocalHom** localhom) {
     int       i, j, nseq1;
     LocalHom* ptr;
 #if 1
@@ -12102,7 +12101,7 @@ st_FinalGapCount(double* fgcp, int clus, char** seq, double* eff, int len) {
 }
 
 void
-getGapPattern(double* fgcp, int clus, char** seq, double* eff, int len, char* xxx) {
+getGapPattern(double* fgcp, int clus, char** seq, double* eff, int len) {
     int     i, j, gc, gb;
     double  feff;
     double* fpt;
@@ -13006,7 +13005,7 @@ plainscore(int nseq, char** s) {
 }
 
 int
-addonetip2top(int njobc, int*** topolc, double** lenc, double** iscorec, int*** topol, double** len, Treedep* dep, int treeout, Addtree* addtree, int iadd, char** name, int* alnleninnode, int* nogaplen, int noalign) {
+addonetip2top(int njobc, int*** topolc, double** lenc, double** iscorec, int*** topol, double** len, Treedep* dep, int treeout, Addtree* addtree, int iadd) {
     int    i, j, mem0, mem1, posinnew, m;
     int    nstep;
     int    norg;
@@ -13474,7 +13473,7 @@ addonetip2top(int njobc, int*** topolc, double** lenc, double** iscorec, int*** 
 }
 
 int
-addonetip(int njobc, int*** topolc, double** lenc, double** iscorec, int*** topol, double** len, Treedep* dep, int treeout, Addtree* addtree, int iadd, char** name, int* alnleninnode, int* nogaplen, int noalign) {
+addonetip(int njobc, int*** topolc, double** lenc, double** iscorec, int*** topol, double** len, Treedep* dep, int treeout, Addtree* addtree, int iadd, int* alnleninnode, int* nogaplen, int noalign) {
     int    i, j, mem0, mem1, posinnew, m;
     int    nstep;
     int    norg;
@@ -14561,7 +14560,7 @@ movereg_swap(char* seq1, char* seq2, LocalHom* tmpptr, int* start1pt, int* start
 }
 
 void
-fillimp(double** impmtx, double* imp, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int forscore, int* orinum1, int* orinum2) {
+fillimp(double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2) {
     int       i, j, k1, k2, start1, start2, end1, end2;
     double    effij, effijx, effij_kozo;
     char *    pt1, *pt2;
@@ -14730,7 +14729,7 @@ readlocalhomtable2_single_bin_noseek(FILE* fp, LocalHom* localhomtable)  // pos 
 }
 
 static int
-readlocalhomfromfile_autofid(LocalHom* lhpt, int nodeid, FILE* fp, int o1, int o2)  // for hat3node
+readlocalhomfromfile_autofid(LocalHom* lhpt, FILE* fp, int o1, int o2)  // for hat3node
 {
     int swap;
 
@@ -14915,7 +14914,7 @@ readloopthread(void* arg) {
             effij = eff1[i] * eff2[j] * effijx;
             //			effij_kozo = eff1_kozo[i] * eff2_kozo[j] * effijx;
 
-            res = readlocalhomfromfile_autofid(&lhsingle, nodeid, fp, orinum1[i], orinum2[j]);
+            res = readlocalhomfromfile_autofid(&lhsingle, fp, orinum1[i], orinum2[j]);
             if (res == -1)
                 tmpptr = NULL;
 
@@ -14977,7 +14976,7 @@ readloopthread(void* arg) {
 }
 
 void
-fillimp_file(double** impmtx, double* imp, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int forscore, int* orinum1, int* orinum2, int* uselh, int* seedinlh1, int* seedinlh2, int nodeid, int nfiles) {
+fillimp_file(double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, int* orinum1, int* orinum2, int* uselh, int* seedinlh1, int* seedinlh2, int nodeid, int nfiles) {
     int                i, j, k1, k2, start1, start2, end1, end2, m0, m1, m2;
     double             effijx, effij_kozo;
     char *             pt1, *pt2;

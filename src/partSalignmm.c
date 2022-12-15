@@ -129,14 +129,14 @@ part_imp_match_init_strict(double* imp, int clus1, int clus2, int lgth1, int lgt
         //		nocount2 = AllocateCharVec( impalloclen );
     }
 
-    fillimp(impmtx, imp, clus1, clus2, lgth1, lgth2, seq1, seq2, eff1, eff2, eff1_kozo, eff2_kozo, localhom, swaplist, forscore, orinum1, orinum2);
+    fillimp(impmtx, clus1, clus2, lgth1, lgth2, seq1, seq2, eff1, eff2, eff1_kozo, eff2_kozo, localhom, swaplist, orinum1, orinum2);
 }
 #else
 #endif
 
 void
 part_imp_rna(int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* eff2, RNApair*** grouprna1, RNApair*** grouprna2, int* gapmap1, int* gapmap2, RNApair* additionalpair) {
-    foldrna(nseq1, nseq2, seq1, seq2, eff1, eff2, grouprna1, grouprna2, impmtx, gapmap1, gapmap2, additionalpair);
+    foldrna(nseq1, nseq2, seq1, seq2, eff1, eff2, grouprna1, grouprna2, impmtx);
 }
 
 static void

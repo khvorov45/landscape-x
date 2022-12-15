@@ -1885,7 +1885,7 @@ Falign_givenanchors(ExtAnch* pairanch, int** whichmtx, double*** scoringmatrices
     //	int nkouho = 0;
     int headgp, tailgp;
     //	double dumfl = 0.0;
-    int    orilen1, orilen2;
+    size_t    orilen1, orilen2;
     int    cutadd;
     int    starttermcut1, starttermcut2, endtermcut1, endtermcut2;
     double marginfac1, marginfac2;
@@ -2830,7 +2830,6 @@ sakujo wo kentou (2010/10/05)
 */
 double
 Falign_udpari_long(
-    int**     whichmtx,
     double*** scoringmatrices,
     double**  n_dynamicmtx,
     char**    seq1,

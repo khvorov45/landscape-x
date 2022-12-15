@@ -158,7 +158,7 @@ mymergesort(int first, int last, Segment** seg) {
 }
 
 double
-Falign_localhom(int** whichmtx, double*** scoringmatrices, double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int clus1, int clus2, int alloclen, int constraint, double* totalimpmatch, int* gapmap1, int* gapmap2, int* chudanpt, int chudanref, int* chudanres) {
+Falign_localhom(int** whichmtx, double*** scoringmatrices, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int clus1, int clus2, int alloclen, int constraint, double* totalimpmatch, int* gapmap1, int* gapmap2, int* chudanpt, int chudanref, int* chudanres) {
     // tditeration.c deha alloclen ha huhen nanode
     // prevalloclen ha iranai.
     int               i, j, k, l, m, maxk;

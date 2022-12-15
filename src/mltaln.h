@@ -184,7 +184,7 @@ extern double partA__align(char** seq1, char** seq2, double* eff1, double* eff2,
 extern double L__align11(double** scoringmtx, double scoreoffset, char** seq1, char** seq2, int alloclen, int* off1pt, int* off2pt);
 extern double G__align11(double** scoringmtx, char** seq1, char** seq2, int alloclen, int headgp, int tailgp);
 extern double Falign(int** whichmtx, double*** scoringmatrices, double** scoreingmtx, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int clus1, int clus2, int alloclen, int* fftlog, int*, int, int*);
-extern double Falign_localhom(int** which, double*** scoringmatrices, double** scoreingmtx, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int clus1, int clus2, int alloclen, int constraint, double* totalimpmatch, int* gapmap1, int* gapmap2, int* chudanpt, int chudanref, int* chudanres);
+extern double Falign_localhom(int** which, double*** scoringmatrices, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int clus1, int clus2, int alloclen, int constraint, double* totalimpmatch, int* gapmap1, int* gapmap2, int* chudanpt, int chudanref, int* chudanres);
 extern double Conalign();
 extern double Aalign(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen);
 extern double imp_match_out_sc(int, int);
