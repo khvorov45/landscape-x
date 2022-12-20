@@ -329,7 +329,7 @@ static double Atracking(
 #endif
 
 static double
-MSalign2m2m_rec(int icyc, int jcyc, double* eff1, double* eff2, char** seq1, char** seq2, double** cpmx1, double** cpmx2, int ist, int ien, int jst, int jen, int alloclen, char** mseq1, char** mseq2, int depth, double** gapinfo, double** map)
+MSalign2m2m_rec(int icyc, int jcyc, double* eff1, double* eff2, char** seq1, char** seq2, double** cpmx1, double** cpmx2, int ist, int ien, int jst, int jen, int alloclen, char** mseq1, char** mseq2, double** gapinfo, double** map)
 /* score no keisan no sai motokaraaru gap no atukai ni mondai ga aru */
 {
     double       value = 0.0;
@@ -395,7 +395,6 @@ MSalign2m2m_rec(int icyc, int jcyc, double* eff1, double* eff2, char** seq1, cha
     ogcp2 = gapinfo[2] + jst;
     fgcp2 = gapinfo[3] + jst;
 
-    depth++;
     reccycle++;
 
     lgth1 = ien - ist + 1;
@@ -2306,7 +2305,7 @@ Lalign2m2m_hmout(char** seq1, char** seq2, char** seq1r, char** seq2r, char* dir
 	fflush( stdout );
 #endif
 
-    wm = MSalign2m2m_rec(icyc, jcyc, eff1, eff2, seq1, seq2, cpmx1, cpmx2, 0, lgth1 - 1, 0, lgth2 - 1, alloclen, mseq1, mseq2, 0, gapinfo, map);
+    wm = MSalign2m2m_rec(icyc, jcyc, eff1, eff2, seq1, seq2, cpmx1, cpmx2, 0, lgth1 - 1, 0, lgth2 - 1, alloclen, mseq1, mseq2, gapinfo, map);
 #if DEBUG
     fprintf(stderr, " seq1[0] = %s\n", seq1[0]);
     fprintf(stderr, " seq2[0] = %s\n", seq2[0]);
