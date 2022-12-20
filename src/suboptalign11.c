@@ -612,7 +612,7 @@ fprintf( stderr, "\n" );
         resf = gentracking(used, seq1, seq2, mseq1, mseq2, cpmx1, cpmx2, ijpi, ijpj, off1pt, off2pt, shuryo[k].i, shuryo[k].j);
         if (resf == -1.0)
             continue;
-        putlocalhom3(mseq1[0], mseq2[0], lhmpt, *off1pt, *off2pt, (int)shuryo[k].wm, strlen(mseq1[0]), 'h');
+        putlocalhom3(mseq1[0], mseq2[0], lhmpt, *off1pt, *off2pt, strlen(mseq1[0]), 'h');
 #if 0
 		fprintf( stderr, "\n" );
 		fprintf( stderr, ">\n%s\n", mseq1[0] );

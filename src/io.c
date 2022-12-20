@@ -368,8 +368,9 @@ addlocalhom_r(char* al1, char* al2, LocalHom* localhompt, int off1, int off2, in
     }
     return (nlocalhom);
 }
+
 void
-putlocalhom3(char* al1, char* al2, LocalHom* localhompt, int off1, int off2, int opt, int overlapaa, char korh) {
+putlocalhom3(char* al1, char* al2, LocalHom* localhompt, int off1, int off2, int overlapaa, char korh) {
     int       pos1, pos2, start1, start2, end1, end2;
     char *    pt1, *pt2;
     double    score;

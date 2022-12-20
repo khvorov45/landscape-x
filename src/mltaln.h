@@ -180,7 +180,7 @@ extern double translate_and_Calign(char** mseq1, char** mseq2, double* effarr1, 
 extern double A__align(double** scoringmtx, int penalty, int penalty_ex, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, char* gs1, char* gs2, char* ge1, char* ge2, int*, int, int*, int headgp, int tailgp, int firstmem, int calledby, double*** cpmxchild0, double*** cpmxchild1, double*** cpmxresult, double orieff1, double orieff2);
 extern double A__align11();
 extern double A__align_gapmap(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int* gapmap1, int* gapmap2);
-extern double partA__align(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int start1, int end1, int start2, int end2, int* gapmap1, int* gapmap2, char*, char*, char*, char*, int*, int, int*);
+extern double partA__align(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int start1, int start2, int end2, int* gapmap1, int* gapmap2, char*, char*, char*, char*, int*, int, int*);
 extern double L__align11(double** scoringmtx, double scoreoffset, char** seq1, char** seq2, int alloclen, int* off1pt, int* off2pt);
 extern double G__align11(double** scoringmtx, char** seq1, char** seq2, int alloclen, int headgp, int tailgp);
 extern double Falign(int** whichmtx, double*** scoringmatrices, double** scoreingmtx, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int clus1, int clus2, int alloclen, int* fftlog, int*, int, int*);

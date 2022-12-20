@@ -158,7 +158,7 @@ double        Falign_localhom(int** which, double*** scoringmatrices, char** seq
 extern double part_imp_match_out_sc(int i1, int j1);
 extern void   part_imp_match_init_strict(int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int* memlist1, int* memlist2);
 extern void   part_imp_match_init(double* imp, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, LocalHom*** localhom);
-extern double partA__align(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int start1, int end1, int start2, int end2, int* gapmap1, int* gapmap2, char*, char*, char*, char*, int*, int, int*);
+extern double partA__align(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int start1, int start2, int end2, int* gapmap1, int* gapmap2, char*, char*, char*, char*, int*, int, int*);
 extern double partA__align_variousdist(int** which, double*** scoringmatrices, double** dummtx, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int start1, int end1, int start2, int end2, int* gapmap1, int* gapmap2, char*, char*, char*, char*, int*, int, int*);
 extern double G__align11(double** scoringmtx, char** seq1, char** seq2, int alloclen, int headgp, int tailgp);
 extern double G__align11psg(double** codonmtx, double** scoringmtx, char** seq1, char** seq2, int alloclen, int headgp, int tailgp, double* gstart, double* gend);
@@ -182,7 +182,7 @@ extern int    extendedmtx(double** matrix, double* freq, unsigned char* amino, c
 extern void   putlocalhom2(char* al1, char* al2, LocalHom* localhompt, int off1, int off2, int opt, int overlapaa, char korh);
 extern void   putlocalhom_str(char* al1, char* al2, double* equiv, double scale, LocalHom* localhompt, int off1, int off2, int opt, int overlapaa, char korh);
 extern void   putlocalhom_ext(char* al1, char* al2, LocalHom* localhompt, int off1, int off2, int opt, int overlapaa, char korh);
-extern void   putlocalhom3(char* al1, char* al2, LocalHom* localhompt, int off1, int off2, int opt, int overlapaa, char korh);
+extern void   putlocalhom3(char* al1, char* al2, LocalHom* localhompt, int off1, int off2, int overlapaa, char korh);
 extern void   putlocalhom(char* al1, char* al2, LocalHom* localhompt, int off1, int off2, int opt, int overlapaa, char korh);
 extern char*  cutal(char* al, int al_display_start, int start, int end);
 extern void   ErrorExit(char* message);
@@ -311,7 +311,7 @@ extern double  naiveHpairscore(int nseq1, int nseq2, char** seq1, char** seq2, d
 extern void    foldrna(int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* eff2, RNApair*** gr1, RNApair*** gr2, double** impmtx);
 extern void    foldrna_gappick(int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* eff2, RNApair*** gr1, RNApair*** gr2, double** impmtx, int* gapmap1, int* gapmap2, RNApair* pair);
 extern void    imp_rna(int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* eff2, RNApair*** gr1, RNApair*** gr2, int* gapmap1, int* gapmap2, RNApair* pair);
-extern void    imp_rnaD(int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* eff2, RNApair*** gr1, RNApair*** gr2, RNApair* pair);
+extern void    imp_rnaD(int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* eff2, RNApair*** gr1, RNApair*** gr2);
 extern void    part_imp_rna(int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* eff2, RNApair*** gr1, RNApair*** gr2);
 extern void    foldalignedrna(int clus1, int clus2, char** mseq1, char** mseq2, double* effarr1, double* effarr2, RNApair* rnapairboth);
 void           readmccaskill(FILE* fp, RNApair** pairprob, int length);

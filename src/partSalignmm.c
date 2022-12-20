@@ -228,7 +228,7 @@ fillzero(double* s, int l) {
 }
 
 static void
-match_calc_del(double*** matrices, double* match, char** seq1, double* eff1, int n2, char** seq2, double* eff2, int i1, int lgth2, int mid, int nmask, int* mask1, int* mask2) {
+match_calc_del(double*** matrices, double* match, char** seq1, double* eff1, char** seq2, double* eff2, int i1, int lgth2, int mid, int nmask, int* mask1, int* mask2) {
     // osoi!
     int i, j, k, m;
     int c1, c2;
@@ -351,7 +351,7 @@ match_calc_add(double** scoreingmtx, double* match, double** cpmx1, double** cpm
 }
 
 static void
-Atracking_localhom(double* impwmpt, double* lasthorizontalw, double* lastverticalw, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int icyc, int jcyc, int start1, int end1, int start2, int end2, int* gapmap1, int* gapmap2, int* warpis, int* warpjs, int warpbase) {
+Atracking_localhom(double* impwmpt, double* lasthorizontalw, double* lastverticalw, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int icyc, int jcyc, int start1, int start2, int* gapmap1, int* gapmap2, int* warpis, int* warpjs, int warpbase) {
     int i, j, l, iin, jin, ifi, jfi, lgth1, lgth2, k, limk;
     //	char gap[] = "-";
     char*  gap;
@@ -597,7 +597,7 @@ Atracking(double* lasthorizontalw, double* lastverticalw, char** seq1, char** se
 }
 
 double
-partA__align(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int start1, int end1, int start2, int end2, int* gapmap1, int* gapmap2, char* sgap1, char* sgap2, char* egap1, char* egap2, int* chudanpt, int chudanref, int* chudanres)
+partA__align(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int start1, int start2, int end2, int* gapmap1, int* gapmap2, char* sgap1, char* sgap2, char* egap1, char* egap2, int* chudanpt, int chudanref, int* chudanres)
 /* score no keisan no sai motokaraaru gap no atukai ni mondai ga aru */
 {
     //	int k;
@@ -1207,17 +1207,8 @@ fprintf( stderr, "\n" );
     }
 #endif
 
-    /*
-	fprintf( stderr, "\n" );
-	for( i=0; i<icyc; i++ ) fprintf( stderr,"%s\n", seq1[i] );
-	fprintf( stderr, "#####\n" );
-	for( j=0; j<jcyc; j++ ) fprintf( stderr,"%s\n", seq2[j] );
-	fprintf( stderr, "====>" );
-	for( i=0; i<icyc; i++ ) strcpy( mseq1[i], seq1[i] );
-	for( j=0; j<jcyc; j++ ) strcpy( mseq2[j], seq2[j] );
-	*/
     if (constraint) {
-        Atracking_localhom(impmatch, currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, start1, end1, start2, end2, gapmap1, gapmap2, warpis, warpjs, warpbase);
+        Atracking_localhom(impmatch, currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, start1, start2, gapmap1, gapmap2, warpis, warpjs, warpbase);
     } else
         Atracking(currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, warpis, warpjs, warpbase);
 
@@ -1622,7 +1613,7 @@ partA__align_variousdist(int** which, double*** matrices, double** n_dynamicmtx,
     for (c = 0; c < maxdistclass; c++) {
         match_calc_add(matrices[c], initverticalw, cpmx2s[c], cpmx1s[c], 0, lgth1, doublework[c], intwork[c], 1);
         if (nmask[c])
-            match_calc_del(matrices, initverticalw, seq2, eff2, icyc, seq1, eff1, 0, lgth1, c, nmask[c], masklist2[c], masklist1[c]);
+            match_calc_del(matrices, initverticalw, seq2, eff2, seq1, eff1, 0, lgth1, c, nmask[c], masklist2[c], masklist1[c]);
     }
 
     if (constraint)
@@ -1633,7 +1624,7 @@ partA__align_variousdist(int** which, double*** matrices, double** n_dynamicmtx,
     for (c = 0; c < maxdistclass; c++) {
         match_calc_add(matrices[c], currentw, cpmx1s[c], cpmx2s[c], 0, lgth2, doublework[c], intwork[c], 1);
         if (nmask[c])
-            match_calc_del(matrices, currentw, seq1, eff1, jcyc, seq2, eff2, 0, lgth2, c, nmask[c], masklist1[c], masklist2[c]);
+            match_calc_del(matrices, currentw, seq1, eff1, seq2, eff2, 0, lgth2, c, nmask[c], masklist1[c], masklist2[c]);
     }
     if (constraint)
         part_imp_match_out_vead_gapmap(currentw, gapmap1[0] + start1, lgth2, start2, gapmap2);
@@ -1731,7 +1722,7 @@ partA__align_variousdist(int** which, double*** matrices, double** n_dynamicmtx,
         for (c = 0; c < maxdistclass; c++) {
             match_calc_add(matrices[c], currentw, cpmx1s[c], cpmx2s[c], i, lgth2, doublework[c], intwork[c], 0);
             if (nmask[c])
-                match_calc_del(matrices, currentw, seq1, eff1, jcyc, seq2, eff2, i, lgth2, c, nmask[c], masklist1[c], masklist2[c]);
+                match_calc_del(matrices, currentw, seq1, eff1, seq2, eff2, i, lgth2, c, nmask[c], masklist1[c], masklist2[c]);
         }
 
         if (constraint) {
@@ -1911,17 +1902,8 @@ fprintf( stderr, "\n" );
     }
 #endif
 
-    /*
-	fprintf( stderr, "\n" );
-	for( i=0; i<icyc; i++ ) fprintf( stderr,"%s\n", seq1[i] );
-	fprintf( stderr, "#####\n" );
-	for( j=0; j<jcyc; j++ ) fprintf( stderr,"%s\n", seq2[j] );
-	fprintf( stderr, "====>" );
-	for( i=0; i<icyc; i++ ) strcpy( mseq1[i], seq1[i] );
-	for( j=0; j<jcyc; j++ ) strcpy( mseq2[j], seq2[j] );
-	*/
     if (constraint) {
-        Atracking_localhom(impmatch, currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, start1, end1, start2, end2, gapmap1, gapmap2, warpis, warpjs, warpbase);
+        Atracking_localhom(impmatch, currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, start1, start2, gapmap1, gapmap2, warpis, warpjs, warpbase);
     } else
         Atracking(currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, warpis, warpjs, warpbase);
 

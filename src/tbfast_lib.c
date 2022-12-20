@@ -713,7 +713,7 @@ treebasethread(void* arg)  // seed && compacttree==3 niha taioushinai.
             Falign_udpari_long(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, NULL);
             A__align(NULL, 0, 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
             D__align(NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0);
-            partA__align(NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL);
+            partA__align(NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL);
             G__align11(NULL, NULL, NULL, 0, 0, 0);  // iru?
             free(mseq1);
             free(mseq2);
@@ -852,7 +852,7 @@ treebasethread(void* arg)  // seed && compacttree==3 niha taioushinai.
             if (alg == 'd') {
                 imp_match_init_strictD(NULL, clus1, clus2, strlen(mseq1[0]), strlen(mseq2[0]), mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, 1, localmem[0], localmem[1], uselh, NULL, NULL, (compacttree == 3) ? l : -1, 0);
                 if (rnakozo)
-                    imp_rnaD(clus1, clus2, mseq1, mseq2, effarr1, effarr2, grouprna1, grouprna2, NULL);
+                    imp_rnaD(clus1, clus2, mseq1, mseq2, effarr1, effarr2, grouprna1, grouprna2);
                 pscore = D__align(dynamicmtx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, constraint, &dumdb, NULL, NULL, NULL, NULL, NULL, 0, NULL, outgap, outgap);
             } else if (alg == 'Q') {
                 fprintf(stderr, "Not supported\n");
@@ -1196,7 +1196,7 @@ treebase(TbfastOpts opts, int* nlen, char** aseq, int nadd, char* mergeoralign, 
             if (alg == 'd') {
                 imp_match_init_strictD(NULL, clus1, clus2, strlen(mseq1[0]), strlen(mseq2[0]), mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, 1, localmem[0], localmem[1], uselh, seedinlh1, seedinlh2, (compacttree == 3) ? l : -1, nfiles);
                 if (rnakozo)
-                    imp_rnaD(clus1, clus2, mseq1, mseq2, effarr1, effarr2, grouprna1, grouprna2, NULL);
+                    imp_rnaD(clus1, clus2, mseq1, mseq2, effarr1, effarr2, grouprna1, grouprna2);
                 pscore = D__align(dynamicmtx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, constraint, &dumdb, NULL, NULL, NULL, NULL, NULL, 0, NULL, outgap, outgap);
             } else if (alg == 'Q') {
                 fprintf(stderr, "Not supported\n");
