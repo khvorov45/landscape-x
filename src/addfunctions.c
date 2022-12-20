@@ -300,7 +300,7 @@ plus2gapchar(char* s, char gapchar) {
 }
 
 void
-findnewgaps(int n, int rep, char** seq, int* gaplen) {
+findnewgaps(int rep, char** seq, int* gaplen) {
     int i, pos, len, len1;
 
     len = strlen(seq[0]);
@@ -318,16 +318,6 @@ findnewgaps(int n, int rep, char** seq, int* gaplen) {
         } else
             pos++;
     }
-
-#if 0
-	if( disp )
-	{
-		fprintf( stderr, "\ngaplen[] in findnewgaps() = \n" );
-		for(i=0; i<pos; i++ ) fprintf( stderr, "%d ", gaplen[i] );
-		fprintf( stderr, "\n" );
-		reporterr( "pos=%d\n", pos );
-	}
-#endif
 }
 
 void
@@ -1840,7 +1830,7 @@ maskoriginalgaps(char* repseq, char* originallygapped) {
 }
 
 void
-restoregaponlysites(char* originallygapped, int n1, int n2, char** s1, char** s2, int rep) {
+restoregaponlysites(char* originallygapped, char** s1, char** s2, int rep) {
     int   i, p;
     char* tmpnew;
     int   len;

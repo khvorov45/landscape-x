@@ -327,7 +327,7 @@ mseqcat(char** seq1, char** seq2, double** eff, double* effarr1, double* effarr2
 int conjuction( char pair[njob][njob], int s, char **seq, char **aseq, double *peff, double *eff, char name[M][B], char aname[M][B], char *d )
 #else
 int
-conjuctionforgaln(int s0, int s1, char** seq, char** aseq, double* peff, double* eff, char** name, char** aname, char* d)
+conjuctionforgaln(int s0, int s1, char** seq, char** aseq, double* peff, double* eff, char* d)
 #endif
 {
     int    m, k;

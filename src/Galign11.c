@@ -1408,7 +1408,7 @@ G__align11(double** n_dynamicmtx, char** seq1, char** seq2, int alloclen, int he
 }
 
 double
-G__align11_noalign(double** n_dynamicmtx, int penal, int penal_ex, char** seq1, char** seq2, int alloclen)
+G__align11_noalign(double** n_dynamicmtx, int penal, int penal_ex, char** seq1, char** seq2)
 /* warp mitaiou */
 {
     //	int k;

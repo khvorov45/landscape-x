@@ -578,7 +578,7 @@ Atracking(double* lasthorizontalw, double* lastverticalw, char** seq1, char** se
 }
 
 static double
-MSalignmm_tanni(double** n_dynamicmtx, int icyc, int jcyc, double* eff1, double* eff2, char** seq1, char** seq2, double** cpmx1pt, double** cpmx2pt, int ist, int ien, int jst, int jen, int alloclen, int fulllen1, int fulllen2, char** mseq1, char** mseq2, char* mgt1, char* mgt2, double** gapinfo, int headgp, int tailgp, double headgapfreq1_g, double headgapfreq2_g)
+MSalignmm_tanni(double** n_dynamicmtx, int icyc, int jcyc, double* eff2, char** seq1, char** seq2, double** cpmx1pt, double** cpmx2pt, int ist, int ien, int jst, int jen, int alloclen, int fulllen1, int fulllen2, char** mseq1, char** mseq2, char* mgt1, char* mgt2, double** gapinfo, int headgp, int tailgp, double headgapfreq1_g, double headgapfreq2_g)
 /* score no keisan no sai motokaraaru gap no atukai ni mondai ga aru */
 {
     //	int k;
@@ -1079,7 +1079,7 @@ MSalignmm_rec(double** n_dynamicmtx, int icyc, int jcyc, double* eff1, double* e
     {
         //		fprintf( stderr, "==== Going to _tanni\n" );
 
-        value = MSalignmm_tanni(n_dynamicmtx, icyc, jcyc, eff1, eff2, seq1, seq2, cpmx1pt, cpmx2pt, ist, ien, jst, jen, alloclen, fulllen1, fulllen2, aseq1, aseq2, agt1, agt2, gapinfo, headgp, tailgp, headgapfreq1_g, headgapfreq2_g);
+        value = MSalignmm_tanni(n_dynamicmtx, icyc, jcyc, eff2, seq1, seq2, cpmx1pt, cpmx2pt, ist, ien, jst, jen, alloclen, fulllen1, fulllen2, aseq1, aseq2, agt1, agt2, gapinfo, headgp, tailgp, headgapfreq1_g, headgapfreq2_g);
 
 #if MEMSAVE
         free(aseq1);

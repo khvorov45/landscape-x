@@ -3987,7 +3987,7 @@ double
 distdp_noalign(char* s1, char* s2, double selfscore1, double selfscore2, int alloclen)  // tbfast.c kara yobareru
 {
     double v;
-    v = G__align11_noalign(n_dis_consweight_multi, penalty, penalty_ex, &s1, &s2, alloclen);
+    v = G__align11_noalign(n_dis_consweight_multi, penalty, penalty_ex, &s1, &s2);
     return (score2dist(v, selfscore1, selfscore2));
 }
 
@@ -4148,7 +4148,7 @@ calcnearestthread(void* arg) {
             if (commonJP)
                 FreeIntMtx(commonJP);
             commonJP = NULL;
-            G__align11_noalign(NULL, 0, 0, NULL, NULL, 0);
+            G__align11_noalign(NULL, 0, 0, NULL, NULL);
             L__align11_noalign(NULL, NULL, NULL);
             genL__align11(NULL, NULL, NULL, 0, NULL, NULL);
             return (NULL);
@@ -4322,7 +4322,7 @@ recalcpairs4thread(void* arg)  // no TLS
             genL__align11(NULL, NULL, NULL, 0, NULL, NULL);
 #if EXACTLYSAMEASPAIRLOCALALIGN
             L__align11_noalign(NULL, NULL, NULL);
-            G__align11_noalign(NULL, 0, 0, NULL, NULL, 0);
+            G__align11_noalign(NULL, 0, 0, NULL, NULL);
 #endif
             free(localhomtable);
             if (dynamicmtx)

@@ -1250,11 +1250,11 @@ treebase(TbfastOpts opts, int* nlen, char** aseq, int nadd, char* mergeoralign, 
             adjustgapmap(gapmaplen, gapmap, mseq1[0]);
             if (opts.smoothing) {
                 restorecommongapssmoothly(njob, njob - (clus1 + clus2), aseq, localmem[0], localmem[1], gapmap, *alloclen, '-');
-                findnewgaps(clus1, 0, mseq1, gaplen);
+                findnewgaps(0, mseq1, gaplen);
                 insertnewgaps_bothorders(njob, alreadyaligned, aseq, localmem[0], localmem[1], gaplen, gapmap, gapmaplen, *alloclen, alg, '-');
             } else {
                 restorecommongaps(njob, njob - (clus1 + clus2), aseq, localmem[0], localmem[1], gapmap, *alloclen, '-');
-                findnewgaps(clus1, 0, mseq1, gaplen);
+                findnewgaps(0, mseq1, gaplen);
                 insertnewgaps(njob, alreadyaligned, aseq, localmem[0], localmem[1], gaplen, gapmap, *alloclen, alg, '-');
             }
             eq2dashmatometehayaku(mseq1, clus1);
@@ -1446,7 +1446,7 @@ tbfast_main(int argc, char* argv[]) {
     FILE*    orderfp = NULL;
     FILE*    hat2p = NULL;
     double   unweightedspscore;
-    int      alignmentlength;
+    size_t      alignmentlength;
     char*    mergeoralign = NULL;
     int      foundthebranch;
     int      nsubalignments, maxmem;
@@ -2186,7 +2186,7 @@ tbfast_main(int argc, char* argv[]) {
                 }
                 if (kozoarivec[i])
                     ik++;
-                G__align11_noalign(NULL, 0, 0, NULL, NULL, 0);
+                G__align11_noalign(NULL, 0, 0, NULL, NULL);
             }
         }
 
@@ -2410,7 +2410,7 @@ tbfast_main(int argc, char* argv[]) {
                     fprintf(stderr, "# Subalignment %d must be aligned.\n", i + 1);
                     fprintf(stderr, "# Please check the alignment lengths of following sequences.\n");
                     fprintf(stderr, "#\n");
-                    fprintf(stderr, "# %d. %-10.10s -> %d letters (including gaps)\n", subtable[i][0] + 1, name[subtable[i][0]] + 1, alignmentlength);
+                    fprintf(stderr, "# %d. %-10.10s -> %zu letters (including gaps)\n", subtable[i][0] + 1, name[subtable[i][0]] + 1, alignmentlength);
                     fprintf(stderr, "# %d. %-10.10s -> %d letters (including gaps)\n", subtable[i][j] + 1, name[subtable[i][j]] + 1, (int)strlen(seq[subtable[i][j]]));
                     fprintf(stderr, "#\n");
                     fprintf(stderr, "# See http://mafft.cbrc.jp/alignment/software/merge.html for details.\n");

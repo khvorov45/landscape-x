@@ -80,7 +80,7 @@ extern void   cpmx_calc_add(char** seq, double** cpmx, double* eff, int lgth, in
 extern void   MScpmx_calc_new(char** seq, double** cpmx, double* eff, int lgth, int clus);
 extern void   mseqcat(char** seq1, char** seq2, double** eff, double* effarr1, double* effarr2, char name1[M][B], char name2[M][B], int clus1, int clus2);
 extern void   strnbcat(char* s1, char* s2, int m);
-extern int    conjuctionforgaln(int s0, int s1, char** seq, char** aseq, double* peff, double* eff, char** name, char** aname, char* d);
+extern int    conjuctionforgaln(int s0, int s1, char** seq, char** aseq, double* peff, double* eff, char* d);
 extern int    fastconjuction(int* memlist, char** seq, char** aseq, double* peff, double* eff, char name[M][B], char aname[M][B], char* d);
 extern int    fastconjuction_noname_kozo(int* memlist, char** seq, char** aseq, double* peff, double* eff, double* peff_kozo, double* eff_kozo, char* d);
 extern int    fastconjuction_noname(int* memlist, char** seq, char** aseq, double* peff, double* eff, char* d, double mineff, double* oritotal);
@@ -162,7 +162,7 @@ extern double partA__align(char** seq1, char** seq2, double* eff1, double* eff2,
 extern double partA__align_variousdist(int** which, double*** scoringmatrices, double** dummtx, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int start1, int end1, int start2, int end2, int* gapmap1, int* gapmap2, char*, char*, char*, char*, int*, int, int*);
 extern double G__align11(double** scoringmtx, char** seq1, char** seq2, int alloclen, int headgp, int tailgp);
 extern double G__align11psg(double** codonmtx, double** scoringmtx, char** seq1, char** seq2, int alloclen, int headgp, int tailgp, double* gstart, double* gend);
-extern double G__align11_noalign(double** scoringmtx, int penal, int penal_ex, char** seq1, char** seq2, int alloclen);
+extern double G__align11_noalign(double** scoringmtx, int penal, int penal_ex, char** seq1, char** seq2);
 extern double L__align11(double** scoringmtx, double scoreoffset, char** seq1, char** seq2, int alloclen, int* off1pt, int* off2pt);
 extern double L__align11_noalign(double** scoringmtx, char** seq1, char** seq2);
 extern double genL__align11(double** scoringmtx, char** seq1, char** seq2, int alloclen, int* off1pt, int* off2pt);
@@ -345,7 +345,7 @@ extern void   getnumlen_nogap_outallreg(FILE* fp, int* nlenminpt);
 extern double plainscore(int nseq, char** seq);
 extern void   eq2dash(char* s);
 extern void   eq2dashmatometehayaku(char** s, int n);
-extern void   findnewgaps(int n, int rep, char** seq, int* gaplen);
+extern void   findnewgaps(int rep, char** seq, int* gaplen);
 extern void   findcommongaps(int, char**, int*);
 extern void   adjustgapmap(int, int*, char*);
 extern void   insertnewgaps_bothorders(int njob, int* alreadyaligned, char** seq, int* ex1, int* ex2, int* gaplen, int* gapmap, int gapmaplen, int alloclen, char alg, char gapchar);
@@ -383,9 +383,7 @@ extern void               initglobalvariables();
 extern void               makeskiptable(int n, int** skip, char** seq);
 extern int                generatesubalignmentstable(int nseq, int*** tablept, int* nsubpt, int* maxmempt, int*** topol, double** len, double threshold);
 extern double             sumofpairsscore(int nseq, char** seq);
-//extern int maskoriginalgaps( char *repseq, char *originallygapped );
 
-//extern void restoregaponlysites( char *originallygapped, int n1, int n2, char **s1, char **s2, int rep );
 extern int    isallgap(char*);
 extern int    deletenewinsertions_whole(int on, int an, char** oseq, char** aseq, GapPos** deletelist);
 extern int    deletenewinsertions_whole_eq(int on, int an, char** oseq, char** aseq, GapPos** deletelist);

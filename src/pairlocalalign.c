@@ -1937,7 +1937,7 @@ athread(void* arg)  // alg='R', alg='r' -> tsukawarenai.
                 commonJP = NULL;
                 Falign(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL, 0, NULL);
                 G__align11(NULL, NULL, NULL, 0, 0, 0);  // 20130603
-                G__align11_noalign(NULL, 0, 0, NULL, NULL, 0);
+                G__align11_noalign(NULL, 0, 0, NULL, NULL);
                 L__align11(NULL, 0.0, NULL, NULL, 0, NULL, NULL);
                 L__align11_noalign(NULL, NULL, NULL);
                 genL__align11(NULL, NULL, NULL, 0, NULL, NULL);
@@ -2059,7 +2059,6 @@ athread(void* arg)  // alg='R', alg='r' -> tsukawarenai.
                                 pscore = L__align11_noalign(n_dis_consweight_multi, distseq1, distseq2);
                         }
                     }
-                    //					pscore = G__align11_noalign( n_dis_consweight_multi, penalty, penalty_ex, distseq1, distseq2, alloclen ); // CHUUI!!!!!!
                     break;
                 case ('Y'):
                     if (nadd == 0 || (i < njob - nadd && njob - nadd <= j))  // new sequence vs exiting sequence nomi keisan
@@ -2087,7 +2086,7 @@ athread(void* arg)  // alg='R', alg='r' -> tsukawarenai.
                         if (store_localhom && (targetmap[i] != -1 || targetmap[j] != -1)) {
                             pscore = G__align11(n_dis_consweight_multi, mseq1, mseq2, alloclen, outgap, outgap);
                             if (thereisx)
-                                pscore = G__align11_noalign(n_dis_consweight_multi, penalty, penalty_ex, distseq1, distseq2, alloclen);  // uwagaki
+                                pscore = G__align11_noalign(n_dis_consweight_multi, penalty, penalty_ex, distseq1, distseq2);
 #if 1
                             if (specificityconsideration > 0.0) {
                                 if (expdist)
@@ -2106,7 +2105,7 @@ athread(void* arg)  // alg='R', alg='r' -> tsukawarenai.
 //
 #endif
                         } else
-                            pscore = G__align11_noalign(n_dis_consweight_multi, penalty, penalty_ex, distseq1, distseq2, alloclen);  // uwagaki
+                            pscore = G__align11_noalign(n_dis_consweight_multi, penalty, penalty_ex, distseq1, distseq2);
                     }
                     off1 = off2 = 0;
                     break;
@@ -2115,7 +2114,6 @@ athread(void* arg)  // alg='R', alg='r' -> tsukawarenai.
                         genL__align11(n_dis_consweight_multi, mseq1, mseq2, alloclen, &off1, &off2);
                         pscore = (double)naivepairscore11(mseq1[0], mseq2[0], 0.0);  // uwagaki
                     } else {
-                        //						pscore = G__align11_noalign( n_dis_consweight_multi, penalty, penalty_ex, mseq1, mseq2, alloclen );
                         pscore = genL__align11(n_dis_consweight_multi, mseq1, mseq2, alloclen, &off1, &off2);
                         if (thereisx) {
                             strcpy(dumseq1[0], distseq1[0]);
@@ -2140,8 +2138,7 @@ athread(void* arg)  // alg='R', alg='r' -> tsukawarenai.
                     break;
                 case ('t'):
                     off1 = off2 = 0;
-                    //					pscore = G__align11_noalign( n_dis_consweight_multi, penalty, penalty_ex, mseq1, mseq2, alloclen );
-                    pscore = G__align11_noalign(n_dis_consweight_multi, penalty, penalty_ex, distseq1, distseq2, alloclen);  // tsuneni distseq shiyou
+                    pscore = G__align11_noalign(n_dis_consweight_multi, penalty, penalty_ex, distseq1, distseq2);
                     break;
                 case ('s'):
                     pscore = callmxscarna_giving_bpp(mseq1, mseq2, bpp[i], bpp[j], i, j);
@@ -2568,8 +2565,7 @@ pairalign(char** name, char** seq, char** aseq, char** dseq, int* thereisxineach
                 } else {
                     switch (alg) {
                         case ('t'):
-                            //							pscore = G__align11_noalign( n_dis_consweight_multi, penalty, penalty_ex, mseq1, mseq2, alloclen );
-                            pscore = G__align11_noalign(n_dis_consweight_multi, penalty, penalty_ex, distseq1, distseq2, alloclen);  // tsuneni distseq shiyou
+                            pscore = G__align11_noalign(n_dis_consweight_multi, penalty, penalty_ex, distseq1, distseq2);
                             off1 = off2 = 0;
                             break;
                         case ('A'):
@@ -2581,7 +2577,7 @@ pairalign(char** name, char** seq, char** aseq, char** dseq, int* thereisxineach
                                 if (store_localhom && (targetmap[i] != -1 || targetmap[j] != -1)) {
                                     pscore = G__align11(n_dis_consweight_multi, mseq1, mseq2, alloclen, outgap, outgap);
                                     if (thereisx)
-                                        pscore = G__align11_noalign(n_dis_consweight_multi, penalty, penalty_ex, distseq1, distseq2, alloclen);  // uwagaki
+                                        pscore = G__align11_noalign(n_dis_consweight_multi, penalty, penalty_ex, distseq1, distseq2);
 #if 1
                                     if (specificityconsideration > 0.0) {
                                         if (expdist)
@@ -2600,12 +2596,11 @@ pairalign(char** name, char** seq, char** aseq, char** dseq, int* thereisxineach
                                     }
 #endif
                                 } else
-                                    pscore = G__align11_noalign(n_dis_consweight_multi, penalty, penalty_ex, distseq1, distseq2, alloclen);  // uwagaki
+                                    pscore = G__align11_noalign(n_dis_consweight_multi, penalty, penalty_ex, distseq1, distseq2);
                             }
                             off1 = off2 = 0;
                             break;
                         case ('N'):
-                            //							pscore = G__align11_noalign( n_dis_consweight_multi, penalty, penalty_ex, mseq1, mseq2, alloclen );
                             if (usenaivescoreinsteadofalignmentscore) {
                                 genL__align11(n_dis_consweight_multi, mseq1, mseq2, alloclen, &off1, &off2);
                                 pscore = (double)naivepairscore11(mseq1[0], mseq2[0], 0.0);  // uwagaki
@@ -3097,7 +3092,7 @@ pairlocalalign(int ngui, char** namegui, char** seqgui, double** distancemtx, Lo
     }
     Falign(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL, 0, NULL);
     G__align11(NULL, NULL, NULL, 0, 0, 0);  // 20130603
-    G__align11_noalign(NULL, 0, 0, NULL, NULL, 0);
+    G__align11_noalign(NULL, 0, 0, NULL, NULL);
     L__align11(NULL, 0.0, NULL, NULL, 0, NULL, NULL);
     L__align11_noalign(NULL, NULL, NULL);
     genL__align11(NULL, NULL, NULL, 0, NULL, NULL);
