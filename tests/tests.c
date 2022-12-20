@@ -1,4 +1,4 @@
-#include "../programmable_build.h"
+#include "../cbuild.h"
 
 #define function static
 
@@ -39,8 +39,8 @@ getRandomU32BiasedBound(Rng* rng, i32 bound) {
 }
 
 typedef struct GenerateSequencesResult {
-    prb_String  full;
-    prb_String* seqs;
+    prb_Str  full;
+    prb_Str* seqs;
     i32         seqCount;
 } GenerateSequencesResult;
 
@@ -53,13 +53,13 @@ generateSequences(prb_Arena* arena, Rng* rng, char* choices, i32 choicesCount, i
         fullSeqBuf[aaIndex] = choice;
     }
     fullSeqBuf[lengthFullSeq] = '\0';
-    prb_String fullSeq = {fullSeqBuf, lengthFullSeq};
+    prb_Str fullSeq = {fullSeqBuf, lengthFullSeq};
 
     i32  maxTrimFromEnds = lengthFullSeq / 10;
     i32  maxMutations = lengthFullSeq / 10;
     i32* mutationBuffer = prb_arenaAllocArray(arena, i32, maxMutations);
 
-    prb_String* seqs = prb_arenaAllocArray(arena, prb_String, seqCount);
+    prb_Str* seqs = prb_arenaAllocArray(arena, prb_Str, seqCount);
     for (i32 seqIndex = 0; seqIndex < seqCount; seqIndex++) {
         i32 startIndex = getRandomU32BiasedBound(rng, maxTrimFromEnds + 1);
         i32 onePastEndIndex = lengthFullSeq - getRandomU32BiasedBound(rng, maxTrimFromEnds + 1);
@@ -87,28 +87,28 @@ generateSequences(prb_Arena* arena, Rng* rng, char* choices, i32 choicesCount, i
             }
         }
         seqBuf[seqLen] = '\0';
-        seqs[seqIndex] = (prb_String) {seqBuf, seqLen};
+        seqs[seqIndex] = (prb_Str) {seqBuf, seqLen};
     }
 
     GenerateSequencesResult result = {.full = fullSeq, .seqs = seqs, .seqCount = seqCount};
     return result;
 }
 
-function prb_String*
-getSeqsFromFile(prb_Arena* arena, prb_String filepath) {
-    prb_String*              seqs = 0;
+function prb_Str*
+getSeqsFromFile(prb_Arena* arena, prb_Str filepath) {
+    prb_Str*              seqs = 0;
     prb_ReadEntireFileResult readRes = prb_readEntireFile(arena, filepath);
     prb_assert(readRes.success);
-    prb_String       contentLeft = prb_strFromBytes(readRes.content);
-    prb_LineIterator lineIter = prb_createLineIter(contentLeft);
+    prb_Str       contentLeft = prb_strFromBytes(readRes.content);
+    prb_LineIter lineIter = prb_createLineIter(contentLeft);
     for (;;) {
         if (prb_lineIterNext(&lineIter) == prb_Failure) {
             break;
         }
         prb_assert(lineIter.curLine.ptr[0] == '>');
-        prb_GrowingString gstr = prb_beginString(arena);
+        prb_GrowingStr gstr = prb_beginStr(arena);
         for (;;) {
-            prb_LineIterator lineIterCopy = lineIter;
+            prb_LineIter lineIterCopy = lineIter;
             if (prb_lineIterNext(&lineIterCopy) == prb_Failure) {
                 break;
             }
@@ -116,23 +116,23 @@ getSeqsFromFile(prb_Arena* arena, prb_String filepath) {
                 break;
             }
             lineIter = lineIterCopy;
-            prb_addStringSegment(&gstr, "%.*s", prb_LIT(lineIter.curLine));
+            prb_addStrSegment(&gstr, "%.*s", prb_LIT(lineIter.curLine));
         }
-        prb_String seq = prb_endString(&gstr);
+        prb_Str seq = prb_endStr(&gstr);
         arrput(seqs, seq);
     }
     return seqs;
 }
 
-function prb_String*
-alignWithMafft(prb_Arena* arena, prb_String mafftExe, prb_String inputPath, prb_String mafftOuputPath) {
+function prb_Str*
+alignWithMafft(prb_Arena* arena, prb_Str mafftExe, prb_Str inputPath, prb_Str mafftOuputPath) {
     {
-        prb_String cmd = prb_fmt(arena, "%.*s --globalpair --maxiterate 1000 %.*s", prb_LIT(mafftExe), prb_LIT(inputPath));
-        prb_writelnToStdout(cmd);
-        prb_ProcessHandle proc = prb_execCmd(arena, cmd, prb_ProcessFlag_RedirectStdout, mafftOuputPath);
+        prb_Str cmd = prb_fmt(arena, "%.*s --globalpair --maxiterate 1000 %.*s", prb_LIT(mafftExe), prb_LIT(inputPath));
+        prb_writelnToStdout(arena, cmd);
+        prb_ProcessHandle proc = prb_execCmd(arena, (prb_ExecCmdSpec) {.cmd = cmd, .redirectStdout = true, .stdoutFilepath = mafftOuputPath});
         prb_assert(proc.status == prb_ProcessStatus_CompletedSuccess);
     }
-    prb_String* mafftAlignedSeqs = getSeqsFromFile(arena, mafftOuputPath);
+    prb_Str* mafftAlignedSeqs = getSeqsFromFile(arena, mafftOuputPath);
     return mafftAlignedSeqs;
 }
 
@@ -145,8 +145,8 @@ main() {
     prb_Arena*    arena = &arena_;
     Rng           rng_ = createRng(1, 3);
     Rng*          rng = &rng_;
-    prb_String    testsDir = prb_getParentDir(arena, prb_STR(__FILE__));
-    prb_String    rootDir = prb_getParentDir(arena, testsDir);
+    prb_Str    testsDir = prb_getParentDir(arena, prb_STR(__FILE__));
+    prb_Str    rootDir = prb_getParentDir(arena, testsDir);
 
     GenerateSequencesResult genSeq = {};
     {
@@ -154,37 +154,37 @@ main() {
         i32  aminoAcidsCount = prb_arrayLength(aminoAcids);
         prb_assert(aminoAcidsCount == 20);
         genSeq = generateSequences(arena, rng, aminoAcids, aminoAcidsCount, 100, 3);
-        prb_writelnToStdout(genSeq.full);
+        prb_writelnToStdout(arena, genSeq.full);
         for (i32 seqIndex = 0; seqIndex < genSeq.seqCount; seqIndex++) {
-            prb_writelnToStdout(genSeq.seqs[seqIndex]);
+            prb_writelnToStdout(arena, genSeq.seqs[seqIndex]);
         }
     }
 
-    prb_String fastaOutputPath = prb_pathJoin(arena, testsDir, prb_STR("testseqs.fasta"));
+    prb_Str fastaOutputPath = prb_pathJoin(arena, testsDir, prb_STR("testseqs.fasta"));
     {
-        prb_GrowingString gstr = prb_beginString(arena);
+        prb_GrowingStr gstr = prb_beginStr(arena);
         for (i32 seqIndex = 0; seqIndex < genSeq.seqCount; seqIndex++) {
-            prb_addStringSegment(&gstr, ">virus%d\n%.*s\n", seqIndex, prb_LIT(genSeq.seqs[seqIndex]));
+            prb_addStrSegment(&gstr, ">virus%d\n%.*s\n", seqIndex, prb_LIT(genSeq.seqs[seqIndex]));
         }
-        prb_String fastaContent = prb_endString(&gstr);
+        prb_Str fastaContent = prb_endStr(&gstr);
         prb_writeEntireFile(arena, fastaOutputPath, fastaContent.ptr, fastaContent.len);
     }
 
     prb_assert(prb_removeFileIfExists(arena, prb_pathJoin(arena, rootDir, prb_STR("mafft/core/logfile.txt"))) == prb_Success);
 
     // TODO(sen) Change to portable when available
-    prb_String mafftBinEnvName = prb_STR("MAFFT_BINARIES");
+    prb_Str mafftBinEnvName = prb_STR("MAFFT_BINARIES");
     char*      oldMafftBin = getenv(mafftBinEnvName.ptr);
     prb_assert(oldMafftBin);
     prb_assert(unsetenv(mafftBinEnvName.ptr) == 0);
-    prb_String  mafftOuputPath = prb_pathJoin(arena, testsDir, prb_STR("mafft-testseqs.fasta"));
-    prb_String* mafftAlignedSeqs = alignWithMafft(arena, prb_STR("mafft"), fastaOutputPath, mafftOuputPath);
+    prb_Str  mafftOuputPath = prb_pathJoin(arena, testsDir, prb_STR("mafft-testseqs.fasta"));
+    prb_Str* mafftAlignedSeqs = alignWithMafft(arena, prb_STR("mafft"), fastaOutputPath, mafftOuputPath);
     prb_assert(arrlen(mafftAlignedSeqs) == genSeq.seqCount);
     prb_assert(setenv(mafftBinEnvName.ptr, oldMafftBin, 1) == 0);
 
-    prb_String  localMafftExe = prb_pathJoin(arena, rootDir, prb_STR("mafft/core/mafft.tmpl"));
-    prb_String  localMafftOuputPath = prb_pathJoin(arena, testsDir, prb_STR("localmafft-testseqs.fasta"));
-    prb_String* localMafftAlignedSeqs = alignWithMafft(arena, localMafftExe, fastaOutputPath, localMafftOuputPath);
+    prb_Str  localMafftExe = prb_pathJoin(arena, rootDir, prb_STR("mafft/core/mafft.tmpl"));
+    prb_Str  localMafftOuputPath = prb_pathJoin(arena, testsDir, prb_STR("localmafft-testseqs.fasta"));
+    prb_Str* localMafftAlignedSeqs = alignWithMafft(arena, localMafftExe, fastaOutputPath, localMafftOuputPath);
     prb_assert(arrlen(localMafftAlignedSeqs) == genSeq.seqCount);
 
     for (i32 seqIndex = 0; seqIndex < genSeq.seqCount; seqIndex++) {
@@ -192,20 +192,20 @@ main() {
     }
 
     // NOTE(sen) Call what I pulled out directly
-    prb_String tempDir = prb_pathJoin(arena, testsDir, prb_STR("tmp"));
-    prb_assert(prb_clearDirectory(arena, tempDir));
-    prb_String cwd = prb_getWorkingDir(arena);
+    prb_Str tempDir = prb_pathJoin(arena, testsDir, prb_STR("tmp"));
+    prb_assert(prb_clearDir(arena, tempDir));
+    prb_Str cwd = prb_getWorkingDir(arena);
     prb_assert(prb_setWorkingDir(arena, tempDir));
-    const char** tbfastArgs = prb_getArgArrayFromString(arena, prb_fmt(arena, "/home/khvorova/Projects/sequencebox/build-debug/mafft/exes/tbfast _ -u 0.0 -l 2.7 -C 0 -b 62 -g -0.10 -f -2.00 -Q 100.0 -h 0.1 -A _ -+ 16 -W 0.00001 -V -1.53 -s 0.0 -C 0 -b 62 -f -1.53 -Q 100.0 -h 0 -F -l 2.7 -X 0.1 -i %.*s", prb_LIT(fastaOutputPath)));
+    const char** tbfastArgs = prb_getArgArrayFromStr(arena, prb_fmt(arena, "/home/khvorova/Projects/sequencebox/build-debug/mafft/exes/tbfast _ -u 0.0 -l 2.7 -C 0 -b 62 -g -0.10 -f -2.00 -Q 100.0 -h 0.1 -A _ -+ 16 -W 0.00001 -V -1.53 -s 0.0 -C 0 -b 62 -f -1.53 -Q 100.0 -h 0 -F -l 2.7 -X 0.1 -i %.*s", prb_LIT(fastaOutputPath)));
     tbfast_main(arrlen(tbfastArgs), (char**)tbfastArgs);
     prb_assert(prb_setWorkingDir(arena, cwd));
 
-    prb_String* tbfastDirectAlignedSeqs = getSeqsFromFile(arena, prb_pathJoin(arena, tempDir, prb_STR("pre")));
+    prb_Str* tbfastDirectAlignedSeqs = getSeqsFromFile(arena, prb_pathJoin(arena, tempDir, prb_STR("pre")));
     prb_assert(arrlen(tbfastDirectAlignedSeqs) == genSeq.seqCount);
     for (i32 seqIndex = 0; seqIndex < genSeq.seqCount; seqIndex++) {
         prb_assert(prb_streq(mafftAlignedSeqs[seqIndex], tbfastDirectAlignedSeqs[seqIndex]));
     }
 
-    prb_writelnToStdout(prb_fmt(arena, "tests took %.2fms", prb_getMsFrom(testsStart)));
+    prb_writelnToStdout(arena, prb_fmt(arena, "tests took %.2fms", prb_getMsFrom(testsStart)));
     return 0;
 }
