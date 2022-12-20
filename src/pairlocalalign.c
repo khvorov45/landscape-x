@@ -2190,7 +2190,7 @@ athread(void* arg)  // alg='R', alg='r' -> tsukawarenai.
                 else if (alg == 'r')
                     putlocalhom_last(mseq1[0], mseq2[0], localhomtable[i] + j - (njob - nadd), lastresx[i] + j - (njob - nadd));
                 else if (alg == 'H')
-                    putlocalhom_ext(mseq1[0], mseq2[0], localhomtable[i] + j, off1, off2, (int)pscore, strlen(mseq1[0]), 'h');
+                    putlocalhom_ext(mseq1[0], mseq2[0], localhomtable[i] + j, off1, off2, strlen(mseq1[0]), 'h');
                 else if (alg == 'Y')
                     putlocalhom2(mseq1[0], mseq2[0], localhomtable[i] + j - (njob - nadd), off1, off2, (int)pscore, strlen(mseq1[0]), 'h');
                 else if (!specifictarget && alg != 'S' && alg != 'V')
@@ -2740,7 +2740,7 @@ pairalign(char** name, char** seq, char** aseq, char** dseq, int* thereisxineach
                         else if (alg == 'r')
                             putlocalhom_last(mseq1[0], mseq2[0], localhomtable[i] + j - (njob - nadd), lastresx[i] + j - (njob - nadd));
                         else if (alg == 'H')
-                            putlocalhom_ext(mseq1[0], mseq2[0], localhomtable[i] + j, off1, off2, (int)pscore, strlen(mseq1[0]), 'h');
+                            putlocalhom_ext(mseq1[0], mseq2[0], localhomtable[i] + j, off1, off2, strlen(mseq1[0]), 'h');
                         else if (alg == 'Y')
                             putlocalhom2(mseq1[0], mseq2[0], localhomtable[i] + j - (njob - nadd), off1, off2, (int)pscore, strlen(mseq1[0]), 'h');
                         else if (!specifictarget && alg != 'S' && alg != 'V')

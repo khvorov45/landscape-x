@@ -181,7 +181,7 @@ extern void   BLOSUMmtx(int n, double** matrix, double* freq, unsigned char* ami
 extern int    extendedmtx(double** matrix, double* freq, unsigned char* amino, char* amino_grp);
 extern void   putlocalhom2(char* al1, char* al2, LocalHom* localhompt, int off1, int off2, int opt, int overlapaa, char korh);
 extern void   putlocalhom_str(char* al1, char* al2, double* equiv, double scale, LocalHom* localhompt, int off1, int off2, int opt, int overlapaa, char korh);
-extern void   putlocalhom_ext(char* al1, char* al2, LocalHom* localhompt, int off1, int off2, int opt, int overlapaa, char korh);
+extern void   putlocalhom_ext(char* al1, char* al2, LocalHom* localhompt, int off1, int off2, int overlapaa, char korh);
 extern void   putlocalhom3(char* al1, char* al2, LocalHom* localhompt, int off1, int off2, char korh);
 extern void   putlocalhom(char* al1, char* al2, LocalHom* localhompt, int off1, int off2, int opt, int overlapaa, char korh);
 extern char*  cutal(char* al, int al_display_start, int start, int end);
