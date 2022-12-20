@@ -362,7 +362,6 @@ athread(void* arg) {
     double**     tscorehistory_detail = targ->tscorehistory_detail;
     int*         finishpt = targ->finishpt;
     int**        skipthisbranch = targ->skipthisbranch;
-    double**     distmtx = targ->distmtx;
     int          ntarget = targ->ntarget;
     int*         targetmap = targ->targetmap;
 
@@ -758,7 +757,7 @@ athread(void* arg) {
 
             //			for( i=0; i<2; i++ ) for( j=0; j<locnjob; j++ ) pair[i][j] = 0;
             distFromABranch(locnjob, distarr, stopol, topol, len, l, k);  // ato de idou
-            OneClusterAndTheOther_fast(locnjob, memlist[0], memlist[1], &s1, &s2, pairbuf, topol, l, k, smalldistmtx, distmtx, distarr);
+            OneClusterAndTheOther_fast(locnjob, memlist[0], memlist[1], &s1, &s2, pairbuf, topol, l, k, smalldistmtx, distarr);
 
             //			reporterr( "\n\n\n\n##### memlist[0][0], memlist[1][0] = %d, %d\n", memlist[0][0]+1, memlist[1][0]+1 );
 
@@ -876,13 +875,13 @@ athread(void* arg) {
                         } else if (alg == 'd') {
                             imp_match_init_strictD(NULL, clus1, clus2, length, length, mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, 1, memlist[0], memlist[1], NULL, NULL, NULL, -1, 0);
                             if (rnakozo)
-                                imp_rnaD(clus1, clus2, mseq1, mseq2, effarr1, effarr2, grouprna1, grouprna2, gapmap1, gapmap2, NULL);
+                                imp_rnaD(clus1, clus2, mseq1, mseq2, effarr1, effarr2, grouprna1, grouprna2, gapmap2, NULL);
                             for (i = length - 1; i >= 0; i--) {
                                 oimpmatchdouble += (double)imp_match_out_scD(i, i);
                                 //								fprintf( stderr, "#### i=%d, initial impmatch = %f seq1 = %c, seq2 = %c\n", i, oimpmatch, mseq1[0][i], mseq2[0][i] );
                             }
                         } else {
-                            part_imp_match_init_strict(NULL, clus1, clus2, length, length, mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, 1, memlist[0], memlist[1]);
+                            part_imp_match_init_strict(clus1, clus2, length, length, mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, 1, memlist[0], memlist[1]);
                             if (rnakozo)
                                 part_imp_rna(clus1, clus2, mseq1, mseq2, effarr1, effarr2, grouprna1, grouprna2, gapmap1, gapmap2, NULL);
                             for (i = length - 1; i >= 0; i--) {
@@ -963,10 +962,6 @@ athread(void* arg) {
             if (!skipthisbranch[l][k]) {
                 if (constraint == 2) {
                     if (use_fft) {
-                        //						if( alg == 'Q' )
-                        //							part_imp_match_init_strictQ( NULL, clus1, clus2, length, length, mseq1, mseq2, effarr1, effarr2, localhomshrink, 1 );
-                        //						else
-                        //							part_imp_match_init_strict( NULL, clus1, clus2, length, length, mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, 1 );
                         chudanres = 0;
                         if (alg == 'd')
                             D__align(n_dis_consweight_multi, mseq1, mseq2, effarr1, effarr2, clus1, clus2, alloclen, constraint, &impmatchdouble, NULL, NULL, NULL, NULL, subgenerationpt, subgenerationatfirst, &chudanres, 1, 1);
@@ -1591,24 +1586,8 @@ TreeDependentIteration(int locnjob, char** name, int nlen[M], char** aseq, char*
                     }
 
                     distFromABranch(locnjob, distarr, stopol, topol, len, l, k);  // ato de dou. weight 4 igai demo tsukaeruyou ni.
-                    //					for( i=0; i<locnjob; i++ ) // BUG??
-                    //					for( i=0; i<2; i++ ) for( j=0; j<locnjob; j++ ) pair[i][j] = 0;
-                    OneClusterAndTheOther_fast(locnjob, memlist[0], memlist[1], &s1, &s2, pairbuf, topol, l, k, smalldistmtx, distmtx, distarr);
+                    OneClusterAndTheOther_fast(locnjob, memlist[0], memlist[1], &s1, &s2, pairbuf, topol, l, k, smalldistmtx, distarr);
 
-                    //					reporterr( "\n\n##### memlist[0][0] = %d\n", memlist[0][0]+1 );
-                    //					reporterr( "##### memlist[1][0] = %d\n\n", memlist[1][0]+1 );
-
-#if 0  // IRANAI!!!!
-					fprintf( stderr, "STEP%d-%d\n", l, k );
-					for( i=0; i<2; i++ ) 
-					{
-						for( j=0; j<locnjob; j++ ) 
-						{
-							fprintf( stderr, "%#3d", pair[i][j] );
-						}
-						fprintf( stderr, "\n" );
-					}
-#endif
                     if (!weight) {
                         for (i = 0; i < locnjob; i++)
                             effarr[i] = 1.0;
@@ -1621,7 +1600,7 @@ TreeDependentIteration(int locnjob, char** name, int nlen[M], char** aseq, char*
                             }
                         }
                     } else if (weight == 2) {
-                        nodeFromABranch(locnjob, branchnode, node, topol, len, l, k);
+                        nodeFromABranch(locnjob, branchnode, node, topol, l, k);
                         node_eff(locnjob, effarr, branchnode);
                     } else if (weight == 4) {
                         weightFromABranch(locnjob, effarr, stopol, topol, l, k);
@@ -1715,7 +1694,7 @@ TreeDependentIteration(int locnjob, char** name, int nlen[M], char** aseq, char*
                                     fprintf(stderr, "'Q' is no longer supported\n");
                                     exit(1);
                                 } else {
-                                    part_imp_match_init_strict(NULL, clus1, clus2, length, length, mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, 1, memlist[0], memlist[1]);
+                                    part_imp_match_init_strict(clus1, clus2, length, length, mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, 1, memlist[0], memlist[1]);
                                     if (rnakozo)
                                         part_imp_rna(clus1, clus2, mseq1, mseq2, effarr1, effarr2, grouprna1, grouprna2, gapmap1, gapmap2, NULL);
                                     for (i = length - 1; i >= 0; i--)
@@ -1793,7 +1772,7 @@ TreeDependentIteration(int locnjob, char** name, int nlen[M], char** aseq, char*
                                         //								fprintf( stderr, "#### i=%d, initial impmatch = %f seq1 = %c, seq2 = %c\n", i, oimpmatch, mseq1[0][i], mseq2[0][i] );
                                     }
                                 } else {
-                                    part_imp_match_init_strict(NULL, clus1, clus2, length, length, mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, 1, memlist[0], memlist[1]);
+                                    part_imp_match_init_strict(clus1, clus2, length, length, mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, 1, memlist[0], memlist[1]);
                                     if (rnakozo)
                                         part_imp_rna(clus1, clus2, mseq1, mseq2, effarr1, effarr2, grouprna1, grouprna2, gapmap1, gapmap2, NULL);
                                     for (i = length - 1; i >= 0; i--) {
@@ -1863,9 +1842,9 @@ TreeDependentIteration(int locnjob, char** name, int nlen[M], char** aseq, char*
                                 } else if (alg == 'd') {
                                     imp_match_init_strictD(NULL, clus1, clus2, length, length, mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, 1, memlist[0], memlist[1], NULL, NULL, NULL, -1, 0);
                                     if (rnakozo)
-                                        imp_rnaD(clus1, clus2, mseq1, mseq2, effarr1, effarr2, grouprna1, grouprna2, gapmap1, gapmap2, NULL);
+                                        imp_rnaD(clus1, clus2, mseq1, mseq2, effarr1, effarr2, grouprna1, grouprna2, gapmap2, NULL);
                                 } else {
-                                    part_imp_match_init_strict(NULL, clus1, clus2, length, length, mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, 1, memlist[0], memlist[1]);
+                                    part_imp_match_init_strict(clus1, clus2, length, length, mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, 1, memlist[0], memlist[1]);
                                     if (rnakozo)
                                         part_imp_rna(clus1, clus2, mseq1, mseq2, effarr1, effarr2, grouprna1, grouprna2, gapmap1, gapmap2, NULL);
                                 }
@@ -1936,17 +1915,9 @@ TreeDependentIteration(int locnjob, char** name, int nlen[M], char** aseq, char*
                     }
 
 #endif
-#if 0
-					printf( "STEP %d-%d-%d\n", iterate, l, k );
-					for( i=0; i<clus2; i++ ) printf( "%f ", effarr2[i] );
-					printf( "\n" );
-#endif
+
                     if (constraint == 2) {
                         if (use_fft) {
-                            //						if( alg == 'Q' )
-                            //							part_imp_match_init_strictQ( NULL, clus1, clus2, length, length, mseq1, mseq2, effarr1, effarr2, localhomshrink, 1 );
-                            //						else
-                            //							part_imp_match_init_strict( NULL, clus1, clus2, length, length, mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, 1 );
                             if (alg == 'd') {
                                 if (scoringmatrices)  // called by tditeration.c
                                 {

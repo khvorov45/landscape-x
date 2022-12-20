@@ -96,7 +96,7 @@ part_imp_match_out_vead_tate_gapmap(double* imp, int j1, int lgth1, int start1, 
 
 #if 1
 void
-part_imp_match_init_strict(double* imp, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int forscore, int* orinum1, int* orinum2) {
+part_imp_match_init_strict(int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int forscore, int* orinum1, int* orinum2) {
     //	int i, j, k1, k2, tmpint, start1, start2, end1, end2;
     //	double effij;
     //	double effij_kozo;
@@ -671,7 +671,7 @@ partA__align(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int
             orlgth1 = 0;
             orlgth2 = 0;
 
-            part_imp_match_init_strict(NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL);
+            part_imp_match_init_strict(0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL);
 
             free(mseq1);
             free(mseq2);
@@ -1324,7 +1324,7 @@ partA__align_variousdist(int** which, double*** matrices, double** n_dynamicmtx,
             orlgth1 = 0;
             orlgth2 = 0;
 
-            part_imp_match_init_strict(NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL);
+            part_imp_match_init_strict(0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL);
 
             free(mseq1);
             free(mseq2);

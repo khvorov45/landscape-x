@@ -28,7 +28,7 @@ match_calc(double* match, char** s1, char** s2, int i1, int lgth2) {
 #endif
 
 static double
-gentracking(double* lasthorizontalw, double* lastverticalw, char** seq1, char** seq2, char** mseq1, char** mseq2, double** cpmx1, double** cpmx2, int** ijpi, int** ijpj, int* off1pt, int* off2pt, int endi, int endj) {
+gentracking(double* lastverticalw, char** seq1, char** seq2, char** mseq1, char** mseq2, double** cpmx1, double** cpmx2, int** ijpi, int** ijpj, int* off1pt, int* off2pt, int endi, int endj) {
     int i, j, l, iin, jin, lgth1, lgth2, k, limk;
     int ifi = 0, jfi = 0;  // by D.Mathog
     //	char gap[] = "-";
@@ -553,7 +553,7 @@ fprintf( stderr, "\n" );
         return (0.0);
     }
 
-    gentracking(currentw, lastverticalw, seq1, seq2, mseq1, mseq2, cpmx1, cpmx2, ijpi, ijpj, off1pt, off2pt, endali, endalj);
+    gentracking(lastverticalw, seq1, seq2, mseq1, mseq2, cpmx1, cpmx2, ijpi, ijpj, off1pt, off2pt, endali, endalj);
 
     //	fprintf( stderr, "### impmatch = %f\n", *impmatch );
 

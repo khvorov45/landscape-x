@@ -193,7 +193,7 @@ extern void   ErrorExit(char* message);
 extern void   cpmx_calc(char** seq, double** cpmx, double* eff, int lgth, int clus);
 extern void   intergroup_score(char**, char**, double*, double*, int, int, int, double*);
 extern int    conjuctionfortbfast();
-extern int    fastconjuction(int* memlist, char** seq, char** aseq, double* peff, double* eff, char name[M][B], char aname[M][B], char* d);
+extern int    fastconjuction(int* memlist, char** seq, char** aseq, double* peff, double* eff, char* d);
 extern char   seqcheck(char**);
 
 typedef struct _LocalHom {

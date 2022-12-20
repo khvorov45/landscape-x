@@ -44,7 +44,7 @@ match_calc(double* match, char** s1, char** s2, int i1, int lgth2) {
 }
 
 static double
-Atracking(char** seq1, char** seq2, char** mseq1, char** mseq2, double** cpmx1, double** cpmx2, int** ijp) {
+Atracking(char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp) {
     int i, j, l, iin, jin, ifi, jfi, lgth1, lgth2, k, limk;
     //	char gap[] = "-";
     char* gap;
@@ -592,7 +592,7 @@ MSalign11(char** seq1, char** seq2, int alloclen)
     mseq2[0] += lgth1 + lgth2;
     *mseq2[0] = 0;
 
-    Atracking(seq1, seq2, mseq1, mseq2, cpmx1, cpmx2, ijp);
+    Atracking(seq1, seq2, mseq1, mseq2, ijp);
 
     resultlen = strlen(mseq1[0]);
     if (alloclen < resultlen || resultlen > N) {

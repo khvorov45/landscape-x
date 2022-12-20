@@ -323,13 +323,8 @@ mseqcat(char** seq1, char** seq2, double** eff, double* effarr1, double* effarr2
             eff[i][j] = effarr2[i - clus1] * effarr2[j - clus1];
 }
 
-#if 0
-int conjuction( char pair[njob][njob], int s, char **seq, char **aseq, double *peff, double *eff, char name[M][B], char aname[M][B], char *d )
-#else
 int
-conjuctionforgaln(int s0, int s1, char** seq, char** aseq, double* peff, double* eff, char* d)
-#endif
-{
+conjuctionforgaln(int s0, int s1, char** seq, char** aseq, double* peff, double* eff, char* d) {
     int    m, k;
     char   b[B];
     double total;
@@ -548,7 +543,7 @@ fastconjuction_noname(int* memlist, char** seq, char** aseq, double* peff, doubl
 }
 
 int
-fastconjuction(int* memlist, char** seq, char** aseq, double* peff, double* eff, char name[M][B], char aname[M][B], char* d) {
+fastconjuction(int* memlist, char** seq, char** aseq, double* peff, double* eff, char* d) {
     int    m, k, dln;
     char   b[B];
     double total;
@@ -623,7 +618,7 @@ conjuctionfortbfast_old(char** pair, int s, char** seq, char** aseq, double* pef
 }
 
 int
-conjuction(char** pair, int s, char** seq, char** aseq, double* peff, double* eff, char** name, char** aname, char* d) {
+conjuction(char** pair, int s, char** seq, char** aseq, double* peff, double* eff, char* d) {
     int    m, k;
     char   b[B];
 
@@ -709,7 +704,7 @@ RootLeafNode(int nseq, int*** topol, int* node) {
 }
 
 void
-nodeFromABranch(int nseq, int* result, int** pairwisenode, int*** topol, double** len, int step, int num) {
+nodeFromABranch(int nseq, int* result, int** pairwisenode, int*** topol, int step, int num) {
     int  i, s, count;
     int* innergroup;
     int* outergroup1;
@@ -766,7 +761,7 @@ nodeFromABranch(int nseq, int* result, int** pairwisenode, int*** topol, double*
 }
 
 void
-OneClusterAndTheOther_fast(int locnjob, int* memlist1, int* memlist2, int* s1, int* s2, char* pair, int*** topol, int step, int branch, double** smalldistmtx, double** distmtx, double* distontree) {
+OneClusterAndTheOther_fast(int locnjob, int* memlist1, int* memlist2, int* s1, int* s2, char* pair, int*** topol, int step, int branch, double** smalldistmtx, double* distontree) {
     int i, k, j;
     int r1;
     //	char *pair;
