@@ -713,7 +713,7 @@ treebasethread(void* arg)  // seed && compacttree==3 niha taioushinai.
             Falign_udpari_long(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, NULL);
             A__align(NULL, 0, 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
             D__align(NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0);
-            partA__align(NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL);
+            partA__align(NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL);
             G__align11(NULL, NULL, NULL, 0, 0, 0);  // iru?
             free(mseq1);
             free(mseq2);

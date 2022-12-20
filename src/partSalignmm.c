@@ -597,7 +597,7 @@ Atracking(double* lasthorizontalw, double* lastverticalw, char** seq1, char** se
 }
 
 double
-partA__align(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int start1, int start2, int end2, int* gapmap1, int* gapmap2, char* sgap1, char* sgap2, char* egap1, char* egap2, int* chudanpt, int chudanref, int* chudanres)
+partA__align(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int start1, int start2, int* gapmap1, int* gapmap2, char* sgap1, char* sgap2, char* egap1, char* egap2, int* chudanpt, int chudanref, int* chudanres)
 /* score no keisan no sai motokaraaru gap no atukai ni mondai ga aru */
 {
     //	int k;
@@ -1240,7 +1240,7 @@ fprintf( stderr, "\n" );
 }
 
 double
-partA__align_variousdist(int** which, double*** matrices, double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int start1, int end1, int start2, int end2, int* gapmap1, int* gapmap2, char* sgap1, char* sgap2, char* egap1, char* egap2, int* chudanpt, int chudanref, int* chudanres)
+partA__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int start1, int start2, int* gapmap1, int* gapmap2, char* sgap1, char* sgap2, char* egap1, char* egap2, int* chudanpt, int chudanref, int* chudanres)
 /* score no keisan no sai motokaraaru gap no atukai ni mondai ga aru */
 {
     //	int k;
@@ -1412,7 +1412,6 @@ partA__align_variousdist(int** which, double*** matrices, double** n_dynamicmtx,
     warpn = 0;
 
     if (trywarp) {
-        //		fprintf( stderr, "IN partA__align_variousdist\n" );
         if (outgap == 0) {
             fprintf(stderr, "At present, outgap must be 1 to allow shift.\n");
             exit(1);
