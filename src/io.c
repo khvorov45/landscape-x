@@ -246,7 +246,7 @@ static int addlocalhom2( char *al1, char *al2, LocalHom *localhompt, int off1, i
 #endif
 
 static int
-addlocalhom_r(char* al1, char* al2, LocalHom* localhompt, int off1, int off2, int overlapaa, int skip, char korh) {
+addlocalhom_r(char* al1, char* al2, LocalHom* localhompt, int off1, int off2, int skip, char korh) {
     int       pos1, pos2, start1, start2, end1, end2;
     char *    pt1, *pt2;
     double    score;
@@ -3254,7 +3254,6 @@ ReadBlastm7(FILE* fp, double* dis, int qmem, char** name, LocalHom* localhomlist
     char        b[B];
     char*       pt;
     static int  junban[M];
-    int         overlapaa;
     double      score, sumscore;
     int         qstart, tstart;
     static char qal[N], tal[N], al[N];
@@ -3311,7 +3310,6 @@ ReadBlastm7(FILE* fp, double* dis, int qmem, char** name, LocalHom* localhomlist
             if (!strncmp("              <Hsp_align-len>", b, 29))
                 break;
         pt = b + 29;
-        overlapaa = atoi(pt);
 
         while (fgets(al, N - 100, fp))
             if (!strncmp("              <Hsp_qseq>", al, 24))
@@ -3333,9 +3331,7 @@ ReadBlastm7(FILE* fp, double* dis, int qmem, char** name, LocalHom* localhomlist
             ;
         *pt = 0;
 
-        //		fprintf( stderr, "t=%d, score = %f, qstart=%d, qend=%d, tstart=%d, tend=%d, overlapaa=%d\n", junban[count], score, qstart, qend, tstart, tend, overlapaa );
-
-        nlocalhom += addlocalhom_r(qal, tal, localhomlist + junban[count], qstart, tstart, overlapaa, nlocalhom, 'h');
+        nlocalhom += addlocalhom_r(qal, tal, localhomlist + junban[count], qstart, tstart, nlocalhom, 'h');
 
         while (fgets(b, B - 1, fp))
             if (!strncmp("            </Hsp>:", b, 18))

@@ -156,7 +156,7 @@ extern double Falign_udpari_long(double*** scoringmatrices, double** scoringmtx,
 extern double Falign_givenanchors(ExtAnch* extanch, int** whichmtx, double*** scoringmatrices, double** scoringmtx, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int clus1, int clus2, int alloclen, int* fftlog);
 double        Falign_localhom(int** which, double*** scoringmatrices, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int clus1, int clus2, int alloclen, int constraint, double* totalimpmatch, int* gapmap1, int* gapmap2, int* chudanpt, int chudanref, int* chudanres);
 extern double part_imp_match_out_sc(int i1, int j1);
-extern void   part_imp_match_init_strict(int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int forscore, int* memlist1, int* memlist2);
+extern void   part_imp_match_init_strict(int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int* memlist1, int* memlist2);
 extern void   part_imp_match_init(double* imp, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, LocalHom*** localhom);
 extern double partA__align(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int start1, int end1, int start2, int end2, int* gapmap1, int* gapmap2, char*, char*, char*, char*, int*, int, int*);
 extern double partA__align_variousdist(int** which, double*** scoringmatrices, double** dummtx, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int start1, int end1, int start2, int end2, int* gapmap1, int* gapmap2, char*, char*, char*, char*, int*, int, int*);
@@ -311,8 +311,8 @@ extern double  naiveHpairscore(int nseq1, int nseq2, char** seq1, char** seq2, d
 extern void    foldrna(int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* eff2, RNApair*** gr1, RNApair*** gr2, double** impmtx);
 extern void    foldrna_gappick(int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* eff2, RNApair*** gr1, RNApair*** gr2, double** impmtx, int* gapmap1, int* gapmap2, RNApair* pair);
 extern void    imp_rna(int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* eff2, RNApair*** gr1, RNApair*** gr2, int* gapmap1, int* gapmap2, RNApair* pair);
-extern void    imp_rnaD(int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* eff2, RNApair*** gr1, RNApair*** gr2, int* gapmap2, RNApair* pair);
-extern void    part_imp_rna(int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* eff2, RNApair*** gr1, RNApair*** gr2, int* gapmap1, int* gapmap2, RNApair* pair);
+extern void    imp_rnaD(int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* eff2, RNApair*** gr1, RNApair*** gr2, RNApair* pair);
+extern void    part_imp_rna(int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* eff2, RNApair*** gr1, RNApair*** gr2);
 extern void    foldalignedrna(int clus1, int clus2, char** mseq1, char** mseq2, double* effarr1, double* effarr2, RNApair* rnapairboth);
 void           readmccaskill(FILE* fp, RNApair** pairprob, int length);
 void           makegrouprna(RNApair*** group, RNApair*** all, int* memlist);

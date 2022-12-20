@@ -107,7 +107,7 @@ imp_match_out_vead_tate(double* imp, int j1, int lgth1) {
 }
 
 void
-imp_rnaD(int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* eff2, RNApair*** grouprna1, RNApair*** grouprna2, int* gapmap2, RNApair* pair) {
+imp_rnaD(int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* eff2, RNApair*** grouprna1, RNApair*** grouprna2, RNApair* pair) {
     foldrna(nseq1, nseq2, seq1, seq2, eff1, eff2, grouprna1, grouprna2, impmtx);
 }
 

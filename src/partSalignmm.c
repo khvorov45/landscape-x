@@ -96,7 +96,7 @@ part_imp_match_out_vead_tate_gapmap(double* imp, int j1, int lgth1, int start1, 
 
 #if 1
 void
-part_imp_match_init_strict(int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int forscore, int* orinum1, int* orinum2) {
+part_imp_match_init_strict(int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2) {
     //	int i, j, k1, k2, tmpint, start1, start2, end1, end2;
     //	double effij;
     //	double effij_kozo;
@@ -135,7 +135,7 @@ part_imp_match_init_strict(int clus1, int clus2, int lgth1, int lgth2, char** se
 #endif
 
 void
-part_imp_rna(int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* eff2, RNApair*** grouprna1, RNApair*** grouprna2, int* gapmap1, int* gapmap2, RNApair* additionalpair) {
+part_imp_rna(int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* eff2, RNApair*** grouprna1, RNApair*** grouprna2) {
     foldrna(nseq1, nseq2, seq1, seq2, eff1, eff2, grouprna1, grouprna2, impmtx);
 }
 
@@ -228,7 +228,7 @@ fillzero(double* s, int l) {
 }
 
 static void
-match_calc_del(int** which, double*** matrices, double* match, int n1, char** seq1, double* eff1, int n2, char** seq2, double* eff2, int i1, int lgth2, int mid, int nmask, int* mask1, int* mask2) {
+match_calc_del(double*** matrices, double* match, char** seq1, double* eff1, int n2, char** seq2, double* eff2, int i1, int lgth2, int mid, int nmask, int* mask1, int* mask2) {
     // osoi!
     int i, j, k, m;
     int c1, c2;
@@ -671,7 +671,7 @@ partA__align(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int
             orlgth1 = 0;
             orlgth2 = 0;
 
-            part_imp_match_init_strict(0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL);
+            part_imp_match_init_strict(0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
             free(mseq1);
             free(mseq2);
@@ -1324,7 +1324,7 @@ partA__align_variousdist(int** which, double*** matrices, double** n_dynamicmtx,
             orlgth1 = 0;
             orlgth2 = 0;
 
-            part_imp_match_init_strict(0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL);
+            part_imp_match_init_strict(0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
             free(mseq1);
             free(mseq2);
@@ -1622,7 +1622,7 @@ partA__align_variousdist(int** which, double*** matrices, double** n_dynamicmtx,
     for (c = 0; c < maxdistclass; c++) {
         match_calc_add(matrices[c], initverticalw, cpmx2s[c], cpmx1s[c], 0, lgth1, doublework[c], intwork[c], 1);
         if (nmask[c])
-            match_calc_del(which, matrices, initverticalw, jcyc, seq2, eff2, icyc, seq1, eff1, 0, lgth1, c, nmask[c], masklist2[c], masklist1[c]);
+            match_calc_del(matrices, initverticalw, seq2, eff2, icyc, seq1, eff1, 0, lgth1, c, nmask[c], masklist2[c], masklist1[c]);
     }
 
     if (constraint)
@@ -1633,7 +1633,7 @@ partA__align_variousdist(int** which, double*** matrices, double** n_dynamicmtx,
     for (c = 0; c < maxdistclass; c++) {
         match_calc_add(matrices[c], currentw, cpmx1s[c], cpmx2s[c], 0, lgth2, doublework[c], intwork[c], 1);
         if (nmask[c])
-            match_calc_del(which, matrices, currentw, icyc, seq1, eff1, jcyc, seq2, eff2, 0, lgth2, c, nmask[c], masklist1[c], masklist2[c]);
+            match_calc_del(matrices, currentw, seq1, eff1, jcyc, seq2, eff2, 0, lgth2, c, nmask[c], masklist1[c], masklist2[c]);
     }
     if (constraint)
         part_imp_match_out_vead_gapmap(currentw, gapmap1[0] + start1, lgth2, start2, gapmap2);
@@ -1731,18 +1731,9 @@ partA__align_variousdist(int** which, double*** matrices, double** n_dynamicmtx,
         for (c = 0; c < maxdistclass; c++) {
             match_calc_add(matrices[c], currentw, cpmx1s[c], cpmx2s[c], i, lgth2, doublework[c], intwork[c], 0);
             if (nmask[c])
-                match_calc_del(which, matrices, currentw, icyc, seq1, eff1, jcyc, seq2, eff2, i, lgth2, c, nmask[c], masklist1[c], masklist2[c]);
+                match_calc_del(matrices, currentw, seq1, eff1, jcyc, seq2, eff2, i, lgth2, c, nmask[c], masklist1[c], masklist2[c]);
         }
-#if 0
-fprintf( stderr, "\n" );
-fprintf( stderr, "i=%d\n", i );
-fprintf( stderr, "currentw before imp = \n" );
-for( j=0; j<lgth2; j++ )
-{
-	fprintf( stderr, "%5.2f ", currentw[j] );
-}
-fprintf( stderr, "\n" );
-#endif
+
         if (constraint) {
             //			fprintf( stderr, "Calling imp_match_calc (o) lgth = %d, i = %d\n", lgth1, i );
             //			imp_match_out_vead( currentw, i, lgth2 );

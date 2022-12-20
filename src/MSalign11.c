@@ -108,7 +108,7 @@ Atracking(char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp) {
 }
 
 void
-backdp(double** WMMTX, double wmmax, double* maxinw, double* maxinh, int lgth1, int lgth2, int alloclen, double* w1, double* w2, double* initverticalw, double* m, int* mp, int iin, int jin, char** seq1, char** seq2, char** mseq1, char** mseq2) {
+backdp(double** WMMTX, double wmmax, double* maxinw, double* maxinh, int lgth1, int lgth2, double* w1, double* w2, double* initverticalw, double* m, int* mp, int iin, int jin, char** seq1, char** seq2, char** mseq1, char** mseq2) {
     register int i, j;
     int          prevhiti, prevhitj;
     //	int lasti, lastj;
@@ -565,7 +565,7 @@ MSalign11(char** seq1, char** seq2, int alloclen)
     mseq2[0] += lgth1 + lgth2;
     *mseq2[0] = 0;
 
-    backdp(WMMTX, wmmax, maxinw, maxinh, lgth1, lgth2, alloclen, w1, w2, initverticalw, m, mp, iin, jin, seq1, seq2, mseq1, mseq2);
+    backdp(WMMTX, wmmax, maxinw, maxinh, lgth1, lgth2, w1, w2, initverticalw, m, mp, iin, jin, seq1, seq2, mseq1, mseq2);
 
     fprintf(stderr, "\n");
 #if 1
