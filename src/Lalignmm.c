@@ -1173,8 +1173,9 @@ MSalign2m2m_rec(int icyc, int jcyc, char** seq1, double** cpmx1, double** cpmx2,
 
     return (value);
 }
+
 static double
-MSalignmm_rec(int icyc, int jcyc, double* eff1, double* eff2, char** seq1, char** seq2, double** cpmx1, double** cpmx2, int ist, int ien, int jst, int jen, int alloclen, char** mseq1, char** mseq2, int depth, double** gapinfo, double** map)
+MSalignmm_rec(int icyc, int jcyc, double* eff1, double* eff2, char** seq1, char** seq2, double** cpmx1, double** cpmx2, int ist, int ien, int jst, int jen, int alloclen, char** mseq1, char** mseq2, double** gapinfo, double** map)
 /* score no keisan no sai motokaraaru gap no atukai ni mondai ga aru */
 {
     double       value = 0.0;
@@ -1229,10 +1230,6 @@ MSalignmm_rec(int icyc, int jcyc, double* eff1, double* eff2, char** seq1, char*
     double* fgcp2;
     double  firstm;
     int     firstmp;
-#if 0
-	static char ttt1[50000];
-	static char ttt2[50000];
-#endif
 
     localthr = -offset + 500;  // 0?
 
@@ -1241,7 +1238,6 @@ MSalignmm_rec(int icyc, int jcyc, double* eff1, double* eff2, char** seq1, char*
     ogcp2 = gapinfo[2] + jst;
     fgcp2 = gapinfo[3] + jst;
 
-    depth++;
     reccycle++;
 
     lgth1 = ien - ist + 1;
@@ -2140,7 +2136,7 @@ Lalignmm_hmout(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, i
     gapinfo[3] = fgcp2;
 #endif
 
-    wm = MSalignmm_rec(icyc, jcyc, eff1, eff2, seq1, seq2, cpmx1, cpmx2, 0, lgth1 - 1, 0, lgth2 - 1, alloclen, mseq1, mseq2, 0, gapinfo, map);
+    wm = MSalignmm_rec(icyc, jcyc, eff1, eff2, seq1, seq2, cpmx1, cpmx2, 0, lgth1 - 1, 0, lgth2 - 1, alloclen, mseq1, mseq2, gapinfo, map);
 #if DEBUG
     fprintf(stderr, " seq1[0] = %s\n", seq1[0]);
     fprintf(stderr, " seq2[0] = %s\n", seq2[0]);
