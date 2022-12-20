@@ -850,7 +850,7 @@ treebasethread(void* arg)  // seed && compacttree==3 niha taioushinai.
                 pscore = A__align(dynamicmtx, penalty, penalty_ex, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, constraint, &dumdb, NULL, NULL, NULL, NULL, NULL, 0, NULL, outgap, outgap, -1, -1, NULL, NULL, NULL, 0.0, 0.0);  // cpmxhist mitaiou
             }
             if (alg == 'd') {
-                imp_match_init_strictD(NULL, clus1, clus2, strlen(mseq1[0]), strlen(mseq2[0]), mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, 1, localmem[0], localmem[1], uselh, NULL, NULL, (compacttree == 3) ? l : -1, 0);
+                imp_match_init_strictD(clus1, clus2, strlen(mseq1[0]), strlen(mseq2[0]), mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, localmem[0], localmem[1], uselh, NULL, NULL, (compacttree == 3) ? l : -1, 0);
                 if (rnakozo)
                     imp_rnaD(clus1, clus2, mseq1, mseq2, effarr1, effarr2, grouprna1, grouprna2);
                 pscore = D__align(dynamicmtx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, constraint, &dumdb, NULL, NULL, NULL, NULL, NULL, 0, NULL, outgap, outgap);
@@ -1194,7 +1194,7 @@ treebase(TbfastOpts opts, int* nlen, char** aseq, int nadd, char* mergeoralign, 
                 pscore = A__align(dynamicmtx, penalty, penalty_ex, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, constraint, &dumdb, NULL, NULL, NULL, NULL, NULL, 0, NULL, outgap, outgap, localmem[0][0], 1, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
             }
             if (alg == 'd') {
-                imp_match_init_strictD(NULL, clus1, clus2, strlen(mseq1[0]), strlen(mseq2[0]), mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, 1, localmem[0], localmem[1], uselh, seedinlh1, seedinlh2, (compacttree == 3) ? l : -1, nfiles);
+                imp_match_init_strictD(clus1, clus2, strlen(mseq1[0]), strlen(mseq2[0]), mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, localmem[0], localmem[1], uselh, seedinlh1, seedinlh2, (compacttree == 3) ? l : -1, nfiles);
                 if (rnakozo)
                     imp_rnaD(clus1, clus2, mseq1, mseq2, effarr1, effarr2, grouprna1, grouprna2);
                 pscore = D__align(dynamicmtx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, constraint, &dumdb, NULL, NULL, NULL, NULL, NULL, 0, NULL, outgap, outgap);
@@ -1344,7 +1344,7 @@ treebase(TbfastOpts opts, int* nlen, char** aseq, int nadd, char* mergeoralign, 
     Falign_udpari_long(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, NULL);
     D__align(NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0);
     A__align(NULL, 0, 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
-    imp_match_init_strictD(NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, 0, 0);
+    imp_match_init_strictD(0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
     imp_match_init_strict(NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, 0, 0);
     FreeCommonIP();
 }

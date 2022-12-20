@@ -873,7 +873,7 @@ athread(void* arg) {
                             fprintf(stderr, "'Q' is no longer supported\n");
                             exit(1);
                         } else if (alg == 'd') {
-                            imp_match_init_strictD(NULL, clus1, clus2, length, length, mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, 1, memlist[0], memlist[1], NULL, NULL, NULL, -1, 0);
+                            imp_match_init_strictD(clus1, clus2, length, length, mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, memlist[0], memlist[1], NULL, NULL, NULL, -1, 0);
                             if (rnakozo)
                                 imp_rnaD(clus1, clus2, mseq1, mseq2, effarr1, effarr2, grouprna1, grouprna2);
                             for (i = length - 1; i >= 0; i--) {
@@ -1765,7 +1765,7 @@ TreeDependentIteration(int locnjob, char** name, int nlen[M], char** aseq, char*
                                     fprintf(stderr, "'Q' is no longer supported\n");
                                     exit(1);
                                 } else if (alg == 'd') {
-                                    imp_match_init_strictD(NULL, clus1, clus2, length, length, mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, 1, memlist[0], memlist[1], NULL, NULL, NULL, -1, 0);
+                                    imp_match_init_strictD(clus1, clus2, length, length, mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, memlist[0], memlist[1], NULL, NULL, NULL, -1, 0);
 
                                     for (i = length - 1; i >= 0; i--) {
                                         oimpmatchdouble += (double)imp_match_out_scD(i, i);
@@ -1840,7 +1840,7 @@ TreeDependentIteration(int locnjob, char** name, int nlen[M], char** aseq, char*
                                     fprintf(stderr, "'Q' is no longer supported\n");
                                     exit(1);
                                 } else if (alg == 'd') {
-                                    imp_match_init_strictD(NULL, clus1, clus2, length, length, mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, 1, memlist[0], memlist[1], NULL, NULL, NULL, -1, 0);
+                                    imp_match_init_strictD(clus1, clus2, length, length, mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, memlist[0], memlist[1], NULL, NULL, NULL, -1, 0);
                                     if (rnakozo)
                                         imp_rnaD(clus1, clus2, mseq1, mseq2, effarr1, effarr2, grouprna1, grouprna2);
                                 } else {

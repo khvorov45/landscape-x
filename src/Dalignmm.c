@@ -112,7 +112,7 @@ imp_rnaD(int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* e
 }
 
 void
-imp_match_init_strictD(double* imp, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int forscore, int* orinum1, int* orinum2, int* uselh, int* seedinlh1, int* seedinlh2, int nodeid, int nfiles) {
+imp_match_init_strictD(int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2, int* uselh, int* seedinlh1, int* seedinlh2, int nodeid, int nfiles) {
     //	int i, j, k1, k2, tmpint, start1, start2, end1, end2;
     //	double effij;
     //	double effij_kozo;
@@ -2439,7 +2439,7 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
             orlgth1 = 0;
             orlgth2 = 0;
 
-            imp_match_init_strictD(NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, 0, 0);
+            imp_match_init_strictD(0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
 
             free(mseq1);
             free(mseq2);
@@ -4175,7 +4175,7 @@ D__align_variousdist(int** which, double*** matrices, double** n_dynamicmtx, cha
             orlgth1 = 0;
             orlgth2 = 0;
 
-            imp_match_init_strictD(NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, 0, 0);
+            imp_match_init_strictD(0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
 
             free(mseq1);
             free(mseq2);
