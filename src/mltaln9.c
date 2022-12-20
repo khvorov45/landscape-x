@@ -3984,8 +3984,8 @@ distdp(double** scoringmtx, char* s1, char* s2, LocalHom* lh, double selfscore1,
 }
 
 double
-distdp_noalign(char* s1, char* s2, double selfscore1, double selfscore2, int alloclen)  // tbfast.c kara yobareru
-{
+distdp_noalign(char* s1, char* s2, double selfscore1, double selfscore2, int alloclen) {
+    (void)alloclen;
     double v;
     v = G__align11_noalign(n_dis_consweight_multi, penalty, penalty_ex, &s1, &s2);
     return (score2dist(v, selfscore1, selfscore2));
