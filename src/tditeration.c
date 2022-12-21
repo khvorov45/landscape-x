@@ -277,7 +277,7 @@ freelocalarrays(
     commonAlloc2 = 0;
     Falign(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL, 0, NULL);
     Falign_localhom(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, 0, NULL);
-    D__align(NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0);
+    D__align(NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, 0, NULL, 0, 0);
     partA__align_variousdist(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL);
 
     if (rnakozo && rnaprediction == 'm') {
@@ -964,7 +964,7 @@ athread(void* arg) {
                     if (use_fft) {
                         chudanres = 0;
                         if (alg == 'd')
-                            D__align(n_dis_consweight_multi, mseq1, mseq2, effarr1, effarr2, clus1, clus2, alloclen, constraint, &impmatchdouble, NULL, NULL, NULL, NULL, subgenerationpt, subgenerationatfirst, &chudanres, 1, 1);
+                            D__align(n_dis_consweight_multi, mseq1, mseq2, effarr1, effarr2, clus1, clus2, alloclen, constraint, &impmatchdouble, subgenerationpt, subgenerationatfirst, &chudanres, 1, 1);
 
                         else
                             Falign_localhom(whichmtx, scoringmatrices, mseq1, mseq2, effarr1, effarr2, eff1s, eff2s, clus1, clus2, alloclen, constraint, &impmatchdouble, gapmap1, gapmap2, subgenerationpt, subgenerationatfirst, &chudanres);
@@ -1881,9 +1881,9 @@ TreeDependentIteration(int locnjob, char** name, int nlen[M], char** aseq, char*
                             if (alg == 'd') {
                                 if (scoringmatrices)  // called by tditeration.c
                                 {
-                                    D__align_variousdist(whichmtx, scoringmatrices, mseq1, mseq2, effarr1, effarr2, eff1s, eff2s, clus1, clus2, alloclen, constraint, &impmatchdouble, NULL, NULL, NULL, NULL, 0, NULL, 1, 1);
+                                    D__align_variousdist(whichmtx, scoringmatrices, mseq1, mseq2, effarr1, effarr2, eff1s, eff2s, clus1, clus2, alloclen, constraint, &impmatchdouble, NULL, 0, NULL, 1, 1);
                                 } else {
-                                    D__align(n_dis_consweight_multi, mseq1, mseq2, effarr1, effarr2, clus1, clus2, alloclen, constraint, &impmatchdouble, NULL, NULL, NULL, NULL, NULL, 0, NULL, 1, 1);
+                                    D__align(n_dis_consweight_multi, mseq1, mseq2, effarr1, effarr2, clus1, clus2, alloclen, constraint, &impmatchdouble, NULL, 0, NULL, 1, 1);
                                 }
                             } else
                                 Falign_localhom(whichmtx, scoringmatrices, mseq1, mseq2, effarr1, effarr2, eff1s, eff2s, clus1, clus2, alloclen, constraint, &impmatchdouble, gapmap1, gapmap2, NULL, 0, NULL);

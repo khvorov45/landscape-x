@@ -809,9 +809,9 @@ Falign(int** whichmtx, double*** scoringmatrices, double** n_dynamicmtx, char** 
             alignableReagion(0, 0, NULL, NULL, NULL, NULL, NULL);
             fft(0, NULL, 1);
             A__align(NULL, 0, 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
-            D__align(NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0);
+            D__align(NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, 0, NULL, 0, 0);
             A__align_variousdist(NULL, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0);
-            D__align_variousdist(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0);
+            D__align_variousdist(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, 0, NULL, 0, 0);
             G__align11(NULL, NULL, NULL, 0, 0, 0);
             G__align11psg(NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
             blockAlign2(NULL, NULL, NULL, NULL, NULL, NULL);
@@ -1613,9 +1613,9 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
                 } else {
                     if (scoringmatrices)  // called by tditeration.c
                     {
-                        totalscore += D__align_variousdist(whichmtx, scoringmatrices, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, 0, &dumdb, sgap2, egap1, egap2, chudanpt, chudanref, chudanres, headgp, tailgp);
+                        totalscore += D__align_variousdist(whichmtx, scoringmatrices, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, 0, &dumdb, chudanpt, chudanref, chudanres, headgp, tailgp);
                     } else
-                        totalscore += D__align(n_dynamicmtx, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, 0, &dumdb, sgap1, sgap2, egap1, egap2, chudanpt, chudanref, chudanres, headgp, tailgp);
+                        totalscore += D__align(n_dynamicmtx, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, 0, &dumdb, chudanpt, chudanref, chudanres, headgp, tailgp);
                 }
                 break;
             case ('A'):
@@ -1901,7 +1901,7 @@ Falign_givenanchors(ExtAnch* pairanch, int** whichmtx, double*** scoringmatrices
             //fft( 0, NULL, 1 );
             A__align(NULL, 0, 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
             A__align_variousdist(NULL, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0);
-            D__align_variousdist( NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0);
+            D__align_variousdist( NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, 0, NULL, 0, 0);
             G__align11(NULL, NULL, NULL, 0, 0, 0);
             //blockAlign2( NULL, NULL, NULL, NULL, NULL, NULL );
             //if( crossscore ) FreeDoubleMtx( crossscore );
@@ -2895,7 +2895,7 @@ Falign_udpari_long(
             fft(0, NULL, 1);
             A__align(NULL, 0, 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
             A__align_variousdist(NULL, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0);
-            D__align_variousdist(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0);
+            D__align_variousdist(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, 0, NULL, 0, 0);
             G__align11(NULL, NULL, NULL, 0, 0, 0);
             blockAlign2(NULL, NULL, NULL, NULL, NULL, NULL);
             if (crossscore)

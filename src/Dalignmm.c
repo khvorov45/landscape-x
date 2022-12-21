@@ -858,38 +858,6 @@ fillgaplen(Gaplen** mtx, int l) {
     }
 }
 
-static int
-gapvariety(int n, int l, char** seq) {
-    int i, j, gl, *known, nknown, val;
-    known = calloc(l + 1, sizeof(int));
-    //	for( i=0; i<n; i++ ) reporterr( "seq[%d] = %s\n", i, seq[i] );
-
-    val = 0;
-    for (j = 0; j <= l; j++) {
-        for (i = 0; i < j; i++)
-            known[i] = 0;
-        nknown = 0;
-        for (i = 0; i < n; i++) {
-            if (seq[i][j] == '-')
-                continue;
-
-            gl = strralpha(seq[i] + j, seq[i]);
-            //			reporterr( "gl = %d\n", gl );
-            if (gl > 0) {
-                if (known[gl]) {
-                    ;
-                } else {
-                    nknown++;
-                }
-            }
-        }
-        val += nknown;
-    }
-    free(known);
-
-    return (val);
-}
-
 static void
 gaplencount(int n, int l, Gaplen** mtx, char** seq, double* eff) {
     int i, j, k, gl, *known, nknown;
@@ -2344,9 +2312,7 @@ freegaplenpartly(Gaplen** mtx, int startpos, int endpos) {
 #endif
 
 double
-D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, char* sgap1, char* sgap2, char* egap1, char* egap2, int* chudanpt, int chudanref, int* chudanres, int headgp, int tailgp)
-/* score no keisan no sai motokaraaru gap no atukai ni mondai ga aru */
-{
+D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int* chudanpt, int chudanref, int* chudanres, int headgp, int tailgp) {
     //	int k;
     register int i, j;
 
@@ -4031,49 +3997,11 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
     reporterr("\n");
 #endif
 
-#if 0
-//	if( strlen( seq1[0] ) - lgth1 > 100 && icyc > 1 || strlen( seq2[0] ) - lgth2 > 100 & jcyc > 1 )
-	if( strstr( seq1[0], "LNDDAT" ) && icyc == 1 || strstr( seq2[0], "LNDDAT" ) && jcyc==1)
-	{
-		for( i=0; i<icyc; i++ )
-			printf( ">group1\n%s\n", seq1[i] );
-		for( j=0; j<jcyc; j++ )
-			printf( ">group2\n%s\n", seq2[j] );
-		exit( 1 );
-	}
-#endif
-
     return (wm);
 }
 
 double
-D__align_ls(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, char* sgap1, char* sgap2, char* egap1, char* egap2, int* chudanpt, int chudanref, int* chudanres, int headgp, int tailgp) {
-    int    v1, v2;
-    double val;
-
-#if 1
-    v1 = gapvariety(icyc, strlen(seq1[0]), seq1);
-    v2 = gapvariety(jcyc, strlen(seq2[0]), seq2);
-#else
-    v1 = icyc;
-    v2 = jcyc;
-#endif
-
-    //	reporterr( "\nicyc,jcyc = %d,%d\n", icyc, jcyc );
-    reporterr(" v1,v2 = %d,%d\n", v1, v2);
-
-    if (v1 >= v2) {
-        val = D__align(n_dynamicmtx, seq1, seq2, eff1, eff2, icyc, jcyc, alloclen, constraint, impmatch, sgap1, sgap2, egap1, egap2, chudanpt, chudanref, chudanres, headgp, tailgp);
-    } else {
-        val = D__align(n_dynamicmtx, seq2, seq1, eff2, eff1, jcyc, icyc, alloclen, constraint, impmatch, sgap2, sgap1, egap2, egap1, chudanpt, chudanref, chudanres, headgp, tailgp);
-    }
-    return val;
-}
-
-double
-D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, char* sgap2, char* egap1, char* egap2, int* chudanpt, int chudanref, int* chudanres, int headgp, int tailgp)
-/* score no keisan no sai motokaraaru gap no atukai ni mondai ga aru */
-{
+D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int* chudanpt, int chudanref, int* chudanres, int headgp, int tailgp) {
     //	int k;
     register int i, j, c;
     int          lasti, lastj; /* outgap == 0 -> lgth1, outgap == 1 -> lgth1+1 */
