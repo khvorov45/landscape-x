@@ -1018,8 +1018,7 @@ pairgapcount(char* s1, char* s2) {
 #endif
 
 static double
-calcpfac_gap_noidatend(Gaplen** gaplen1, Gaplen** gaplen2, int newgaplen, int i, int j, char* seq1, char* seq2, int disp)  // seq1 to seq2 ha debug you
-{
+calcpfac_gap_noidatend(Gaplen** gaplen1, Gaplen** gaplen2, int newgaplen, int i, int j) {
 #if 1
     double  pfac, pfac1, pfac10, pfac2;
     int     k, l, pos1, pos2;
@@ -1461,7 +1460,7 @@ calcpfac(Gaplen** gaplen1, Gaplen** gaplen2, int i, int j, char* seq1, char* seq
 #endif
 
 static double
-calcpfac_gapex_noidatend(Gaplen** gaplen1, Gaplen** gaplen2, int i, int j, int newgaplen, char* seq1, char* seq2, int disp) {
+calcpfac_gapex_noidatend(Gaplen** gaplen1, Gaplen** gaplen2, int i, int j, int newgaplen) {
     double  pfac, pfac1, pfac10;
     int     k, l, pos1, pos2;
     Gaplen *gaplen1i, *gaplen2j, *g1, *g2;
@@ -1509,8 +1508,7 @@ calcpfac_gapex_noidatend(Gaplen** gaplen1, Gaplen** gaplen2, int i, int j, int n
 }
 
 static double
-calcpfacnoidatend(Gaplen** gaplen1, Gaplen** gaplen2, int i, int j, char* seq1, char* seq2, int disp)  // seq1 to seq2 ha debug you
-{
+calcpfacnoidatend(Gaplen** gaplen1, Gaplen** gaplen2, int i, int j) {
     double  pfac, pfac1, pfac2;
     int     k, l, pos1, pos2;
     Gaplen *gaplen1i, *gaplen2j, *g1, *g2;
@@ -3022,14 +3020,14 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
 #endif
 
     for (j = 1; j < lgth2 + 1; j++) {
-        pfac = calcpfac_gap_noidatend(gaplen1, gaplen2, j, 0, j, seq1[0], seq2[0], 0);
+        pfac = calcpfac_gap_noidatend(gaplen1, gaplen2, j, 0, j);
         //		reporterr( "computing initial end gap penalty for %c-%c, i=0, j=%d, pfac=%f\n", seq1[0][0], seq2[0][j], j, pfac );
         //		reporterr( "%c-%c, i=0, j=%d, currentw[j]=%f -> ", seq1[0][0], seq2[0][j], j, currentw[j] );
         currentw[j] += fpenalty * pfac;  // tekitou
         //		reporterr( " %f\n", currentw[j] );
     }
     for (i = 1; i < lgth1 + 1; i++) {
-        pfac = calcpfac_gap_noidatend(gaplen2, gaplen1, i, 0, i, seq2[0], seq1[0], 0);
+        pfac = calcpfac_gap_noidatend(gaplen2, gaplen1, i, 0, i);
         //		reporterr( "computing initial end gap penalty for %c-%c, i=%d, j=0, pfac=%f\n", seq1[0][i], seq2[0][0], i, pfac );
         initverticalw[i] += fpenalty * pfac;  // tekitou
     }
@@ -3040,7 +3038,7 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
         mp[j] = 0;
         ;
 #else
-        pfac = calcpfac_gapex_noidatend(gaplen2, gaplen1, j, 1, j, seq2[0], seq1[0], 1);
+        pfac = calcpfac_gapex_noidatend(gaplen2, gaplen1, j, 1, j);
 #if DEBUG
         reporterr("%c-%c, INITIAL jgap extension check, pfac = %f\n\n", seq1[0][j], '=', pfac);
 #endif
@@ -3156,7 +3154,7 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
         mi = previousw[0] + ogcp2[1] * gapfreq1[i - 1];
         mpi = 0;
 #else
-        pfac = calcpfac_gapex_noidatend(gaplen1, gaplen2, i, 1, i, seq1[0], seq2[0], 1);
+        pfac = calcpfac_gapex_noidatend(gaplen1, gaplen2, i, 1, i);
 #if DEBUG
         reporterr("%c-%c, INITIAL igap extension check, pfac = %f\n\n", '=', seq2[0][j], pfac);
 #endif
@@ -3273,7 +3271,7 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
 
             //			pfac = calcpfac( gaplen1jprev[j-1], gaplen2jprev[j-1], i, j, seq1[0], seq2[0] );
             //reporterr( "#### COMPACT, i,j=%d,%d\n", i, j );
-            pfac = calcpfacnoidatend(gaplen1jprev[j - 1], gaplen2jprev[j - 1], i, 1, seq1[0], seq2[0] + j, one);  // 1j->full, 2j->half
+            pfac = calcpfacnoidatend(gaplen1jprev[j - 1], gaplen2jprev[j - 1], i, 1);
 #if USEGAPLENMTX
             //reporterr( "#### FULL, i,j=%d,%d\n", i, j );
             pfactmp = calcpfac(gaplen1mtx[i - 1][j - 1], gaplen2mtx[i - 1][j - 1], i, j, seq1[0], seq2[0], one);
@@ -3312,7 +3310,7 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
             //if( i == 53 && j == 93 ) exit( 1 );
 
             //			pfac = calcpfac_gap_incomplete( gaplen1ibestkamo[i-1], gaplen2ibestkamo[i-1], newgaplen, i, j, seq1[0], seq2[0], 0 ); // i-1
-            pfac = calcpfac_gap_noidatend(gaplen1ibestkamo[i - 1], gaplen2ibestkamo[i - 1], newgaplen, 1, j, seq1[0] + i - 1, seq2[0], 0);  // i-1
+            pfac = calcpfac_gap_noidatend(gaplen1ibestkamo[i - 1], gaplen2ibestkamo[i - 1], newgaplen, 1, j);
 #if USEGAPLENMTX
             pfactmp = calcpfac_gap_incomplete(gaplen1mtx[i - 1][mpi], gaplen2mtx[i - 1][mpi], newgaplen, i, j, seq1[0], seq2[0], 1);
 #endif
@@ -3404,7 +3402,7 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
 #else
 
             //			pfac = calcpfac_gapex( gaplen1ibestkamo[i-1], gaplen2ibestkamo[i-1], i, j, j-mpi, seq1[0], seq2[0], 1 ); // i-1
-            pfac = calcpfac_gapex_noidatend(gaplen1ibestkamo[i - 1], gaplen2ibestkamo[i - 1], 1, j, j - mpi, seq1[0] + i, seq2[0], 1);  // 1ibest->half, 2ibest->full
+            pfac = calcpfac_gapex_noidatend(gaplen1ibestkamo[i - 1], gaplen2ibestkamo[i - 1], 1, j, j - mpi);
 #if USEGAPLENMTX
             pfactmp = calcpfac_gapex(gaplen1mtx[i - 1][mpi], gaplen2mtx[i - 1][mpi], i, j, j - mpi, seq1[0], seq2[0], 1);
 #endif
@@ -3430,7 +3428,7 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
             newgaplen = i - *mpjpt - 1;
             //			pfac = calcpfac_gap_incomplete( gaplen2jbestkamo[j-1], gaplen1jbestkamo[j-1], newgaplen, j, i, seq2[0], seq1[0], 0 ); // j-1 deha???
 
-            pfac = calcpfac_gap_noidatend(gaplen2jbestkamo[j - 1], gaplen1jbestkamo[j - 1], newgaplen, 1, i, seq2[0] + j - 1, seq1[0], 1);  // 2jbestkamo->half, 1jbestkamo->full
+            pfac = calcpfac_gap_noidatend(gaplen2jbestkamo[j - 1], gaplen1jbestkamo[j - 1], newgaplen, 1, i);
 #if USEGAPLENMTX
             pfactmp = calcpfac_gap_incomplete(gaplen2mtx[*mpjpt][j - 1], gaplen1mtx[*mpjpt][j - 1], newgaplen, j, i, seq2[0], seq1[0], 1);
 #endif
@@ -3515,7 +3513,7 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
 #else
 
             //			pfactmp = calcpfac_gapex( gaplen2jbestkamo[j-1], gaplen1jbestkamo[j-1], j, i, i-*mpjpt, seq2[0], seq1[0], 0 ); // j-1
-            pfactmp = calcpfac_gapex_noidatend(gaplen2jbestkamo[j - 1], gaplen1jbestkamo[j - 1], 1, i, i - *mpjpt, seq2[0] + j, seq1[0], 0);  // 2jbestkamo->half, 1jbestkamo->full
+            pfactmp = calcpfac_gapex_noidatend(gaplen2jbestkamo[j - 1], gaplen1jbestkamo[j - 1], 1, i, i - *mpjpt);
 #if USEGAPLENMTX
             pfac = calcpfac_gapex(gaplen2mtx[*mpjpt][j - 1], gaplen1mtx[*mpjpt][j - 1], j, i, i - *mpjpt, seq2[0], seq1[0], 0);
 #endif
@@ -4675,14 +4673,14 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
 #endif
 
     for (j = 1; j < lgth2 + 1; j++) {
-        pfac = calcpfac_gap_noidatend(gaplen1, gaplen2, j, 0, j, seq1[0], seq2[0], 0);
+        pfac = calcpfac_gap_noidatend(gaplen1, gaplen2, j, 0, j);
         //		reporterr( "computing initial end gap penalty for %c-%c, i=0, j=%d, pfac=%f\n", seq1[0][0], seq2[0][j], j, pfac );
         //		reporterr( "%c-%c, i=0, j=%d, currentw[j]=%f -> ", seq1[0][0], seq2[0][j], j, currentw[j] );
         currentw[j] += fpenalty * pfac;  // tekitou
         //		reporterr( " %f\n", currentw[j] );
     }
     for (i = 1; i < lgth1 + 1; i++) {
-        pfac = calcpfac_gap_noidatend(gaplen2, gaplen1, i, 0, i, seq2[0], seq1[0], 0);
+        pfac = calcpfac_gap_noidatend(gaplen2, gaplen1, i, 0, i);
         //		reporterr( "computing initial end gap penalty for %c-%c, i=%d, j=0, pfac=%f\n", seq1[0][i], seq2[0][0], i, pfac );
         initverticalw[i] += fpenalty * pfac;  // tekitou
     }
@@ -4693,7 +4691,7 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
         mp[j] = 0;
         ;
 #else
-        pfac = calcpfac_gapex_noidatend(gaplen2, gaplen1, j, 1, j, seq2[0], seq1[0], 1);
+        pfac = calcpfac_gapex_noidatend(gaplen2, gaplen1, j, 1, j);
 #if DEBUG
         reporterr("%c-%c, INITIAL jgap extension check, pfac = %f\n\n", seq1[0][j], '=', pfac);
 #endif
@@ -4829,7 +4827,7 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
         mi = previousw[0] + ogcp2[1] * gapfreq1[i - 1];
         mpi = 0;
 #else
-        pfac = calcpfac_gapex_noidatend(gaplen1, gaplen2, i, 1, i, seq1[0], seq2[0], 1);
+        pfac = calcpfac_gapex_noidatend(gaplen1, gaplen2, i, 1, i);
 #if DEBUG
         reporterr("%c-%c, INITIAL igap extension check, pfac = %f\n\n", '=', seq2[0][j], pfac);
 #endif
@@ -4955,7 +4953,7 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
 
             //			pfac = calcpfac( gaplen1jprev[j-1], gaplen2jprev[j-1], i, j, seq1[0], seq2[0] );
             //reporterr( "#### COMPACT, i,j=%d,%d\n", i, j );
-            pfac = calcpfacnoidatend(gaplen1jprev[j - 1], gaplen2jprev[j - 1], i, 1, seq1[0], seq2[0] + j, one);  // 1j->full, 2j->half
+            pfac = calcpfacnoidatend(gaplen1jprev[j - 1], gaplen2jprev[j - 1], i, 1);
 #if USEGAPLENMTX
             //reporterr( "#### FULL, i,j=%d,%d\n", i, j );
             pfactmp = calcpfac(gaplen1mtx[i - 1][j - 1], gaplen2mtx[i - 1][j - 1], i, j, seq1[0], seq2[0], one);
@@ -4994,7 +4992,7 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
             //if( i == 53 && j == 93 ) exit( 1 );
 
             //			pfac = calcpfac_gap_incomplete( gaplen1ibestkamo[i-1], gaplen2ibestkamo[i-1], newgaplen, i, j, seq1[0], seq2[0], 0 ); // i-1
-            pfac = calcpfac_gap_noidatend(gaplen1ibestkamo[i - 1], gaplen2ibestkamo[i - 1], newgaplen, 1, j, seq1[0] + i - 1, seq2[0], 0);  // i-1
+            pfac = calcpfac_gap_noidatend(gaplen1ibestkamo[i - 1], gaplen2ibestkamo[i - 1], newgaplen, 1, j);
 #if USEGAPLENMTX
             pfactmp = calcpfac_gap_incomplete(gaplen1mtx[i - 1][mpi], gaplen2mtx[i - 1][mpi], newgaplen, i, j, seq1[0], seq2[0], 1);
 #endif
@@ -5098,7 +5096,7 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
 #else
 
             //			pfac = calcpfac_gapex( gaplen1ibestkamo[i-1], gaplen2ibestkamo[i-1], i, j, j-mpi, seq1[0], seq2[0], 1 ); // i-1
-            pfac = calcpfac_gapex_noidatend(gaplen1ibestkamo[i - 1], gaplen2ibestkamo[i - 1], 1, j, j - mpi, seq1[0] + i, seq2[0], 1);  // 1ibest->half, 2ibest->full
+            pfac = calcpfac_gapex_noidatend(gaplen1ibestkamo[i - 1], gaplen2ibestkamo[i - 1], 1, j, j - mpi);
 #if USEGAPLENMTX
             pfactmp = calcpfac_gapex(gaplen1mtx[i - 1][mpi], gaplen2mtx[i - 1][mpi], i, j, j - mpi, seq1[0], seq2[0], 1);
 #endif
@@ -5124,7 +5122,7 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
             newgaplen = i - *mpjpt - 1;
             //			pfac = calcpfac_gap_incomplete( gaplen2jbestkamo[j-1], gaplen1jbestkamo[j-1], newgaplen, j, i, seq2[0], seq1[0], 0 ); // j-1 deha???
 
-            pfac = calcpfac_gap_noidatend(gaplen2jbestkamo[j - 1], gaplen1jbestkamo[j - 1], newgaplen, 1, i, seq2[0] + j - 1, seq1[0], 1);  // 2jbestkamo->half, 1jbestkamo->full
+            pfac = calcpfac_gap_noidatend(gaplen2jbestkamo[j - 1], gaplen1jbestkamo[j - 1], newgaplen, 1, i);
 #if USEGAPLENMTX
             pfactmp = calcpfac_gap_incomplete(gaplen2mtx[*mpjpt][j - 1], gaplen1mtx[*mpjpt][j - 1], newgaplen, j, i, seq2[0], seq1[0], 1);
 #endif
@@ -5219,7 +5217,7 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
 #else
 
             //			pfactmp = calcpfac_gapex( gaplen2jbestkamo[j-1], gaplen1jbestkamo[j-1], j, i, i-*mpjpt, seq2[0], seq1[0], 0 ); // j-1
-            pfactmp = calcpfac_gapex_noidatend(gaplen2jbestkamo[j - 1], gaplen1jbestkamo[j - 1], 1, i, i - *mpjpt, seq2[0] + j, seq1[0], 0);  // 2jbestkamo->half, 1jbestkamo->full
+            pfactmp = calcpfac_gapex_noidatend(gaplen2jbestkamo[j - 1], gaplen1jbestkamo[j - 1], 1, i, i - *mpjpt);
 #if USEGAPLENMTX
             pfac = calcpfac_gapex(gaplen2mtx[*mpjpt][j - 1], gaplen1mtx[*mpjpt][j - 1], j, i, i - *mpjpt, seq2[0], seq1[0], 0);
 #endif
