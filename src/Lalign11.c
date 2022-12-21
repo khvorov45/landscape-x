@@ -88,7 +88,7 @@ static void match_calc_bk( double *match, double **cpmx1, double **cpmx2, int i1
 #endif
 
 static double
-Ltracking(double* lastverticalw, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int* off1pt, int* off2pt, int endi, int endj, int* warpis, int* warpjs, int warpbase) {
+Ltracking(char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int* off1pt, int* off2pt, int endi, int endj, int* warpis, int* warpjs, int warpbase) {
     int i, j, l, iin, jin, lgth1, lgth2, k, limk;
     int ifi = 0, jfi = 0;  // by D.Mathog, a guess
     //	char gap[] = "-";
@@ -657,12 +657,6 @@ fprintf( stderr, "\n" );
         free(prevwarpj);
     }
 
-#if 0
-	fprintf( stderr, "maxwm = %f\n", maxwm );
-	fprintf( stderr, "endali = %d\n", endali );
-	fprintf( stderr, "endalj = %d\n", endalj );
-#endif
-
     if (ijp[endali][endalj] == localstop) {
         strcpy(seq1[0], "");
         strcpy(seq2[0], "");
@@ -671,7 +665,7 @@ fprintf( stderr, "\n" );
         return (0.0);
     }
 
-    Ltracking(lastverticalw, seq1, seq2, mseq1, mseq2, ijp, off1pt, off2pt, endali, endalj, warpis, warpjs, warpbase);
+    Ltracking(seq1, seq2, mseq1, mseq2, ijp, off1pt, off2pt, endali, endalj, warpis, warpjs, warpbase);
     if (warpis)
         free(warpis);
     if (warpjs)

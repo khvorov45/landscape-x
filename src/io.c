@@ -2204,7 +2204,7 @@ getnumlen_nogap_outallreg(FILE* fp, int* nlenminpt) {
 }
 
 static void
-escapehtml(char* res, char* ori, int maxlen) {
+escapehtml(char* res, char* ori) {
     char* res0 = res;
     while (*ori) {
         if (*ori == '<') {
@@ -2260,13 +2260,9 @@ getnumlen_nogap_outallreg_web(FILE* fp, FILE* ofp, int* nlenminpt, int* isaligne
     for (i = 0; i < njob; i++) {
         myfgets(tmpname, N - 1, fp);
         tmpname2[0] = tmpname[0];
-        escapehtml(tmpname2 + 1, tmpname + 1, N);
-        //		fprintf( stdout, "%s\n", tmpname );
-        //		fprintf( stdout, "%s\n", tmpname2 );
-        //		exit(1);
+        escapehtml(tmpname2 + 1, tmpname + 1);
         tmpseq = load1SeqWithoutName_realloc_casepreserve(fp);
         tmp = countnogaplen(tmpseq);
-        //		fprintf( stdout, "%d\n", tmp );
         if (tmp > nlenmax)
             nlenmax = tmp;
         if (tmp < *nlenminpt)
@@ -2425,7 +2421,7 @@ getnumlen(FILE* fp) {
 }
 
 void
-WriteGapFill(FILE* fp, int locnjob, char name[][B], int nlen[M], char** aseq) {
+WriteGapFill(FILE* fp, int locnjob, char name[][B], char** aseq) {
     static char b[N];
     int         i, j;
     int         nalen[M];
@@ -2471,7 +2467,7 @@ WriteGapFill(FILE* fp, int locnjob, char name[][B], int nlen[M], char** aseq) {
 }
 
 void
-writeDataforgaln(FILE* fp, int locnjob, char** name, int* nlen, char** aseq) {
+writeDataforgaln(FILE* fp, int locnjob, char** name, char** aseq) {
     int i, j;
     int nalen;
 
@@ -2490,7 +2486,7 @@ writeDataforgaln(FILE* fp, int locnjob, char** name, int* nlen, char** aseq) {
 }
 
 void
-writeData_pointer(FILE* fp, int locnjob, char** name, int* nlen, char** aseq) {
+writeData_pointer(FILE* fp, int locnjob, char** name, char** aseq) {
     int i, j;
     int nalen;
 
@@ -2515,7 +2511,7 @@ writeData_pointer(FILE* fp, int locnjob, char** name, int* nlen, char** aseq) {
 }
 
 void
-writeData(FILE* fp, int locnjob, char name[][B], int nlen[], char** aseq) {
+writeData(FILE* fp, int locnjob, char name[][B], char** aseq) {
     int i, j;
     int nalen;
 
@@ -2547,7 +2543,7 @@ write1seq(FILE* fp, char* aseq) {
 }
 
 void
-readhat2_doublehalf_part_pointer(FILE* fp, int nseq, int nadd, char** name, double** mtx) {
+readhat2_doublehalf_part_pointer(FILE* fp, int nseq, int nadd, double** mtx) {
     int  i, j, nseq0, norg;
     char b[B];
 
@@ -2584,7 +2580,7 @@ readhat2_doublehalf_part_pointer(FILE* fp, int nseq, int nadd, char** name, doub
 }
 
 void
-readhat2_doublehalf_pointer(FILE* fp, int nseq, char** name, double** mtx) {
+readhat2_doublehalf_pointer(FILE* fp, int nseq, double** mtx) {
     int  i, j, nseq0;
     char b[B];
 
@@ -2618,8 +2614,9 @@ readhat2_doublehalf_pointer(FILE* fp, int nseq, char** name, double** mtx) {
             mtx[i][j - i] = (input_new(fp, D));
         }
 }
+
 void
-readhat2_doublehalf(FILE* fp, int nseq, char name[M][B], double** mtx) {
+readhat2_doublehalf(FILE* fp, int nseq, double** mtx) {
     int  i, j, nseq0;
     char b[B];
 
@@ -2651,8 +2648,9 @@ readhat2_doublehalf(FILE* fp, int nseq, char name[M][B], double** mtx) {
             mtx[i][j - i] = (input_new(fp, D));
         }
 }
+
 void
-readhat2_double(FILE* fp, int nseq, char name[M][B], double** mtx) {
+readhat2_double(FILE* fp, int nseq, double** mtx) {
     int  i, j, nseq0;
     char b[B];
 
@@ -2684,8 +2682,9 @@ readhat2_double(FILE* fp, int nseq, char name[M][B], double** mtx) {
             mtx[i][j] = (input_new(fp, D));
         }
 }
+
 void
-readhat2_int(FILE* fp, int nseq, char name[M][B], int** mtx) {
+readhat2_int(FILE* fp, int nseq, int** mtx) {
     int  i, j, nseq0;
     char b[B];
 
@@ -2719,7 +2718,7 @@ readhat2_int(FILE* fp, int nseq, char name[M][B], int** mtx) {
 }
 
 void
-readhat2_pointer(FILE* fp, int nseq, char** name, double** mtx) {
+readhat2_pointer(FILE* fp, int nseq, double** mtx) {
     int  i, j, nseq0;
     char b[B];
 
@@ -2752,7 +2751,7 @@ readhat2_pointer(FILE* fp, int nseq, char** name, double** mtx) {
         }
 }
 void
-readhat2(FILE* fp, int nseq, char name[M][B], double** mtx) {
+readhat2(FILE* fp, int nseq, double** mtx) {
     int  i, j, nseq0;
     char b[B];
 
@@ -3001,7 +3000,7 @@ ReadFasta_sub(FILE* fp, double* dis, int nseq, char name[M][B]) {
 }
 
 int
-ReadSsearch(FILE* fp, double* dis, int nseq, char name[M][B]) {
+ReadSsearch(FILE* fp, double* dis, int nseq) {
     int  i, count = 0;
     char b[B];
     int  junban[M];
@@ -3251,7 +3250,7 @@ ReadBlastm7_scoreonly(FILE* fp, double* dis, int nin) {
 }
 
 int
-ReadBlastm7(FILE* fp, double* dis, int qmem, char** name, LocalHom* localhomlist) {
+ReadBlastm7(FILE* fp, double* dis, LocalHom* localhomlist) {
     int         count = 0;
     char        b[B];
     char*       pt;
@@ -3354,7 +3353,7 @@ ReadBlastm7(FILE* fp, double* dis, int qmem, char** name, LocalHom* localhomlist
 }
 
 int
-ReadFasta34noalign(FILE* fp, double* dis, int qmem, char** name, LocalHom* localhomlist) {
+ReadFasta34noalign(FILE* fp, double* dis) {
     int        count = 0;
     char       b[B];
     char*      pt;
@@ -3384,7 +3383,7 @@ ReadFasta34noalign(FILE* fp, double* dis, int qmem, char** name, LocalHom* local
 }
 
 int
-ReadFasta34m10_nuc(FILE* fp, double* dis, int qmem, char** name, LocalHom* localhomlist) {
+ReadFasta34m10_nuc(FILE* fp, double* dis, LocalHom* localhomlist) {
     int         count = 0;
     char        b[B];
     char*       pt;
@@ -3511,7 +3510,7 @@ ReadFasta34m10_nuc(FILE* fp, double* dis, int qmem, char** name, LocalHom* local
 }
 
 int
-ReadFasta34m10(FILE* fp, double* dis, int qmem, char** name, LocalHom* localhomlist) {
+ReadFasta34m10(FILE* fp, double* dis, LocalHom* localhomlist) {
     int         count = 0;
     char        b[B];
     char*       pt;
@@ -3635,7 +3634,7 @@ ReadFasta34m10(FILE* fp, double* dis, int qmem, char** name, LocalHom* localhoml
 }
 
 int
-ReadFasta34m10_scoreonly_nucbk(FILE* fp, double* dis, int nin) {
+ReadFasta34m10_scoreonly_nucbk(FILE* fp, double* dis) {
     int    count = 0;
     char   b[B];
     char*  pt;
@@ -3784,7 +3783,7 @@ ReadFasta34m10_scoreonly(FILE* fp, double* dis, int nin) {
     return count;
 }
 int
-ReadFasta34(FILE* fp, double* dis, int nseq, char name[M][B], LocalHom* localhomlist) {
+ReadFasta34(FILE* fp, double* dis, LocalHom* localhomlist) {
     int        count = 0;
     char       b[B];
     char*      pt;
@@ -3843,7 +3842,7 @@ ReadFasta34(FILE* fp, double* dis, int nseq, char name[M][B], LocalHom* localhom
 }
 
 int
-ReadFasta3(FILE* fp, double* dis, int nseq, char name[M][B]) {
+ReadFasta3(FILE* fp, double* dis) {
     int    count = 0;
     char   b[B];
     char*  pt;
@@ -3872,7 +3871,7 @@ ReadFasta3(FILE* fp, double* dis, int nseq, char name[M][B]) {
 }
 
 int
-ReadFasta(FILE* fp, double* dis, int nseq, char name[M][B]) {
+ReadFasta(FILE* fp, double* dis, int nseq) {
     int  i, count = 0;
     char b[B];
     int  junban[M];
@@ -3908,7 +3907,7 @@ ReadFasta(FILE* fp, double* dis, int nseq, char name[M][B]) {
 }
 
 int
-ReadOpt(FILE* fp, int opt[M], int nseq, char name[M][B]) {
+ReadOpt(FILE* fp, int opt[M], int nseq) {
     int  i, count = 0;
     char b[B];
     int  junban[M];
@@ -3928,7 +3927,7 @@ ReadOpt(FILE* fp, int opt[M], int nseq, char name[M][B]) {
 }
 
 int
-ReadOpt2(FILE* fp, int opt[M], int nseq, char name[M][B]) {
+ReadOpt2(FILE* fp, int opt[M], int nseq) {
     int  i, count = 0;
     char b[B];
     int  junban[M];
@@ -3946,7 +3945,7 @@ ReadOpt2(FILE* fp, int opt[M], int nseq, char name[M][B]) {
 }
 
 int
-writePre(int nseq, char** name, int nlen[M], char** aseq, int force) {
+writePre(int nseq, char** name, char** aseq, int force) {
 #if USE_XCED
     int i, value;
     if (!signalSM) {
@@ -3954,12 +3953,8 @@ writePre(int nseq, char** name, int nlen[M], char** aseq, int force) {
             rewind(prep_g);
             if (devide)
                 dvWrite(prep_g, nseq, name, nlen, aseq);
-#if 0
-			else    WriteGapFill( prep_g, nseq, name, nlen, aseq );
-#else
             else
-                writeData(prep_g, nseq, name, nlen, aseq);
-#endif
+                writeData(prep_g, nseq, name, aseq);
         }
         return (0);
     }
@@ -4016,7 +4011,7 @@ writePre(int nseq, char** name, int nlen[M], char** aseq, int force) {
 #else
     if (force) {
         rewind(prep_g);
-        writeData_pointer(prep_g, nseq, name, nlen, aseq);
+        writeData_pointer(prep_g, nseq, name, aseq);
     }
 #endif
     return (0);
@@ -4103,7 +4098,7 @@ closeFiles(void) {
 }
 
 void
-WriteForFasta(FILE* fp, int locnjob, char** name, int nlen[M], char** aseq) {
+WriteForFasta(FILE* fp, int locnjob, char** name, char** aseq) {
     static char b[N];
     int         i, j;
     int         nalen[M];
@@ -4120,7 +4115,7 @@ WriteForFasta(FILE* fp, int locnjob, char** name, int nlen[M], char** aseq) {
 }
 
 void
-readlocalhomtable2_target(FILE* fp, int njob, LocalHom** localhomtable, char* kozoarivec, int* targetmap) {
+readlocalhomtable2_target(FILE* fp, LocalHom** localhomtable, char* kozoarivec, int* targetmap) {
     double      opt;
     static char buff[B];
     char        infor[100];
@@ -4254,7 +4249,7 @@ readlocalhomtable2_half(FILE* fp, int njob, LocalHom** localhomtable, char* kozo
 }
 
 void
-readlocalhomtable2(FILE* fp, int njob, LocalHom** localhomtable, char* kozoarivec) {
+readlocalhomtable2(FILE* fp, LocalHom** localhomtable, char* kozoarivec) {
     double      opt;
     static char buff[B];
     char        infor[100];
@@ -4562,8 +4557,7 @@ readlocalhomtable(FILE* fp, int njob, LocalHom** localhomtable, char* kozoarivec
 }
 
 void
-readlocalhomtable_two(FILE* fp, int norg, int nadd, LocalHom** localhomtable, LocalHom** localhomtablex, char* kozoarivec)  // for test only
-{
+readlocalhomtable_two(FILE* fp, int norg, int nadd, LocalHom** localhomtable, LocalHom** localhomtablex) {
     double      opt;
     static char buff[B];
     char        infor[100];
@@ -4645,8 +4639,7 @@ readlocalhomtable_two(FILE* fp, int norg, int nadd, LocalHom** localhomtable, Lo
 }
 
 void
-readlocalhomtable_one(FILE* fp, int norg, int nadd, LocalHom** localhomtable, char* kozoarivec)  // for test only
-{
+readlocalhomtable_one(FILE* fp, int norg, int nadd, LocalHom** localhomtable) {
     double      opt;
     static char buff[B];
     char        infor[100];
@@ -5099,7 +5092,7 @@ clustalout_pointer(FILE* fp, int nseq, int maxlen, char** seq, char** name, char
 }
 
 void
-writeData_reorder_pointer(FILE* fp, int locnjob, char** name, int* nlen, char** aseq, int* order) {
+writeData_reorder_pointer(FILE* fp, int locnjob, char** name, char** aseq, int* order) {
     int i, j, k;
     int nalen;
 
@@ -5122,8 +5115,9 @@ writeData_reorder_pointer(FILE* fp, int locnjob, char** name, int* nlen, char** 
 #endif
     }
 }
+
 void
-writeData_reorder(FILE* fp, int locnjob, char name[][B], int nlen[], char** aseq, int* order) {
+writeData_reorder(FILE* fp, int locnjob, char name[][B], char** aseq, int* order) {
     int i, j, k;
     int nalen;
 
@@ -5796,7 +5790,7 @@ treein_bin(FILE* fp, int n, int*** topol, double** len, Treedep* dep, int* nfile
 
 void
 uselhout(FILE* fp, int n, int* uselh) {
-    if (fwrite(uselh, sizeof(int), n, fp) != n) {
+    if ((int)fwrite(uselh, sizeof(int), n, fp) != n) {
         reporterr("write error in uselhout()\n");
         exit(1);
     }
@@ -5804,7 +5798,7 @@ uselhout(FILE* fp, int n, int* uselh) {
 
 int
 uselhin(FILE* fp, int n, int* uselh) {
-    if (fread(uselh, sizeof(int), n, fp) != n) {
+    if ((int)fread(uselh, sizeof(int), n, fp) != n) {
         reporterr("read error in uselhout()\n");
         exit(1);
     }

@@ -1175,7 +1175,7 @@ MSalign2m2m_rec(int icyc, int jcyc, char** seq1, double** cpmx1, double** cpmx2,
 }
 
 static double
-MSalignmm_rec(int icyc, int jcyc, char** seq1, double** cpmx1, double** cpmx2, int ist, int ien, int jst, int jen, int alloclen, char** mseq1, char** mseq2, double** gapinfo, double** map) {
+MSalignmm_rec(int icyc, int jcyc, char** seq1, double** cpmx1, double** cpmx2, int ist, int ien, int jst, int jen, char** mseq1, char** mseq2, double** gapinfo, double** map) {
     double       value = 0.0;
     register int i, j;
     char **      aseq1, **aseq2;
@@ -2027,9 +2027,7 @@ MSalignmm_rec(int icyc, int jcyc, char** seq1, double** cpmx1, double** cpmx2, i
 }
 
 double
-Lalignmm_hmout(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, char* sgap1, char* sgap2, char* egap1, char* egap2, double** map)
-/* score no keisan no sai motokaraaru gap no atukai ni mondai ga aru */
-{
+Lalignmm_hmout(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, char* sgap1, char* sgap2, char* egap2, double** map) {
     //	int k;
     int    i, j;
     int    ll1, ll2;
@@ -2075,14 +2073,14 @@ Lalignmm_hmout(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, i
     cpmx2 = AllocateFloatMtx(ll2 + 2, nalphabets + 1);
 
     for (i = 0; i < icyc; i++) {
-        if (strlen(seq1[i]) != lgth1) {
+        if ((int)strlen(seq1[i]) != lgth1) {
             fprintf(stderr, "i = %d / %d\n", i, icyc);
             fprintf(stderr, "bug! hairetsu ga kowareta!\n");
             exit(1);
         }
     }
     for (j = 0; j < jcyc; j++) {
-        if (strlen(seq2[j]) != lgth2) {
+        if ((int)strlen(seq2[j]) != lgth2) {
             fprintf(stderr, "j = %d / %d\n", j, jcyc);
             fprintf(stderr, "bug! hairetsu ga kowareta!\n");
             exit(1);
@@ -2134,7 +2132,7 @@ Lalignmm_hmout(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, i
     gapinfo[3] = fgcp2;
 #endif
 
-    wm = MSalignmm_rec(icyc, jcyc, seq1, cpmx1, cpmx2, 0, lgth1 - 1, 0, lgth2 - 1, alloclen, mseq1, mseq2, gapinfo, map);
+    wm = MSalignmm_rec(icyc, jcyc, seq1, cpmx1, cpmx2, 0, lgth1 - 1, 0, lgth2 - 1, mseq1, mseq2, gapinfo, map);
 #if DEBUG
     fprintf(stderr, " seq1[0] = %s\n", seq1[0]);
     fprintf(stderr, " seq2[0] = %s\n", seq2[0]);
@@ -2156,14 +2154,14 @@ Lalignmm_hmout(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, i
     lgth1 = strlen(seq1[0]);
     lgth2 = strlen(seq2[0]);
     for (i = 0; i < icyc; i++) {
-        if (strlen(seq1[i]) != lgth1) {
+        if ((int)strlen(seq1[i]) != lgth1) {
             fprintf(stderr, "i = %d / %d\n", i, icyc);
             fprintf(stderr, "hairetsu ga kowareta (end of MSalignmm) !\n");
             exit(1);
         }
     }
     for (j = 0; j < jcyc; j++) {
-        if (strlen(seq2[j]) != lgth2) {
+        if ((int)strlen(seq2[j]) != lgth2) {
             fprintf(stderr, "j = %d / %d\n", j, jcyc);
             fprintf(stderr, "hairetsu ga kowareta (end of MSalignmm) !\n");
             exit(1);
@@ -2174,9 +2172,7 @@ Lalignmm_hmout(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, i
 }
 
 double
-Lalign2m2m_hmout(char** seq1, char** seq2, char** seq1r, char** seq2r, char* dir1, char* dir2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, char* sgap1, char* sgap2, char* egap1, char* egap2, double** map)
-/* score no keisan no sai motokaraaru gap no atukai ni mondai ga aru */
-{
+Lalign2m2m_hmout(char** seq1, char** seq2, char** seq1r, char** seq2r, char* dir1, char* dir2, double* eff1, double* eff2, int icyc, int jcyc, char* sgap1, char* sgap2, char* egap2, double** map) {
     //	int k;
     int      i, j;
     int      ll1, ll2;
@@ -2220,14 +2216,14 @@ Lalign2m2m_hmout(char** seq1, char** seq2, char** seq1r, char** seq2r, char* dir
     cpmx2 = AllocateFloatMtx(ll2 + 2, 39);
 
     for (i = 0; i < icyc; i++) {
-        if (strlen(seq1[i]) != lgth1) {
+        if ((int)strlen(seq1[i]) != lgth1) {
             fprintf(stderr, "i = %d / %d\n", i, icyc);
             fprintf(stderr, "bug! hairetsu ga kowareta!\n");
             exit(1);
         }
     }
     for (j = 0; j < jcyc; j++) {
-        if (strlen(seq2[j]) != lgth2) {
+        if ((int)strlen(seq2[j]) != lgth2) {
             fprintf(stderr, "j = %d / %d\n", j, jcyc);
             fprintf(stderr, "bug! hairetsu ga kowareta!\n");
             exit(1);
@@ -2341,14 +2337,14 @@ Lalign2m2m_hmout(char** seq1, char** seq2, char** seq1r, char** seq2r, char* dir
     lgth1 = strlen(seq1[0]);
     lgth2 = strlen(seq2[0]);
     for (i = 0; i < icyc; i++) {
-        if (strlen(seq1[i]) != lgth1) {
+        if ((int)strlen(seq1[i]) != lgth1) {
             fprintf(stderr, "i = %d / %d\n", i, icyc);
             fprintf(stderr, "hairetsu ga kowareta (end of MSalignmm) !\n");
             exit(1);
         }
     }
     for (j = 0; j < jcyc; j++) {
-        if (strlen(seq2[j]) != lgth2) {
+        if ((int)strlen(seq2[j]) != lgth2) {
             fprintf(stderr, "j = %d / %d\n", j, jcyc);
             fprintf(stderr, "hairetsu ga kowareta (end of MSalignmm) !\n");
             exit(1);

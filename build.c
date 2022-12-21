@@ -303,10 +303,10 @@ main() {
                 prb_Str outname = prb_replaceExt(arena, inname, prb_STR("obj"));
                 prb_Str outpath = prb_pathJoin(arena, srcOutDir, outname);
                 arrput(srcObjPaths, outpath);
-                prb_Str cmd = prb_fmt(arena, "clang -g -Wall -Werror -Wfatal-errors -Denablemultithread -c %.*s -o %.*s", prb_LIT(thisFile), prb_LIT(outpath));
+                prb_Str cmd = prb_fmt(arena, "clang -g -Wall -Werror -Denablemultithread -c %.*s -o %.*s", prb_LIT(thisFile), prb_LIT(outpath));
                 prb_writelnToStdout(arena, cmd);
-                prb_ProcessHandle proc = prb_execCmd(arena, (prb_ExecCmdSpec) {.cmd = cmd, .dontwait = true});
-                prb_assert(proc.status == prb_ProcessStatus_Launched);
+                prb_ProcessHandle proc = prb_execCmd(arena, (prb_ExecCmdSpec) {.cmd = cmd, .dontwait = false});
+                prb_assert(proc.status == prb_ProcessStatus_CompletedSuccess);
                 arrput(srcCompileProcs, proc);
             }
         }

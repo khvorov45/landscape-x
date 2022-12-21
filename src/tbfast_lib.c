@@ -844,9 +844,9 @@ treebasethread(void* arg)  // seed && compacttree==3 niha taioushinai.
                 exit(1);
             }
             if (alg == 'A') {
-                imp_match_init_strict(NULL, clus1, clus2, strlen(mseq1[0]), strlen(mseq2[0]), mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, 1, localmem[0], localmem[1], uselh, NULL, NULL, (compacttree == 3) ? l : -1, 0);  // seedinlh, nfiles ni ha taiou shiteinai
+                imp_match_init_strict(clus1, clus2, strlen(mseq1[0]), strlen(mseq2[0]), mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, localmem[0], localmem[1], uselh, NULL, NULL, (compacttree == 3) ? l : -1, 0);  // seedinlh, nfiles ni ha taiou shiteinai
                 if (rnakozo)
-                    imp_rna(clus1, clus2, mseq1, mseq2, effarr1, effarr2, grouprna1, grouprna2, NULL, NULL);
+                    imp_rna(clus1, clus2, mseq1, mseq2, effarr1, effarr2, grouprna1, grouprna2);
                 pscore = A__align(dynamicmtx, penalty, penalty_ex, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, constraint, &dumdb, NULL, NULL, NULL, NULL, NULL, 0, NULL, outgap, outgap, -1, -1, NULL, NULL, NULL, 0.0, 0.0);  // cpmxhist mitaiou
             }
             if (alg == 'd') {
@@ -1185,9 +1185,9 @@ treebase(TbfastOpts opts, int* nlen, char** aseq, int nadd, char* mergeoralign, 
             }
             //			fprintf( stderr, "c" );
             if (alg == 'A') {
-                imp_match_init_strict(NULL, clus1, clus2, strlen(mseq1[0]), strlen(mseq2[0]), mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, 1, localmem[0], localmem[1], uselh, seedinlh1, seedinlh2, (compacttree == 3) ? l : -1, nfiles);
+                imp_match_init_strict(clus1, clus2, strlen(mseq1[0]), strlen(mseq2[0]), mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, localmem[0], localmem[1], uselh, seedinlh1, seedinlh2, (compacttree == 3) ? l : -1, nfiles);
                 if (rnakozo)
-                    imp_rna(clus1, clus2, mseq1, mseq2, effarr1, effarr2, grouprna1, grouprna2, NULL, NULL);
+                    imp_rna(clus1, clus2, mseq1, mseq2, effarr1, effarr2, grouprna1, grouprna2);
 #if REPORTCOSTS
 //				reporterr(       "\n\n %d - %d (%d x %d) : \n", topol[l][0][0], topol[l][1][0], clus1, clus2 );
 #endif
@@ -1345,7 +1345,7 @@ treebase(TbfastOpts opts, int* nlen, char** aseq, int nadd, char* mergeoralign, 
     D__align(NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0);
     A__align(NULL, 0, 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
     imp_match_init_strictD(0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
-    imp_match_init_strict(NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, 0, 0);
+    imp_match_init_strict(0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
     FreeCommonIP();
 }
 
@@ -1531,7 +1531,7 @@ tbfast_main(int argc, char* argv[]) {
         readData_pointer(infp, name, nlen, seq);
         fclose(infp);
         gappick0(seq[1], seq[0]);
-        writeData_pointer(prep_g, njob, name, nlen, seq + 1);
+        writeData_pointer(prep_g, njob, name, seq + 1);
         reporterr("Warning: Only %d sequence found.\n", njob);
         FreeCharMtx(seq);
         FreeCharMtx(name);
@@ -1693,7 +1693,7 @@ tbfast_main(int argc, char* argv[]) {
                 if (prep) {
                     fprintf(stderr, "Loading 'hat3.seed' ... ");
                     if (specifictarget)
-                        readlocalhomtable2_target(prep, njob, localhomtable, kozoarivec, targetmap);
+                        readlocalhomtable2_target(prep, localhomtable, kozoarivec, targetmap);
                     else
                         readlocalhomtable2_half(prep, njob, localhomtable, kozoarivec);
                     fclose(prep);
@@ -1756,7 +1756,7 @@ tbfast_main(int argc, char* argv[]) {
             if (prep == NULL)
                 ErrorExit("Make hat3.");
             if (specifictarget)
-                readlocalhomtable2_target(prep, njob, localhomtable, kozoarivec, targetmap);
+                readlocalhomtable2_target(prep, localhomtable, kozoarivec, targetmap);
             else
                 readlocalhomtable2_half(prep, njob, localhomtable, kozoarivec);
             fclose(prep);
@@ -1895,7 +1895,7 @@ tbfast_main(int argc, char* argv[]) {
     WriteOptions(trap_g);
 
     if (opts.distout && !opts.treeout && opts.noalign) {
-        writeData_pointer(prep_g, njob, name, nlen, seq);
+        writeData_pointer(prep_g, njob, name, seq);
         fprintf(stderr, "\n");
         SHOWVERSION;
         goto chudan;
@@ -2115,7 +2115,7 @@ tbfast_main(int argc, char* argv[]) {
                     prep = fopen("hat2n", "r");
                     if (prep == NULL)
                         ErrorExit("Make hat2.");
-                    readhat2_doublehalf_pointer(prep, njob, name, iscore);
+                    readhat2_doublehalf_pointer(prep, njob, iscore);
                     fclose(prep);
                     fprintf(stderr, "done.\n");
 
@@ -2123,7 +2123,7 @@ tbfast_main(int argc, char* argv[]) {
                     prep = fopen("hat2i", "r");
                     if (prep == NULL)
                         ErrorExit("Make hat2i.");
-                    readhat2_doublehalf_pointer(prep, njob - nadd, name, iscore);
+                    readhat2_doublehalf_pointer(prep, njob - nadd, iscore);
                     fclose(prep);
                     fprintf(stderr, "done.\n");
                 } else {
@@ -2131,7 +2131,7 @@ tbfast_main(int argc, char* argv[]) {
                     prep = fopen("hat2", "r");
                     if (prep == NULL)
                         ErrorExit("Make hat2.");
-                    readhat2_doublehalf_pointer(prep, njob, name, iscore);
+                    readhat2_doublehalf_pointer(prep, njob, iscore);
                     fclose(prep);
                     fprintf(stderr, "done.\n");
                 }
@@ -2252,7 +2252,7 @@ tbfast_main(int argc, char* argv[]) {
     fclose(orderfp);
 
     if (opts.treeout && opts.noalign) {
-        writeData_pointer(prep_g, njob, name, nlen, seq);
+        writeData_pointer(prep_g, njob, name, seq);
         fprintf(stderr, "\n");
         SHOWVERSION;
         goto chudan;  // 2016Jul31
@@ -2658,7 +2658,7 @@ tbfast_main(int argc, char* argv[]) {
         }
     }
 
-    writeData_pointer(prep_g, njob, name, nlen, bseq);
+    writeData_pointer(prep_g, njob, name, bseq);
 
 #if IODEBUG
     fprintf(stderr, "OSHIMAI\n");

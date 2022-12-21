@@ -128,7 +128,7 @@ iteration(int locnjob, char name[M][B], int nlen[M], char** aseq, char** bseq, i
     }
 
     if (!tbitr && !tbweight) {
-        writePre(locnjob, name, nlen, aseq, 0);
+        writePre(locnjob, name, aseq, 0);
 
 #if 0
 		prep = fopen( "best", "w" );
@@ -304,7 +304,7 @@ iteration(int locnjob, char name[M][B], int nlen[M], char** aseq, char** bseq, i
                 strcpy(aseq[i], mseq2[i]);
             strcpy(sai, sai1); /* kokoka ? */
             if (!tbitr && !tbweight) {
-                writePre(locnjob, name, nlen, aseq, 0);
+                writePre(locnjob, name, aseq, 0);
             }
             strcpy(sai, sai1);
             tscore = tmpscore;

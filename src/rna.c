@@ -416,7 +416,7 @@ foldrna(int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* ef
 #endif
 
     /* similarity score */
-    Lalignmm_hmout(oseq1, oseq2, eff1, eff2, nseq1, nseq2, 10000, NULL, NULL, NULL, NULL, map);
+    Lalignmm_hmout(oseq1, oseq2, eff1, eff2, nseq1, nseq2, NULL, NULL, NULL, map);
 
     if (1) {
         if (RNAscoremtx == 'n') {

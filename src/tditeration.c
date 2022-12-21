@@ -895,7 +895,7 @@ athread(void* arg) {
                             fprintf(stderr, "'Q' is no longer supported\n");
                             exit(1);
                         } else {
-                            imp_match_init_strict(NULL, clus1, clus2, length, length, mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, 1, memlist[0], memlist[1], NULL, NULL, NULL, -1, 0);
+                            imp_match_init_strict(clus1, clus2, length, length, mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, memlist[0], memlist[1], NULL, NULL, NULL, -1, 0);
 
                             fprintf(stderr, "not supported\n");
                             exit(1);
@@ -1308,7 +1308,7 @@ TreeDependentIteration(int locnjob, char** name, int nlen[M], char** aseq, char*
     for (i = 0; i < locnjob; i++)
         strcpy(bseq[i], aseq[i]);
 
-    writePre(locnjob, name, nlen, aseq, 0);
+    writePre(locnjob, name, aseq, 0);
 
     if (utree) {
         if (constraint) {
@@ -1705,7 +1705,7 @@ TreeDependentIteration(int locnjob, char** name, int nlen[M], char** aseq, char*
                                     fprintf(stderr, "'Q' is no longer supported\n");
                                     exit(1);
                                 } else {
-                                    imp_match_init_strict(NULL, clus1, clus2, length, length, mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, 1, memlist[0], memlist[1], NULL, NULL, NULL, -1, 0);
+                                    imp_match_init_strict(clus1, clus2, length, length, mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, memlist[0], memlist[1], NULL, NULL, NULL, -1, 0);
                                     fprintf(stderr, "not supported\n");
                                     exit(1);
                                 }
@@ -1786,7 +1786,7 @@ TreeDependentIteration(int locnjob, char** name, int nlen[M], char** aseq, char*
                                     fprintf(stderr, "'Q' is no longer supported\n");
                                     exit(1);
                                 } else {
-                                    imp_match_init_strict(NULL, clus1, clus2, length, length, mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, 1, memlist[0], memlist[1], NULL, NULL, NULL, -1, 0);
+                                    imp_match_init_strict(clus1, clus2, length, length, mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, memlist[0], memlist[1], NULL, NULL, NULL, -1, 0);
 
                                     fprintf(stderr, "not supported\n");
                                     exit(1);
@@ -1853,7 +1853,7 @@ TreeDependentIteration(int locnjob, char** name, int nlen[M], char** aseq, char*
                                     fprintf(stderr, "'Q' is no longer supported\n");
                                     exit(1);
                                 } else {
-                                    imp_match_init_strict(NULL, clus1, clus2, length, length, mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, 1, memlist[0], memlist[1], NULL, NULL, NULL, -1, 0);
+                                    imp_match_init_strict(clus1, clus2, length, length, mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, memlist[0], memlist[1], NULL, NULL, NULL, -1, 0);
                                     fprintf(stderr, "Not supported\n");
                                     exit(1);
                                 }
@@ -1861,50 +1861,10 @@ TreeDependentIteration(int locnjob, char** name, int nlen[M], char** aseq, char*
                         }
                     }
 
-                    //				oimpmatch = 0.0;
-                    if (constraint) {
-#if 0  // iranai
-						if( alg == 'Q' )
-						{
-							imp_match_init_strictQ( NULL, clus1, clus2, length, length, mseq1, mseq2, effarr1, effarr2, localhomshrink, 1 );
-							for(  i=length-1; i>=0; i-- )
-							{
-								oimpmatch += imp_match_out_scQ( i, i );
-	//							fprintf( stderr, "#### i=%d, initial impmatch = %f seq1 = %c, seq2 = %c\n", i, oimpmatch, mseq1[0][i], mseq2[0][i] );
-							}
-						}
-						else
-						{
-							imp_match_init_strict( NULL, clus1, clus2, length, length, mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, 1 );
-							for(  i=length-1; i>=0; i-- )
-							{
-								oimpmatch += imp_match_out_sc( i, i );
-	//							fprintf( stderr, "#### i=%d, initial impmatch = %f seq1 = %c, seq2 = %c\n", i, oimpmatch, mseq1[0][i], mseq2[0][i] );
-							}
-						}
-#endif
-                    }
-#if 0
-					if( alg == 'H' )
-						naivescore0 = naivepairscore( clus1, clus2, mseq1, mseq2, effarr1, effarr2, penalty ) + oimpmatch;
-					else if( alg == 'Q' )
-						naivescore0 = naiveQpairscore( clus1, clus2, mseq1, mseq2, effarr1, effarr2, penalty ) + oimpmatch;
-					else if( alg == 'R' )
-						naivescore0 = naiveRpairscore( clus1, clus2, mseq1, mseq2, effarr1, effarr2, penalty ) + oimpmatch;
-#endif
-
-                    //				if( rnakozo ) foldalignedrna( clus1, clus2, mseq1, mseq2, effarr1, effarr2, rnapairboth );
-
-                    //				if( !use_fft && !rnakozo )
-                    //					if( !use_fft )
                     if (!use_fft) {
                         commongappick_record(clus1, mseq1, gapmap1);
                         commongappick_record(clus2, mseq2, gapmap2);
                     }
-
-#if 0
-					fprintf( stderr, "##### mscore = %f\n", mscore );
-#endif
 
 #if DEBUG
                     if (!devide) {
@@ -1921,7 +1881,7 @@ TreeDependentIteration(int locnjob, char** name, int nlen[M], char** aseq, char*
                             if (alg == 'd') {
                                 if (scoringmatrices)  // called by tditeration.c
                                 {
-                                    D__align_variousdist(whichmtx, scoringmatrices, NULL, mseq1, mseq2, effarr1, effarr2, eff1s, eff2s, clus1, clus2, alloclen, constraint, &impmatchdouble, NULL, NULL, NULL, NULL, NULL, 0, NULL, 1, 1);
+                                    D__align_variousdist(whichmtx, scoringmatrices, mseq1, mseq2, effarr1, effarr2, eff1s, eff2s, clus1, clus2, alloclen, constraint, &impmatchdouble, NULL, NULL, NULL, NULL, 0, NULL, 1, 1);
                                 } else {
                                     D__align(n_dis_consweight_multi, mseq1, mseq2, effarr1, effarr2, clus1, clus2, alloclen, constraint, &impmatchdouble, NULL, NULL, NULL, NULL, NULL, 0, NULL, 1, 1);
                                 }
@@ -2044,7 +2004,7 @@ TreeDependentIteration(int locnjob, char** name, int nlen[M], char** aseq, char*
                         //					fprintf( stderr, "@@@@@ mscore,tscore = %f,%f\n", mscore, tscore );
 
                         if (tscore > mscore - cut / 100.0 * mscore) {
-                            writePre(locnjob, name, nlen, aseq, 0);
+                            writePre(locnjob, name, aseq, 0);
                             for (i = 0; i < locnjob; i++)
                                 strcpy(bseq[i], aseq[i]);
                             if (score_check == 2) {

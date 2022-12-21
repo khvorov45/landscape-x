@@ -2368,8 +2368,6 @@ pairalign(char** name, char** seq, char** aseq, char** dseq, int* thereisxineach
 		fprintf( stderr, "TBFAST effarr[%d] = %f\n", i, effarr[i] );
 #endif
 
-    //	writePre( njob, name, nlen, aseq, 0 );
-
     reporterr("All-to-all alignment.\n");
     if (alg == 'R') {
         fprintf(stderr, "Calling last (http://last.cbrc.jp/)\n");
@@ -3007,8 +3005,6 @@ pairlocalalign(int ngui, char** namegui, char** seqgui, double** distancemtx, Lo
         exit(1);
     }
 
-    //	writePre( njob, name, nlen, seq, 0 );
-
     //reporterr( "expdist=%p\n", expdist );
 
     if (dorp == 'p' && scoremtx == 1 && nblosum > 0)  // protein, not text.  hitsuyou?
@@ -3035,10 +3031,6 @@ pairlocalalign(int ngui, char** namegui, char** seqgui, double** distancemtx, Lo
     fclose(trap_g);
     fclose(prep_g);
 
-//	writePre( njob, name, nlen, aseq, !contin );
-#if 0
-	writeData( stdout, njob, name, nlen, aseq );
-#endif
 #if IODEBUG
     fprintf(stderr, "OSHIMAI\n");
 #endif

@@ -73,12 +73,12 @@ imp_match_out_vead_tate(double* imp, int j1, int lgth1) {
 }
 
 void
-imp_rna(int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* eff2, RNApair*** grouprna1, RNApair*** grouprna2, int* gapmap2, RNApair* pair) {
+imp_rna(int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* eff2, RNApair*** grouprna1, RNApair*** grouprna2) {
     foldrna(nseq1, nseq2, seq1, seq2, eff1, eff2, grouprna1, grouprna2, impmtx);
 }
 
 void
-imp_match_init_strict(double* imp, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int forscore, int* orinum1, int* orinum2, int* uselh, int* seedinlh1, int* seedinlh2, int nodeid, int nfiles) {
+imp_match_init_strict(int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2, int* uselh, int* seedinlh1, int* seedinlh2, int nodeid, int nfiles) {
     //	int i, j, k1, k2, tmpint, start1, start2, end1, end2;
     //	double effij;
     //	double effij_kozo;
@@ -118,7 +118,7 @@ imp_match_init_strict(double* imp, int clus1, int clus2, int lgth1, int lgth2, c
 }
 
 static void
-match_calc_del(int** which, double*** matrices, double* match, int n1, char** seq1, double* eff1, int n2, char** seq2, double* eff2, int i1, int lgth2, int mid, int nmask, int* mask1, int* mask2) {
+match_calc_del(double*** matrices, double* match, char** seq1, double* eff1, char** seq2, double* eff2, int i1, int lgth2, int mid, int nmask, int* mask1, int* mask2) {
     // osoi!
     int i, j, k, m;
     int c1, c2;
@@ -1068,7 +1068,7 @@ A__align(double** n_dynamicmtx, int penalty_l, int penalty_ex_l, char** seq1, ch
             orlgth1 = 0;
             orlgth2 = 0;
 
-            imp_match_init_strict(NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, 0, 0);
+            imp_match_init_strict(0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
 
             FreeFloatVec(w1);
             FreeFloatVec(w2);
@@ -2036,15 +2036,13 @@ A__align(double** n_dynamicmtx, int penalty_l, int penalty_ex_l, char** seq1, ch
 }
 
 double
-A__align_gapmap(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int* gapmap1, int* gapmap2)
-/* score no keisan no sai motokaraaru gap no atukai ni mondai ga aru */
-{
+A__align_gapmap(void) {
     fprintf(stderr, "Unexpected error.  Please contact katoh@ifrec.osaka-u.ac.jp\n");
     exit(1);
 }
 
 double
-A__align_variousdist(int** which, double*** matrices, double** n_dynamicmtx, int penalty_l, int penalty_ex_l, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, char* sgap1, char* sgap2, char* egap1, char* egap2, int* chudanpt, int chudanref, int* chudanres, int headgp, int tailgp)
+A__align_variousdist(int** which, double*** matrices, int penalty_l, int penalty_ex_l, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, char* sgap1, char* sgap2, char* egap1, char* egap2, int* chudanpt, int chudanref, int* chudanres, int headgp, int tailgp)
 /* score no keisan no sai motokaraaru gap no atukai ni mondai ga aru */
 {
     //	int k;
@@ -2122,7 +2120,7 @@ A__align_variousdist(int** which, double*** matrices, double** n_dynamicmtx, int
             orlgth1 = 0;
             orlgth2 = 0;
 
-            imp_match_init_strict(NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL, NULL, NULL, NULL, 0, 0);
+            imp_match_init_strict(0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
 
             free(mseq1);
             free(mseq2);
@@ -2467,7 +2465,7 @@ A__align_variousdist(int** which, double*** matrices, double** n_dynamicmtx, int
         match_calc_add(matrices[c], initverticalw, cpmx2s[c], cpmx1s[c], 0, lgth1, doublework[c], intwork[c], 1);
         //		for( i=0; i<lgth1; i++ ) fprintf( stderr, "c=%d, %d - %f\n", c, i, initverticalw[i] );
         if (nmask[c])
-            match_calc_del(which, matrices, initverticalw, jcyc, seq2, eff2, icyc, seq1, eff1, 0, lgth1, c, nmask[c], masklist2[c], masklist1[c]);
+            match_calc_del(matrices, initverticalw, seq2, eff2, seq1, eff1, 0, lgth1, c, nmask[c], masklist2[c], masklist1[c]);
     }
 //	for( i=0; i<lgth1; i++ ) fprintf( stderr, "%d - %f\n", i, initverticalw[i] );
 #endif
@@ -2486,7 +2484,7 @@ A__align_variousdist(int** which, double*** matrices, double** n_dynamicmtx, int
     for (c = 0; c < maxdistclass; c++) {
         match_calc_add(matrices[c], currentw, cpmx1s[c], cpmx2s[c], 0, lgth2, doublework[c], intwork[c], 1);
         if (nmask[c])
-            match_calc_del(which, matrices, currentw, icyc, seq1, eff1, jcyc, seq2, eff2, 0, lgth2, c, nmask[c], masklist1[c], masklist2[c]);
+            match_calc_del(matrices, currentw, seq1, eff1, seq2, eff2, 0, lgth2, c, nmask[c], masklist1[c], masklist2[c]);
     }
 //	for( i=0; i<lgth2; i++ ) fprintf( stderr, "%d - %f\n", i, currentw[i] );
 //	exit( 1 );
@@ -2620,7 +2618,7 @@ A__align_variousdist(int** which, double*** matrices, double** n_dynamicmtx, int
         for (c = 0; c < maxdistclass; c++) {
             match_calc_add(matrices[c], currentw, cpmx1s[c], cpmx2s[c], i, lgth2, doublework[c], intwork[c], 0);
             if (nmask[c])
-                match_calc_del(which, matrices, currentw, icyc, seq1, eff1, jcyc, seq2, eff2, i, lgth2, c, nmask[c], masklist1[c], masklist2[c]);
+                match_calc_del(matrices, currentw, seq1, eff1, seq2, eff2, i, lgth2, c, nmask[c], masklist1[c], masklist2[c]);
         }
 #endif
 #if 0
