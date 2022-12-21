@@ -1829,7 +1829,7 @@ extendgaplenpartly(Gaplen** cpy, Gaplen** orig, int start, int end) {
 #endif
 
 static void
-duplicategaplencompactx(Gaplen** cpy, Gaplen** orig, int maxlen, int start, int end) {
+duplicategaplencompactx(Gaplen** cpy, Gaplen** orig, int start, int end) {
     int i, l;
 
     if (start < 0)
@@ -2947,60 +2947,25 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
 #endif
 
     for (i = 0; i < 1; i++) {
-        //		duplicategaplencompactx( gaplen1icurr[i], gaplen1, lgth1, i-0, lgth1 ); //originally, 0, lgth1
-        //
-        //		duplicategaplencompactx( gaplen1icurr[i], gaplen1+i, lgth1-i, 0, lgth1-i ); // half
-        duplicategaplencompactx(gaplen1icurr[i], gaplen1 + i, lgth1 - i, 0, 1);  //  0, 1  hitsuyou
-
-        //		duplicategaplencompactx( gaplen2icurr[i], gaplen2, lgth2, 0, lgth2 ); // ichiou zenbu
-        duplicategaplencompactx(gaplen2icurr[i], gaplen2, lgth2, 0, 0);
-
+        duplicategaplencompactx(gaplen1icurr[i], gaplen1 + i, 0, 1);  //  0, 1  hitsuyou
+        duplicategaplencompactx(gaplen2icurr[i], gaplen2, 0, 0);
         copygaplencompactx(gaplen2icurr[i], gaplen2, 0, i, 0, 0);  // -> zurasu -> error?
-
-        //		duplicategaplencompactx( gaplen1ibestkamo[i], gaplen1, lgth1, 0, 1 );
-        //		duplicategaplencompactx( gaplen1ibestkamo[i], gaplen1+i, lgth1-i, 0, 1 ); // half
-        duplicategaplencompactx(gaplen1ibestkamo[i], gaplen1 + i, lgth1 - i, 0, 0);  // half
-        //		duplicategaplencompactx( gaplen2ibestkamo[i], gaplen2, lgth2, 0, lgth2 );
-        duplicategaplencompactx(gaplen2ibestkamo[i], gaplen2, lgth2, 0, 0);
-        //		copygaplenrestricted( gaplen2ibestkamo[i], gaplen2, lgth2, 0, i, 0, 0 ); // -> zurasu -> error?
-        //		copygaplenrestricted_zurasu( gaplen2ibestkamo[i], gaplen2, lgth2, 0, i, 0, lgth2, 0, lgth2 ); // -> zurasu -> error?
+        duplicategaplencompactx(gaplen1ibestkamo[i], gaplen1 + i, 0, 0);  // half
+        duplicategaplencompactx(gaplen2ibestkamo[i], gaplen2, 0, 0);
         copygaplencompactx(gaplen2ibestkamo[i], gaplen2, 0, i, 0, 0);  // -> zurasu -> error?
     }
 
-    //	reporterr( "Duplicating gaplen*j*curr \n" );
-    //	int nduplicated = 0;
-    for (j = 0; j < lgth2 + 1; j++)
-    //	for( j=0; j<1; j++ )
-    {
+    for (j = 0; j < lgth2 + 1; j++) {
 #if USEGAPLENMTX
-        //		addnewgaplen( gaplen1mtx[0][j], gaplen1, gaplen1, lgth1, 0, j );
-        //		addnewgaplen( gaplen2mtx[0][j], gaplen2, gaplen2, lgth2, -1, 0 );
-        //		duplicategaplenpartly( gaplen1mtx[0][j], gaplen1, 0, lgth1 );
-        //		duplicategaplenpartly( gaplen2mtx[0][j], gaplen2, 0, lgth2 );
         copygaplenrestricted(gaplen1mtx[0][j], gaplen1, lgth1, 0, j, 0, 0);
 #endif
 
 #if USEGAPLENHALF
         copygaplenrestricted(gaplen1half[0][j], gaplen1, lgth1, 0, j, 0, 0);
 #endif
-        //		reporterr( "1jcurr?\n" );
-        //		duplicategaplencompactx( gaplen1jcurr[j], gaplen1, lgth1, 0, lgth1 ); // test
-        duplicategaplencompactx(gaplen1jcurr[j], gaplen1, lgth1, 0, 0);  // dame?
-        //		reporterr( "done\n" );
-        //		duplicategaplencompactx( gaplen1jcurr[j], gaplen1, lgth1, 0, 0 ); //test
-
-        //		duplicategaplencompactx( gaplen2jcurr[j], gaplen2, lgth2, j-0, lgth2 ); // full
-        //		duplicategaplencompactx( gaplen2jcurr[j], gaplen2+j, lgth2-j, 0, lgth2-j ); //half! KOKO????
-        //reporterr( "starting suspicious duplication\n" );
-        duplicategaplencompactx(gaplen2jcurr[j], gaplen2 + j, lgth2 - j, 0, 0);  //half!
-        //reporterr( "starting suspicious copy\n" );
+        duplicategaplencompactx(gaplen1jcurr[j], gaplen1, 0, 0);  // dame?
+        duplicategaplencompactx(gaplen2jcurr[j], gaplen2 + j, 0, 0);  //half!
         copygaplencompactx(gaplen1jcurr[j], gaplen1, 0, j, 0, 0);  // TEST
-        //reporterr( "finished\n" );
-
-        //		reporterr( "Checking gaplen1jcurr[%d]\n", j );
-        //		checkgaplen( gaplen1jcurr[j], 100 );
-        //		reporterr( "Checking gaplen2jcurr[%d]\n", j );
-        //		checkgaplen( gaplen2jcurr[j], 100 );
     }
 
     //	reporterr( "nduplicated (corrected) = %d\n", nduplicated );
@@ -3008,11 +2973,8 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
     //	reporterr( "Duplicating gaplen*j*prev \n\n" );
     for (j = 0; j < lgth2 + 1; j++)  // allocate nominotame, atode uwagaki
     {
-        //		duplicategaplencompactx( gaplen1jprev[j], gaplen1, lgth1, 0, lgth1 );
-        duplicategaplencompactx(gaplen1jprev[j], gaplen1, lgth1, 0, 0);  // TEST
-        //		duplicategaplencompactx( gaplen2jprev[j], gaplen2, lgth2, j-0, lgth2 ); // originally, 0,lgth2
-        //		duplicategaplencompactx( gaplen2jprev[j], gaplen2+j, lgth2-j, 0, lgth2-j ); // half
-        duplicategaplencompactx(gaplen2jprev[j], gaplen2 + j, lgth2 - j, 0, 0);  // half
+        duplicategaplencompactx(gaplen1jprev[j], gaplen1, 0, 0);  // TEST
+        duplicategaplencompactx(gaplen2jprev[j], gaplen2 + j, 0, 0);  // half
 
         copygaplencompactx(gaplen1jprev[j], gaplen1, 0, j, 0, 0);  // wasuretetakamo
     }
@@ -3022,20 +2984,13 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
     for (j = 0; j < lgth2 + 1; j++)
     //	for( j=0; j<1; j++ )
     {
-        //		duplicategaplencompactx( gaplen1jbestkamo[j], gaplen1, lgth1, 0, lgth1 ); // KOKO
-        //		duplicategaplencompactx( gaplen1jbestkamo[j], gaplen1, lgth1, 0, 0 ); // test
-        //		duplicategaplencompactx( gaplen1jbestkamo[j], gaplen1, lgth1, 0, 1 );
-        duplicategaplencompactx(gaplen1jbestkamo[j], gaplen1, lgth1, 0, 0);
+        duplicategaplencompactx(gaplen1jbestkamo[j], gaplen1, 0, 0);
 
-        //		duplicategaplencompactx( gaplen1jbestkamo[j], gaplen1, lgth1, 0, 1 );
-        //		duplicategaplencompactx( gaplen2jbestkamo[j], gaplen2, lgth2, j-0, j+1 ); // originally, 0, j+1
-        duplicategaplencompactx(gaplen2jbestkamo[j], gaplen2 + j, lgth2 - j, 0, 1);  // half!
+        duplicategaplencompactx(gaplen2jbestkamo[j], gaplen2 + j, 0, 1);  // half!
         copygaplencompactx(gaplen1jbestkamo[j], gaplen1, 0, j, 0, 0);  // TEST
 
-        //		duplicategaplencompactx( gaplen1jbest[j], gaplen1, lgth1, 0, lgth1 ); // KOKO
-        duplicategaplencompactx(gaplen1jbest[j], gaplen1, lgth1, 0, 0);  // test
-        //		duplicategaplencompactx( gaplen2jbest[j], gaplen2, lgth2,j-0, j+1 ); // originally, 0,j+1
-        duplicategaplencompactx(gaplen2jbest[j], gaplen2 + j, lgth2 - j, 0, 1);  // half!
+        duplicategaplencompactx(gaplen1jbest[j], gaplen1, 0, 0);  // test
+        duplicategaplencompactx(gaplen2jbest[j], gaplen2 + j, 0, 1);  // half!
         copygaplencompactx(gaplen1jbest[j], gaplen1, 0, j, 0, 0);  // TEST
     }
 
@@ -3144,12 +3099,12 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
         }
 #endif
 
-        duplicategaplencompactx(gaplen1icurr[i], gaplen1 + i, lgth1 - i, 0, 1);  // half!!
-        duplicategaplencompactx(gaplen2icurr[i], gaplen2, lgth2, 0, 0);  // test
+        duplicategaplencompactx(gaplen1icurr[i], gaplen1 + i, 0, 1);  // half!!
+        duplicategaplencompactx(gaplen2icurr[i], gaplen2, 0, 0);  // test
         copygaplencompactx(gaplen2icurr[i], gaplen2, 0, i, 0, 0);  // IRU? TEST
 
-        duplicategaplencompactx(gaplen1ibestkamo[i], gaplen1 + i, lgth1 - i, 0, 1);  //half
-        duplicategaplencompactx(gaplen2ibestkamo[i], gaplen2, lgth2, 0, 0);  // ORIGINALLY, 0, lgth2
+        duplicategaplencompactx(gaplen1ibestkamo[i], gaplen1 + i, 0, 1);  //half
+        duplicategaplencompactx(gaplen2ibestkamo[i], gaplen2, 0, 0);  // ORIGINALLY, 0, lgth2
         copygaplencompactx(gaplen2ibestkamo[i], gaplen2, 0, i, 0, 0);  // IRU? // TEST
 
         extendgaplencompactx(gaplen1jprev[0], gaplen1, i);  // ???
@@ -4590,11 +4545,11 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
 #endif
 
     for (i = 0; i < 1; i++) {
-        duplicategaplencompactx(gaplen1icurr[i], gaplen1 + i, lgth1 - i, 0, 1);  //  0, 1  hitsuyou
-        duplicategaplencompactx(gaplen2icurr[i], gaplen2, lgth2, 0, 0);
+        duplicategaplencompactx(gaplen1icurr[i], gaplen1 + i, 0, 1);  //  0, 1  hitsuyou
+        duplicategaplencompactx(gaplen2icurr[i], gaplen2, 0, 0);
         copygaplencompactx(gaplen2icurr[i], gaplen2, 0, i, 0, 0);  // -> zurasu -> error?
-        duplicategaplencompactx(gaplen1ibestkamo[i], gaplen1 + i, lgth1 - i, 0, 0);  // half
-        duplicategaplencompactx(gaplen2ibestkamo[i], gaplen2, lgth2, 0, 0);
+        duplicategaplencompactx(gaplen1ibestkamo[i], gaplen1 + i, 0, 0);  // half
+        duplicategaplencompactx(gaplen2ibestkamo[i], gaplen2, 0, 0);
         copygaplencompactx(gaplen2ibestkamo[i], gaplen2, 0, i, 0, 0);  // -> zurasu -> error?
     }
 
@@ -4615,15 +4570,11 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
         copygaplenrestricted(gaplen1half[0][j], gaplen1, lgth1, 0, j, 0, 0);
 #endif
         //		reporterr( "1jcurr?\n" );
-        //		duplicategaplencompactx( gaplen1jcurr[j], gaplen1, lgth1, 0, lgth1 ); // test
-        duplicategaplencompactx(gaplen1jcurr[j], gaplen1, lgth1, 0, 0);  // dame?
+        duplicategaplencompactx(gaplen1jcurr[j], gaplen1, 0, 0);  // dame?
         //		reporterr( "done\n" );
-        //		duplicategaplencompactx( gaplen1jcurr[j], gaplen1, lgth1, 0, 0 ); //test
 
-        //		duplicategaplencompactx( gaplen2jcurr[j], gaplen2, lgth2, j-0, lgth2 ); // full
-        //		duplicategaplencompactx( gaplen2jcurr[j], gaplen2+j, lgth2-j, 0, lgth2-j ); //half! KOKO????
         //reporterr( "starting suspicious duplication\n" );
-        duplicategaplencompactx(gaplen2jcurr[j], gaplen2 + j, lgth2 - j, 0, 0);  //half!
+        duplicategaplencompactx(gaplen2jcurr[j], gaplen2 + j, 0, 0);  //half!
         //reporterr( "starting suspicious copy\n" );
         copygaplencompactx(gaplen1jcurr[j], gaplen1, 0, j, 0, 0);  // TEST
         //reporterr( "finished\n" );
@@ -4639,11 +4590,8 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
     //	reporterr( "Duplicating gaplen*j*prev \n\n" );
     for (j = 0; j < lgth2 + 1; j++)  // allocate nominotame, atode uwagaki
     {
-        //		duplicategaplencompactx( gaplen1jprev[j], gaplen1, lgth1, 0, lgth1 );
-        duplicategaplencompactx(gaplen1jprev[j], gaplen1, lgth1, 0, 0);  // TEST
-        //		duplicategaplencompactx( gaplen2jprev[j], gaplen2, lgth2, j-0, lgth2 ); // originally, 0,lgth2
-        //		duplicategaplencompactx( gaplen2jprev[j], gaplen2+j, lgth2-j, 0, lgth2-j ); // half
-        duplicategaplencompactx(gaplen2jprev[j], gaplen2 + j, lgth2 - j, 0, 0);  // half
+        duplicategaplencompactx(gaplen1jprev[j], gaplen1, 0, 0);  // TEST
+        duplicategaplencompactx(gaplen2jprev[j], gaplen2 + j, 0, 0);  // half
 
         copygaplencompactx(gaplen1jprev[j], gaplen1, 0, j, 0, 0);  // wasuretetakamo
     }
@@ -4653,20 +4601,13 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
     for (j = 0; j < lgth2 + 1; j++)
     //	for( j=0; j<1; j++ )
     {
-        //		duplicategaplencompactx( gaplen1jbestkamo[j], gaplen1, lgth1, 0, lgth1 ); // KOKO
-        //		duplicategaplencompactx( gaplen1jbestkamo[j], gaplen1, lgth1, 0, 0 ); // test
-        //		duplicategaplencompactx( gaplen1jbestkamo[j], gaplen1, lgth1, 0, 1 );
-        duplicategaplencompactx(gaplen1jbestkamo[j], gaplen1, lgth1, 0, 0);
+        duplicategaplencompactx(gaplen1jbestkamo[j], gaplen1, 0, 0);
 
-        //		duplicategaplencompactx( gaplen1jbestkamo[j], gaplen1, lgth1, 0, 1 );
-        //		duplicategaplencompactx( gaplen2jbestkamo[j], gaplen2, lgth2, j-0, j+1 ); // originally, 0, j+1
-        duplicategaplencompactx(gaplen2jbestkamo[j], gaplen2 + j, lgth2 - j, 0, 1);  // half!
+        duplicategaplencompactx(gaplen2jbestkamo[j], gaplen2 + j, 0, 1);  // half!
         copygaplencompactx(gaplen1jbestkamo[j], gaplen1, 0, j, 0, 0);  // TEST
 
-        //		duplicategaplencompactx( gaplen1jbest[j], gaplen1, lgth1, 0, lgth1 ); // KOKO
-        duplicategaplencompactx(gaplen1jbest[j], gaplen1, lgth1, 0, 0);  // test
-        //		duplicategaplencompactx( gaplen2jbest[j], gaplen2, lgth2,j-0, j+1 ); // originally, 0,j+1
-        duplicategaplencompactx(gaplen2jbest[j], gaplen2 + j, lgth2 - j, 0, 1);  // half!
+        duplicategaplencompactx(gaplen1jbest[j], gaplen1, 0, 0);  // test
+        duplicategaplencompactx(gaplen2jbest[j], gaplen2 + j, 0, 1);  // half!
         copygaplencompactx(gaplen1jbest[j], gaplen1, 0, j, 0, 0);  // TEST
     }
 
@@ -4820,12 +4761,12 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
         }
 #endif
 
-        duplicategaplencompactx(gaplen1icurr[i], gaplen1 + i, lgth1 - i, 0, 1);  // half!!
-        duplicategaplencompactx(gaplen2icurr[i], gaplen2, lgth2, 0, 0);  // test
+        duplicategaplencompactx(gaplen1icurr[i], gaplen1 + i, 0, 1);  // half!!
+        duplicategaplencompactx(gaplen2icurr[i], gaplen2, 0, 0);  // test
         copygaplencompactx(gaplen2icurr[i], gaplen2, 0, i, 0, 0);  // IRU? TEST
 
-        duplicategaplencompactx(gaplen1ibestkamo[i], gaplen1 + i, lgth1 - i, 0, 1);  //half
-        duplicategaplencompactx(gaplen2ibestkamo[i], gaplen2, lgth2, 0, 0);  // ORIGINALLY, 0, lgth2
+        duplicategaplencompactx(gaplen1ibestkamo[i], gaplen1 + i, 0, 1);  //half
+        duplicategaplencompactx(gaplen2ibestkamo[i], gaplen2, 0, 0);  // ORIGINALLY, 0, lgth2
         copygaplencompactx(gaplen2ibestkamo[i], gaplen2, 0, i, 0, 0);  // IRU? // TEST
 
         extendgaplencompactx(gaplen1jprev[0], gaplen1, i);  // ???
