@@ -3979,7 +3979,7 @@ static double
 distdp(double** scoringmtx, char* s1, char* s2, LocalHom* lh, double selfscore1, double selfscore2, int alloclen) {
     double v;
     v = G__align11(scoringmtx, &s1, &s2, alloclen, 1, 1);
-    putlocalhom2(s1, s2, lh, 0, 0, (int)v, strlen(s1), 'h');
+    putlocalhom2(s1, s2, lh, 0, 0, 'h');
     return (score2dist(v, selfscore1, selfscore2));
 }
 
@@ -3997,7 +3997,7 @@ distdpL(double** scoringmtx, char* s1, char* s2, LocalHom* lh, double selfscore1
     int    off1, off2;
     //	reporterr( "LOCAL align\n" );
     v = L__align11(scoringmtx, 0.0, &s1, &s2, alloclen, &off1, &off2);
-    putlocalhom2(s1, s2, lh, off1, off2, (int)v, strlen(s1), 'h');
+    putlocalhom2(s1, s2, lh, off1, off2, 'h');
     return (score2dist(v, selfscore1, selfscore2));
 }
 
@@ -4016,7 +4016,7 @@ distdpN(double** scoringmtx, char* s1, char* s2, LocalHom* lh, double selfscore1
     int    off1, off2;
     //	reporterr( "genafLOCAL align\n" );
     v = genL__align11(scoringmtx, &s1, &s2, alloclen, &off1, &off2);
-    putlocalhom2(s1, s2, lh, off1, off2, (int)v, strlen(s1), 'h');
+    putlocalhom2(s1, s2, lh, off1, off2, 'h');
     return (score2dist(v, selfscore1, selfscore2));
 }
 

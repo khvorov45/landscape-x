@@ -37,7 +37,7 @@ match_calc(double* match, char** s1, char** s2, int i1, int lgth2) {
 }
 
 static double
-gentracking(int** used, char** seq1, char** seq2, char** mseq1, char** mseq2, double** cpmx2, int** ijpi, int** ijpj, int* off1pt, int* off2pt, int endi, int endj) {
+gentracking(int** used, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijpi, int** ijpj, int* off1pt, int* off2pt, int endi, int endj) {
     int l, iin, jin, lgth1, lgth2, k, limk;
     int ifi = 0, jfi = 0;
     //	char gap[] = "-";
@@ -609,7 +609,7 @@ fprintf( stderr, "\n" );
         if (shuryo[k].wm < shuryo[0].wm * 0.3)
             break;
         fprintf(stderr, "k=%d, shuryo[k].i,j,wm=%d,%d,%f go\n", k, shuryo[k].i, shuryo[k].j, shuryo[k].wm);
-        resf = gentracking(used, seq1, seq2, mseq1, mseq2, cpmx2, ijpi, ijpj, off1pt, off2pt, shuryo[k].i, shuryo[k].j);
+        resf = gentracking(used, seq1, seq2, mseq1, mseq2, ijpi, ijpj, off1pt, off2pt, shuryo[k].i, shuryo[k].j);
         if (resf == -1.0)
             continue;
         putlocalhom3(mseq1[0], mseq2[0], lhmpt, *off1pt, *off2pt, 'h');

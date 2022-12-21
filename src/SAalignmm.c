@@ -41,7 +41,7 @@ match_calc(double* match, double** cpmx1, double** cpmx2, int i1, int lgth2, dou
 }
 
 static double
-Atracking(double* lasthorizontalw, double* lastverticalw, char** seq1, char** seq2, char** mseq1, char** mseq2, double** cpmx1, double** cpmx2, int** ijp, int icyc, int jcyc) {
+Atracking(double* lasthorizontalw, double* lastverticalw, char** seq1, char** seq2, char** mseq1, char** mseq2, double** cpmx2, int** ijp, int icyc, int jcyc) {
     int i, j, k, l, iin, jin, ifi, jfi, lgth1, lgth2;
     //	char gap[] = "-";
     char*  gap;
@@ -331,7 +331,7 @@ Aalign(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc,
 	for( i=0; i<icyc; i++ ) strcpy( mseq1[i], seq1[i] );
 	for( j=0; j<jcyc; j++ ) strcpy( mseq2[j], seq2[j] );
 	*/
-    Atracking(currentw, lastverticalw, seq1, seq2, mseq1, mseq2, cpmx1, cpmx2, ijp, icyc, jcyc);
+    Atracking(currentw, lastverticalw, seq1, seq2, mseq1, mseq2, cpmx2, ijp, icyc, jcyc);
 
     resultlen = strlen(mseq1[0]);
     if (alloclen < resultlen || resultlen > N) {

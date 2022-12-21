@@ -516,7 +516,7 @@ putlocalhom3(char* al1, char* al2, LocalHom* localhompt, int off1, int off2, cha
 }
 
 void
-putlocalhom_ext(char* al1, char* al2, LocalHom* localhompt, int off1, int off2, int overlapaa, char korh) {
+putlocalhom_ext(char* al1, char* al2, LocalHom* localhompt, int off1, int off2, char korh) {
     int       pos1, pos2, start1, start2, end1, end2;
     char *    pt1, *pt2;
     int       iscore;
@@ -615,7 +615,7 @@ putlocalhom_ext(char* al1, char* al2, LocalHom* localhompt, int off1, int off2, 
 }
 
 void
-putlocalhom_str(char* al1, char* al2, double* equiv, double scale, LocalHom* localhompt, int off1, int off2, int opt, int overlapaa, char korh) {
+putlocalhom_str(char* al1, char* al2, double* equiv, double scale, LocalHom* localhompt, int off1, int off2, char korh) {
     int       posinaln, pos1, pos2, start1, start2, end1, end2;
     char *    pt1, *pt2;
     LocalHom* tmppt = localhompt;
@@ -661,7 +661,7 @@ putlocalhom_str(char* al1, char* al2, double* equiv, double scale, LocalHom* loc
 }
 
 void
-putlocalhom2(char* al1, char* al2, LocalHom* localhompt, int off1, int off2, int opt, int overlapaa, char korh) {
+putlocalhom2(char* al1, char* al2, LocalHom* localhompt, int off1, int off2, char korh) {
     int       pos1, pos2, start1, start2, end1, end2;
     char *    pt1, *pt2;
     int       iscore;
@@ -3382,13 +3382,13 @@ ReadFasta34noalign(FILE* fp, double* dis, int qmem, char** name, LocalHom* local
 
     return count;
 }
+
 int
 ReadFasta34m10_nuc(FILE* fp, double* dis, int qmem, char** name, LocalHom* localhomlist) {
     int         count = 0;
     char        b[B];
     char*       pt;
     static int  junban[M];
-    int         overlapaa;
     int         opt, qstart, qend, tstart, tend;
     double      z, bits;
     int         qal_display_start, tal_display_start;
@@ -3442,7 +3442,6 @@ ReadFasta34m10_nuc(FILE* fp, double* dis, int qmem, char** name, LocalHom* local
             if (!strncmp("_overlap:", b + 4, 9))
                 break;
         pt = strstr(b, ":") + 1;
-        overlapaa = atoi(pt);
 
         while (fgets(b, B - 1, fp))
             if (!strncmp("_start:", b + 4, 7))
@@ -3502,31 +3501,21 @@ ReadFasta34m10_nuc(FILE* fp, double* dis, int qmem, char** name, LocalHom* local
         }
         *pt = 0;
 
-        //		fprintf( stderr, "(%d-%d:%d-%d)\n", qstart, qend, tstart, tend );
-        //		fprintf( stderr, "qal_display_start = %d, tal_display_start = %d\n", qal_display_start, tal_display_start );
-
-        //		fprintf( stderr, "qal = %s\n", qal );
-        //		fprintf( stderr, "tal = %s\n", tal );
-
         qal2 = cutal(qal, qal_display_start, qstart, qend);
         tal2 = cutal(tal, tal_display_start, tstart, tend);
 
-        //		fprintf( stderr, "qal2 = %s\n", qal2 );
-        //		fprintf( stderr, "tal2 = %s\n", tal2 );
-
-        //		fprintf( stderr, "putting   %d - %d, opt = %d\n", qmem, junban[count-1], opt );
-        putlocalhom2(qal2, tal2, localhomlist + junban[count - 1], qstart, tstart, opt, overlapaa, 'h');
+        putlocalhom2(qal2, tal2, localhomlist + junban[count - 1], qstart, tstart, 'h');
     }
-    //	fprintf( stderr, "count = %d\n", count );
+ 
     return count;
 }
+
 int
 ReadFasta34m10(FILE* fp, double* dis, int qmem, char** name, LocalHom* localhomlist) {
     int         count = 0;
     char        b[B];
     char*       pt;
     static int  junban[M];
-    int         overlapaa;
     int         opt, qstart, qend, tstart, tend;
     double      z, bits;
     int         qal_display_start, tal_display_start;
@@ -3577,7 +3566,6 @@ ReadFasta34m10(FILE* fp, double* dis, int qmem, char** name, LocalHom* localhoml
             if (!strncmp("_overlap:", b + 4, 9))
                 break;
         pt = strstr(b, ":") + 1;
-        overlapaa = atoi(pt);
 
         while (fgets(b, B - 1, fp))
             if (!strncmp("_start:", b + 4, 7))
@@ -3637,24 +3625,15 @@ ReadFasta34m10(FILE* fp, double* dis, int qmem, char** name, LocalHom* localhoml
         }
         *pt = 0;
 
-        //		fprintf( stderr, "(%d-%d:%d-%d)\n", qstart, qend, tstart, tend );
-        //		fprintf( stderr, "qal_display_start = %d, tal_display_start = %d\n", qal_display_start, tal_display_start );
-
-        //		fprintf( stderr, "qal = %s\n", qal );
-        //		fprintf( stderr, "tal = %s\n", tal );
-
         qal2 = cutal(qal, qal_display_start, qstart, qend);
         tal2 = cutal(tal, tal_display_start, tstart, tend);
 
-        //		fprintf( stderr, "qal2 = %s\n", qal2 );
-        //		fprintf( stderr, "tal2 = %s\n", tal2 );
-
-        //		fprintf( stderr, "putting   %d - %d, opt = %d\n", qmem, junban[count-1], opt );
-        putlocalhom2(qal2, tal2, localhomlist + junban[count - 1], qstart, tstart, opt, overlapaa, 'h');
+        putlocalhom2(qal2, tal2, localhomlist + junban[count - 1], qstart, tstart, 'h');
     }
-    //	fprintf( stderr, "count = %d\n", count );
+
     return count;
 }
+
 int
 ReadFasta34m10_scoreonly_nucbk(FILE* fp, double* dis, int nin) {
     int    count = 0;

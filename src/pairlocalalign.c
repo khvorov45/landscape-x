@@ -2190,28 +2190,20 @@ athread(void* arg)  // alg='R', alg='r' -> tsukawarenai.
                 else if (alg == 'r')
                     putlocalhom_last(mseq1[0], mseq2[0], localhomtable[i] + j - (njob - nadd), lastresx[i] + j - (njob - nadd));
                 else if (alg == 'H')
-                    putlocalhom_ext(mseq1[0], mseq2[0], localhomtable[i] + j, off1, off2, strlen(mseq1[0]), 'h');
+                    putlocalhom_ext(mseq1[0], mseq2[0], localhomtable[i] + j, off1, off2, 'h');
                 else if (alg == 'Y')
-                    putlocalhom2(mseq1[0], mseq2[0], localhomtable[i] + j - (njob - nadd), off1, off2, (int)pscore, strlen(mseq1[0]), 'h');
+                    putlocalhom2(mseq1[0], mseq2[0], localhomtable[i] + j - (njob - nadd), off1, off2, 'h');
                 else if (!specifictarget && alg != 'S' && alg != 'V')
-                    putlocalhom2(mseq1[0], mseq2[0], localhomtable[i] + j - i, off1, off2, (int)pscore, strlen(mseq1[0]), 'h');
+                    putlocalhom2(mseq1[0], mseq2[0], localhomtable[i] + j - i, off1, off2, 'h');
                 else
-                //					putlocalhom2( mseq1[0], mseq2[0], localhomtable[i]+j, off1, off2, (int)pscore, strlen( mseq1[0] ) );
                 {
                     if (targetmap[i] != -1 && targetmap[j] != -1) {
-                        putlocalhom2(mseq2[0], mseq1[0], localhomtable[targetmap[j]] + i, off2, off1, (int)pscore, strlen(mseq2[0]), 'h');
-                        putlocalhom2(mseq1[0], mseq2[0], localhomtable[targetmap[i]] + j, off1, off2, (int)pscore, strlen(mseq1[0]), 'h');  // sukoshi muda.
+                        putlocalhom2(mseq2[0], mseq1[0], localhomtable[targetmap[j]] + i, off2, off1, 'h');
+                        putlocalhom2(mseq1[0], mseq2[0], localhomtable[targetmap[i]] + j, off1, off2, 'h');  // sukoshi muda.
                     } else if (targetmap[j] != -1)
-                        putlocalhom2(mseq2[0], mseq1[0], localhomtable[targetmap[j]] + i, off2, off1, (int)pscore, strlen(mseq2[0]), 'h');
+                        putlocalhom2(mseq2[0], mseq1[0], localhomtable[targetmap[j]] + i, off2, off1, 'h');
                     else if (targetmap[i] != -1)
-                        putlocalhom2(mseq1[0], mseq2[0], localhomtable[targetmap[i]] + j, off1, off2, (int)pscore, strlen(mseq1[0]), 'h');
-#if 0
-					if( targetmap[i] != -1 )
-						putlocalhom2( mseq1[0], mseq2[0], localhomtable[targetmap[i]]+j, off1, off2, (int)pscore, strlen( mseq1[0] ), 'h' );
-					
-					else if( targetmap[j] != -1 )
-						putlocalhom2( mseq2[0], mseq1[0], localhomtable[targetmap[j]]+i, off2, off1, (int)pscore, strlen( mseq2[0] ), 'h' );
-#endif
+                        putlocalhom2(mseq1[0], mseq2[0], localhomtable[targetmap[i]] + j, off1, off2, 'h');
                     else {
                         reporterr("okashii\n");
                         exit(1);
@@ -2740,19 +2732,19 @@ pairalign(char** name, char** seq, char** aseq, char** dseq, int* thereisxineach
                         else if (alg == 'r')
                             putlocalhom_last(mseq1[0], mseq2[0], localhomtable[i] + j - (njob - nadd), lastresx[i] + j - (njob - nadd));
                         else if (alg == 'H')
-                            putlocalhom_ext(mseq1[0], mseq2[0], localhomtable[i] + j, off1, off2, strlen(mseq1[0]), 'h');
+                            putlocalhom_ext(mseq1[0], mseq2[0], localhomtable[i] + j, off1, off2, 'h');
                         else if (alg == 'Y')
-                            putlocalhom2(mseq1[0], mseq2[0], localhomtable[i] + j - (njob - nadd), off1, off2, (int)pscore, strlen(mseq1[0]), 'h');
+                            putlocalhom2(mseq1[0], mseq2[0], localhomtable[i] + j - (njob - nadd), off1, off2, 'h');
                         else if (!specifictarget && alg != 'S' && alg != 'V')
-                            putlocalhom2(mseq1[0], mseq2[0], localhomtable[i] + j - i, off1, off2, (int)pscore, strlen(mseq1[0]), 'h');
+                            putlocalhom2(mseq1[0], mseq2[0], localhomtable[i] + j - i, off1, off2, 'h');
                         else {
                             if (targetmap[i] != -1 && targetmap[j] != -1) {
-                                putlocalhom2(mseq1[0], mseq2[0], localhomtable[targetmap[i]] + j, off1, off2, (int)pscore, strlen(mseq1[0]), 'h');
-                                putlocalhom2(mseq2[0], mseq1[0], localhomtable[targetmap[j]] + i, off2, off1, (int)pscore, strlen(mseq2[0]), 'h');  // sukoshi muda.
+                                putlocalhom2(mseq1[0], mseq2[0], localhomtable[targetmap[i]] + j, off1, off2, 'h');
+                                putlocalhom2(mseq2[0], mseq1[0], localhomtable[targetmap[j]] + i, off2, off1, 'h');  // sukoshi muda.
                             } else if (targetmap[j] != -1)
-                                putlocalhom2(mseq2[0], mseq1[0], localhomtable[targetmap[j]] + i, off2, off1, (int)pscore, strlen(mseq2[0]), 'h');
+                                putlocalhom2(mseq2[0], mseq1[0], localhomtable[targetmap[j]] + i, off2, off1, 'h');
                             else if (targetmap[i] != -1)
-                                putlocalhom2(mseq1[0], mseq2[0], localhomtable[targetmap[i]] + j, off1, off2, (int)pscore, strlen(mseq1[0]), 'h');
+                                putlocalhom2(mseq1[0], mseq2[0], localhomtable[targetmap[i]] + j, off1, off2, 'h');
                             else {
                                 reporterr("okashii\n");
                                 exit(1);

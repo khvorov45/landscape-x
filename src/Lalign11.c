@@ -60,7 +60,7 @@ static void match_calc_bk( double *match, double **cpmx1, double **cpmx2, int i1
 		for( k=0; k<nalphabets; k++ )
 			scarr[l] += n_dis[k][l] * cpmx1[k][i1];
 	}
-#if 0 /* ¤³¤ì¤ò»È¤¦¤È¤­¤Ïdoublework¤Î¥¢¥í¥±¡¼¥È¤òµÕ¤Ë¤¹¤ë */
+#if 0 /* ï¿½ï¿½ï¿½ï¿½ï¿½È¤ï¿½ï¿½È¤ï¿½ï¿½ï¿½doubleworkï¿½Î¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¤ï¿½Õ¤Ë¤ï¿½ï¿½ï¿½ */
 	{
 		double *fpt, **fptpt, *fpt2;
 		int *ipt, **iptpt;
@@ -88,7 +88,7 @@ static void match_calc_bk( double *match, double **cpmx1, double **cpmx2, int i1
 #endif
 
 static double
-Ltracking(double* lasthorizontalw, double* lastverticalw, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int* off1pt, int* off2pt, int endi, int endj, int* warpis, int* warpjs, int warpbase) {
+Ltracking(double* lastverticalw, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int* off1pt, int* off2pt, int endi, int endj, int* warpis, int* warpjs, int warpbase) {
     int i, j, l, iin, jin, lgth1, lgth2, k, limk;
     int ifi = 0, jfi = 0;  // by D.Mathog, a guess
     //	char gap[] = "-";
@@ -671,7 +671,7 @@ fprintf( stderr, "\n" );
         return (0.0);
     }
 
-    Ltracking(currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, off1pt, off2pt, endali, endalj, warpis, warpjs, warpbase);
+    Ltracking(lastverticalw, seq1, seq2, mseq1, mseq2, ijp, off1pt, off2pt, endali, endalj, warpis, warpjs, warpbase);
     if (warpis)
         free(warpis);
     if (warpjs)
