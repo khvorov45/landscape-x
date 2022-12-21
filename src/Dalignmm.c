@@ -2021,7 +2021,7 @@ gaplenextend(Gaplen** cpy, int gapstartpos, int insertionlen) {
 #endif
 
 static void
-copygaplencompactx(Gaplen** cpy, Gaplen** orig, int seqlen, int gapstartpos, int insertionlen, int posincopy, int posinori) {
+copygaplencompactx(Gaplen** cpy, Gaplen** orig, int gapstartpos, int insertionlen, int posincopy, int posinori) {
     Gaplen *pt, *cpt;
 
 #if DEBUG
@@ -2955,7 +2955,7 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
         //		duplicategaplencompactx( gaplen2icurr[i], gaplen2, lgth2, 0, lgth2 ); // ichiou zenbu
         duplicategaplencompactx(gaplen2icurr[i], gaplen2, lgth2, 0, 0);
 
-        copygaplencompactx(gaplen2icurr[i], gaplen2, lgth2, 0, i, 0, 0);  // -> zurasu -> error?
+        copygaplencompactx(gaplen2icurr[i], gaplen2, 0, i, 0, 0);  // -> zurasu -> error?
 
         //		duplicategaplencompactx( gaplen1ibestkamo[i], gaplen1, lgth1, 0, 1 );
         //		duplicategaplencompactx( gaplen1ibestkamo[i], gaplen1+i, lgth1-i, 0, 1 ); // half
@@ -2964,7 +2964,7 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
         duplicategaplencompactx(gaplen2ibestkamo[i], gaplen2, lgth2, 0, 0);
         //		copygaplenrestricted( gaplen2ibestkamo[i], gaplen2, lgth2, 0, i, 0, 0 ); // -> zurasu -> error?
         //		copygaplenrestricted_zurasu( gaplen2ibestkamo[i], gaplen2, lgth2, 0, i, 0, lgth2, 0, lgth2 ); // -> zurasu -> error?
-        copygaplencompactx(gaplen2ibestkamo[i], gaplen2, lgth2, 0, i, 0, 0);  // -> zurasu -> error?
+        copygaplencompactx(gaplen2ibestkamo[i], gaplen2, 0, i, 0, 0);  // -> zurasu -> error?
     }
 
     //	reporterr( "Duplicating gaplen*j*curr \n" );
@@ -2994,7 +2994,7 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
         //reporterr( "starting suspicious duplication\n" );
         duplicategaplencompactx(gaplen2jcurr[j], gaplen2 + j, lgth2 - j, 0, 0);  //half!
         //reporterr( "starting suspicious copy\n" );
-        copygaplencompactx(gaplen1jcurr[j], gaplen1, lgth1, 0, j, 0, 0);  // TEST
+        copygaplencompactx(gaplen1jcurr[j], gaplen1, 0, j, 0, 0);  // TEST
         //reporterr( "finished\n" );
 
         //		reporterr( "Checking gaplen1jcurr[%d]\n", j );
@@ -3014,7 +3014,7 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
         //		duplicategaplencompactx( gaplen2jprev[j], gaplen2+j, lgth2-j, 0, lgth2-j ); // half
         duplicategaplencompactx(gaplen2jprev[j], gaplen2 + j, lgth2 - j, 0, 0);  // half
 
-        copygaplencompactx(gaplen1jprev[j], gaplen1, lgth1, 0, j, 0, 0);  // wasuretetakamo
+        copygaplencompactx(gaplen1jprev[j], gaplen1, 0, j, 0, 0);  // wasuretetakamo
     }
 
     //	reporterr( "Duplicating gaplen*j*best \n\n" );
@@ -3030,13 +3030,13 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
         //		duplicategaplencompactx( gaplen1jbestkamo[j], gaplen1, lgth1, 0, 1 );
         //		duplicategaplencompactx( gaplen2jbestkamo[j], gaplen2, lgth2, j-0, j+1 ); // originally, 0, j+1
         duplicategaplencompactx(gaplen2jbestkamo[j], gaplen2 + j, lgth2 - j, 0, 1);  // half!
-        copygaplencompactx(gaplen1jbestkamo[j], gaplen1, lgth1, 0, j, 0, 0);  // TEST
+        copygaplencompactx(gaplen1jbestkamo[j], gaplen1, 0, j, 0, 0);  // TEST
 
         //		duplicategaplencompactx( gaplen1jbest[j], gaplen1, lgth1, 0, lgth1 ); // KOKO
         duplicategaplencompactx(gaplen1jbest[j], gaplen1, lgth1, 0, 0);  // test
         //		duplicategaplencompactx( gaplen2jbest[j], gaplen2, lgth2,j-0, j+1 ); // originally, 0,j+1
         duplicategaplencompactx(gaplen2jbest[j], gaplen2 + j, lgth2 - j, 0, 1);  // half!
-        copygaplencompactx(gaplen1jbest[j], gaplen1, lgth1, 0, j, 0, 0);  // TEST
+        copygaplencompactx(gaplen1jbest[j], gaplen1, 0, j, 0, 0);  // TEST
     }
 
     //	reporterr( "Duplication end\n" );
@@ -3124,7 +3124,6 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
 
         previousw[0] = initverticalw[i - 1];
 
-#if 1
         gaplentmp = gaplen1jprev;
         gaplen1jprev = gaplen1jcurr;
         gaplen1jcurr = gaplentmp;
@@ -3144,54 +3143,19 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
             reporterr("\n");
         }
 #endif
-#else
 
-        reporterr("Entering a small j loop, i=%\n", i);
-        for (j = 1; j < lgth2 + 1; j++) {
-            //			addnewgaplen( gaplen1jprev[j], gaplen1jcurr[j], gaplen1, lgth1, -1, 0 );
-            //			addnewgaplen( gaplen2jprev[j], gaplen2jcurr[j], gaplen2, lgth2, -1, 0 );
-            reporterr("err1? j=%d/%d\n", j, lgth2);
-            copygaplencompactx(gaplen1jprev[j - 1], gaplen1jcurr[j - 1], lgth1, -1, 0, i - 1, i - 1);  // TEST
-            reporterr("err1? j=%d/%d\n", j, lgth2);
-            copygaplencompactx(gaplen2jprev[j - 1], gaplen2jcurr[j - 1], lgth2, -1, 0, j - 1, j - 1);  // TETS
-#if DEBUG
-            reporterr("before j loop, i=%d, gaplen2jcurr[%d] = \n", i, j);
-            showgaplen(gaplen2jcurr[j], 100);
-            reporterr("\n");
-            reporterr("before j loop, i=%d, gaplen2prev[%d] = \n", i, j);
-            showgaplen(gaplen2jprev[j], 100);
-            reporterr("\n");
-#endif
-        }
-#endif
-
-        //		reporterr( "err2? i=%d/%d\n", i, lgth1 );
-
-        //		duplicategaplencompactx( gaplen1icurr[i], gaplen1, lgth1, i, i+1 ); //originally 0, i+1
-        //		reporterr( "gaplen+0=\n");
-        //		showgaplen( gaplen1, 10 );
-        //		reporterr( "i=%d, lgth1=%d, lgth1-i=%d, gaplen+i-1=\n", i, lgth1, lgth1-i );
-        //		showgaplen( gaplen1+i-1, 100 );
         duplicategaplencompactx(gaplen1icurr[i], gaplen1 + i, lgth1 - i, 0, 1);  // half!!
-        //		duplicategaplencompactx( gaplen2icurr[i], gaplen2, lgth2, 0, lgth2 ); // KOKO
         duplicategaplencompactx(gaplen2icurr[i], gaplen2, lgth2, 0, 0);  // test
-        copygaplencompactx(gaplen2icurr[i], gaplen2, lgth2, 0, i, 0, 0);  // IRU? TEST
+        copygaplencompactx(gaplen2icurr[i], gaplen2, 0, i, 0, 0);  // IRU? TEST
 
-        //		duplicategaplencompactx( gaplen1ibestkamo[i], gaplen1, lgth1, i, i+1 ); //originally 0, i+1
         duplicategaplencompactx(gaplen1ibestkamo[i], gaplen1 + i, lgth1 - i, 0, 1);  //half
-        //		duplicategaplencompactx( gaplen2ibestkamo[i], gaplen2, lgth2, 0, lgth2 ); // ORIGINALLY, 0, lgth2
         duplicategaplencompactx(gaplen2ibestkamo[i], gaplen2, lgth2, 0, 0);  // ORIGINALLY, 0, lgth2
-        //		copygaplenrestricted( gaplen2ibestkamo[i], gaplen2, lgth2, 0, i, lgth2, 0, 0 ); // IRU? // TEST
-        copygaplencompactx(gaplen2ibestkamo[i], gaplen2, lgth2, 0, i, 0, 0);  // IRU? // TEST
+        copygaplencompactx(gaplen2ibestkamo[i], gaplen2, 0, i, 0, 0);  // IRU? // TEST
 
         extendgaplencompactx(gaplen1jprev[0], gaplen1, i);  // ???
 
-        //		addnewgaplen( gaplen1jprev[0], gaplen1icurr[i-1], gaplen1, lgth1, -1, 0 );
-        //		addnewgaplen( gaplen2jprev[0], gaplen2icurr[i-1], gaplen2, lgth2, -1, 0 );
-        //		copygaplenrestricted( gaplen1jprev[0], gaplen1icurr[i-1], lgth1, -1, 0, i, i ); // i-1, i da to omou.
-        copygaplencompactx(gaplen1jprev[0], gaplen1icurr[i - 1], lgth1 - i, -1, 0, i, 1);  // half? lgth1-i?
-        //		copygaplenrestricted( gaplen2jprev[0], gaplen2icurr[i-1], lgth2, -1, 0, 0, 0 );
-        copygaplencompactx(gaplen2jprev[0], gaplen2icurr[i - 1], lgth2 - j, -1, 0, 0, 0);  // half?? lgth2-j?
+        copygaplencompactx(gaplen1jprev[0], gaplen1icurr[i - 1], -1, 0, i, 1);  // half? lgth1-i?
+        copygaplencompactx(gaplen2jprev[0], gaplen2icurr[i - 1], -1, 0, 0, 0);  // half?? lgth2-j?
 
         match_calc(n_dynamicmtx, currentw, cpmx1, cpmx2, i, lgth2, doublework, intwork, 0);
 #if XXXXXXX
@@ -3471,22 +3435,10 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
                 //				freegaplenpartly( gaplen1ibestkamo[i-1], 0, i-1 );
                 freegaplenpartly(gaplen2ibestkamo[i - 1], j - 3, j - 2);
 #endif
-                //				freegaplenpartly( gaplen1jprev[mpibk], 0, lgth2 ); // full
-                //				freegaplenpartly( gaplen2jprev[mpibk], 0, lgth2-mpibk ); // half
-                //				if( gaplen1jprev[mpibk] ) FreeGaplenMtx( gaplen1jprev[mpibk], 0 );
-                //				gaplen1jprev[mpibk] = NULL;
-                //				if( gaplen2jprev[mpibk] ) FreeGaplenMtx( gaplen2jprev[mpibk], 0 );
-                //				gaplen2jprev[mpibk] = NULL;
 
-                //				addnewgaplen( gaplen1ibestkamo[i-1], gaplen1jprev[j-1], gaplen1, lgth1, -1, 0 );
-                //				addnewgaplen( gaplen2ibestkamo[i-1], gaplen2jprev[j-1], gaplen2, lgth2, -1, 0 );
-                //				copygaplenrestricted( gaplen1ibestkamo[i-1], gaplen1jprev[j-1], lgth1, -1, 0, i, i ); // i-1, i
-                copygaplencompactx(gaplen1ibestkamo[i - 1], gaplen1jprev[j - 1], lgth1, -1, 0, 1, i);  // half
-                //				copygaplenrestricted( gaplen2ibestkamo[i-1], gaplen2jprev[j-1], lgth2, -1, 0, j, j ); // mpi, j
-                copygaplencompactx(gaplen2ibestkamo[i - 1], gaplen2jprev[j - 1], lgth2, -1, 0, j, 1);  //half
+                copygaplencompactx(gaplen1ibestkamo[i - 1], gaplen1jprev[j - 1], -1, 0, 1, i);  // half
+                copygaplencompactx(gaplen2ibestkamo[i - 1], gaplen2jprev[j - 1], -1, 0, j, 1);  //half
             }
-
-            //			reporterr( "g=%f, *prept=%f, mi=%f\n", g, *prept, mi );
 
 #if USE_PENALTY_EX
             mi += fpenalty_ex;
@@ -3556,15 +3508,9 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
                 reporterr("Selected as jgap end!, pfac = %f\n", pfac);
                 fprintf(stderr, "Jump from %d (%c) to %d (%c)!\n", j, seq1[0][j], *mpjpt, seq1[0][*mpjpt]);
 #endif
-                //				addnewgaplen( gaplen1jbest[j-1], gaplen1jbestkamo[j-1], gaplen1, lgth1, -1, 0 );
-                //				addnewgaplen( gaplen2jbest[j-1], gaplen2jbestkamo[j-1], gaplen2, lgth2, -1, 0 );
-                copygaplencompactx(gaplen1jbest[j - 1], gaplen1jbestkamo[j - 1], lgth1, -1, 0, i, i);  // *mpjpt, i
-                //				copygaplenrestricted( gaplen2jbest[j-1], gaplen2jbestkamo[j-1], lgth2, -1, 0, j, j ); // j-1, j
-                copygaplencompactx(gaplen2jbest[j - 1], gaplen2jbestkamo[j - 1], lgth2, -1, 0, 1, 1);  // half!
+                copygaplencompactx(gaplen1jbest[j - 1], gaplen1jbestkamo[j - 1], -1, 0, i, i);  // *mpjpt, i
+                copygaplencompactx(gaplen2jbest[j - 1], gaplen2jbestkamo[j - 1], -1, 0, 1, 1);  // half!
             }
-
-            //			extendgaplenpartly( gaplen1jbest[j-1], gaplen1, i, i ); // tmptmptmp
-            //			extendgaplenpartly( gaplen2jbest[j-1], gaplen2, 0, 0 ); // tmptmptmp
 
 #if 0
 			sfac = 1.0;
@@ -3601,23 +3547,9 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
 //				freegaplenpartly( gaplen2jbestkamo[j-1], j-3, j-2 );
 #endif
 
-                //				addnewgaplen( gaplen1jbestkamo[j-1], gaplen1jprev[j-1], gaplen1, lgth1, -1, 0 );
-                //				addnewgaplen( gaplen2jbestkamo[j-1], gaplen2jprev[j-1], gaplen2, lgth2, -1, 0 );
-                //				reporterr( "copying gaplen1jbestkamo[%d-1] from galpen1jprev, j=%d, i=%d\n", j, j, i );
-                copygaplencompactx(gaplen1jbestkamo[j - 1], gaplen1jprev[j - 1], lgth1, -1, 0, i, i);  // *mpjpt, i
-                //				copygaplenrestricted( gaplen2jbestkamo[j-1], gaplen2jprev[j-1], lgth2, -1, 0, j, j ); // j-1, j
-                //				copygaplencompactx( gaplen2jbestkamo[j-1], gaplen2jprev[j-1], lgth2, -1, 0, j, 1 ); // half!
-                //				reporterr( "copying gaplen2jbestkamo[%d-1] from galpen2jprev\n", j );
-                copygaplencompactx(gaplen2jbestkamo[j - 1], gaplen2jprev[j - 1], lgth2 - j, -1, 0, 1, 1);  // ryouhou half!
-
-                //				if( j==2 && i==1 ) exit( 1 );
+                copygaplencompactx(gaplen1jbestkamo[j - 1], gaplen1jprev[j - 1], -1, 0, i, i);  // *mpjpt, i
+                copygaplencompactx(gaplen2jbestkamo[j - 1], gaplen2jprev[j - 1], -1, 0, 1, 1);  // ryouhou half!
             }
-
-            //			extendgaplenpartly( gaplen1ibestkamo[i-1], gaplen1, 0, 0 ); // tmptmptmp
-            //			extendgaplenpartly( gaplen2ibestkamo[i-1], gaplen2, j, j ); // tmptmptmp
-
-            //			extendgaplenpartly( gaplen1jbestkamo[j-1], gaplen1, i, i ); // tmptmptmp
-            //			extendgaplenpartly( gaplen2jbestkamo[j-1], gaplen2, 0, 0 ); // tmptmptmp
 
 #if USE_PENALTY_EX
             m[j] += fpenalty_ex;
@@ -3720,13 +3652,8 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
                 copygaplenrestricted_zurasu(gaplen1half[i][j], gaplen1half[i - 1][j + *ijppt], lgth1, 0, -*ijppt - 1, 0, 0, 1, 1);  // 0, lgth1
                 copygaplenrestricted_zurasu(gaplen2half[i][j], gaplen2half[i - 1][j + *ijppt], lgth2, -1, 0, 0, 0, -*ijppt, -*ijppt);  // 0, lgth2
 #endif
-                //				addnewgaplen( gaplen1jcurr[j], gaplen1jprev[j+*ijppt], gaplen1, lgth1, i, -*ijppt-1 );
-                //				addnewgaplen( gaplen2jcurr[j], gaplen2jprev[j+*ijppt], gaplen2, lgth2, -1, 0 );
-                //				reporterr( "copying gaplen1jcurr from gaplen1jbest, with a %d insertion\n", -*ijppt-1 );
-                copygaplencompactx(gaplen1jcurr[j], gaplen1jprev[j + *ijppt], lgth1, i, -*ijppt - 1, i, i);  // scope: i+*ijppt+1, i ?
-                //				reporterr( "copy end\n" );
-                //				copygaplenrestricted( gaplen2jcurr[j], gaplen2jprev[j+*ijppt], lgth2, -1, 0, j, j );
-                copygaplencompactx(gaplen2jcurr[j], gaplen2jprev[j + *ijppt], lgth2, -1, 0, 0, -*ijppt);  // half! ryouho zureteru
+                copygaplencompactx(gaplen1jcurr[j], gaplen1jprev[j + *ijppt], i, -*ijppt - 1, i, i);  // scope: i+*ijppt+1, i ?
+                copygaplencompactx(gaplen2jcurr[j], gaplen2jprev[j + *ijppt], -1, 0, 0, -*ijppt);  // half! ryouho zureteru
             } else if (*ijppt > 0) {
 #if DEBUG
                 reporterr("Path: %d-%d->%d-%d, i=%d (%c), j=%d (%c), *ijppt=%d\n", i, j, i - *ijppt, j - 1, i, seq1[0][i], j, seq2[0][j], *ijppt);
@@ -3742,12 +3669,8 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
                 copygaplenrestricted_zurasu(gaplen1half[i][j], gaplen1half[i - *ijppt][j - 1], lgth1, -1, 0, 0, 0, *ijppt, *ijppt);  // 0, lgth1
                 copygaplenrestricted_zurasu(gaplen2half[i][j], gaplen2half[i - *ijppt][j - 1], lgth2, 0, *ijppt - 1, 0, 0, 1, 1);  // 0, lgth2
 #endif
-                //				addnewgaplen( gaplen1jcurr[j], gaplen1jbest[j-1], gaplen1, lgth1, -1, 0 );
-                //				addnewgaplen( gaplen2jcurr[j], gaplen2jbest[j-1], gaplen2, lgth2, j, *ijppt-1 );
-                copygaplencompactx(gaplen1jcurr[j], gaplen1jbest[j - 1], lgth1, -1, 0, i, i);
-                //				copygaplenrestricted( gaplen2jcurr[j], gaplen2jbest[j-1], lgth2, j, *ijppt-1, j, j ); // j-*ijppt+1?
-                //				copygaplenrestricted_zurasu( gaplen2jcurr[j], gaplen2jbest[j-1], lgth2, 0, *ijppt-1, 0, 0, j, j ); // 2jcurr->half, but 2jbest->full, imanotokoro
-                copygaplencompactx(gaplen2jcurr[j], gaplen2jbest[j - 1], lgth2, 0, *ijppt - 1, 0, 1);  //ryouhou half
+                copygaplencompactx(gaplen1jcurr[j], gaplen1jbest[j - 1], -1, 0, i, i);
+                copygaplencompactx(gaplen2jcurr[j], gaplen2jbest[j - 1], 0, *ijppt - 1, 0, 1);  //ryouhou half
 
             } else
 #endif
@@ -3766,11 +3689,8 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
                 copygaplenrestricted_zurasu(gaplen1half[i][j], gaplen1half[i - 1][j - 1], lgth1, -1, 0, 0, 0, 1, 1);  // 0, lgth1
                 copygaplenrestricted_zurasu(gaplen2half[i][j], gaplen2half[i - 1][j - 1], lgth2, -1, 0, 0, 0, 1, 1);  // 0, lgth2
 #endif
-                //				addnewgaplen( gaplen1jcurr[j], gaplen1jprev[j-1], gaplen1, lgth1, -1, 0 );
-                //				addnewgaplen( gaplen2jcurr[j], gaplen2jprev[j-1], gaplen2, lgth2, -1, 0 );
-                copygaplencompactx(gaplen1jcurr[j], gaplen1jprev[j - 1], lgth1, -1, 0, i, i);
-                //				copygaplenrestricted( gaplen2jcurr[j], gaplen2jprev[j-1], lgth2, -1, 0, j, j );
-                copygaplencompactx(gaplen2jcurr[j], gaplen2jprev[j - 1], lgth2, -1, 0, 0, 1);  // half
+                copygaplencompactx(gaplen1jcurr[j], gaplen1jprev[j - 1], -1, 0, i, i);
+                copygaplencompactx(gaplen2jcurr[j], gaplen2jprev[j - 1], -1, 0, 0, 1);  // half
             }
 
 #if DEBUG
@@ -4670,24 +4590,12 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
 #endif
 
     for (i = 0; i < 1; i++) {
-        //		duplicategaplencompactx( gaplen1icurr[i], gaplen1, lgth1, i-0, lgth1 ); //originally, 0, lgth1
-        //
-        //		duplicategaplencompactx( gaplen1icurr[i], gaplen1+i, lgth1-i, 0, lgth1-i ); // half
         duplicategaplencompactx(gaplen1icurr[i], gaplen1 + i, lgth1 - i, 0, 1);  //  0, 1  hitsuyou
-
-        //		duplicategaplencompactx( gaplen2icurr[i], gaplen2, lgth2, 0, lgth2 ); // ichiou zenbu
         duplicategaplencompactx(gaplen2icurr[i], gaplen2, lgth2, 0, 0);
-
-        copygaplencompactx(gaplen2icurr[i], gaplen2, lgth2, 0, i, 0, 0);  // -> zurasu -> error?
-
-        //		duplicategaplencompactx( gaplen1ibestkamo[i], gaplen1, lgth1, 0, 1 );
-        //		duplicategaplencompactx( gaplen1ibestkamo[i], gaplen1+i, lgth1-i, 0, 1 ); // half
+        copygaplencompactx(gaplen2icurr[i], gaplen2, 0, i, 0, 0);  // -> zurasu -> error?
         duplicategaplencompactx(gaplen1ibestkamo[i], gaplen1 + i, lgth1 - i, 0, 0);  // half
-        //		duplicategaplencompactx( gaplen2ibestkamo[i], gaplen2, lgth2, 0, lgth2 );
         duplicategaplencompactx(gaplen2ibestkamo[i], gaplen2, lgth2, 0, 0);
-        //		copygaplenrestricted( gaplen2ibestkamo[i], gaplen2, lgth2, 0, i, 0, 0 ); // -> zurasu -> error?
-        //		copygaplenrestricted_zurasu( gaplen2ibestkamo[i], gaplen2, lgth2, 0, i, 0, lgth2, 0, lgth2 ); // -> zurasu -> error?
-        copygaplencompactx(gaplen2ibestkamo[i], gaplen2, lgth2, 0, i, 0, 0);  // -> zurasu -> error?
+        copygaplencompactx(gaplen2ibestkamo[i], gaplen2, 0, i, 0, 0);  // -> zurasu -> error?
     }
 
     //	reporterr( "Duplicating gaplen*j*curr \n" );
@@ -4717,7 +4625,7 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
         //reporterr( "starting suspicious duplication\n" );
         duplicategaplencompactx(gaplen2jcurr[j], gaplen2 + j, lgth2 - j, 0, 0);  //half!
         //reporterr( "starting suspicious copy\n" );
-        copygaplencompactx(gaplen1jcurr[j], gaplen1, lgth1, 0, j, 0, 0);  // TEST
+        copygaplencompactx(gaplen1jcurr[j], gaplen1, 0, j, 0, 0);  // TEST
         //reporterr( "finished\n" );
 
         //		reporterr( "Checking gaplen1jcurr[%d]\n", j );
@@ -4737,7 +4645,7 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
         //		duplicategaplencompactx( gaplen2jprev[j], gaplen2+j, lgth2-j, 0, lgth2-j ); // half
         duplicategaplencompactx(gaplen2jprev[j], gaplen2 + j, lgth2 - j, 0, 0);  // half
 
-        copygaplencompactx(gaplen1jprev[j], gaplen1, lgth1, 0, j, 0, 0);  // wasuretetakamo
+        copygaplencompactx(gaplen1jprev[j], gaplen1, 0, j, 0, 0);  // wasuretetakamo
     }
 
     //	reporterr( "Duplicating gaplen*j*best \n\n" );
@@ -4753,13 +4661,13 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
         //		duplicategaplencompactx( gaplen1jbestkamo[j], gaplen1, lgth1, 0, 1 );
         //		duplicategaplencompactx( gaplen2jbestkamo[j], gaplen2, lgth2, j-0, j+1 ); // originally, 0, j+1
         duplicategaplencompactx(gaplen2jbestkamo[j], gaplen2 + j, lgth2 - j, 0, 1);  // half!
-        copygaplencompactx(gaplen1jbestkamo[j], gaplen1, lgth1, 0, j, 0, 0);  // TEST
+        copygaplencompactx(gaplen1jbestkamo[j], gaplen1, 0, j, 0, 0);  // TEST
 
         //		duplicategaplencompactx( gaplen1jbest[j], gaplen1, lgth1, 0, lgth1 ); // KOKO
         duplicategaplencompactx(gaplen1jbest[j], gaplen1, lgth1, 0, 0);  // test
         //		duplicategaplencompactx( gaplen2jbest[j], gaplen2, lgth2,j-0, j+1 ); // originally, 0,j+1
         duplicategaplencompactx(gaplen2jbest[j], gaplen2 + j, lgth2 - j, 0, 1);  // half!
-        copygaplencompactx(gaplen1jbest[j], gaplen1, lgth1, 0, j, 0, 0);  // TEST
+        copygaplencompactx(gaplen1jbest[j], gaplen1, 0, j, 0, 0);  // TEST
     }
 
     //	reporterr( "Duplication end\n" );
@@ -4892,7 +4800,6 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
 
         previousw[0] = initverticalw[i - 1];
 
-#if 1
         gaplentmp = gaplen1jprev;
         gaplen1jprev = gaplen1jcurr;
         gaplen1jcurr = gaplentmp;
@@ -4912,54 +4819,19 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
             reporterr("\n");
         }
 #endif
-#else
 
-        reporterr("Entering a small j loop, i=%\n", i);
-        for (j = 1; j < lgth2 + 1; j++) {
-            //			addnewgaplen( gaplen1jprev[j], gaplen1jcurr[j], gaplen1, lgth1, -1, 0 );
-            //			addnewgaplen( gaplen2jprev[j], gaplen2jcurr[j], gaplen2, lgth2, -1, 0 );
-            reporterr("err1? j=%d/%d\n", j, lgth2);
-            copygaplencompactx(gaplen1jprev[j - 1], gaplen1jcurr[j - 1], lgth1, -1, 0, i - 1, i - 1);  // TEST
-            reporterr("err1? j=%d/%d\n", j, lgth2);
-            copygaplencompactx(gaplen2jprev[j - 1], gaplen2jcurr[j - 1], lgth2, -1, 0, j - 1, j - 1);  // TETS
-#if DEBUG
-            reporterr("before j loop, i=%d, gaplen2jcurr[%d] = \n", i, j);
-            showgaplen(gaplen2jcurr[j], 100);
-            reporterr("\n");
-            reporterr("before j loop, i=%d, gaplen2prev[%d] = \n", i, j);
-            showgaplen(gaplen2jprev[j], 100);
-            reporterr("\n");
-#endif
-        }
-#endif
-
-        //		reporterr( "err2? i=%d/%d\n", i, lgth1 );
-
-        //		duplicategaplencompactx( gaplen1icurr[i], gaplen1, lgth1, i, i+1 ); //originally 0, i+1
-        //		reporterr( "gaplen+0=\n");
-        //		showgaplen( gaplen1, 10 );
-        //		reporterr( "i=%d, lgth1=%d, lgth1-i=%d, gaplen+i-1=\n", i, lgth1, lgth1-i );
-        //		showgaplen( gaplen1+i-1, 100 );
         duplicategaplencompactx(gaplen1icurr[i], gaplen1 + i, lgth1 - i, 0, 1);  // half!!
-        //		duplicategaplencompactx( gaplen2icurr[i], gaplen2, lgth2, 0, lgth2 ); // KOKO
         duplicategaplencompactx(gaplen2icurr[i], gaplen2, lgth2, 0, 0);  // test
-        copygaplencompactx(gaplen2icurr[i], gaplen2, lgth2, 0, i, 0, 0);  // IRU? TEST
+        copygaplencompactx(gaplen2icurr[i], gaplen2, 0, i, 0, 0);  // IRU? TEST
 
-        //		duplicategaplencompactx( gaplen1ibestkamo[i], gaplen1, lgth1, i, i+1 ); //originally 0, i+1
         duplicategaplencompactx(gaplen1ibestkamo[i], gaplen1 + i, lgth1 - i, 0, 1);  //half
-        //		duplicategaplencompactx( gaplen2ibestkamo[i], gaplen2, lgth2, 0, lgth2 ); // ORIGINALLY, 0, lgth2
         duplicategaplencompactx(gaplen2ibestkamo[i], gaplen2, lgth2, 0, 0);  // ORIGINALLY, 0, lgth2
-        //		copygaplenrestricted( gaplen2ibestkamo[i], gaplen2, lgth2, 0, i, lgth2, 0, 0 ); // IRU? // TEST
-        copygaplencompactx(gaplen2ibestkamo[i], gaplen2, lgth2, 0, i, 0, 0);  // IRU? // TEST
+        copygaplencompactx(gaplen2ibestkamo[i], gaplen2, 0, i, 0, 0);  // IRU? // TEST
 
         extendgaplencompactx(gaplen1jprev[0], gaplen1, i);  // ???
 
-        //		addnewgaplen( gaplen1jprev[0], gaplen1icurr[i-1], gaplen1, lgth1, -1, 0 );
-        //		addnewgaplen( gaplen2jprev[0], gaplen2icurr[i-1], gaplen2, lgth2, -1, 0 );
-        //		copygaplenrestricted( gaplen1jprev[0], gaplen1icurr[i-1], lgth1, -1, 0, i, i ); // i-1, i da to omou.
-        copygaplencompactx(gaplen1jprev[0], gaplen1icurr[i - 1], lgth1 - i, -1, 0, i, 1);  // half? lgth1-i?
-        //		copygaplenrestricted( gaplen2jprev[0], gaplen2icurr[i-1], lgth2, -1, 0, 0, 0 );
-        copygaplencompactx(gaplen2jprev[0], gaplen2icurr[i - 1], lgth2 - j, -1, 0, 0, 0);  // half?? lgth2-j?
+        copygaplencompactx(gaplen1jprev[0], gaplen1icurr[i - 1], -1, 0, i, 1);  // half? lgth1-i?
+        copygaplencompactx(gaplen2jprev[0], gaplen2icurr[i - 1], -1, 0, 0, 0);  // half?? lgth2-j?
 
 //		match_calc( n_dynamicmtx, currentw, cpmx1, cpmx2, i, lgth2, doublework, intwork, 0 );
 #if SLOW
@@ -5269,9 +5141,9 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
                 //				addnewgaplen( gaplen1ibestkamo[i-1], gaplen1jprev[j-1], gaplen1, lgth1, -1, 0 );
                 //				addnewgaplen( gaplen2ibestkamo[i-1], gaplen2jprev[j-1], gaplen2, lgth2, -1, 0 );
                 //				copygaplenrestricted( gaplen1ibestkamo[i-1], gaplen1jprev[j-1], lgth1, -1, 0, i, i ); // i-1, i
-                copygaplencompactx(gaplen1ibestkamo[i - 1], gaplen1jprev[j - 1], lgth1, -1, 0, 1, i);  // half
+                copygaplencompactx(gaplen1ibestkamo[i - 1], gaplen1jprev[j - 1], -1, 0, 1, i);  // half
                 //				copygaplenrestricted( gaplen2ibestkamo[i-1], gaplen2jprev[j-1], lgth2, -1, 0, j, j ); // mpi, j
-                copygaplencompactx(gaplen2ibestkamo[i - 1], gaplen2jprev[j - 1], lgth2, -1, 0, j, 1);  //half
+                copygaplencompactx(gaplen2ibestkamo[i - 1], gaplen2jprev[j - 1], -1, 0, j, 1);  //half
             }
 
             //			reporterr( "g=%f, *prept=%f, mi=%f\n", g, *prept, mi );
@@ -5346,9 +5218,9 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
 #endif
                 //				addnewgaplen( gaplen1jbest[j-1], gaplen1jbestkamo[j-1], gaplen1, lgth1, -1, 0 );
                 //				addnewgaplen( gaplen2jbest[j-1], gaplen2jbestkamo[j-1], gaplen2, lgth2, -1, 0 );
-                copygaplencompactx(gaplen1jbest[j - 1], gaplen1jbestkamo[j - 1], lgth1, -1, 0, i, i);  // *mpjpt, i
+                copygaplencompactx(gaplen1jbest[j - 1], gaplen1jbestkamo[j - 1], -1, 0, i, i);  // *mpjpt, i
                 //				copygaplenrestricted( gaplen2jbest[j-1], gaplen2jbestkamo[j-1], lgth2, -1, 0, j, j ); // j-1, j
-                copygaplencompactx(gaplen2jbest[j - 1], gaplen2jbestkamo[j - 1], lgth2, -1, 0, 1, 1);  // half!
+                copygaplencompactx(gaplen2jbest[j - 1], gaplen2jbestkamo[j - 1], -1, 0, 1, 1);  // half!
             }
 
             //			extendgaplenpartly( gaplen1jbest[j-1], gaplen1, i, i ); // tmptmptmp
@@ -5386,19 +5258,9 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
 
 #if FREEFREQUENTLY
                 freegaplenpartly(gaplen1jbestkamo[j - 1], i - 3, i - 2);
-//				freegaplenpartly( gaplen2jbestkamo[j-1], j-3, j-2 );
 #endif
-
-                //				addnewgaplen( gaplen1jbestkamo[j-1], gaplen1jprev[j-1], gaplen1, lgth1, -1, 0 );
-                //				addnewgaplen( gaplen2jbestkamo[j-1], gaplen2jprev[j-1], gaplen2, lgth2, -1, 0 );
-                //				reporterr( "copying gaplen1jbestkamo[%d-1] from galpen1jprev, j=%d, i=%d\n", j, j, i );
-                copygaplencompactx(gaplen1jbestkamo[j - 1], gaplen1jprev[j - 1], lgth1, -1, 0, i, i);  // *mpjpt, i
-                //				copygaplenrestricted( gaplen2jbestkamo[j-1], gaplen2jprev[j-1], lgth2, -1, 0, j, j ); // j-1, j
-                //				copygaplencompactx( gaplen2jbestkamo[j-1], gaplen2jprev[j-1], lgth2, -1, 0, j, 1 ); // half!
-                //				reporterr( "copying gaplen2jbestkamo[%d-1] from galpen2jprev\n", j );
-                copygaplencompactx(gaplen2jbestkamo[j - 1], gaplen2jprev[j - 1], lgth2 - j, -1, 0, 1, 1);  // ryouhou half!
-
-                //				if( j==2 && i==1 ) exit( 1 );
+                copygaplencompactx(gaplen1jbestkamo[j - 1], gaplen1jprev[j - 1], -1, 0, i, i);  // *mpjpt, i
+                copygaplencompactx(gaplen2jbestkamo[j - 1], gaplen2jprev[j - 1], -1, 0, 1, 1);  // ryouhou half!
             }
 
             //			extendgaplenpartly( gaplen1ibestkamo[i-1], gaplen1, 0, 0 ); // tmptmptmp
@@ -5508,13 +5370,8 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
                 copygaplenrestricted_zurasu(gaplen1half[i][j], gaplen1half[i - 1][j + *ijppt], lgth1, 0, -*ijppt - 1, 0, 0, 1, 1);  // 0, lgth1
                 copygaplenrestricted_zurasu(gaplen2half[i][j], gaplen2half[i - 1][j + *ijppt], lgth2, -1, 0, 0, 0, -*ijppt, -*ijppt);  // 0, lgth2
 #endif
-                //				addnewgaplen( gaplen1jcurr[j], gaplen1jprev[j+*ijppt], gaplen1, lgth1, i, -*ijppt-1 );
-                //				addnewgaplen( gaplen2jcurr[j], gaplen2jprev[j+*ijppt], gaplen2, lgth2, -1, 0 );
-                //				reporterr( "copying gaplen1jcurr from gaplen1jbest, with a %d insertion\n", -*ijppt-1 );
-                copygaplencompactx(gaplen1jcurr[j], gaplen1jprev[j + *ijppt], lgth1, i, -*ijppt - 1, i, i);  // scope: i+*ijppt+1, i ?
-                //				reporterr( "copy end\n" );
-                //				copygaplenrestricted( gaplen2jcurr[j], gaplen2jprev[j+*ijppt], lgth2, -1, 0, j, j );
-                copygaplencompactx(gaplen2jcurr[j], gaplen2jprev[j + *ijppt], lgth2, -1, 0, 0, -*ijppt);  // half! ryouho zureteru
+                copygaplencompactx(gaplen1jcurr[j], gaplen1jprev[j + *ijppt], i, -*ijppt - 1, i, i);  // scope: i+*ijppt+1, i ?
+                copygaplencompactx(gaplen2jcurr[j], gaplen2jprev[j + *ijppt], -1, 0, 0, -*ijppt);  // half! ryouho zureteru
             } else if (*ijppt > 0) {
 #if DEBUG
                 reporterr("Path: %d-%d->%d-%d, i=%d (%c), j=%d (%c), *ijppt=%d\n", i, j, i - *ijppt, j - 1, i, seq1[0][i], j, seq2[0][j], *ijppt);
@@ -5530,12 +5387,8 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
                 copygaplenrestricted_zurasu(gaplen1half[i][j], gaplen1half[i - *ijppt][j - 1], lgth1, -1, 0, 0, 0, *ijppt, *ijppt);  // 0, lgth1
                 copygaplenrestricted_zurasu(gaplen2half[i][j], gaplen2half[i - *ijppt][j - 1], lgth2, 0, *ijppt - 1, 0, 0, 1, 1);  // 0, lgth2
 #endif
-                //				addnewgaplen( gaplen1jcurr[j], gaplen1jbest[j-1], gaplen1, lgth1, -1, 0 );
-                //				addnewgaplen( gaplen2jcurr[j], gaplen2jbest[j-1], gaplen2, lgth2, j, *ijppt-1 );
-                copygaplencompactx(gaplen1jcurr[j], gaplen1jbest[j - 1], lgth1, -1, 0, i, i);
-                //				copygaplenrestricted( gaplen2jcurr[j], gaplen2jbest[j-1], lgth2, j, *ijppt-1, j, j ); // j-*ijppt+1?
-                //				copygaplenrestricted_zurasu( gaplen2jcurr[j], gaplen2jbest[j-1], lgth2, 0, *ijppt-1, 0, 0, j, j ); // 2jcurr->half, but 2jbest->full, imanotokoro
-                copygaplencompactx(gaplen2jcurr[j], gaplen2jbest[j - 1], lgth2, 0, *ijppt - 1, 0, 1);  //ryouhou half
+                copygaplencompactx(gaplen1jcurr[j], gaplen1jbest[j - 1], -1, 0, i, i);
+                copygaplencompactx(gaplen2jcurr[j], gaplen2jbest[j - 1], 0, *ijppt - 1, 0, 1);  //ryouhou half
 
             } else
 #endif
@@ -5554,11 +5407,8 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
                 copygaplenrestricted_zurasu(gaplen1half[i][j], gaplen1half[i - 1][j - 1], lgth1, -1, 0, 0, 0, 1, 1);  // 0, lgth1
                 copygaplenrestricted_zurasu(gaplen2half[i][j], gaplen2half[i - 1][j - 1], lgth2, -1, 0, 0, 0, 1, 1);  // 0, lgth2
 #endif
-                //				addnewgaplen( gaplen1jcurr[j], gaplen1jprev[j-1], gaplen1, lgth1, -1, 0 );
-                //				addnewgaplen( gaplen2jcurr[j], gaplen2jprev[j-1], gaplen2, lgth2, -1, 0 );
-                copygaplencompactx(gaplen1jcurr[j], gaplen1jprev[j - 1], lgth1, -1, 0, i, i);
-                //				copygaplenrestricted( gaplen2jcurr[j], gaplen2jprev[j-1], lgth2, -1, 0, j, j );
-                copygaplencompactx(gaplen2jcurr[j], gaplen2jprev[j - 1], lgth2, -1, 0, 0, 1);  // half
+                copygaplencompactx(gaplen1jcurr[j], gaplen1jprev[j - 1], -1, 0, i, i);
+                copygaplencompactx(gaplen2jcurr[j], gaplen2jprev[j - 1], -1, 0, 0, 1);  // half
             }
 
 #if DEBUG
