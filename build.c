@@ -306,7 +306,7 @@ main() {
                 arrput(srcObjPaths, outpath);
                 prb_Str outlog = prb_replaceExt(arena, outpath, prb_STR("log"));
                 arrput(srcObjPathsLog, outlog);
-                prb_Str cmd = prb_fmt(arena, "clang -g -Wall -Werror -Denablemultithread -c %.*s -o %.*s", prb_LIT(thisFile), prb_LIT(outpath));
+                prb_Str cmd = prb_fmt(arena, "clang -g -Wall -Werror -Wextra -Denablemultithread -c %.*s -o %.*s", prb_LIT(thisFile), prb_LIT(outpath));
                 prb_writelnToStdout(arena, cmd);
                 prb_ProcessHandle proc = prb_execCmd(arena, (prb_ExecCmdSpec) {.cmd = cmd, .dontwait = true, .redirectStderr = true, .stderrFilepath = outlog});
                 prb_assert(proc.status == prb_ProcessStatus_Launched);

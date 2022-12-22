@@ -152,7 +152,7 @@ imp_match_init_strictD(int clus1, int clus2, int lgth1, int lgth2, char** seq1, 
 }
 
 static void
-match_calc_del(double*** matrices, double* match, char** seq1, double* eff1, int n2, char** seq2, double* eff2, int i1, int lgth2, int mid, int nmask, int* mask1, int* mask2) {
+match_calc_del(double*** matrices, double* match, char** seq1, double* eff1, char** seq2, double* eff2, int i1, int lgth2, int mid, int nmask, int* mask1, int* mask2) {
     // osoi!
     int i, j, k, m;
     int c1, c2;
@@ -721,7 +721,7 @@ FreeGaplenMtxReport(Gaplen** mtx) {
 #endif
 
 static void
-FreeGaplenMtx(Gaplen** mtx, int inclfreq) {
+FreeGaplenMtx(Gaplen** mtx) {
     int i;
     if (mtx == NULL)
         return;
@@ -730,24 +730,6 @@ FreeGaplenMtx(Gaplen** mtx, int inclfreq) {
         if (mtx[i]) {
             if (mtx[i] == (Gaplen*)1)
                 break;
-
-#if 0
-			if( inclfreq ) 
-			{
-//				reporterr( "inclfreq=%d\n", inclfreq );
-				for( j=0; mtx[i][j].relend==0; j++ ) 
-				{
-//					reporterr( "j=%d\n", j );
-//					reporterr( "Free! freq\n" );
-					if( mtx[i][j].freq ) 
-					{
-						free( mtx[i][j].freq );
-					}
-					mtx[i][j].freq = NULL;
-				}
-			}
-#endif
-
             free(mtx[i]);
             mtx[i] = NULL;
         }
@@ -765,7 +747,7 @@ FreeGaplenCubgaplenReport(Gaplen*** cub) {
 
     for (i = 0; cub[i]; i++) {
         reporterr("i=%d, cub[i]=%p\n", i, cub[i]);
-        FreeGaplenMtx(cub[i], 0);
+        FreeGaplenMtx(cub[i]);
         cub[i] = NULL;
     }
     free(cub);
@@ -780,7 +762,7 @@ FreeGaplenCub(Gaplen*** cub) {
         return;
 
     for (i = 0; cub[i]; i++) {
-        FreeGaplenMtx(cub[i], 0);
+        FreeGaplenMtx(cub[i]);
         cub[i] = NULL;
     }
     free(cub);
@@ -2463,10 +2445,10 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
                 FreeGaplenCub(gaplen2jbest);
             gaplen2jbest = NULL;
             if (gaplen1)
-                FreeGaplenMtx(gaplen1, 1);
+                FreeGaplenMtx(gaplen1);
             gaplen1 = NULL;
             if (gaplen2)
-                FreeGaplenMtx(gaplen2, 1);
+                FreeGaplenMtx(gaplen2);
             gaplen2 = NULL;
         } else {
             //			fprintf( stderr, "## Not allocated\n" );
@@ -2618,10 +2600,10 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
                 FreeGaplenCub(gaplen2jbest);
             gaplen2jbest = NULL;
             if (gaplen1)
-                FreeGaplenMtx(gaplen1, 1);
+                FreeGaplenMtx(gaplen1);
             gaplen1 = NULL;
             if (gaplen2)
-                FreeGaplenMtx(gaplen2, 1);
+                FreeGaplenMtx(gaplen2);
             gaplen2 = NULL;
         }
 
@@ -3772,7 +3754,7 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
     for (i = 0; i < lgth1 + 1; i++) {
         for (j = 0; j < lgth2 + 1; j++) {
             if (gaplen1mtx[i][j])
-                FreeGaplenMtx(gaplen1mtx[i][j], 0);
+                FreeGaplenMtx(gaplen1mtx[i][j]);
             gaplen1mtx[i][j] = NULL;
         }
         free(gaplen1mtx[i]);
@@ -3784,7 +3766,7 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
     for (i = 0; i < lgth1 + 1; i++) {
         for (j = 0; j < lgth2 + 1; j++) {
             if (gaplen2mtx[i][j])
-                FreeGaplenMtx(gaplen2mtx[i][j], 0);
+                FreeGaplenMtx(gaplen2mtx[i][j]);
             gaplen2mtx[i][j] = NULL;
         }
         free(gaplen2mtx[i]);
@@ -3798,7 +3780,7 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
     for (i = 0; i < lgth1 + 1; i++) {
         for (j = 0; j < lgth2 + 1; j++) {
             if (gaplen1half[i][j])
-                FreeGaplenMtx(gaplen1half[i][j], 0);
+                FreeGaplenMtx(gaplen1half[i][j]);
             gaplen1half[i][j] = NULL;
         }
         free(gaplen1half[i]);
@@ -3810,7 +3792,7 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
     for (i = 0; i < lgth1 + 1; i++) {
         for (j = 0; j < lgth2 + 1; j++) {
             if (gaplen2half[i][j])
-                FreeGaplenMtx(gaplen2half[i][j], 0);
+                FreeGaplenMtx(gaplen2half[i][j]);
             gaplen2half[i][j] = NULL;
         }
         free(gaplen2half[i]);
@@ -4028,10 +4010,10 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
                 FreeGaplenCub(gaplen2jbest);
             gaplen2jbest = NULL;
             if (gaplen1)
-                FreeGaplenMtx(gaplen1, 1);
+                FreeGaplenMtx(gaplen1);
             gaplen1 = NULL;
             if (gaplen2)
-                FreeGaplenMtx(gaplen2, 1);
+                FreeGaplenMtx(gaplen2);
             gaplen2 = NULL;
 
         } else {
@@ -4214,10 +4196,10 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
                 FreeGaplenCub(gaplen2jbest);
             gaplen2jbest = NULL;
             if (gaplen1)
-                FreeGaplenMtx(gaplen1, 1);
+                FreeGaplenMtx(gaplen1);
             gaplen1 = NULL;
             if (gaplen2)
-                FreeGaplenMtx(gaplen2, 1);
+                FreeGaplenMtx(gaplen2);
             gaplen2 = NULL;
         }
 
@@ -4637,7 +4619,7 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
         //		for( i=0; i<lgth1; i++ ) fprintf( stderr, "c=%d, %d - %f\n", c, i, initverticalw[i] );
 
         if (nmask[c])
-            match_calc_del(matrices, initverticalw, seq2, eff2, icyc, seq1, eff1, 0, lgth1, c, nmask[c], masklist2[c], masklist1[c]);
+            match_calc_del(matrices, initverticalw, seq2, eff2, seq1, eff1, 0, lgth1, c, nmask[c], masklist2[c], masklist1[c]);
     }
 #endif
     //	reporterr( "initverticalw = \n" );
@@ -4656,7 +4638,7 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
     for (c = 0; c < maxdistclass; c++) {
         match_calc_add(matrices[c], currentw, cpmx1s[c], cpmx2s[c], 0, lgth2, doublework[c], intwork[c], 1);
         if (nmask[c])
-            match_calc_del(matrices, currentw, seq1, eff1, jcyc, seq2, eff2, 0, lgth2, c, nmask[c], masklist1[c], masklist2[c]);
+            match_calc_del(matrices, currentw, seq1, eff1, seq2, eff2, 0, lgth2, c, nmask[c], masklist1[c], masklist2[c]);
     }
 #endif
     //	reporterr( "currentw = \n" );
@@ -4780,7 +4762,7 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
         for (c = 0; c < maxdistclass; c++) {
             match_calc_add(matrices[c], currentw, cpmx1s[c], cpmx2s[c], i, lgth2, doublework[c], intwork[c], 0);
             if (nmask[c])
-                match_calc_del(matrices, currentw, seq1, eff1, jcyc, seq2, eff2, i, lgth2, c, nmask[c], masklist1[c], masklist2[c]);
+                match_calc_del(matrices, currentw, seq1, eff1, seq2, eff2, i, lgth2, c, nmask[c], masklist1[c], masklist2[c]);
         }
 #endif
 
@@ -5067,21 +5049,9 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
 #endif
 
 #if FREEFREQUENTLY
-                //				freegaplenpartly( gaplen1ibestkamo[i-1], 0, i-1 );
                 freegaplenpartly(gaplen2ibestkamo[i - 1], j - 3, j - 2);
 #endif
-                //				freegaplenpartly( gaplen1jprev[mpibk], 0, lgth2 ); // full
-                //				freegaplenpartly( gaplen2jprev[mpibk], 0, lgth2-mpibk ); // half
-                //				if( gaplen1jprev[mpibk] ) FreeGaplenMtx( gaplen1jprev[mpibk], 0 );
-                //				gaplen1jprev[mpibk] = NULL;
-                //				if( gaplen2jprev[mpibk] ) FreeGaplenMtx( gaplen2jprev[mpibk], 0 );
-                //				gaplen2jprev[mpibk] = NULL;
-
-                //				addnewgaplen( gaplen1ibestkamo[i-1], gaplen1jprev[j-1], gaplen1, lgth1, -1, 0 );
-                //				addnewgaplen( gaplen2ibestkamo[i-1], gaplen2jprev[j-1], gaplen2, lgth2, -1, 0 );
-                //				copygaplenrestricted( gaplen1ibestkamo[i-1], gaplen1jprev[j-1], lgth1, -1, 0, i, i ); // i-1, i
                 copygaplencompactx(gaplen1ibestkamo[i - 1], gaplen1jprev[j - 1], -1, 0, 1, i);  // half
-                //				copygaplenrestricted( gaplen2ibestkamo[i-1], gaplen2jprev[j-1], lgth2, -1, 0, j, j ); // mpi, j
                 copygaplencompactx(gaplen2ibestkamo[i - 1], gaplen2jprev[j - 1], -1, 0, j, 1);  //half
             }
 
@@ -5485,7 +5455,7 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
     for (i = 0; i < lgth1 + 1; i++) {
         for (j = 0; j < lgth2 + 1; j++) {
             if (gaplen1mtx[i][j])
-                FreeGaplenMtx(gaplen1mtx[i][j], 0);
+                FreeGaplenMtx(gaplen1mtx[i][j]);
             gaplen1mtx[i][j] = NULL;
         }
         free(gaplen1mtx[i]);
@@ -5497,7 +5467,7 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
     for (i = 0; i < lgth1 + 1; i++) {
         for (j = 0; j < lgth2 + 1; j++) {
             if (gaplen2mtx[i][j])
-                FreeGaplenMtx(gaplen2mtx[i][j], 0);
+                FreeGaplenMtx(gaplen2mtx[i][j]);
             gaplen2mtx[i][j] = NULL;
         }
         free(gaplen2mtx[i]);
@@ -5511,7 +5481,7 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
     for (i = 0; i < lgth1 + 1; i++) {
         for (j = 0; j < lgth2 + 1; j++) {
             if (gaplen1half[i][j])
-                FreeGaplenMtx(gaplen1half[i][j], 0);
+                FreeGaplenMtx(gaplen1half[i][j]);
             gaplen1half[i][j] = NULL;
         }
         free(gaplen1half[i]);
@@ -5523,7 +5493,7 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
     for (i = 0; i < lgth1 + 1; i++) {
         for (j = 0; j < lgth2 + 1; j++) {
             if (gaplen2half[i][j])
-                FreeGaplenMtx(gaplen2half[i][j], 0);
+                FreeGaplenMtx(gaplen2half[i][j]);
             gaplen2half[i][j] = NULL;
         }
         free(gaplen2half[i]);
