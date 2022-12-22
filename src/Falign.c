@@ -696,7 +696,7 @@ system( "/usr/bin/gnuplot list.plot" );
                 Aalign(tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen);
                 break;
             case ('M'):
-                MSalignmm(n_dynamicmtx, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, NULL, NULL, NULL, NULL, NULL, 0, NULL, headgp, tailgp, NULL, NULL, NULL, 0.0, 0.0);
+                MSalignmm(n_dynamicmtx, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, NULL, NULL, NULL, NULL, headgp, tailgp, NULL, NULL, NULL, 0.0, 0.0);
                 break;
             case ('A'):
                 if (clus1 == 1 && clus2 == 1)
@@ -1604,8 +1604,7 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
                 if (scoringmatrices)
                     totalscore += MSalignmm_variousdist(scoringmatrices, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, headgp, tailgp);
                 else
-                    totalscore += MSalignmm(n_dynamicmtx, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, chudanpt, chudanref, chudanres, headgp, tailgp, NULL, NULL, NULL, 0.0, 0.0);
-                //						totalscore += MSalignmm( n_dis_consweight_multi, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, chudanpt, chudanref, chudanres, headgp, tailgp );
+                    totalscore += MSalignmm(n_dynamicmtx, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, headgp, tailgp, NULL, NULL, NULL, 0.0, 0.0);
                 break;
             case ('d'):
                 if (clus1 == 1 && clus2 == 1) {
@@ -2732,7 +2731,7 @@ Falign_givenanchors(ExtAnch* pairanch, int** whichmtx, double*** scoringmatrices
                     if (scoringmatrices)  // called by tditeration.c
                         totalscore += MSalignmm_variousdist(scoringmatrices, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, headgp, tailgp);
                     else
-                        totalscore += MSalignmm(n_dynamicmtx, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, NULL, 0, NULL, headgp, tailgp, NULL, NULL, NULL, 0.0, 0.0);
+                        totalscore += MSalignmm(n_dynamicmtx, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, headgp, tailgp, NULL, NULL, NULL, 0.0, 0.0);
                 } else {
                     fprintf(stderr, "alg = %c\n", alg);
                     ErrorExit("ERROR IN SOURCE FILE Falign.c");
@@ -3572,8 +3571,7 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
                 if (scoringmatrices)  // called by tditeration.c
                     totalscore += MSalignmm_variousdist(scoringmatrices, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, headgp, tailgp);
                 else
-                    totalscore += MSalignmm(n_dynamicmtx, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, NULL, 0, NULL, headgp, tailgp, NULL, NULL, NULL, 0.0, 0.0);
-                //						totalscore += G__align11( n_dynamicmtx, tmpres1, tmpres2, alloclen, headgp, tailgp ); // CHUUI!!!
+                    totalscore += MSalignmm(n_dynamicmtx, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, headgp, tailgp, NULL, NULL, NULL, 0.0, 0.0);
                 break;
             default:
                 fprintf(stderr, "alg = %c\n", alg);

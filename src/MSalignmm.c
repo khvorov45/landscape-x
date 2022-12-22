@@ -914,9 +914,7 @@ freearrays_rec2(char* gaps, char** aseq1, char** aseq2) {
 }
 
 static double
-MSalignmm_rec(double** n_dynamicmtx, int icyc, int jcyc, double* eff1, double* eff2, char** seq1, char** seq2, double** cpmx1pt, double** cpmx2pt, int ist, int ien, int jst, int jen, int alloclen, int fulllen1, int fulllen2, char** mseq1, char** mseq2, char* mgt1, char* mgt2, int depth, double** gapinfo, int* chudanpt, int chudanref, int* chudanres, int headgp, int tailgp, double headgapfreq1_g, double headgapfreq2_g)
-/* score no keisan no sai motokaraaru gap no atukai ni mondai ga aru */
-{
+MSalignmm_rec(double** n_dynamicmtx, int icyc, int jcyc, double* eff1, double* eff2, char** seq1, char** seq2, double** cpmx1pt, double** cpmx2pt, int ist, int ien, int jst, int jen, int alloclen, int fulllen1, int fulllen2, char** mseq1, char** mseq2, char* mgt1, char* mgt2, int depth, double** gapinfo, int headgp, int tailgp, double headgapfreq1_g, double headgapfreq2_g) {
     //	int k;
     int          alnlen;
     double       value = 0.0;
@@ -1794,7 +1792,7 @@ MSalignmm_rec(double** n_dynamicmtx, int icyc, int jcyc, double* eff1, double* e
 		fprintf( stderr, "seq2[0] = %.*s\n", lgth2, seq2[0] );
 #endif
 
-    value = MSalignmm_rec(n_dynamicmtx, icyc, jcyc, eff1, eff2, seq1, seq2, cpmx1pt, cpmx2pt, ist, ist + jumpi, jst, jst + jumpj, alloclen, fulllen1, fulllen2, aseq1, aseq2, agt1, agt2, depth, gapinfo, NULL, 0, NULL, headgp, tailgp, headgapfreq1_g, headgapfreq2_g);  // chudan mada
+    value = MSalignmm_rec(n_dynamicmtx, icyc, jcyc, eff1, eff2, seq1, seq2, cpmx1pt, cpmx2pt, ist, ist + jumpi, jst, jst + jumpj, alloclen, fulllen1, fulllen2, aseq1, aseq2, agt1, agt2, depth, gapinfo, headgp, tailgp, headgapfreq1_g, headgapfreq2_g);
 #if 0
 	reporterr( "length1=%d -> %d? %d?\n", lgth1, strlen(seq1[0]), strlen(aseq1[0]) );
 		reporterr( "after first _rec\n" );
@@ -1892,7 +1890,7 @@ MSalignmm_rec(double** n_dynamicmtx, int icyc, int jcyc, double* eff1, double* e
 		fprintf( stderr, "seq1[0] = %.*s\n", lgth1, seq1[0] );
 		fprintf( stderr, "seq2[0] = %.*s\n", lgth2, seq2[0] );
 #endif
-    value += MSalignmm_rec(n_dynamicmtx, icyc, jcyc, eff1, eff2, seq1, seq2, cpmx1pt, cpmx2pt, ist + imid, ien, jst + jmid, jen, alloclen, fulllen1, fulllen2, aseq1, aseq2, agt1, agt2, depth, gapinfo, NULL, 0, NULL, headgp, tailgp, headgapfreq1_g, headgapfreq2_g);  // chudan mada
+    value += MSalignmm_rec(n_dynamicmtx, icyc, jcyc, eff1, eff2, seq1, seq2, cpmx1pt, cpmx2pt, ist + imid, ien, jst + jmid, jen, alloclen, fulllen1, fulllen2, aseq1, aseq2, agt1, agt2, depth, gapinfo, headgp, tailgp, headgapfreq1_g, headgapfreq2_g);
 #if 0
 		reporterr( "after second _rec\n" );
 		if( strlen( aseq1[0] ) != strlen( agt1 ) ) reporterr( "WARNING\n" );
@@ -2004,9 +2002,7 @@ freearrays(
 }
 
 double
-MSalignmm(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, char* sgap1, char* sgap2, char* egap1, char* egap2, int* chudanpt, int chudanref, int* chudanres, int headgp, int tailgp, double*** cpmxchild0, double*** cpmxchild1, double*** cpmxresult, double orieff1, double orieff2)
-/* score no keisan no sai motokaraaru gap no atukai ni mondai ga aru */
-{
+MSalignmm(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, char* sgap1, char* sgap2, char* egap1, char* egap2, int headgp, int tailgp, double*** cpmxchild0, double*** cpmxchild1, double*** cpmxresult, double orieff1, double orieff2) {
     //	int k;
     int      i, j;
     int      ll1, ll2;
@@ -2299,15 +2295,7 @@ MSalignmm(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double*
 	fflush( stdout );
 #endif
 
-    wm = MSalignmm_rec(n_dynamicmtx, icyc, jcyc, eff1, eff2, seq1, seq2, cpmx1pt, cpmx2pt, 0, lgth1 - 1, 0, lgth2 - 1, alloclen, lgth1, lgth2, mseq1, mseq2, mgt1, mgt2, 0, gapinfo, chudanpt, chudanref, chudanres, headgp, tailgp, headgapfreq1, headgapfreq2);
-#ifdef enablemultithread
-    if (chudanres && *chudanres) {
-        //		fprintf( stderr, "\n\n## CHUUDAN!!! relay\n" );
-        *chudanres = 1;
-        freearrays(ogcp1, ogcp2, ogcp1o, ogcp2o, fgcp1, fgcp2, fgcp1o, fgcp2o, cpmx1, cpmx2, gapfreq1f, gapfreq2f, gapinfo, mseq1, mseq2, mgt1, mgt2);
-        return (-1.0);
-    }
-#endif
+    wm = MSalignmm_rec(n_dynamicmtx, icyc, jcyc, eff1, eff2, seq1, seq2, cpmx1pt, cpmx2pt, 0, lgth1 - 1, 0, lgth2 - 1, alloclen, lgth1, lgth2, mseq1, mseq2, mgt1, mgt2, 0, gapinfo, headgp, tailgp, headgapfreq1, headgapfreq2);
 
 #if 1
     if (cpmxresult) {

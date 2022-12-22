@@ -81,7 +81,7 @@ profilealignment2(int n0, int n2, char** aln0, char** aln2, int alloclen, char a
 
     newgapstr = "-";
     if (alg == 'M')
-        MSalignmm(n_dis_consweight_multi, aln0, aln2, effarr0, effarr2, n0, n2, alloclen, NULL, NULL, NULL, NULL, NULL, 0, NULL, 1, 1, NULL, NULL, NULL, 0.0, 0.0);  //outgap=1, 2014/Dec/1
+        MSalignmm(n_dis_consweight_multi, aln0, aln2, effarr0, effarr2, n0, n2, alloclen, NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, NULL, 0.0, 0.0);  //outgap=1, 2014/Dec/1
     else
         A__align(n_dis_consweight_multi, penalty, penalty_ex, aln0, aln2, effarr0, effarr2, n0, n2, alloclen, 0, &dumdb, NULL, NULL, NULL, NULL, NULL, 0, NULL, 1, 1, -1, -1, NULL, NULL, NULL, 0.0, 0.0);  //outgap=1, 2014/Dec/1
 
@@ -193,7 +193,7 @@ profilealignment(int n0, int n1, int n2, char** aln0, char** aln1, char** aln2, 
 
     newgapstr = "-";
     if (alg == 'M')
-        MSalignmm(n_dis_consweight_multi, aln0, aln2, effarr0, effarr2, n0, n2, alloclen, NULL, NULL, NULL, NULL, NULL, 0, NULL, 1, 1, NULL, NULL, NULL, 0.0, 0.0);  //outgap=1, 2014/Dec/1
+        MSalignmm(n_dis_consweight_multi, aln0, aln2, effarr0, effarr2, n0, n2, alloclen, NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, NULL, 0.0, 0.0);  //outgap=1, 2014/Dec/1
     else
         A__align(n_dis_consweight_multi, penalty, penalty_ex, aln0, aln2, effarr0, effarr2, n0, n2, alloclen, 0, &dumdb, NULL, NULL, NULL, NULL, NULL, 0, NULL, 1, 1, -1, -1, NULL, NULL, NULL, 0.0, 0.0);  //outgap=1, 2014/Dec/1
 
