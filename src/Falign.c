@@ -702,7 +702,7 @@ system( "/usr/bin/gnuplot list.plot" );
                 if (clus1 == 1 && clus2 == 1)
                     G__align11(n_dynamicmtx, tmpres1, tmpres2, alloclen, headgp, tailgp);
                 else
-                    A__align(n_dynamicmtx, penalty, penalty_ex, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, 0, &dumdb, NULL, NULL, NULL, NULL, NULL, 0, NULL, headgp, tailgp, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
+                    A__align(n_dynamicmtx, penalty, penalty_ex, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, 0, &dumdb, NULL, NULL, NULL, NULL, headgp, tailgp, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
                 break;
             default:
                 fprintf(stderr, "alg = %c\n", alg);
@@ -755,7 +755,7 @@ system( "/usr/bin/gnuplot list.plot" );
 }
 
 double
-Falign(int** whichmtx, double*** scoringmatrices, double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int clus1, int clus2, int alloclen, int* fftlog, int* chudanpt, int chudanref, int* chudanres) {
+Falign(int** whichmtx, double*** scoringmatrices, double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int clus1, int clus2, int alloclen, int* fftlog) {
     int            i, j, k, l, m, maxk;
     int            nlen, nlen2;
     static TLS int crossscoresize = 0;
@@ -808,9 +808,9 @@ Falign(int** whichmtx, double*** scoringmatrices, double** n_dynamicmtx, char** 
             mymergesort(0, 0, NULL);
             alignableReagion(0, 0, NULL, NULL, NULL, NULL, NULL);
             fft(0, NULL, 1);
-            A__align(NULL, 0, 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
+            A__align(NULL, 0, 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
             D__align(NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0);
-            A__align_variousdist(NULL, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0);
+            A__align_variousdist(NULL, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0);
             D__align_variousdist(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0);
             G__align11(NULL, NULL, NULL, 0, 0, 0);
             G__align11psg(NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
@@ -1452,7 +1452,6 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
         result2[j][0] = 0;
     totalscore = 0.0;
     *fftlog = -1;
-    //	reporterr( "\nin Falign(), *fftlog = %d\n", *fftlog );
     for (i = 0; i < count - 1; i++) {
         *fftlog += 1;
         if (i == 0)
@@ -1631,9 +1630,9 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
                     }
                     if (scoringmatrices)  // called by tditeration.c
                     {
-                        totalscore += A__align_variousdist(whichmtx, scoringmatrices, penalty, penalty_ex, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, 0, &dumdb, sgap1, sgap2, egap1, egap2, chudanpt, chudanref, chudanres, headgp, tailgp);
+                        totalscore += A__align_variousdist(whichmtx, scoringmatrices, penalty, penalty_ex, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, 0, &dumdb, sgap1, sgap2, egap1, egap2, headgp, tailgp);
                     } else
-                        totalscore += A__align(n_dynamicmtx, penalty, penalty_ex, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, 0, &dumdb, sgap1, sgap2, egap1, egap2, chudanpt, chudanref, chudanres, headgp, tailgp, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
+                        totalscore += A__align(n_dynamicmtx, penalty, penalty_ex, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, 0, &dumdb, sgap1, sgap2, egap1, egap2, headgp, tailgp, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
                 }
                 break;
             default:
@@ -1691,7 +1690,6 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
 		}
 #endif
     }
-    //	reporterr( "\nafter Falign(), *fftlog = %d\n", *fftlog );
 
 #if KEIKA
     fprintf(stderr, "DP ... done   \n");
@@ -1898,8 +1896,8 @@ Falign_givenanchors(ExtAnch* pairanch, int** whichmtx, double*** scoringmatrices
             mymergesort(0, 0, NULL);
             //alignableReagion( 0, 0, NULL, NULL, NULL, NULL, NULL );
             //fft( 0, NULL, 1 );
-            A__align(NULL, 0, 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
-            A__align_variousdist(NULL, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0);
+            A__align(NULL, 0, 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
+            A__align_variousdist(NULL, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0);
             D__align_variousdist( NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0);
             G__align11(NULL, NULL, NULL, 0, 0, 0);
             //blockAlign2( NULL, NULL, NULL, NULL, NULL, NULL );
@@ -2716,17 +2714,17 @@ Falign_givenanchors(ExtAnch* pairanch, int** whichmtx, double*** scoringmatrices
                         penalty_exx = penalty_ex;
                     //reporterr( "i=%d, nomemsave, TERMINAL, penalty_exx = %d\n", i, penalty_exx );
                     if (scoringmatrices)  // called by tditeration.c
-                        totalscore += A__align_variousdist(whichmtx, scoringmatrices, penalty, penalty_exx, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, 0, NULL, sgap1, sgap2, egap1, egap2, NULL, 0, NULL, headgp, tailgp);
+                        totalscore += A__align_variousdist(whichmtx, scoringmatrices, penalty, penalty_exx, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, 0, NULL, sgap1, sgap2, egap1, egap2, headgp, tailgp);
                     else
-                        totalscore += A__align(n_dynamicmtx, penalty, penalty_exx, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, 0, NULL, sgap1, sgap2, egap1, egap2, NULL, 0, NULL, headgp, tailgp, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
+                        totalscore += A__align(n_dynamicmtx, penalty, penalty_exx, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, 0, NULL, sgap1, sgap2, egap1, egap2, headgp, tailgp, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
                     //use_getrusage();
                 } else if (alg == 'A')
                 //				else if( alg == 'A' || alignorcopy[i] == 'A' ) // hitomazu
                 {
                     if (scoringmatrices)  // called by tditeration.c
-                        totalscore += A__align_variousdist(whichmtx, scoringmatrices, penalty, penalty_ex, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, 0, NULL, sgap1, sgap2, egap1, egap2, NULL, 0, NULL, headgp, tailgp);
+                        totalscore += A__align_variousdist(whichmtx, scoringmatrices, penalty, penalty_ex, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, 0, NULL, sgap1, sgap2, egap1, egap2, headgp, tailgp);
                     else
-                        totalscore += A__align(n_dynamicmtx, penalty, penalty_ex, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, 0, NULL, sgap1, sgap2, egap1, egap2, NULL, 0, NULL, headgp, tailgp, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
+                        totalscore += A__align(n_dynamicmtx, penalty, penalty_ex, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, 0, NULL, sgap1, sgap2, egap1, egap2, headgp, tailgp, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
                 } else if (alg == 'M') {
                     if (scoringmatrices)  // called by tditeration.c
                         totalscore += MSalignmm_variousdist(scoringmatrices, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, headgp, tailgp);
@@ -2892,8 +2890,8 @@ Falign_udpari_long(
             mymergesort(0, 0, NULL);
             alignableReagion(0, 0, NULL, NULL, NULL, NULL, NULL);
             fft(0, NULL, 1);
-            A__align(NULL, 0, 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
-            A__align_variousdist(NULL, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0);
+            A__align(NULL, 0, 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
+            A__align_variousdist(NULL, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0);
             D__align_variousdist(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0);
             G__align11(NULL, NULL, NULL, 0, 0, 0);
             blockAlign2(NULL, NULL, NULL, NULL, NULL, NULL);

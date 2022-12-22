@@ -977,9 +977,7 @@ Atracking(double* lasthorizontalw, double* lastverticalw, double fpenalty, doubl
 }
 
 double
-A__align(double** n_dynamicmtx, int penalty_l, int penalty_ex_l, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, char* sgap1, char* sgap2, char* egap1, char* egap2, int* chudanpt, int chudanref, int* chudanres, int headgp, int tailgp, int firstmem, int calledbyfulltreebase, double*** cpmxchild0, double*** cpmxchild1, double*** cpmxresult, double orieff1, double orieff2)
-/* score no keisan no sai motokaraaru gap no atukai ni mondai ga aru */
-{
+A__align(double** n_dynamicmtx, int penalty_l, int penalty_ex_l, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, char* sgap1, char* sgap2, char* egap1, char* egap2, int headgp, int tailgp, int firstmem, int calledbyfulltreebase, double*** cpmxchild0, double*** cpmxchild1, double*** cpmxresult, double orieff1, double orieff2) {
     int            reuseprofiles;
     static TLS int previousfirstlen;  // 2016/Feb/1 // MEMBER NO CHECK GA HITSUYOU!!!!
     static TLS int previousicyc;  // 2016/Feb/1 // MEMBER NO CHECK GA HITSUYOU!!!!
@@ -2042,9 +2040,7 @@ A__align_gapmap(void) {
 }
 
 double
-A__align_variousdist(int** which, double*** matrices, int penalty_l, int penalty_ex_l, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, char* sgap1, char* sgap2, char* egap1, char* egap2, int* chudanpt, int chudanref, int* chudanres, int headgp, int tailgp)
-/* score no keisan no sai motokaraaru gap no atukai ni mondai ga aru */
-{
+A__align_variousdist(int** which, double*** matrices, int penalty_l, int penalty_ex_l, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, char* sgap1, char* sgap2, char* egap1, char* egap2, int headgp, int tailgp) {
     //	int k;
     register int i, j, c;
     int          ngap1, ngap2;
