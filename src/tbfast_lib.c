@@ -512,18 +512,6 @@ msacompactdisthalfmtxthread(void* arg) {
     int                            i, j;
 
     while (1) {
-#ifdef enablemultithread
-        if (nthreadpair) {
-            pthread_mutex_lock(targ->mutex);
-            i = *jobpospt;
-            if (i == njob - 1) {
-                pthread_mutex_unlock(targ->mutex);
-                return (NULL);
-            }
-            *jobpospt = i + 1;
-            pthread_mutex_unlock(targ->mutex);
-        } else
-#endif
         {
             i = *jobpospt;
             if (i == njob - 1) {
