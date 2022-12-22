@@ -108,7 +108,6 @@ extern int          fastshrinklocalhom_target(int* mem1, int* mem2, LocalHom** l
 extern int          fastshrinklocalhom_one(int* mem1, int* mem2, int norg, LocalHom** localhom, LocalHom*** localhomshrink);
 extern int          msfastshrinklocalhom(int* mem1, int* mem2, LocalHom** localhom, LocalHom*** localhomshrink);
 extern int          fastshrinklocalhom_half_seed(int* mem1, int* mem2, int nseed, int* posinlsh1, int* posinlsh2, LocalHom** localhom, LocalHom*** localhomshrink);
-extern int          TreeDependentIteration(int locnjob, char** name, int nlen[M], char** aseq, char** bseq, int*** topol, double** len, double** eff, int** skipthisbranch, int alloclen, LocalHom** localhomtable, RNApair*** single, int nkozo, char* kozoarivec, int ntarget, int* targetmap, int* targetmapr);
 extern void         checkMinusLength(int nseq, double** len);
 extern void         negativeMember2(int* mem, int* query, int locnseq);
 extern int*         negativeMember(int* query, int locnseq);

@@ -295,6 +295,7 @@ main() {
     prb_Str*           allFilesInMysrc = prb_getAllDirEntries(arena, srcDir, prb_Recursive_No);
     prb_ProcessHandle* srcCompileProcs = 0;
     prb_Str*           srcObjPaths = 0;
+    prb_Str*           srcObjPathsLog = 0;
     for (i32 fileIndex = 0; fileIndex < arrlen(allFilesInMysrc); fileIndex++) {
         prb_Str thisFile = allFilesInMysrc[fileIndex];
         if (prb_strEndsWith(thisFile, prb_STR(".c"))) {
@@ -303,15 +304,26 @@ main() {
                 prb_Str outname = prb_replaceExt(arena, inname, prb_STR("obj"));
                 prb_Str outpath = prb_pathJoin(arena, srcOutDir, outname);
                 arrput(srcObjPaths, outpath);
+                prb_Str outlog = prb_replaceExt(arena, outpath, prb_STR("log"));
+                arrput(srcObjPathsLog, outlog);
                 prb_Str cmd = prb_fmt(arena, "clang -g -Wall -Werror -Denablemultithread -c %.*s -o %.*s", prb_LIT(thisFile), prb_LIT(outpath));
                 prb_writelnToStdout(arena, cmd);
-                prb_ProcessHandle proc = prb_execCmd(arena, (prb_ExecCmdSpec) {.cmd = cmd, .dontwait = false});
-                prb_assert(proc.status == prb_ProcessStatus_CompletedSuccess);
+                prb_ProcessHandle proc = prb_execCmd(arena, (prb_ExecCmdSpec) {.cmd = cmd, .dontwait = true, .redirectStderr = true, .stderrFilepath = outlog});
+                prb_assert(proc.status == prb_ProcessStatus_Launched);
                 arrput(srcCompileProcs, proc);
             }
         }
     }
-    prb_assert(prb_waitForProcesses(srcCompileProcs, arrlen(srcCompileProcs)));
+    
+    if (prb_waitForProcesses(srcCompileProcs, arrlen(srcCompileProcs)) == prb_Failure) {
+        for (i32 logIndex = 0; logIndex < arrlen(srcObjPathsLog); logIndex++) {
+            prb_Str logfile = srcObjPathsLog[logIndex];
+            prb_ReadEntireFileResult readRes = prb_readEntireFile(arena, logfile);
+            prb_assert(readRes.success);
+            prb_writeToStdout(prb_strFromBytes(readRes.content));
+        }
+        prb_assert(!"compilation failed");
+    }
 
     {
         prb_Str srcLibPath = prb_pathJoin(arena, srcOutDir, prb_STR("align.a"));
