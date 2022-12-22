@@ -2292,7 +2292,7 @@ freegaplenpartly(Gaplen** mtx, int startpos, int endpos) {
 #endif
 
 double
-D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int* chudanpt, int chudanref, int* chudanres, int headgp, int tailgp) {
+D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int headgp, int tailgp) {
     //	int k;
     register int i, j;
 
@@ -3856,7 +3856,7 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
 }
 
 double
-D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int* chudanpt, int chudanref, int* chudanres, int headgp, int tailgp) {
+D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int headgp, int tailgp) {
     //	int k;
     register int i, j, c;
     int          lasti, lastj; /* outgap == 0 -> lgth1, outgap == 1 -> lgth1+1 */

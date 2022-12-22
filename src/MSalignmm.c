@@ -2758,9 +2758,7 @@ freearrays_rec1_variousdist(
 }
 
 static double
-MSalignmm_rec_variousdist(double*** matrices, int icyc, int jcyc, char** seq1, char** seq2, double*** cpmx1s, double*** cpmx2s, int ist, int ien, int jst, int jen, int alloclen, int fulllen1, int fulllen2, char** mseq1, char** mseq2, int depth, double** gapinfo, int* chudanpt, int chudanref, int* chudanres, int headgp, int tailgp, double headgapfreq1_g, double headgapfreq2_g)
-/* score no keisan no sai motokaraaru gap no atukai ni mondai ga aru */
-{
+MSalignmm_rec_variousdist(double*** matrices, int icyc, int jcyc, char** seq1, char** seq2, double*** cpmx1s, double*** cpmx2s, int ist, int ien, int jst, int jen, int alloclen, int fulllen1, int fulllen2, char** mseq1, char** mseq2, int depth, double** gapinfo, int headgp, int tailgp, double headgapfreq1_g, double headgapfreq2_g) {
     //	int k;
     int          alnlen;
     double       value = 0.0;
@@ -3638,13 +3636,8 @@ MSalignmm_rec_variousdist(double*** matrices, int icyc, int jcyc, char** seq1, c
 #endif
     );
 
-    //	fprintf( stderr, "==== calling myself (first)\n" );
+    value = MSalignmm_rec_variousdist(matrices, icyc, jcyc, seq1, seq2, cpmx1s, cpmx2s, ist, ist + jumpi, jst, jst + jumpj, alloclen, fulllen1, fulllen2, aseq1, aseq2, depth, gapinfo, headgp, tailgp, headgapfreq1_g, headgapfreq2_g);
 
-    value = MSalignmm_rec_variousdist(matrices, icyc, jcyc, seq1, seq2, cpmx1s, cpmx2s, ist, ist + jumpi, jst, jst + jumpj, alloclen, fulllen1, fulllen2, aseq1, aseq2, depth, gapinfo, NULL, 0, NULL, headgp, tailgp, headgapfreq1_g, headgapfreq2_g);  // chudan mada
-#if 0
-		fprintf( stderr, "aseq1[0] = %s\n", aseq1[0] );
-		fprintf( stderr, "aseq2[0] = %s\n", aseq2[0] );
-#endif
 #if MEMSAVE
 #else
     for (i = 0; i < icyc; i++)
@@ -3716,7 +3709,7 @@ MSalignmm_rec_variousdist(double*** matrices, int icyc, int jcyc, char** seq1, c
         aseq2[i] += alnlen;
 #endif
 
-    value += MSalignmm_rec_variousdist(matrices, icyc, jcyc, seq1, seq2, cpmx1s, cpmx2s, ist + imid, ien, jst + jmid, jen, alloclen, fulllen1, fulllen2, aseq1, aseq2, depth, gapinfo, NULL, 0, NULL, headgp, tailgp, headgapfreq1_g, headgapfreq2_g);  // chudan mada
+    value += MSalignmm_rec_variousdist(matrices, icyc, jcyc, seq1, seq2, cpmx1s, cpmx2s, ist + imid, ien, jst + jmid, jen, alloclen, fulllen1, fulllen2, aseq1, aseq2, depth, gapinfo, headgp, tailgp, headgapfreq1_g, headgapfreq2_g);
 #if 0
 		fprintf( stderr, "aseq1[0] = %s\n", aseq1[0] );
 		fprintf( stderr, "aseq2[0] = %s\n", aseq2[0] );
@@ -3803,7 +3796,7 @@ freearrays_variousdist(
 }
 
 double
-MSalignmm_variousdist(double*** matrices, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, char* sgap1, char* sgap2, char* egap1, char* egap2, int* chudanpt, int chudanref, int* chudanres, int headgp, int tailgp) {
+MSalignmm_variousdist(double*** matrices, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, char* sgap1, char* sgap2, char* egap1, char* egap2, int headgp, int tailgp) {
     int       i, j, c;
     int       ll1, ll2;
     size_t    lgth1, lgth2;
@@ -3965,7 +3958,7 @@ MSalignmm_variousdist(double*** matrices, char** seq1, char** seq2, double* eff1
 	fflush( stdout );
 #endif
 
-    wm = MSalignmm_rec_variousdist(matrices, icyc, jcyc, seq1, seq2, cpmx1s, cpmx2s, 0, lgth1 - 1, 0, lgth2 - 1, alloclen, lgth1, lgth2, mseq1, mseq2, 0, gapinfo, chudanpt, chudanref, chudanres, headgp, tailgp, headgapfreq1, headgapfreq2);
+    wm = MSalignmm_rec_variousdist(matrices, icyc, jcyc, seq1, seq2, cpmx1s, cpmx2s, 0, lgth1 - 1, 0, lgth2 - 1, alloclen, lgth1, lgth2, mseq1, mseq2, 0, gapinfo, headgp, tailgp, headgapfreq1, headgapfreq2);
 #ifdef enablemultithread
     if (chudanres && *chudanres) {
         //		fprintf( stderr, "\n\n## CHUUDAN!!! relay\n" );

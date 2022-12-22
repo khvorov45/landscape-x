@@ -140,7 +140,7 @@ extern void         blockAlign3(int* cut1, int* cut2, Segment** seg1, Segment** 
 extern double       imp_match_out_scD(int i1, int j1);
 extern void         imp_match_init_strictD(int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1kozo, double* eff2kozo, LocalHom*** localhom, char* swaplist, int* memlist1, int* memlist2, int* uselh, int* seedinlh1, int* seedinlh2, int nodeid, int nfiles);
 extern double       MSalignmm(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, char*, char*, char*, char*, int*, int, int*, int headgp, int tailgp, double*** cpmxchild0, double*** cpmxchild1, double*** cpmxresult, double orieff1, double orieff2);
-extern double       MSalignmm_variousdist(double*** matrices, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, char*, char*, char*, char*, int*, int, int*, int headgp, int tailgp);
+extern double       MSalignmm_variousdist(double*** matrices, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, char*, char*, char*, char*, int headgp, int tailgp);
 extern double       Lalignmm_hmout(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, char*, char*, char*, double** map);
 // extern double       Lalign2m2m_hmout(char** seq1, char** seq2, char** seq1r, char** seq2r, char* dir1, char* dir2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, char*, char*, char*, char*, double** map);
 extern double       MSalign11(char** seq1, char** seq2, int alloclen);
@@ -157,7 +157,7 @@ double        Falign_localhom(int** which, double*** scoringmatrices, char** seq
 extern double part_imp_match_out_sc(int i1, int j1);
 extern void   part_imp_match_init_strict(int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int* memlist1, int* memlist2);
 extern void   part_imp_match_init(double* imp, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, LocalHom*** localhom);
-extern double partA__align(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int start1, int start2, int* gapmap1, int* gapmap2, char*, char*, char*, char*, int*, int, int*);
+extern double partA__align(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int start1, int start2, int* gapmap1, int* gapmap2, char*, char*, char*, char*);
 extern double partA__align_variousdist(int** which, double*** scoringmatrices, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int start1, int start2, int* gapmap1, int* gapmap2, char*, char*, char*, char*);
 extern double G__align11(double** scoringmtx, char** seq1, char** seq2, int alloclen, int headgp, int tailgp);
 extern double G__align11psg(double** codonmtx, double** scoringmtx, char** seq1, char** seq2, int alloclen, int headgp, int tailgp, double* gstart, double* gend);
@@ -390,8 +390,8 @@ extern int    recordoriginalgaps(char* originallygapped, int n, char** s);
 extern void   restoreoriginalgaps(int n, char** seq, char* originalgaps);
 extern void   reconstructdeletemap(int nadd, char** addbk, GapPos** deletelist, char** realn, FILE* fp, char** name);
 extern void   reconstructdeletemap_compact(int nadd, char** addbk, GapPos** deletelist, char** realn, FILE* fp, char** name);
-extern double D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int* chudanpt, int chudanref, int* chudanres, int headgp, int tailgp);
-extern double D__align_variousdist(int** whichmtx, double*** matrices, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int* chudanpt, int chudanref, int* chudanres, int headgp, int tailgp);
+extern double D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int headgp, int tailgp);
+extern double D__align_variousdist(int** whichmtx, double*** matrices, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int headgp, int tailgp);
 extern void   stringshuffle(int* ary, int size);
 extern void   topolorder(int* order, int* posinorder, int*** topol, Treedep* dep, int pos, int child);
 extern int*   topolorderz(int* order, int*** topol, Treedep* dep, int pos, int nchild);
