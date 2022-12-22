@@ -378,7 +378,6 @@ extern void               reporterr(const char* str, ...);
 extern void               freeconstants();
 extern void               closeFiles();
 extern void               FreeCommonIP();
-extern void               initglobalvariables();
 extern void               makeskiptable(int n, int** skip, char** seq);
 extern int                generatesubalignmentstable(int nseq, int*** tablept, int* nsubpt, int* maxmempt, int*** topol, double** len, double threshold);
 extern double             sumofpairsscore(int nseq, char** seq);

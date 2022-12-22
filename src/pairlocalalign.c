@@ -3034,7 +3034,6 @@ pairlocalalign(int ngui, char** namegui, char** seqgui, double** distancemtx, Lo
 #if IODEBUG
     fprintf(stderr, "OSHIMAI\n");
 #endif
-    SHOWVERSION;
 
     if (stdout_dist && nthread > 1) {
         fprintf(stderr, "\nThe order of distances is not identical to that in the input file, because of the parallel calculation.  Reorder them by yourself, using sort -n -k 2 | sort -n -k 1 -s\n");

@@ -271,7 +271,6 @@ arguments(int argc, char* argv[], int* pac, char** pav, int* tac, char** tav)  /
                     goto nextoption;
                 case 'C':
                     nthreadpair = nthread = myatoi(*++argv);
-                    //					fprintf( stderr, "nthread = %d\n", nthread );
                     --argc;
 #ifndef enablemultithread
                     nthread = 0;
@@ -1897,7 +1896,6 @@ tbfast_main(int argc, char* argv[]) {
     if (opts.distout && !opts.treeout && opts.noalign) {
         writeData_pointer(prep_g, njob, name, seq);
         fprintf(stderr, "\n");
-        SHOWVERSION;
         goto chudan;
     }
 
@@ -2254,7 +2252,6 @@ tbfast_main(int argc, char* argv[]) {
     if (opts.treeout && opts.noalign) {
         writeData_pointer(prep_g, njob, name, seq);
         fprintf(stderr, "\n");
-        SHOWVERSION;
         goto chudan;  // 2016Jul31
     }
 
@@ -2685,7 +2682,6 @@ tbfast_main(int argc, char* argv[]) {
     if (spscoreout)
         reporterr("Unweighted sum-of-pairs score = %10.5f\n", sumofpairsscore(njob, bseq));
     nthread = MAX(opts.nthreadtb, nthreadreadlh);  // toriaezu
-    SHOWVERSION;
     if (opts.ndeleted > 0) {
         reporterr("\nTo keep the alignment length, %d letters were DELETED.\n", opts.ndeleted);
         if (opts.mapout)

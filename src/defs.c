@@ -133,39 +133,6 @@ int    maxl, tsize;
 char codonpos = 0;
 char codonscore = 0;
 
-void
-initglobalvariables() {
-    commonAlloc1 = 0;
-    commonAlloc2 = 0;
-    commonIP = NULL;
-    commonJP = NULL;
-    nthread = 1;
-    randomseed = 0;
-    parallelizationstrategy = BAATARI1;
-
-    trywarp = 0;
-    penalty_shift_factor = 100.0;
-    outgap = 1;
-    addprofile = 1;
-    scoreout = 0;
-    outnumber = 0;
-    legacygapcost = 0;
-    consweight_multi = 1.0;
-    consweight_rna = 0.0;
-    RNAscoremtx = 'n';
-
-    newgapstr = "-";
-
-    nalphabets = 26;
-    nscoredalphabets = 20;
-
-    specificityconsideration = 0.0;
-    ndistclass = 10;
-    maxdistclass = -1;
-
-    gmsg = 0;
-}
-
 // for usetmpfile
 int compacttree = 0;
 int lhlimit = INT_MAX;
