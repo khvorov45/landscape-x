@@ -158,7 +158,7 @@ extern double part_imp_match_out_sc(int i1, int j1);
 extern void   part_imp_match_init_strict(int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int* memlist1, int* memlist2);
 extern void   part_imp_match_init(double* imp, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, LocalHom*** localhom);
 extern double partA__align(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int start1, int start2, int* gapmap1, int* gapmap2, char*, char*, char*, char*, int*, int, int*);
-extern double partA__align_variousdist(int** which, double*** scoringmatrices, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int start1, int start2, int* gapmap1, int* gapmap2, char*, char*, char*, char*, int*, int, int*);
+extern double partA__align_variousdist(int** which, double*** scoringmatrices, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int start1, int start2, int* gapmap1, int* gapmap2, char*, char*, char*, char*);
 extern double G__align11(double** scoringmtx, char** seq1, char** seq2, int alloclen, int headgp, int tailgp);
 extern double G__align11psg(double** codonmtx, double** scoringmtx, char** seq1, char** seq2, int alloclen, int headgp, int tailgp, double* gstart, double* gend);
 extern double G__align11_noalign(double** scoringmtx, int penal, int penal_ex, char** seq1, char** seq2);

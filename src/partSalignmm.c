@@ -1240,9 +1240,7 @@ fprintf( stderr, "\n" );
 }
 
 double
-partA__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int start1, int start2, int* gapmap1, int* gapmap2, char* sgap1, char* sgap2, char* egap1, char* egap2, int* chudanpt, int chudanref, int* chudanres)
-/* score no keisan no sai motokaraaru gap no atukai ni mondai ga aru */
-{
+partA__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int start1, int start2, int* gapmap1, int* gapmap2, char* sgap1, char* sgap2, char* egap1, char* egap2) {
     //	int k;
     register int i, j, c;
     int          lasti, lastj; /* outgap == 0 -> lgth1, outgap == 1 -> lgth1+1 */

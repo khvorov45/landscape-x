@@ -215,7 +215,7 @@ Falign_localhom(int** whichmtx, double*** scoringmatrices, char** seq1, char** s
             //			A__align( NULL, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL, 0, 0, -1, -1 ); // iru?
             G__align11(NULL, NULL, NULL, 0, 0, 0);
             partA__align(NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL);
-            partA__align_variousdist(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, NULL);
+            partA__align_variousdist(NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL);
             blockAlign2(NULL, NULL, NULL, NULL, NULL, NULL);
             if (crossscore)
                 FreeDoubleMtx(crossscore);
@@ -763,7 +763,7 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
             case ('A'):
                 if (scoringmatrices)  // called by tditeration.c
                 {
-                    totalscore += partA__align_variousdist(whichmtx, scoringmatrices, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, constraint, &impmatch, cut1[i], cut2[i], gapmap1, gapmap2, sgap1, sgap2, egap1, egap2, chudanpt, chudanref, chudanres);
+                    totalscore += partA__align_variousdist(whichmtx, scoringmatrices, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, constraint, &impmatch, cut1[i], cut2[i], gapmap1, gapmap2, sgap1, sgap2, egap1, egap2);
                 } else
                     totalscore += partA__align(tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, constraint, &impmatch, cut1[i], cut2[i], gapmap1, gapmap2, sgap1, sgap2, egap1, egap2, chudanpt, chudanref, chudanres);
                 *totalimpmatch += impmatch;
