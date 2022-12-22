@@ -706,7 +706,6 @@ generalkmerdistarrthread(void* arg)  // enablemultithread == 0 demo tsukau
 {
     generaldistarrthread_arg_t* targ = (generaldistarrthread_arg_t*)arg;
     int                         njob = targ->njob;
-    int                         para = targ->para;
     int                         m = targ->m;
     int*                        nlen = targ->nlen;
     int**                       pointt = targ->pointt;
@@ -715,22 +714,10 @@ generalkmerdistarrthread(void* arg)  // enablemultithread == 0 demo tsukau
     int*                        joblist = targ->joblist;
     int*                        posshared = targ->posshared;
     double*                     result = targ->result;
-    //	double **partmtx = targ->partmtx;
     int i, posinjoblist, n;
 
-    //			for( acpti=ac; acpti!=NULL; acpti=acpti->next )
-
     while (1) {
-#ifdef enablemultithread
-        if (para)
-            pthread_mutex_lock(targ->mutex);
-#endif
-        if (*posshared >= njob)  // block no toki >=
-        {
-#ifdef enablemultithread
-            if (para)
-                pthread_mutex_unlock(targ->mutex);
-#endif
+        if (*posshared >= njob) {
             commonsextet_p(NULL, NULL);
             return (NULL);
         }
@@ -756,7 +743,6 @@ generalmsadistarrthread(void* arg)  // enablemultithread == 0 demo tsukau
 {
     generaldistarrthread_arg_t* targ = (generaldistarrthread_arg_t*)arg;
     int                         njob = targ->njob;
-    int                         para = targ->para;
     int                         m = targ->m;
     int*                        tselfscore = targ->tselfscore;
     char**                      seq = targ->seq;
@@ -3247,7 +3233,6 @@ static void*
 msaresetnearestthread(void* arg) {
     resetnearestthread_arg_t* targ = (resetnearestthread_arg_t*)arg;
     //	int thread_no = targ->thread_no;
-    int      para = targ->para;
     int      im = targ->im;
     double** partmtx = targ->partmtx;
     double*  mindist = targ->mindist;
@@ -3297,7 +3282,6 @@ static void*
 kmerresetnearestthread(void* arg) {
     resetnearestthread_arg_t* targ = (resetnearestthread_arg_t*)arg;
     //	int thread_no = targ->thread_no;
-    int      para = targ->para;
     int      im = targ->im;
     double** partmtx = targ->partmtx;
     double*  mindist = targ->mindist;
@@ -3385,7 +3369,6 @@ verycompactkmerdistarrthreadjoblist(void* arg)  // enablemultithread == 0 demo t
 {
     compactdistarrthread_arg_t* targ = (compactdistarrthread_arg_t*)arg;
     int                         njob = targ->njob;
-    int                         para = targ->para;
     int                         im = targ->im;
     int                         jm = targ->jm;
     //	int thread_no = targ->thread_no;
@@ -3489,7 +3472,6 @@ kmerdistarrthreadjoblist(void* arg)  // enablemultithread == 0 demo tsukau
 {
     compactdistarrthread_arg_t* targ = (compactdistarrthread_arg_t*)arg;
     int                         njob = targ->njob;
-    int                         para = targ->para;
     int                         im = targ->im;
     int                         jm = targ->jm;
     //	int thread_no = targ->thread_no;
@@ -3594,7 +3576,6 @@ verycompactmsadistarrthreadjoblist(void* arg)  // enablemultithread == 0 demo ts
 {
     compactdistarrthread_arg_t* targ = (compactdistarrthread_arg_t*)arg;
     int                         njob = targ->njob;
-    int                         para = targ->para;
     int                         im = targ->im;
     int                         jm = targ->jm;
     //	int thread_no = targ->thread_no;
@@ -3686,7 +3667,6 @@ msadistarrthreadjoblist(void* arg)  // enablemultithread == 0 demo tsukau
 {
     compactdistarrthread_arg_t* targ = (compactdistarrthread_arg_t*)arg;
     int                         njob = targ->njob;
-    int                         para = targ->para;
     int                         im = targ->im;
     int                         jm = targ->jm;
     //	int thread_no = targ->thread_no;
