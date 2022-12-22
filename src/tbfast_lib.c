@@ -1072,7 +1072,7 @@ tbfast_main(int argc, char* argv[]) {
     FILE*    orderfp = NULL;
     FILE*    hat2p = NULL;
     double   unweightedspscore;
-    size_t      alignmentlength;
+    size_t   alignmentlength;
     char*    mergeoralign = NULL;
     int      foundthebranch;
     int      nsubalignments, maxmem;
@@ -2129,7 +2129,6 @@ tbfast_main(int argc, char* argv[]) {
                 singlerna[i][j][0].bestscore = -1.0;
             }
             singlerna[i][nogaplen] = NULL;
-            //			fprintf( stderr, "### reading bpp %d ...\n", i );
             readmccaskill(prep, singlerna[i], nogaplen);
         }
         fclose(prep);
@@ -2139,80 +2138,7 @@ tbfast_main(int argc, char* argv[]) {
 
     fprintf(stderr, "Progressive alignment ... \n");
 
-#ifdef enablemultithread
-    if (opts.nthreadtb > 0 && nadd == 0) {
-        treebasethread_arg_t* targ;
-        int                   jobpos;
-        pthread_t*            handle;
-        pthread_mutex_t       mutex;
-        pthread_cond_t        treecond;
-        int*                  fftlog;
-        int                   nrun;
-        int                   nthread_yoyu;
-
-        nthread_yoyu = opts.nthreadtb * 1;
-        nrun = 0;
-        jobpos = 0;
-        targ = calloc(nthread_yoyu, sizeof(treebasethread_arg_t));
-        fftlog = AllocateIntVec(njob);
-        handle = calloc(nthread_yoyu, sizeof(pthread_t));
-        pthread_mutex_init(&mutex, NULL);
-        pthread_cond_init(&treecond, NULL);
-
-        for (i = 0; i < njob; i++)
-            dep[i].done = 0;
-        for (i = 0; i < njob; i++)
-            fftlog[i] = 1;
-
-        if (compacttree == 3) {
-            reporterr("bug. treebasethread() is no longer used when compacttree==3.\n");
-            exit(1);
-        }
-
-        if (constraint && compacttree != 3) {
-            if (specifictarget)
-                calcimportance_target(njob, ntarget, eff, bseq, localhomtable, targetmap, targetmapr, alloclen);
-            //				dontcalcimportance_target( njob, eff, bseq, localhomtable, ntarget ); // CHUUI
-            else
-                calcimportance_half(njob, eff, bseq, localhomtable, alloclen);
-            //				dontcalcimportance_half( njob, eff, bseq, localhomtable ); // CHUUI
-        }
-
-        for (i = 0; i < nthread_yoyu; i++) {
-            targ[i].thread_no = i;
-            targ[i].nrunpt = &nrun;
-            targ[i].njob = njob;
-            targ[i].nlen = nlen;
-            targ[i].jobpospt = &jobpos;
-            targ[i].topol = topol;
-            targ[i].dep = dep;
-            targ[i].aseq = bseq;
-            targ[i].effarr = eff;
-            targ[i].alloclenpt = &alloclen;
-            targ[i].localhomtable = localhomtable;
-            targ[i].singlerna = singlerna;
-            targ[i].effarr_kozo = eff_kozo_mapped;
-            targ[i].fftlog = fftlog;
-            targ[i].mergeoralign = mergeoralign;
-            targ[i].targetmap = targetmap;
-            targ[i].uselh = uselh;
-            targ[i].mutex = &mutex;
-            targ[i].treecond = &treecond;
-
-            pthread_create(handle + i, NULL, treebasethread, (void*)(targ + i));
-        }
-
-        for (i = 0; i < nthread_yoyu; i++) {
-            pthread_join(handle[i], NULL);
-        }
-        pthread_mutex_destroy(&mutex);
-        pthread_cond_destroy(&treecond);
-        free(handle);
-        free(targ);
-        free(fftlog);
-    } else
-#endif
-        treebase(opts, nlen, bseq, nadd, mergeoralign, mseq1, mseq2, topol, dep, eff, &alloclen, localhomtable, singlerna, eff_kozo_mapped, targetmap, targetmapr, ntarget, uselh, nseed, nfilesfornode);
+    treebase(opts, nlen, bseq, nadd, mergeoralign, mseq1, mseq2, topol, dep, eff, &alloclen, localhomtable, singlerna, eff_kozo_mapped, targetmap, targetmapr, ntarget, uselh, nseed, nfilesfornode);
 
     fprintf(stderr, "\ndone.\n");
 
