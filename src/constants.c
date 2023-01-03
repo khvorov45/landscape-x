@@ -1,5 +1,4 @@
 #include "mltaln.h"
-#include "miyata.h"
 #include "miyata5.h"
 
 #define DEFAULTGOP_B -1530
@@ -18,6 +17,52 @@
 #define DEFAULTGEP_J -00
 #define DEFAULTOFS_J -123 /* +10 -- -50  teido ka ? */
 #define DEFAULTPAMN 200
+
+double polarity_[] = {
+    8.1, /* A */
+    10.5, /* R */
+    11.6, /* N */
+    13.0, /* D */
+    5.5, /* C */
+    10.5, /* Q */
+    12.3, /* E */
+    9.0, /* G */
+    10.4, /* H */
+    5.2, /* I */
+    4.9, /* L */
+    11.3, /* K */
+    5.7, /* M */
+    5.2, /* F */
+    8.0, /* P */
+    9.2, /* S */
+    8.6, /* T */
+    5.4, /* W */
+    6.2, /* Y */
+    5.9, /* V */
+};
+
+double volume_[] = {
+    31.0, /* A */
+    124.0, /* R */
+    56.0, /* N */
+    54.0, /* D */
+    55.0, /* C */
+    85.0, /* Q */
+    83.0, /* E */
+    3.0, /* G */
+    96.0, /* H */
+    111.0, /* I */
+    111.0, /* L */
+    119.0, /* K */
+    105.0, /* M */
+    132.0, /* F */
+    32.5, /* P */
+    32.0, /* S */
+    61.0, /* T */
+    170.0, /* W */
+    136.0, /* Y */
+    84.0, /* V */
+};
 
 void
 JTTmtx(double** rsr, double* freq, unsigned char* locamino, char* locgrp, int isTM) {
