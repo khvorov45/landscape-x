@@ -1,10 +1,5 @@
 #define _XOPEN_SOURCE
 
-extern int disttbfast(int ngui, int lgui, char** namegui, char** seqgui, int argc, char** argv, int (*callback)(int, int, char*));
-#define GUI_ERROR 1
-#define GUI_LENGTHOVER 2
-#define GUI_CANCEL 3
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stddef.h>
@@ -13,17 +8,13 @@ extern int disttbfast(int ngui, int lgui, char** namegui, char** seqgui, int arg
 #include <math.h>
 #include <ctype.h>
 #include "mtxutl.h"
-//#include <double.h>
 #include <limits.h>
 #include <stdarg.h>
-#ifdef enablemultithread
-#include <pthread.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#endif
+
 #ifndef _MSC_VER
 #include <unistd.h>
 #endif
+
 #if !defined(mingw) && !defined(_MSC_VER)
 #include <sys/resource.h>  // for setstacksize, 2016/Jun
 #include <sys/shm.h>  // shared memory
