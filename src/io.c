@@ -1192,26 +1192,26 @@ FRead(FILE* fp, char** name, int nlen[], char** seq) {
 
 static int
 countKUorWA(FILE* fp) {
-    int value;
-    int c, b;
-
-    value = 0;
-    b = '\n';
+    int value = 0;
+    int b = '\n';
+    int c = 0;
     while ((c = getc(fp)) != EOF) {
-        if (b == '\n' && (c == '>'))
+        if (b == '\n' && (c == '>')) {
             value++;
+        }
         b = c;
     }
     rewind(fp);
-    return (value);
+    return value;
 }
 
 void
 searchKUorWA(FILE* fp) {
-    int c, b;
-    b = '\n';
-    while (!(((c = getc(fp)) == '>' || c == EOF) && b == '\n'))
+    int b = '\n';
+    int c = 0;
+    while (!(((c = getc(fp)) == '>' || c == EOF) && b == '\n')) {
         b = c;
+    }
     ungetc(c, fp);
 }
 
@@ -2373,41 +2373,27 @@ getnumlen_nogap_outallreg_web(FILE* fp, FILE* ofp, int* nlenminpt, int* isaligne
 
 void
 getnumlen(FILE* fp) {
-    int    total;
-    int    nsite = 0;
-    int    atgcnum;
-    int    i, tmp;
-    char*  tmpseq;
-    char*  tmpname;
-    double atgcfreq;
-
-#if mingw
-    setmode(fileno(fp), O_BINARY);
-    setmode(fileno(stdout), O_BINARY);
-#endif
-
-    tmpname = AllocateCharVec(N);
+    int   nsite = 0;
+    char* tmpname = AllocateCharVec(N);
     njob = countKUorWA(fp);
     searchKUorWA(fp);
     nlenmax = 0;
-    atgcnum = 0;
-    total = 0;
-    for (i = 0; i < njob; i++) {
+    int atgcnum = 0;
+    int total = 0;
+    for (int i = 0; i < njob; i++) {
         myfgets(tmpname, N - 1, fp);
-        tmpseq = load1SeqWithoutName_realloc(fp);
-        tmp = strlen(tmpseq);
+        char* tmpseq = load1SeqWithoutName_realloc(fp);
+        int   tmp = strlen(tmpseq);
         if (tmp > nlenmax)
             nlenmax = tmp;
         if (total < 1000000) {
             atgcnum += countATGC(tmpseq, &nsite);
             total += nsite;
         }
-        //		fprintf( stderr, "##### total = %d\n", total );
         free(tmpseq);
     }
 
-    atgcfreq = (double)atgcnum / total;
-    //	fprintf( stderr, "##### atgcfreq = %f\n", atgcfreq );
+    double atgcfreq = (double)atgcnum / (double)total;
     if (dorp == NOTSPECIFIED) {
         if (atgcfreq > 0.75) {
             dorp = 'd';

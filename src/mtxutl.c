@@ -35,14 +35,8 @@ MtxmltDouble(double** mtx1, double** mtx2, int n) {
 
 char*
 AllocateCharVec(int l1) {
-    char* cvec;
-
-    cvec = (char*)calloc(l1, sizeof(char));
-    if (cvec == NULL) {
-        fprintf(stderr, "Cannot allocate %d character vector.\n", l1);
-        exit(1);
-    }
-    return (cvec);
+    char* cvec = (char*)calloc(l1, sizeof(char));
+    return cvec;
 }
 
 #if 0
