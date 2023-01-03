@@ -91,7 +91,7 @@ main() {
     prb_assert(prb_createDirIfNotExists(arena, mafftObjDir) == prb_Success);
 
     // NOTE(sen) Force clean mafft
-    prb_assert(prb_clearDir(arena, mafftObjDir) == prb_Success);
+    // prb_assert(prb_clearDir(arena, mafftObjDir) == prb_Success);
 
     prb_Process* objProccesses = 0;
     bool         anyObjRecompiled = false;
@@ -113,7 +113,6 @@ main() {
                     prb_assert(prb_strScannerMove(&fileContentScanner, (prb_StrFindSpec) {.mode = prb_StrFindMode_LineBreak, .direction = prb_StrDirection_FromEnd}, prb_StrScannerSide_BeforeMatch));
                     prb_assert(prb_strScannerMove(&fileContentScanner, (prb_StrFindSpec) {.pattern = prb_STR("{")}, prb_StrScannerSide_AfterMatch));
                     prb_Str mainLine = fileContentScanner.betweenLastMatches;
-                    prb_writelnToStdout(arena, mainLine);
 
                     bool    mainTakesArgs = false;
                     prb_Str mainArgcName = {};
@@ -149,7 +148,7 @@ main() {
                     if (mainTakesArgs) {
                         // NOTE(sen) Generate alternative file where main is modified
 
-                        if (true) {
+                        if (false) {
                             prb_writelnToStdout(arena, mainLine);
                             prb_writelnToStdout(arena, mainArgcName);
                             prb_writelnToStdout(arena, mainArgvName);
