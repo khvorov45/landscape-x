@@ -1,7 +1,39 @@
 /* A set of utilities for writing "build scripts" as small C (or C++) programs.
 
+Works on windows and linux.
+
 Repository: https://github.com/khvorov45/cbuild
-See example/build.c for an example build script.
+See example/build.c for a non-trivial example build program.
+
+A simple build program might look like this
+
+File structure
+
+project-directory
+|
+|-cbuild.h
+|-build.c
+|-program.c
+
+Contents of build.c:
+
+```c
+#include "cbuild.h"
+
+int main() {
+    prb_Arena arena_ = prb_createArenaFromVmem(1 * prb_GIGABYTE);
+    prb_Arena* arena = &arena_;
+    prb_Str rootDir = prb_getParentDir(arena, prb_STR(__FILE__));
+    prb_Str mainFile = prb_pathJoin(arena, rootDir, prb_STR("program.c"));
+    prb_Str mainOut = prb_replaceExt(arena, mainFile, prb_STR("exe"));
+    prb_Str compileCmd = prb_fmt(arena, "clang %.*s -o %.*s", prb_LIT(mainFile), prb_LIT(mainOut));
+    prb_Process proc = prb_createProcess(compileCmd, (prb_ProcessSpec) {});
+    prb_assert(prb_launchProcesses(arena, &proc, 1, prb_Background_No));
+}
+```
+
+Compile and run `build.c` to compile the main program.
+On linux you'll have to link the build program to pthread `-lpthread` if the compiler doesn't do it by default.
 
 If using in multiple translation units:
     - Define prb_NOT_STATIC in the translation unit that has the implementation
@@ -22,6 +54,7 @@ All memory allocation calls in stb ds are using libc realloc/free.
 
 If a prb_* function ever returns an array (pointer to multiple elements) then it's
 an stb ds array, so get its length with arrlen() (or prb_stbds_arrlen() without short names)
+Note that arrlen() is different from prb_arrayCount() which counts the length of a static array on the stack.
 
 All prb_* iterators are meant to be used in loops like this
 for (prb_Iter iter = prb_createIter(); prb_iterNext(&iter) == prb_Success;) {
@@ -29,21 +62,27 @@ for (prb_Iter iter = prb_createIter(); prb_iterNext(&iter) == prb_Success;) {
 }
 */
 
-// TODO(khvorov) Job status enum should probably be separate from process status
-// TODO(khvorov) Pathfind iterator should probably not crash when given non-existant directories
-// TODO(khvorov) Set env variables when executing processes
-// TODO(khvorov) strReplace should just take a position and a length of the replacement
-// TODO(khvorov) strReplace should probably handle multiple replacements
-// TODO(khvorov) Ability to check/change file executable permissions
-// TODO(khvorov) A way to limit the number of cores used when executing jobs/processes
-// TODO(khvorov) Small example in readme and doc comment. Probably actually test it works.
-// TODO(khvorov) Make multithread api similar to launching multiple processes
+// TODO(khvorov) License
 
 // NOLINTBEGIN(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)
 
 #ifdef __GNUC__
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-function"
+#endif
+
+#ifdef __clang__
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wunused-function"
+#endif
+
+#ifdef _MSC_VER
+#pragma warning(push)
+#pragma warning(disable : 4146)  // unary minus operator applied to unsigned type, result still unsigned
+#pragma warning(disable : 4201)  // nonstandard extension used: nameless struct/union
+#pragma warning(disable : 4505)  // unreferenced function with internal linkage has been removed
+#pragma warning(disable : 4820)  // padding
+#pragma warning(disable : 5045)  // Compiler will insert Spectre mitigation for memory load if /Qspectre switch specified
 #endif
 
 #ifndef prb_HEADER_FILE
@@ -56,7 +95,7 @@ for (prb_Iter iter = prb_createIter(); prb_iterNext(&iter) == prb_Success;) {
 #include <stdalign.h>
 
 #include <string.h>
-#include <regex.h>
+#include <stdlib.h>
 
 #if defined(WIN32) || defined(_WIN32)
 #define prb_PLATFORM_WINDOWS 1
@@ -67,11 +106,8 @@ for (prb_Iter iter = prb_createIter(); prb_iterNext(&iter) == prb_Success;) {
 #endif
 
 #if prb_PLATFORM_WINDOWS
-
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
-#include <shellapi.h>
-#pragma comment(lib, "Shell32.lib")
 
 #elif prb_PLATFORM_LINUX
 
@@ -81,7 +117,6 @@ for (prb_Iter iter = prb_createIter(); prb_iterNext(&iter) == prb_Success;) {
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <stdlib.h>
 #include <spawn.h>
 #include <dirent.h>
 #include <glob.h>
@@ -106,16 +141,26 @@ for (prb_Iter iter = prb_createIter(); prb_iterNext(&iter) == prb_Success;) {
 #define prb_realloc realloc
 #define prb_free free
 
+#if defined(_MSC_VER) && !defined(__cplusplus)
+#define prb_alignof _Alignof
+#else
+#define prb_alignof alignof
+#endif
+
+#if defined(__cplusplus)
+#define prb_FALLTHROUGH [[fallthrough]]
+#else
+#define prb_FALLTHROUGH
+#endif
+
 #define prb_max(a, b) (((a) > (b)) ? (a) : (b))
 #define prb_min(a, b) (((a) < (b)) ? (a) : (b))
 #define prb_clamp(x, a, b) (((x) < (a)) ? (a) : (((x) > (b)) ? (b) : (x)))
-#define prb_arrayLength(arr) (int32_t)(sizeof(arr) / sizeof(arr[0]))
-#define prb_arenaAllocArray(arena, type, len) (type*)prb_arenaAllocAndZero(arena, (len) * sizeof(type), alignof(type))
-#define prb_arenaAllocStruct(arena, type) (type*)prb_arenaAllocAndZero(arena, sizeof(type), alignof(type))
+#define prb_arrayCount(arr) (int32_t)(sizeof(arr) / sizeof(arr[0]))
+#define prb_arenaAllocArray(arena, type, len) (type*)prb_arenaAllocAndZero(arena, (len) * (int32_t)sizeof(type), prb_alignof(type))
+#define prb_arenaAllocStruct(arena, type) (type*)prb_arenaAllocAndZero(arena, sizeof(type), prb_alignof(type))
 #define prb_isPowerOf2(x) (((x) > 0) && (((x) & ((x)-1)) == 0))
 #define prb_unused(x) ((x) = (x))
-
-// TODO(khvorov) Is there a way to create a macro that creates a job and copies data?
 
 // clang-format off
 
@@ -201,7 +246,7 @@ for (prb_Iter iter = prb_createIter(); prb_iterNext(&iter) == prb_Success;) {
 
 #ifndef prb_assert
 // NOTE(khvorov) Assign condition to a variable to catch prb_assert(x = y) instead of prb_assert(x == y)
-#define prb_assert(condition) do { bool assertbool = condition; if (!(assertbool)) { prb_assertAction(); } } while (0)
+#define prb_assert(condition) do { bool assertbool = (bool)(condition); if (!(assertbool)) { prb_assertAction(); } } while (0)
 #endif
 // clang-format on
 
@@ -248,8 +293,12 @@ typedef enum prb_Status {
 } prb_Status;
 
 typedef struct prb_TimeStart {
-    bool     valid;
-    uint64_t nsec;
+    bool valid;
+#if prb_PLATFORM_WINDOWS
+    LONGLONG ticks;
+#elif prb_PLATFORM_LINUX
+    uint64_t  nsec;
+#endif
 } prb_TimeStart;
 
 typedef enum prb_ColorID {
@@ -269,14 +318,14 @@ typedef struct prb_Bytes {
     int32_t  len;
 } prb_Bytes;
 
-typedef struct prb_ExecCmdSpec {
-    prb_Str cmd;
-    bool    dontwait;
+typedef struct prb_ProcessSpec {
     bool    redirectStdout;
     prb_Str stdoutFilepath;
     bool    redirectStderr;
     prb_Str stderrFilepath;
-} prb_ExecCmdSpec;
+    // Additional environment variables that look like this "var1=val1 var2=val2"
+    prb_Str addEnv;
+} prb_ProcessSpec;
 
 typedef enum prb_ProcessStatus {
     prb_ProcessStatus_NotLaunched,
@@ -285,22 +334,22 @@ typedef enum prb_ProcessStatus {
     prb_ProcessStatus_CompletedFailed,
 } prb_ProcessStatus;
 
-typedef struct prb_ProcessHandle {
+typedef struct prb_Process {
+    prb_Str           cmd;
+    prb_ProcessSpec   spec;
     prb_ProcessStatus status;
 
 #if prb_PLATFORM_WINDOWS
-#error unimplemented
+    PROCESS_INFORMATION processInfo;
 #elif prb_PLATFORM_LINUX
     pid_t     pid;
-#else
-#error unimplemented
 #endif
-} prb_ProcessHandle;
+} prb_Process;
 
 typedef enum prb_StrFindMode {
     prb_StrFindMode_Exact,
     prb_StrFindMode_AnyChar,
-    prb_StrFindMode_RegexPosix,
+    prb_StrFindMode_LineBreak,
 } prb_StrFindMode;
 
 typedef enum prb_StrDirection {
@@ -308,45 +357,37 @@ typedef enum prb_StrDirection {
     prb_StrDirection_FromEnd,
 } prb_StrDirection;
 
-// TODO(khvorov) Simplify
+typedef enum prb_StrScannerSide {
+    prb_StrScannerSide_AfterMatch,
+    prb_StrScannerSide_BeforeMatch,
+} prb_StrScannerSide;
+
 typedef struct prb_StrFindSpec {
-    prb_Str          str;
-    prb_Str          pattern;
-    prb_StrDirection direction;
     prb_StrFindMode  mode;
-    union {
-        struct {
-            int32_t ignore;
-        } exact;
-        struct {
-            int32_t ignore;
-        } anyChar;
-        struct {
-            prb_Arena* arena;
-        } regexPosix;
-    };
+    prb_StrDirection direction;
+    // Not necessary if mode is LineBreak
+    prb_Str pattern;
+    // Only for mode AnyChar. When true, encountering end of string will result in a match.
+    bool alwaysMatchEnd;
 } prb_StrFindSpec;
 
 typedef struct prb_StrFindResult {
-    bool    found;
-    int32_t matchByteIndex;
-    int32_t matchLen;
+    bool found;
+    // In a left-to-right system `beforeMatch` is to the left of match
+    prb_Str beforeMatch;
+    prb_Str match;
+    // In a left-to-right system `afterMatch` is to the right of match
+    prb_Str afterMatch;
 } prb_StrFindResult;
 
-typedef struct prb_LineIter {
+typedef struct prb_StrScanner {
     prb_Str ogstr;
-    int32_t curLineCount;
-    int32_t curByteOffset;
-    prb_Str curLine;
-    int32_t curLineEndLen;
-} prb_LineIter;
-
-typedef struct prb_WordIter {
-    prb_Str ogstr;
-    int32_t curWordCount;
-    int32_t curByteOffset;
-    prb_Str curWord;
-} prb_WordIter;
+    prb_Str beforeMatch;
+    prb_Str match;
+    prb_Str afterMatch;
+    int32_t matchCount;
+    prb_Str betweenLastMatches;
+} prb_StrScanner;
 
 typedef struct prb_Utf8CharIter {
     prb_Str          str;
@@ -357,12 +398,6 @@ typedef struct prb_Utf8CharIter {
     int32_t          curUtf8Bytes;
     bool             curIsValid;
 } prb_Utf8CharIter;
-
-typedef struct prb_StrFindIter {
-    prb_StrFindSpec   spec;
-    prb_StrFindResult curResult;
-    int32_t           curMatchCount;
-} prb_StrFindIter;
 
 typedef struct prb_PathEntryIter {
     prb_Str ogstr;
@@ -393,16 +428,23 @@ typedef struct prb_FileHash {
     uint64_t hash;
 } prb_FileHash;
 
+typedef enum prb_JobStatus {
+    prb_JobStatus_NotLaunched,
+    prb_JobStatus_Launched,
+    prb_JobStatus_Completed,
+} prb_JobStatus;
+
 typedef void (*prb_JobProc)(prb_Arena* arena, void* data);
 
 typedef struct prb_Job {
-    prb_Arena         arena;
-    prb_JobProc       proc;
-    void*             data;
-    prb_ProcessStatus status;
+    prb_Arena     arena;
+    prb_JobProc   proc;
+    void*         data;
+    prb_JobStatus status;
 
 #if prb_PLATFORM_WINDOWS
-#error unimplemented
+    HANDLE threadhandle;
+    DWORD  threadid;
 #elif prb_PLATFORM_LINUX
     pthread_t threadid;
 #else
@@ -410,21 +452,29 @@ typedef struct prb_Job {
 #endif
 } prb_Job;
 
-typedef enum prb_ThreadMode {
-    prb_ThreadMode_Single,
-    prb_ThreadMode_Multi,
-} prb_ThreadMode;
+typedef enum prb_Background {
+    prb_Background_No,
+    prb_Background_Yes,
+} prb_Background;
 
-// TODO(khvorov) Finish
+typedef struct prb_ParseUintResult {
+    bool     success;
+    uint64_t number;
+} prb_ParseUintResult;
+
 typedef enum prb_ParsedNumberKind {
     prb_ParsedNumberKind_None,
     prb_ParsedNumberKind_U64,
+    prb_ParsedNumberKind_I64,
+    prb_ParsedNumberKind_F64,
 } prb_ParsedNumberKind;
 
 typedef struct prb_ParsedNumber {
     prb_ParsedNumberKind kind;
     union {
         uint64_t parsedU64;
+        int64_t  parsedI64;
+        double   parsedF64;
     };
 } prb_ParsedNumber;
 
@@ -443,6 +493,11 @@ typedef struct prb_GetenvResult {
     bool    found;
     prb_Str str;
 } prb_GetenvResult;
+
+typedef struct prb_CoreCountResult {
+    bool    success;
+    int32_t cores;
+} prb_CoreCountResult;
 
 // SECTION Memory
 prb_PUBLICDEC bool           prb_memeq(const void* ptr1, const void* ptr2, int32_t bytes);
@@ -466,73 +521,70 @@ prb_PUBLICDEC bool                     prb_isDir(prb_Arena* arena, prb_Str path)
 prb_PUBLICDEC bool                     prb_isFile(prb_Arena* arena, prb_Str path);
 prb_PUBLICDEC bool                     prb_dirIsEmpty(prb_Arena* arena, prb_Str path);
 prb_PUBLICDEC prb_Status               prb_createDirIfNotExists(prb_Arena* arena, prb_Str path);
-prb_PUBLICDEC prb_Status               prb_removeFileOrDirIfExists(prb_Arena* arena, prb_Str path);
-prb_PUBLICDEC prb_Status               prb_removeFileIfExists(prb_Arena* arena, prb_Str path);
-prb_PUBLICDEC prb_Status               prb_removeDirIfExists(prb_Arena* arena, prb_Str path);
+prb_PUBLICDEC prb_Status               prb_removePathIfExists(prb_Arena* arena, prb_Str path);
 prb_PUBLICDEC prb_Status               prb_clearDir(prb_Arena* arena, prb_Str path);
 prb_PUBLICDEC prb_Str                  prb_getWorkingDir(prb_Arena* arena);
 prb_PUBLICDEC prb_Status               prb_setWorkingDir(prb_Arena* arena, prb_Str dir);
 prb_PUBLICDEC prb_Str                  prb_pathJoin(prb_Arena* arena, prb_Str path1, prb_Str path2);
 prb_PUBLICDEC bool                     prb_charIsSep(char ch);
-prb_PUBLICDEC prb_StrFindResult        prb_findSepBeforeLastEntry(prb_Str path);
 prb_PUBLICDEC prb_Str                  prb_getParentDir(prb_Arena* arena, prb_Str path);
 prb_PUBLICDEC prb_Str                  prb_getLastEntryInPath(prb_Str path);
 prb_PUBLICDEC prb_Str                  prb_replaceExt(prb_Arena* arena, prb_Str path, prb_Str newExt);
 prb_PUBLICDEC prb_PathEntryIter        prb_createPathEntryIter(prb_Str path);
 prb_PUBLICDEC prb_Status               prb_pathEntryIterNext(prb_PathEntryIter* iter);
+prb_PUBLICDEC void                     prb_getAllDirEntriesCustomBuffer(prb_Arena* arena, prb_Str dir, prb_Recursive mode, prb_Str** storage);
 prb_PUBLICDEC prb_Str*                 prb_getAllDirEntries(prb_Arena* arena, prb_Str dir, prb_Recursive mode);
 prb_PUBLICDEC prb_FileTimestamp        prb_getLastModified(prb_Arena* arena, prb_Str path);
 prb_PUBLICDEC prb_Multitime            prb_createMultitime(void);
 prb_PUBLICDEC void                     prb_multitimeAdd(prb_Multitime* multitime, prb_FileTimestamp newTimestamp);
 prb_PUBLICDEC prb_ReadEntireFileResult prb_readEntireFile(prb_Arena* arena, prb_Str path);
 prb_PUBLICDEC prb_Status               prb_writeEntireFile(prb_Arena* arena, prb_Str path, const void* content, int32_t contentLen);
-prb_PUBLICDEC prb_Str                  prb_binaryToCArray(prb_Arena* arena, prb_Str arrayName, void* data, int32_t dataLen);
 prb_PUBLICDEC prb_FileHash             prb_getFileHash(prb_Arena* arena, prb_Str filepath);
 
 // SECTION Strings
-prb_PUBLICDEC bool              prb_streq(prb_Str str1, prb_Str str2);
-prb_PUBLICDEC prb_Str           prb_strSliceForward(prb_Str str, int32_t bytes);
-prb_PUBLICDEC prb_Str           prb_strSliceBetween(prb_Str str, int32_t start, int32_t onePastEnd);
-prb_PUBLICDEC const char*       prb_strGetNullTerminated(prb_Arena* arena, prb_Str str);
-prb_PUBLICDEC prb_Str           prb_strMallocCopy(prb_Str str);
-prb_PUBLICDEC prb_Str           prb_strFromBytes(prb_Bytes bytes);
-prb_PUBLICDEC prb_Str           prb_strTrimSide(prb_Str str, prb_StrDirection dir);
-prb_PUBLICDEC prb_Str           prb_strTrim(prb_Str str);
-prb_PUBLICDEC prb_StrFindResult prb_strFind(prb_StrFindSpec spec);
-prb_PUBLICDEC prb_StrFindIter   prb_createStrFindIter(prb_StrFindSpec spec);
-prb_PUBLICDEC prb_Status        prb_strFindIterNext(prb_StrFindIter* iter);
-prb_PUBLICDEC bool              prb_strStartsWith(prb_Str str, prb_Str pattern);
-prb_PUBLICDEC bool              prb_strEndsWith(prb_Str str, prb_Str pattern);
-prb_PUBLICDEC prb_Str           prb_strReplace(prb_Arena* arena, prb_StrFindSpec spec, prb_Str replacement);
-prb_PUBLICDEC prb_Str           prb_stringsJoin(prb_Arena* arena, prb_Str* strings, int32_t stringsCount, prb_Str sep);
-prb_PUBLICDEC prb_GrowingStr    prb_beginStr(prb_Arena* arena);
-prb_PUBLICDEC void              prb_addStrSegment(prb_GrowingStr* gstr, const char* fmt, ...) prb_ATTRIBUTE_FORMAT(2, 3);
-prb_PUBLICDEC prb_Str           prb_endStr(prb_GrowingStr* gstr);
-prb_PUBLICDEC prb_Str           prb_vfmtCustomBuffer(void* buf, int32_t bufSize, const char* fmt, va_list args);
-prb_PUBLICDEC prb_Str           prb_fmt(prb_Arena* arena, const char* fmt, ...) prb_ATTRIBUTE_FORMAT(2, 3);
-prb_PUBLICDEC prb_Status        prb_writeToStdout(prb_Str str);
-prb_PUBLICDEC prb_Status        prb_writelnToStdout(prb_Arena* arena, prb_Str str);
-prb_PUBLICDEC prb_Str           prb_colorEsc(prb_ColorID color);
-prb_PUBLICDEC prb_Utf8CharIter  prb_createUtf8CharIter(prb_Str str, prb_StrDirection direction);
-prb_PUBLICDEC prb_Status        prb_utf8CharIterNext(prb_Utf8CharIter* iter);
-prb_PUBLICDEC prb_LineIter      prb_createLineIter(prb_Str str);
-prb_PUBLICDEC prb_Status        prb_lineIterNext(prb_LineIter* iter);
-prb_PUBLICDEC prb_WordIter      prb_createWordIter(prb_Str str);
-prb_PUBLICDEC prb_Status        prb_wordIterNext(prb_WordIter* iter);
-prb_PUBLICDEC prb_ParsedNumber  prb_parseNumber(prb_Str str);
+prb_PUBLICDEC bool                prb_streq(prb_Str str1, prb_Str str2);
+prb_PUBLICDEC prb_Str             prb_strSlice(prb_Str str, int32_t start, int32_t onePastEnd);
+prb_PUBLICDEC const char*         prb_strGetNullTerminated(prb_Arena* arena, prb_Str str);
+prb_PUBLICDEC prb_Str             prb_strFromBytes(prb_Bytes bytes);
+prb_PUBLICDEC prb_Str             prb_strTrimSide(prb_Str str, prb_StrDirection dir);
+prb_PUBLICDEC prb_Str             prb_strTrim(prb_Str str);
+prb_PUBLICDEC prb_StrFindResult   prb_strFind(prb_Str str, prb_StrFindSpec spec);
+prb_PUBLICDEC bool                prb_strStartsWith(prb_Str str, prb_Str pattern);
+prb_PUBLICDEC bool                prb_strEndsWith(prb_Str str, prb_Str pattern);
+prb_PUBLICDEC prb_Str             prb_stringsJoin(prb_Arena* arena, prb_Str* strings, int32_t stringsCount, prb_Str sep);
+prb_PUBLICDEC prb_GrowingStr      prb_beginStr(prb_Arena* arena);
+prb_PUBLICDEC void                prb_addStrSegment(prb_GrowingStr* gstr, const char* fmt, ...) prb_ATTRIBUTE_FORMAT(2, 3);
+prb_PUBLICDEC prb_Str             prb_endStr(prb_GrowingStr* gstr);
+prb_PUBLICDEC prb_Str             prb_vfmtCustomBuffer(void* buf, int32_t bufSize, const char* fmt, va_list args);
+prb_PUBLICDEC prb_Str             prb_fmt(prb_Arena* arena, const char* fmt, ...) prb_ATTRIBUTE_FORMAT(2, 3);
+prb_PUBLICDEC prb_Status          prb_writeToStdout(prb_Str str);
+prb_PUBLICDEC prb_Status          prb_writelnToStdout(prb_Arena* arena, prb_Str str);
+prb_PUBLICDEC prb_Str             prb_colorEsc(prb_ColorID color);
+prb_PUBLICDEC prb_Utf8CharIter    prb_createUtf8CharIter(prb_Str str, prb_StrDirection direction);
+prb_PUBLICDEC prb_Status          prb_utf8CharIterNext(prb_Utf8CharIter* iter);
+prb_PUBLICDEC prb_StrScanner      prb_createStrScanner(prb_Str str);
+prb_PUBLICDEC prb_Status          prb_strScannerMove(prb_StrScanner* scanner, prb_StrFindSpec spec, prb_StrScannerSide side);
+prb_PUBLICDEC prb_ParseUintResult prb_parseUint(prb_Str digits, uint64_t base);
+prb_PUBLICDEC prb_ParsedNumber    prb_parseNumber(prb_Str str);
+prb_PUBLICDEC prb_Str             prb_binaryToCArray(prb_Arena* arena, prb_Str arrayName, void* data, int32_t dataLen);
 
 // SECTION Processes
-prb_PUBLICDEC void              prb_terminate(int32_t code);
-prb_PUBLICDEC prb_Str           prb_getCmdline(prb_Arena* arena);
-prb_PUBLICDEC prb_Str*          prb_getCmdArgs(prb_Arena* arena);
-prb_PUBLICDEC const char**      prb_getArgArrayFromStr(prb_Arena* arena, prb_Str str);
-prb_PUBLICDEC prb_ProcessHandle prb_execCmd(prb_Arena* arena, prb_ExecCmdSpec spec);
-prb_PUBLICDEC prb_Status        prb_waitForProcesses(prb_ProcessHandle* handles, int32_t handleCount);
-prb_PUBLICDEC void              prb_sleep(float ms);
-prb_PUBLICDEC bool              prb_debuggerPresent(prb_Arena* arena);
-prb_PUBLICDEC prb_Status        prb_setenv(prb_Arena* arena, prb_Str name, prb_Str value);
-prb_PUBLICDEC prb_GetenvResult  prb_getenv(prb_Arena* arena, prb_Str name);
-prb_PUBLICDEC prb_Status        prb_unsetenv(prb_Arena* arena, prb_Str name);
+prb_PUBLICDEC void                prb_terminate(int32_t code);
+prb_PUBLICDEC prb_Str             prb_getCmdline(prb_Arena* arena);
+prb_PUBLICDEC prb_Str*            prb_getCmdArgs(prb_Arena* arena);
+prb_PUBLICDEC const char**        prb_getArgArrayFromStr(prb_Arena* arena, prb_Str str);
+prb_PUBLICDEC prb_CoreCountResult prb_getCoreCount(prb_Arena* arena);
+prb_PUBLICDEC prb_CoreCountResult prb_getAllowExecutionCoreCount(prb_Arena* arena);
+prb_PUBLICDEC prb_Status          prb_allowExecutionOnCores(prb_Arena* arena, int32_t coreCount);
+prb_PUBLICDEC prb_Process         prb_createProcess(prb_Str cmd, prb_ProcessSpec spec);
+prb_PUBLICDEC prb_Status          prb_launchProcesses(prb_Arena* arena, prb_Process* procs, int32_t procCount, prb_Background mode);
+prb_PUBLICDEC prb_Status          prb_waitForProcesses(prb_Process* handles, int32_t handleCount);
+prb_PUBLICDEC prb_Status          prb_killProcesses(prb_Process* handles, int32_t handleCount);
+prb_PUBLICDEC void                prb_sleep(float ms);
+prb_PUBLICDEC bool                prb_debuggerPresent(prb_Arena* arena);
+prb_PUBLICDEC prb_Status          prb_setenv(prb_Arena* arena, prb_Str name, prb_Str value);
+prb_PUBLICDEC prb_GetenvResult    prb_getenv(prb_Arena* arena, prb_Str name);
+prb_PUBLICDEC prb_Status          prb_unsetenv(prb_Arena* arena, prb_Str name);
 
 // SECTION Timing
 prb_PUBLICDEC prb_TimeStart prb_timeStart(void);
@@ -540,7 +592,8 @@ prb_PUBLICDEC float         prb_getMsFrom(prb_TimeStart timeStart);
 
 // SECTION Multithreading
 prb_PUBLICDEC prb_Job    prb_createJob(prb_JobProc proc, void* data, prb_Arena* arena, int32_t arenaBytes);
-prb_PUBLICDEC prb_Status prb_execJobs(prb_Job* jobs, int32_t jobsCount, prb_ThreadMode mode);
+prb_PUBLICDEC prb_Status prb_launchJobs(prb_Job* jobs, int32_t jobsCount, prb_Background mode);
+prb_PUBLICDEC prb_Status prb_waitForJobs(prb_Job* jobs, int32_t jobsCount);
 
 // SECTION Random numbers
 prb_PUBLICDEC prb_Rng  prb_createRng(uint32_t seed);
@@ -622,8 +675,7 @@ prb_STBSP__PUBLICDEC int prb_STB_SPRINTF_DECORATE(sprintf)(char* buf, char const
 prb_STBSP__PUBLICDEC int prb_STB_SPRINTF_DECORATE(snprintf)(char* buf, int count, char const* fmt, ...)
     prb_STBSP__ATTRIBUTE_FORMAT(3, 4);
 
-prb_STBSP__PUBLICDEC int  prb_STB_SPRINTF_DECORATE(vsprintfcb
-)(prb_STBSP_SPRINTFCB* callback, void* user, char* buf, char const* fmt, va_list va);
+prb_STBSP__PUBLICDEC int  prb_STB_SPRINTF_DECORATE(vsprintfcb)(prb_STBSP_SPRINTFCB* callback, void* user, char* buf, char const* fmt, va_list va);
 prb_STBSP__PUBLICDEC void prb_STB_SPRINTF_DECORATE(set_separators)(char comma, char period);
 
 //
@@ -982,7 +1034,7 @@ prb_stbds_shmode_func_wrapper(T*, size_t elemsize, int mode) {
 prb_PUBLICDEF bool
 prb_memeq(const void* ptr1, const void* ptr2, int32_t bytes) {
     prb_assert(bytes >= 0);
-    int  memcmpResult = prb_memcmp(ptr1, ptr2, bytes);
+    int  memcmpResult = prb_memcmp(ptr1, ptr2, (size_t)bytes);
     bool result = memcmpResult == 0;
     return result;
 }
@@ -992,7 +1044,7 @@ prb_getOffsetForAlignment(void* ptr, int32_t align) {
     prb_assert(prb_isPowerOf2(align));
     uintptr_t ptrAligned = (uintptr_t)((uint8_t*)ptr + (align - 1)) & (uintptr_t)(~(align - 1));
     prb_assert(ptrAligned >= (uintptr_t)ptr);
-    intptr_t diff = ptrAligned - (uintptr_t)ptr;
+    intptr_t diff = (intptr_t)(ptrAligned - (uintptr_t)ptr);
     prb_assert(diff < align && diff >= 0);
     return (int32_t)diff;
 }
@@ -1001,8 +1053,8 @@ prb_PUBLICDEF void*
 prb_vmemAlloc(int32_t bytes) {
 #if prb_PLATFORM_WINDOWS
 
-    void* ptr = VirtualAlloc(0, bytes, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-    prb_assert(ptr);
+    void* ptr = VirtualAlloc(0, (SIZE_T)bytes, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+    prb_assert(ptr != 0);
 
 #elif prb_PLATFORM_LINUX
 
@@ -1018,17 +1070,25 @@ prb_vmemAlloc(int32_t bytes) {
 
 prb_PUBLICDEF prb_Arena
 prb_createArenaFromVmem(int32_t bytes) {
-    prb_Arena arena = {};
-    arena.base = prb_vmemAlloc(bytes);
-    arena.size = bytes;
+    prb_Arena arena = {
+        .base = prb_vmemAlloc(bytes),
+        .size = bytes,
+        .used = 0,
+        .lockedForStr = false,
+        .tempCount = 0,
+    };
     return arena;
 }
 
 prb_PUBLICDEF prb_Arena
 prb_createArenaFromArena(prb_Arena* parent, int32_t bytes) {
-    prb_Arena arena = {};
-    arena.base = prb_arenaFreePtr(parent);
-    arena.size = bytes;
+    prb_Arena arena = {
+        .base = prb_arenaFreePtr(parent),
+        .size = bytes,
+        .used = 0,
+        .lockedForStr = false,
+        .tempCount = 0,
+    };
     prb_arenaChangeUsed(parent, bytes);
     return arena;
 }
@@ -1039,7 +1099,7 @@ prb_arenaAllocAndZero(prb_Arena* arena, int32_t size, int32_t align) {
     prb_arenaAlignFreePtr(arena, align);
     void* result = prb_arenaFreePtr(arena);
     prb_arenaChangeUsed(arena, size);
-    prb_memset(result, 0, size);
+    prb_memset(result, 0, (size_t)size);
     return result;
 }
 
@@ -1085,19 +1145,119 @@ prb_endTempMemory(prb_TempMemory temp) {
 // SECTION Filesystem (implementation)
 //
 
-#if prb_PLATFORM_LINUX
+#if prb_PLATFORM_WINDOWS
+
+typedef struct prb_windows_WideStr {
+    LPWSTR  ptr;
+    int32_t len;
+} prb_windows_WideStr;
+
+static prb_windows_WideStr
+prb_windows_getWideStr(prb_Arena* arena, prb_Str str) {
+    prb_windows_WideStr result = {.ptr = 0, .len = 0};
+    prb_arenaAlignFreePtr(arena, prb_alignof(uint16_t));
+    result.ptr = (LPWSTR)prb_arenaFreePtr(arena);
+    int multiByteResult = MultiByteToWideChar(CP_UTF8, 0, str.ptr, str.len, result.ptr, prb_arenaFreeSize(arena) / (int32_t)sizeof(uint16_t));
+    prb_assert(multiByteResult > 0);
+    result.len = multiByteResult;
+    LPWSTR temp = result.ptr;
+    prb_unused(temp);
+    prb_arenaChangeUsed(arena, multiByteResult * (int32_t)sizeof(uint16_t));
+    prb_arenaAllocAndZero(arena, 2, 1);  // NOTE(khvorov) Null terminator just in case
+    return result;
+}
+
+static prb_Str
+prb_windows_strFromWideStr(prb_Arena* arena, prb_windows_WideStr wstr) {
+    prb_Str result = {.ptr = 0, .len = 0};
+    char*   ptr = (char*)prb_arenaFreePtr(arena);
+    int     bytesWritten = WideCharToMultiByte(CP_UTF8, 0, wstr.ptr, wstr.len, ptr, prb_arenaFreeSize(arena), 0, 0);
+    prb_assert(bytesWritten > 0);
+    result.ptr = ptr;
+    result.len = bytesWritten;
+    prb_arenaChangeUsed(arena, bytesWritten);
+    prb_arenaAllocAndZero(arena, 1, 1);  // NOTE(khvorov) Null terminator
+    return result;
+}
+
+static prb_windows_WideStr
+prb_windows_getWidePath(prb_Arena* arena, prb_Str str) {
+    prb_windows_WideStr wstr = prb_windows_getWideStr(arena, str);
+
+    // NOTE(khvorov) 248 is from
+    // https://learn.microsoft.com/en-us/windows/win32/api/fileapi/nf-fileapi-createdirectoryw
+    if (wstr.len >= 248) {
+        int32_t newlen = wstr.len + 4;
+        LPWSTR  newptr = (LPWSTR)prb_arenaAllocArray(arena, uint16_t, newlen);
+        newptr[0] = '\\';
+        newptr[1] = '\\';
+        newptr[2] = '?';
+        newptr[3] = '\\';
+        prb_memcpy(newptr + 4, wstr.ptr, wstr.len * sizeof(*wstr.ptr));
+        for (int32_t ind = 0; ind < newlen; ind++) {
+            if (newptr[ind] == '/') {
+                newptr[ind] = '\\';
+            }
+        }
+        wstr = (prb_windows_WideStr) {newptr, newlen};
+        prb_arenaAllocAndZero(arena, 2, 1);  // NOTE(khvorov) Null terminator
+    }
+
+    return wstr;
+}
+
+typedef struct prb_windows_GetFileStatResult {
+    bool                      success;
+    WIN32_FILE_ATTRIBUTE_DATA stat;
+} prb_windows_GetFileStatResult;
+
+static prb_windows_GetFileStatResult
+prb_windows_getFileStat(prb_Arena* arena, prb_Str path) {
+    prb_TempMemory                temp = prb_beginTempMemory(arena);
+    prb_windows_GetFileStatResult result;
+    prb_memset(&result, 0, sizeof(result));
+    prb_windows_WideStr pathWide = prb_windows_getWidePath(arena, path);
+    if (GetFileAttributesExW(pathWide.ptr, GetFileExInfoStandard, &result.stat) != 0) {
+        result.success = true;
+    }
+    prb_endTempMemory(temp);
+    return result;
+}
+
+typedef struct prb_windows_OpenResult {
+    bool   success;
+    HANDLE handle;
+} prb_windows_OpenResult;
+
+static prb_windows_OpenResult
+prb_windows_open(prb_Arena* arena, prb_Str path, DWORD access, DWORD share, DWORD create, SECURITY_ATTRIBUTES* securityAttr) {
+    prb_windows_OpenResult result = {.success = false, .handle = 0};
+    prb_TempMemory         temp = prb_beginTempMemory(arena);
+    prb_windows_WideStr    pathWide = prb_windows_getWidePath(arena, path);
+
+    HANDLE handle = CreateFileW(pathWide.ptr, access, share, securityAttr, create, FILE_ATTRIBUTE_NORMAL, 0);
+    if (handle != INVALID_HANDLE_VALUE) {
+        result.success = true;
+        result.handle = handle;
+    }
+
+    prb_endTempMemory(temp);
+    return result;
+}
+
+#elif prb_PLATFORM_LINUX
 
 typedef struct prb_linux_GetFileStatResult {
-    bool        success;
+    bool success;
     struct stat stat;
 } prb_linux_GetFileStatResult;
 
 static prb_linux_GetFileStatResult
 prb_linux_getFileStat(prb_Arena* arena, prb_Str path) {
-    prb_TempMemory              temp = prb_beginTempMemory(arena);
+    prb_TempMemory temp = prb_beginTempMemory(arena);
     prb_linux_GetFileStatResult result = {};
-    const char*                 pathNull = prb_strGetNullTerminated(arena, path);
-    struct stat                 statBuf = {};
+    const char* pathNull = prb_strGetNullTerminated(arena, path);
+    struct stat statBuf = {};
     if (stat(pathNull, &statBuf) == 0) {
         result = (prb_linux_GetFileStatResult) {.success = true, .stat = statBuf};
     }
@@ -1107,13 +1267,13 @@ prb_linux_getFileStat(prb_Arena* arena, prb_Str path) {
 
 typedef struct prb_linux_OpenResult {
     bool success;
-    int  handle;
+    int handle;
 } prb_linux_OpenResult;
 
 static prb_linux_OpenResult
 prb_linux_open(prb_Arena* arena, prb_Str path, int oflags, mode_t mode) {
-    prb_TempMemory       temp = prb_beginTempMemory(arena);
-    const char*          pathNull = prb_strGetNullTerminated(arena, path);
+    prb_TempMemory temp = prb_beginTempMemory(arena);
+    const char* pathNull = prb_strGetNullTerminated(arena, path);
     prb_linux_OpenResult result = {};
     result.handle = open(pathNull, oflags, mode);
     result.success = result.handle != -1;
@@ -1122,11 +1282,11 @@ prb_linux_open(prb_Arena* arena, prb_Str path, int oflags, mode_t mode) {
 }
 
 typedef struct prb_linux_Dirent64 {
-    uint64_t       d_ino;
-    int64_t        d_off;
+    uint64_t d_ino;
+    int64_t d_off;
     unsigned short d_reclen;
-    unsigned char  d_type;
-    char           d_name[];
+    unsigned char d_type;
+    char d_name[];
 } prb_linux_Dirent64;
 
 #endif
@@ -1134,20 +1294,15 @@ typedef struct prb_linux_Dirent64 {
 prb_PUBLICDEF bool
 prb_pathExists(prb_Arena* arena, prb_Str path) {
     bool result = false;
-
 #if prb_PLATFORM_WINDOWS
-
-#error unimplemented
-
+    prb_windows_GetFileStatResult stat = prb_windows_getFileStat(arena, path);
+    result = stat.success;
 #elif prb_PLATFORM_LINUX
-
     prb_linux_GetFileStatResult stat = prb_linux_getFileStat(arena, path);
     result = stat.success;
-
 #else
 #error unimplemented
 #endif
-
     return result;
 }
 
@@ -1156,7 +1311,11 @@ prb_pathIsAbsolute(prb_Str path) {
     bool result = false;
 #if prb_PLATFORM_WINDOWS
 
-#error unimplemented
+    // NOTE(khvorov) Paths like \file.txt are "absolute" according to microsoft but not according to me
+    // because they are still relative to the current volume.
+    bool doubleSlash = path.len >= 2 && prb_charIsSep(path.ptr[0]) && prb_charIsSep(path.ptr[1]);
+    bool disk = path.len >= 3 && path.ptr[1] == ':' && prb_charIsSep(path.ptr[2]);
+    result = doubleSlash || disk;
 
 #elif prb_PLATFORM_LINUX
 
@@ -1173,7 +1332,17 @@ prb_PUBLICDEF prb_Str
 prb_getAbsolutePath(prb_Arena* arena, prb_Str path) {
     prb_Str pathAbs = path;
     if (!prb_pathIsAbsolute(path)) {
-        pathAbs = prb_pathJoin(arena, prb_getWorkingDir(arena), path);
+        prb_Str cwd = prb_getWorkingDir(arena);
+        prb_Str toJoin = cwd;
+#if prb_PLATFORM_WINDOWS
+        // NOTE(khvorov) These are the semi-absolute \test.txt type paths
+        if (path.len > 0 && prb_charIsSep(path.ptr[0])) {
+            prb_PathEntryIter iter = prb_createPathEntryIter(cwd);
+            prb_assert(prb_pathEntryIterNext(&iter));
+            toJoin = iter.curEntryPath;
+        }
+#endif
+        pathAbs = prb_pathJoin(arena, toJoin, path);
     }
 
     prb_GrowingStr    gstr = prb_beginStr(arena);
@@ -1208,54 +1377,38 @@ prb_getAbsolutePath(prb_Arena* arena, prb_Str path) {
 prb_PUBLICDEF bool
 prb_isDir(prb_Arena* arena, prb_Str path) {
     bool result = false;
-
 #if prb_PLATFORM_WINDOWS
-
-    prb_Str pathNoTrailingSlash = path;
-    char    lastChar = path.ptr[path.len - 1];
-    if (prb_charIsSep(lastChar)) {
-        pathNoTrailingSlash = prb_stringCopy(path, 0, path.len - 2);
+    prb_windows_GetFileStatResult stat = prb_windows_getFileStat(arena, path);
+    if (stat.success) {
+        result = (stat.stat.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY;
     }
-    bool             result = false;
-    WIN32_FIND_DATAA findData;
-    HANDLE           findHandle = FindFirstFileA(pathNoTrailingSlash.ptr, &findData);
-    if (findHandle != INVALID_HANDLE_VALUE) {
-        result = (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) != 0;
-    }
-
 #elif prb_PLATFORM_LINUX
-
     prb_linux_GetFileStatResult stat = prb_linux_getFileStat(arena, path);
     if (stat.success) {
         result = S_ISDIR(stat.stat.st_mode);
     }
-
 #else
 #error unimplemented
 #endif
-
     return result;
 }
 
 prb_PUBLICDEF bool
 prb_isFile(prb_Arena* arena, prb_Str path) {
     bool result = false;
-
 #if prb_PLATFORM_WINDOWS
-
-#error unimplemented
-
+    prb_windows_GetFileStatResult stat = prb_windows_getFileStat(arena, path);
+    if (stat.success) {
+        result = (stat.stat.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0;
+    }
 #elif prb_PLATFORM_LINUX
-
     prb_linux_GetFileStatResult stat = prb_linux_getFileStat(arena, path);
     if (stat.success) {
         result = S_ISREG(stat.stat.st_mode);
     }
-
 #else
 #error unimplemented
 #endif
-
     return result;
 }
 
@@ -1271,108 +1424,89 @@ prb_dirIsEmpty(prb_Arena* arena, prb_Str path) {
 
 prb_PUBLICDEF prb_Status
 prb_createDirIfNotExists(prb_Arena* arena, prb_Str path) {
-    // TODO(khvorov) Make work when multiple levels are needed
-    prb_TempMemory temp = prb_beginTempMemory(arena);
-    const char*    pathNull = prb_strGetNullTerminated(arena, path);
-    prb_Status     result = prb_Success;
-
+    prb_TempMemory    temp = prb_beginTempMemory(arena);
+    prb_Status        result = prb_Success;
+    prb_Str           pathAbs = prb_getAbsolutePath(arena, path);
+    prb_PathEntryIter iter = prb_createPathEntryIter(pathAbs);
+    while (prb_pathEntryIterNext(&iter) && result == prb_Success) {
+        if (!prb_isDir(arena, iter.curEntryPath)) {
 #if prb_PLATFORM_WINDOWS
-
-    // TODO(khvorov) Check error
-    CreateDirectory(path.ptr, 0);
-
+            prb_windows_WideStr pathWide = prb_windows_getWidePath(arena, iter.curEntryPath);
+            result = CreateDirectoryW(pathWide.ptr, 0) != 0 ? prb_Success : prb_Failure;
 #elif prb_PLATFORM_LINUX
-
-    if (!prb_isDir(arena, path)) {
-        result = mkdir(pathNull, S_IRWXU | S_IRWXG | S_IRWXO) == 0 ? prb_Success : prb_Failure;
-    }
-
+            const char* pathNull = prb_strGetNullTerminated(arena, iter.curEntryPath);
+            result = mkdir(pathNull, S_IRWXU | S_IRWXG | S_IRWXO) == 0 ? prb_Success : prb_Failure;
 #else
 #error unimplemented
 #endif
-
+        }
+    }
     prb_endTempMemory(temp);
     return result;
 }
 
 prb_PUBLICDEF prb_Status
-prb_removeFileOrDirIfExists(prb_Arena* arena, prb_Str path) {
-    prb_Status result = prb_Failure;
-    if (prb_isDir(arena, path)) {
-        result = prb_removeDirIfExists(arena, path);
-    } else {
-        result = prb_removeFileIfExists(arena, path);
-    }
-    return result;
-}
-
-prb_PUBLICDEF prb_Status
-prb_removeFileIfExists(prb_Arena* arena, prb_Str path) {
-    prb_Status     result = prb_Success;
-    prb_TempMemory temp = prb_beginTempMemory(arena);
-    const char*    pathNull = prb_strGetNullTerminated(arena, path);
-
-#if prb_PLATFORM_WINDOWS
-
-#error unimplemented
-
-#elif prb_PLATFORM_LINUX
-
-    if (prb_isFile(arena, path)) {
-        result = unlink(pathNull) == 0 ? prb_Success : prb_Failure;
-    }
-
-#else
-#error unimplemented
-#endif
-
-    prb_endTempMemory(temp);
-    return result;
-}
-
-prb_PUBLICDEF prb_Status
-prb_removeDirIfExists(prb_Arena* arena, prb_Str path) {
+prb_removePathIfExists(prb_Arena* arena, prb_Str path) {
     prb_Status     result = prb_Success;
     prb_TempMemory temp = prb_beginTempMemory(arena);
 
-#if prb_PLATFORM_WINDOWS
-
-    const char*       pathNull = prb_strGetNullTerminated(arena, path);
-    prb_StringBuilder doubleNullBuilder = prb_createStringBuilder(path.len + 2);
-    prb_stringBuilderWrite(&doubleNullBuilder, path);
-    SHFileOperationA(&(SHFILEOPSTRUCTA) {
-        .wFunc = FO_DELETE,
-        .pFrom = doubleNullBuilder.string.ptr,
-        .fFlags = FOF_NO_UI,
-    });
-
-#elif prb_PLATFORM_LINUX
-
+    prb_Str*    toRemove = 0;
+    const char* pathNull = prb_strGetNullTerminated(arena, path);
+    prb_Str     pathNullStr = {pathNull, path.len};
+    prb_stbds_arrput(toRemove, pathNullStr);
     if (prb_isDir(arena, path)) {
-        prb_Str* entries = prb_getAllDirEntries(arena, path, prb_Recursive_Yes);
-        for (int32_t entryIndex = 0; entryIndex < prb_stbds_arrlen(entries) && result == prb_Success; entryIndex++) {
-            prb_Str entry = entries[entryIndex];
-            result = prb_removeFileOrDirIfExists(arena, entry);
-        }
-        prb_stbds_arrfree(entries);
-        if (result == prb_Success) {
-            prb_assert(prb_dirIsEmpty(arena, path));
-            const char* pathNull = prb_strGetNullTerminated(arena, path);
-            result = rmdir(pathNull) == 0 ? prb_Success : prb_Failure;
-        }
+        // NOTE(khvorov) These are null-terminated
+        prb_getAllDirEntriesCustomBuffer(arena, path, prb_Recursive_Yes, &toRemove);
     }
 
+    // NOTE(khvorov) Remove all files
+    for (int32_t entryIndex = 0; entryIndex < prb_stbds_arrlen(toRemove) && result == prb_Success; entryIndex++) {
+        prb_Str entry = toRemove[entryIndex];
+        if (prb_isFile(arena, entry)) {
+#if prb_PLATFORM_WINDOWS
+            prb_windows_WideStr entryWide = prb_windows_getWidePath(arena, entry);
+            if (DeleteFileW(entryWide.ptr) == 0) {
+                result = prb_Failure;
+                if (SetFileAttributesW(entryWide.ptr, FILE_ATTRIBUTE_NORMAL)) {
+                    if (DeleteFileW(entryWide.ptr)) {
+                        result = prb_Success;
+                    }
+                }
+            }
+#elif prb_PLATFORM_LINUX
+            result = unlink(entry.ptr) == 0 ? prb_Success : prb_Failure;
 #else
 #error unimplemented
 #endif
+        }
+    }
 
+    // NOTE(khvorov) Remove all directories in reverse order because
+    // getAllDirEntries puts the most nested ones at the bottom
+    for (int32_t entryIndex = (int32_t)prb_stbds_arrlen(toRemove) - 1; entryIndex >= 0 && result == prb_Success; entryIndex--) {
+        prb_Str entry = toRemove[entryIndex];
+        if (prb_isDir(arena, entry)) {
+#if prb_PLATFORM_WINDOWS
+            prb_windows_WideStr entryWide = prb_windows_getWidePath(arena, entry);
+            if (RemoveDirectoryW(entryWide.ptr) == 0) {
+                result = prb_Failure;
+            }
+#elif prb_PLATFORM_LINUX
+            result = rmdir(entry.ptr) == 0 ? prb_Success : prb_Failure;
+#else
+#error unimplemented
+#endif
+        }
+    }
+
+    prb_stbds_arrfree(toRemove);
     prb_endTempMemory(temp);
     return result;
 }
 
 prb_PUBLICDEF prb_Status
 prb_clearDir(prb_Arena* arena, prb_Str path) {
-    prb_Status result = prb_removeFileOrDirIfExists(arena, path);
+    prb_Status result = prb_removePathIfExists(arena, path);
     if (result == prb_Success) {
         result = prb_createDirIfNotExists(arena, path);
     }
@@ -1381,41 +1515,53 @@ prb_clearDir(prb_Arena* arena, prb_Str path) {
 
 prb_PUBLICDEF prb_Str
 prb_getWorkingDir(prb_Arena* arena) {
+    prb_Str result = {.ptr = 0, .len = 0};
+
 #if prb_PLATFORM_WINDOWS
 
-    // TODO(khvorov) Make sure long paths work
-    // TODO(khvorov) Check error
-    int32_t maxLen = MAX_PATH + 1;
-    char*   ptr = (char*)prb_allocAndZero(maxLen, 1);
-    GetCurrentDirectoryA(maxLen, ptr);
-    return ptr;
+    prb_arenaAlignFreePtr(arena, prb_alignof(uint16_t));
+    LPWSTR ptrWide = (LPWSTR)prb_arenaFreePtr(arena);
+    DWORD  lenWide = GetCurrentDirectoryW(prb_arenaFreeSize(arena) / sizeof(uint16_t), ptrWide);
+    prb_assert(lenWide > 0);
+    prb_arenaChangeUsed(arena, (int32_t)lenWide * (int32_t)sizeof(uint16_t));
+    result = prb_windows_strFromWideStr(arena, (prb_windows_WideStr) {ptrWide, (int32_t)lenWide});
+    // NOTE(khvorov) Change backslashes to forward slashes
+    for (int32_t index = 0; index < result.len; index++) {
+        if (result.ptr[index] == '\\') {
+            ((char*)result.ptr)[index] = '/';
+        }
+    }
 
 #elif prb_PLATFORM_LINUX
 
     char* ptr = (char*)prb_arenaFreePtr(arena);
     prb_assert(getcwd(ptr, prb_arenaFreeSize(arena)));
-    prb_Str result = prb_STR(ptr);
+    result = prb_STR(ptr);
     prb_arenaChangeUsed(arena, result.len);
     prb_arenaAllocAndZero(arena, 1, 1);  // NOTE(khvorov) Null terminator
-    return result;
 
 #else
 #error unimplemented
 #endif
+
+    return result;
 }
 
 prb_PUBLICDEF prb_Status
 prb_setWorkingDir(prb_Arena* arena, prb_Str dir) {
     prb_TempMemory temp = prb_beginTempMemory(arena);
-    const char*    dirNull = prb_strGetNullTerminated(arena, dir);
     prb_Status     result = prb_Failure;
 
 #if prb_PLATFORM_WINDOWS
 
-#error unimplemented
+    prb_windows_WideStr pathWide = prb_windows_getWidePath(arena, dir);
+    // NOTE(khvorov) Windows might want to add a trailing slash, so leave 2 null terminators at the end just in case
+    prb_arenaAllocAndZero(arena, 2, 1);
+    result = SetCurrentDirectoryW(pathWide.ptr) != 0 ? prb_Success : prb_Failure;
 
 #elif prb_PLATFORM_LINUX
 
+    const char* dirNull = prb_strGetNullTerminated(arena, dir);
     result = chdir(dirNull) == 0 ? prb_Success : prb_Failure;
 
 #else
@@ -1437,7 +1583,7 @@ prb_pathJoin(prb_Arena* arena, prb_Str path1, prb_Str path2) {
     char path2FirstChar = path2.ptr[0];
     bool path2StartsOnSep = prb_charIsSep(path2FirstChar);
     if (path2StartsOnSep) {
-        path2 = prb_strSliceForward(path2, 1);
+        path2 = prb_strSlice(path2, 1, path2.len);
     }
     prb_Str result = prb_fmt(arena, "%.*s/%.*s", prb_LIT(path1), prb_LIT(path2));
     return result;
@@ -1462,50 +1608,29 @@ prb_charIsSep(char ch) {
     return result;
 }
 
-prb_PUBLICDEF prb_StrFindResult
-prb_findSepBeforeLastEntry(prb_Str path) {
-    prb_StrFindSpec spec = {};
-    spec.str = path;
-    spec.pattern = prb_STR("/\\");
-    spec.mode = prb_StrFindMode_AnyChar;
-    spec.direction = prb_StrDirection_FromEnd;
-    prb_StrFindResult result = prb_strFind(spec);
-
-#if prb_PLATFORM_WINDOWS
-
-#error unimplemented
-
-#elif prb_PLATFORM_LINUX
-
-    // NOTE(khvorov) Ignore trailing slash. Root path '/' does not have a separator before it
-    if (result.found && result.matchByteIndex == spec.str.len - 1) {
-        spec.str.len -= 1;
-        result = prb_strFind(spec);
-    }
-
-#else
-#error unimplemented
-#endif
-
-    return result;
-}
-
 prb_PUBLICDEF prb_Str
 prb_getParentDir(prb_Arena* arena, prb_Str path) {
+    prb_assert(path.ptr && path.len > 0);
     prb_Str           pathAbs = prb_getAbsolutePath(arena, path);
-    prb_StrFindResult findResult = prb_findSepBeforeLastEntry(pathAbs);
-    prb_Str           result = findResult.found ? (prb_Str) {pathAbs.ptr, prb_max(findResult.matchByteIndex, 1)} : pathAbs;
+    prb_PathEntryIter iter = prb_createPathEntryIter(pathAbs);
+    while (prb_pathEntryIterNext(&iter)) {
+        prb_PathEntryIter iterCopy = iter;
+        if (prb_pathEntryIterNext(&iterCopy)) {
+            if (!prb_pathEntryIterNext(&iterCopy)) {
+                break;
+            }
+        }
+    }
+    prb_Str result = iter.curEntryPath;
     return result;
 }
 
 prb_PUBLICDEF prb_Str
 prb_getLastEntryInPath(prb_Str path) {
-    prb_StrFindResult findResult = prb_findSepBeforeLastEntry(path);
-    prb_Str           result = path;
-    if (findResult.found) {
-        prb_assert(path.len > 1);
-        result = prb_strSliceForward(path, findResult.matchByteIndex + 1);
-    }
+    prb_assert(path.ptr && path.len > 0);
+    prb_PathEntryIter iter = prb_createPathEntryIter(path);
+    while (prb_pathEntryIterNext(&iter)) {}
+    prb_Str result = iter.curEntryName;
     return result;
 }
 
@@ -1522,7 +1647,7 @@ prb_replaceExt(prb_Arena* arena, prb_Str path, prb_Str newExt) {
             break;
         }
     }
-    prb_Str result = {};
+    prb_Str result = {.ptr = 0, .len = 0};
     if (dotFound) {
         result = prb_fmt(arena, "%.*s.%.*s", dotIndex, path.ptr, prb_LIT(newExt));
     } else {
@@ -1533,7 +1658,8 @@ prb_replaceExt(prb_Arena* arena, prb_Str path, prb_Str newExt) {
 
 prb_PUBLICDEF prb_PathEntryIter
 prb_createPathEntryIter(prb_Str path) {
-    prb_PathEntryIter iter = {};
+    prb_PathEntryIter iter;
+    prb_memset(&iter, 0, sizeof(iter));
     iter.ogstr = path;
     return iter;
 }
@@ -1545,113 +1671,152 @@ prb_pathEntryIterNext(prb_PathEntryIter* iter) {
         result = prb_Success;
         int32_t oldOffset = iter->curOffset;
 
-        for (int32_t pathIndex = iter->curOffset; pathIndex < iter->ogstr.len; pathIndex++) {
-            char curCh = iter->ogstr.ptr[pathIndex];
-            if (prb_charIsSep(curCh)) {
-                iter->curOffset = pathIndex + 1;
-                break;
+        bool    sepFound = false;
+        int32_t firstFoundSepIndex = 0;
+        while (iter->curOffset < iter->ogstr.len && !sepFound) {
+            if (prb_charIsSep(iter->ogstr.ptr[iter->curOffset])) {
+                firstFoundSepIndex = iter->curOffset;
+
+#if prb_PLATFORM_WINDOWS
+                // NOTE(khvorov) Windows's //network type path
+                sepFound = !(iter->curOffset == 0 && iter->ogstr.len >= 2 && prb_charIsSep(iter->ogstr.ptr[1]));
+                if (!sepFound) {
+                    iter->curOffset = 2;
+                }
+#elif prb_PLATFORM_LINUX
+                sepFound = true;
+#else
+#error unimplemented
+#endif
+
+                // NOTE(khvorov) Ignore multiple separators in a row
+                while (iter->curOffset < iter->ogstr.len && prb_charIsSep(iter->ogstr.ptr[iter->curOffset])) {
+                    iter->curOffset += 1;
+                }
+            } else {
+                iter->curOffset += 1;
             }
         }
 
-        int32_t firstFoundSepIndex = iter->curOffset - 1;
-
-        // NOTE(khvorov) Did not find a separator
-        if (iter->curOffset == oldOffset) {
+        if (!sepFound) {
             firstFoundSepIndex = iter->ogstr.len;
-            iter->curOffset = iter->ogstr.len;
         }
 
-// NOTE(khvorov) Linux's root `/` path
-#if prb_PLATFORM_LINUX
+        // NOTE(khvorov) Linux's root `/` path. Also valid on windows (means relative to the root of the current volume)
         if (oldOffset == 0 && firstFoundSepIndex == 0) {
             firstFoundSepIndex = 1;
         }
-#endif
 
         prb_assert(firstFoundSepIndex > oldOffset);
-        iter->curEntryName = prb_strSliceBetween(iter->ogstr, oldOffset, firstFoundSepIndex);
-        iter->curEntryPath = prb_strSliceBetween(iter->ogstr, 0, firstFoundSepIndex);
-
-        // NOTE(khvorov) Ignore multiple separators in a row
-        while (iter->curOffset < iter->ogstr.len && prb_charIsSep(iter->ogstr.ptr[iter->curOffset])) {
-            iter->curOffset += 1;
-        }
+        iter->curEntryName = prb_strSlice(iter->ogstr, oldOffset, firstFoundSepIndex);
+        iter->curEntryPath = prb_strSlice(iter->ogstr, 0, firstFoundSepIndex);
     }
     return result;
+}
+
+prb_PUBLICDEF void
+prb_getAllDirEntriesCustomBuffer(prb_Arena* arena, prb_Str dir, prb_Recursive mode, prb_Str** storage) {
+    if (dir.ptr && dir.len > 0) {
+#if prb_PLATFORM_WINDOWS
+
+        prb_Str* dirs = 0;
+        prb_stbds_arrput(dirs, dir);
+
+        while (prb_stbds_arrlen(dirs) > 0) {
+            prb_Str          thisDir = prb_stbds_arrpop(dirs);
+            WIN32_FIND_DATAW findData;
+            prb_memset(&findData, 0, sizeof(findData));
+            prb_Str             pattern = prb_pathJoin(arena, thisDir, prb_STR("*"));
+            prb_windows_WideStr pathWide = prb_windows_getWidePath(arena, pattern);
+            HANDLE              handle = FindFirstFileExW(pathWide.ptr, FindExInfoStandard, &findData, FindExSearchNameMatch, 0, 0);
+            if (handle != INVALID_HANDLE_VALUE) {
+                for (;;) {
+                    prb_windows_WideStr fileNameWide = {findData.cFileName, prb_arrayCount(findData.cFileName)};
+                    bool                isDot = fileNameWide.ptr[0] == '.' && fileNameWide.ptr[1] == '\0';
+                    bool                isDoubleDot = fileNameWide.ptr[0] == '.' && fileNameWide.ptr[1] == '.' && fileNameWide.ptr[2] == '\0';
+                    if (!isDot && !isDoubleDot) {
+                        prb_Str filename = prb_windows_strFromWideStr(arena, fileNameWide);
+                        prb_Str filepath = prb_pathJoin(arena, thisDir, filename);
+                        prb_stbds_arrput(*storage, filepath);
+                        if (mode == prb_Recursive_Yes) {
+                            bool isDir = (findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == FILE_ATTRIBUTE_DIRECTORY;
+                            if (isDir) {
+                                prb_stbds_arrput(dirs, filepath);
+                            }
+                        }
+                    }
+                    if (FindNextFileW(handle, &findData) == 0) {
+                        FindClose(handle);
+                        break;
+                    }
+                }
+            }
+        }
+
+        prb_stbds_arrfree(dirs);
+
+#elif prb_PLATFORM_LINUX
+
+        prb_Str* dirs = 0;
+        prb_stbds_arrput(dirs, dir);
+
+        while (prb_stbds_arrlen(dirs) > 0) {
+            prb_Str thisDir = prb_stbds_arrpop(dirs);
+            prb_linux_OpenResult openRes = prb_linux_open(arena, thisDir, O_RDONLY | O_DIRECTORY, 0);
+            if (openRes.success) {
+                prb_arenaAlignFreePtr(arena, prb_alignof(prb_linux_Dirent64));
+                prb_linux_Dirent64* buf = (prb_linux_Dirent64*)(prb_arenaFreePtr(arena));
+                long syscallReturn = syscall(SYS_getdents64, openRes.handle, buf, prb_arenaFreeSize(arena));
+                if (syscallReturn > 0) {
+                    prb_arenaChangeUsed(arena, syscallReturn);
+                    for (long offset = 0; offset < syscallReturn;) {
+                        prb_linux_Dirent64* ent = (prb_linux_Dirent64*)((uint8_t*)buf + offset);
+                        bool isDot = ent->d_name[0] == '.' && ent->d_name[1] == '\0';
+                        bool isDoubleDot = ent->d_name[0] == '.' && ent->d_name[1] == '.' && ent->d_name[2] == '\0';
+                        if (!isDot && !isDoubleDot) {
+                            prb_Str fullpath = prb_pathJoin(arena, thisDir, prb_STR(ent->d_name));
+                            if (mode == prb_Recursive_Yes) {
+                                bool isDir = ent->d_type == DT_DIR;
+                                if (!isDir && ent->d_type == DT_UNKNOWN) {
+                                    isDir = prb_isDir(arena, fullpath);
+                                }
+                                if (isDir) {
+                                    prb_stbds_arrput(dirs, fullpath);
+                                }
+                            }
+                            prb_stbds_arrput(*storage, fullpath);
+                        }
+                        offset += ent->d_reclen;
+                    }
+                }
+            }
+        }
+
+        prb_stbds_arrfree(dirs);
+
+#else
+#error unimplemented
+#endif
+    }
 }
 
 prb_PUBLICDEF prb_Str*
 prb_getAllDirEntries(prb_Arena* arena, prb_Str dir, prb_Recursive mode) {
     prb_Str* entries = 0;
-
-#if prb_PLATFORM_WINDOWS
-
-#error unimplemented
-
-#elif prb_PLATFORM_LINUX
-
-    prb_Str* dirs = 0;
-    prb_stbds_arrput(dirs, dir);
-
-    while (prb_stbds_arrlen(dirs) > 0) {
-        prb_Str              thisDir = prb_stbds_arrpop(dirs);
-        prb_linux_OpenResult openRes = prb_linux_open(arena, thisDir, O_RDONLY | O_DIRECTORY, 0);
-        if (openRes.success) {
-            prb_arenaAlignFreePtr(arena, alignof(prb_linux_Dirent64));
-            prb_linux_Dirent64* buf = (prb_linux_Dirent64*)(prb_arenaFreePtr(arena));
-            long                syscallReturn = syscall(SYS_getdents64, openRes.handle, buf, prb_arenaFreeSize(arena));
-            if (syscallReturn > 0) {
-                prb_arenaChangeUsed(arena, syscallReturn);
-                for (long offset = 0; offset < syscallReturn;) {
-                    prb_linux_Dirent64* ent = (prb_linux_Dirent64*)((uint8_t*)buf + offset);
-                    bool                isDot = ent->d_name[0] == '.' && ent->d_name[1] == '\0';
-                    bool                isDoubleDot = ent->d_name[0] == '.' && ent->d_name[1] == '.' && ent->d_name[2] == '\0';
-                    if (!isDot && !isDoubleDot) {
-                        prb_Str fullpath = prb_pathJoin(arena, thisDir, prb_STR(ent->d_name));
-                        if (mode == prb_Recursive_Yes) {
-                            bool isDir = ent->d_type == DT_DIR;
-                            if (!isDir && ent->d_type == DT_UNKNOWN) {
-                                isDir = prb_isDir(arena, fullpath);
-                            }
-                            if (isDir) {
-                                prb_stbds_arrput(dirs, fullpath);
-                            }
-                        }
-                        prb_stbds_arrput(entries, fullpath);
-                    }
-                    offset += ent->d_reclen;
-                }
-            }
-        }
-    }
-
-    prb_stbds_arrfree(dirs);
-
-#else
-#error unimplemented
-#endif
-
+    prb_getAllDirEntriesCustomBuffer(arena, dir, mode, &entries);
     return entries;
 }
 
 prb_PUBLICDEF prb_FileTimestamp
 prb_getLastModified(prb_Arena* arena, prb_Str path) {
-    prb_FileTimestamp result = {};
+    prb_FileTimestamp result = {.valid = false, .timestamp = 0};
 
 #if prb_PLATFORM_WINDOWS
 
-    WIN32_FIND_DATAA findData = {};
-    HANDLE           firstHandle = FindFirstFileA(pattern, &findData);
-    if (firstHandle != INVALID_HANDLE_VALUE) {
-        uint64_t thisLastMod =
-            ((uint64_t)findData.ftLastWriteTime.dwHighDateTime << 32) | findData.ftLastWriteTime.dwLowDateTime;
-        result = prb_max(result, thisLastMod);
-        while (FindNextFileA(firstHandle, &findData)) {
-            thisLastMod =
-                ((uint64_t)findData.ftLastWriteTime.dwHighDateTime << 32) | findData.ftLastWriteTime.dwLowDateTime;
-            result = prb_max(result, thisLastMod);
-        }
-        FindClose(firstHandle);
+    prb_windows_GetFileStatResult stat = prb_windows_getFileStat(arena, path);
+    if (stat.success) {
+        result.valid = true;
+        result.timestamp = ((uint64_t)stat.stat.ftLastWriteTime.dwHighDateTime << 32) | stat.stat.ftLastWriteTime.dwLowDateTime;
     }
 
 #elif prb_PLATFORM_LINUX
@@ -1673,8 +1838,7 @@ prb_getLastModified(prb_Arena* arena, prb_Str path) {
 
 prb_PUBLICDEF prb_Multitime
 prb_createMultitime(void) {
-    prb_Multitime result = {};
-    result.timeEarliest = UINT64_MAX;
+    prb_Multitime result = {.validAddedTimestampsCount = 0, .invalidAddedTimestampsCount = 0, .timeLatest = 0, .timeEarliest = UINT64_MAX};
     return result;
 }
 
@@ -1691,11 +1855,31 @@ prb_multitimeAdd(prb_Multitime* multitime, prb_FileTimestamp newTimestamp) {
 
 prb_PUBLICDEF prb_ReadEntireFileResult
 prb_readEntireFile(prb_Arena* arena, prb_Str path) {
-    prb_ReadEntireFileResult result = {};
+    prb_ReadEntireFileResult result;
+    prb_memset(&result, 0, sizeof(result));
 
 #if prb_PLATFORM_WINDOWS
 
-#error unimplemented
+    prb_windows_OpenResult handle = prb_windows_open(arena, path, GENERIC_READ, FILE_SHARE_READ, OPEN_EXISTING, 0);
+    if (handle.success) {
+        LARGE_INTEGER size;
+        prb_memset(&size, 0, sizeof(size));
+        if (GetFileSizeEx(handle.handle, &size)) {
+            prb_assert(size.QuadPart <= INT32_MAX);
+            int32_t  bytesToRead = (int32_t)size.QuadPart;
+            uint8_t* buf = (uint8_t*)prb_arenaAllocAndZero(arena, bytesToRead, 1);
+            DWORD    bytesRead = 0;
+            if (ReadFile(handle.handle, buf, (DWORD)bytesToRead, &bytesRead, 0)) {
+                prb_assert(bytesRead <= INT32_MAX);
+                if ((int32_t)bytesRead == bytesToRead) {
+                    result.success = true;
+                    result.content.data = buf;
+                    result.content.len = (int32_t)bytesRead;
+                }
+            }
+        }
+        CloseHandle(handle.handle);
+    }
 
 #elif prb_PLATFORM_LINUX
 
@@ -1704,7 +1888,7 @@ prb_readEntireFile(prb_Arena* arena, prb_Str path) {
         struct stat statBuf = {};
         if (fstat(handle.handle, &statBuf) == 0) {
             uint8_t* buf = (uint8_t*)prb_arenaAllocAndZero(arena, statBuf.st_size + 1, 1);  // NOTE(sen) Null terminator just in case
-            int32_t  readResult = read(handle.handle, buf, statBuf.st_size);
+            int32_t readResult = read(handle.handle, buf, statBuf.st_size);
             if (readResult == statBuf.st_size) {
                 result.success = true;
                 result.content = (prb_Bytes) {buf, readResult};
@@ -1722,60 +1906,44 @@ prb_readEntireFile(prb_Arena* arena, prb_Str path) {
 
 prb_PUBLICDEF prb_Status
 prb_writeEntireFile(prb_Arena* arena, prb_Str path, const void* content, int32_t contentLen) {
-    // TODO(khvorov) Create required directories when they don't exist
-    prb_Status result = prb_Failure;
-
+    prb_assert(contentLen >= 0);
+    prb_TempMemory temp = prb_beginTempMemory(arena);
+    prb_Status     result = prb_Failure;
+    prb_Str        parent = prb_getParentDir(arena, path);
+    if (prb_createDirIfNotExists(arena, parent)) {
 #if prb_PLATFORM_WINDOWS
-
-#error unimplemented
-
+        prb_windows_OpenResult handle = prb_windows_open(arena, path, GENERIC_WRITE, 0, CREATE_ALWAYS, 0);
+        if (handle.success) {
+            DWORD bytesWritten = 0;
+            if (WriteFile(handle.handle, content, (DWORD)contentLen, &bytesWritten, 0)) {
+                prb_assert(bytesWritten <= INT32_MAX);
+                result = (int32_t)bytesWritten == contentLen ? prb_Success : prb_Failure;
+            }
+            CloseHandle(handle.handle);
+        }
 #elif prb_PLATFORM_LINUX
-
-    prb_linux_OpenResult handle = prb_linux_open(arena, path, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
-    if (handle.success) {
-        ssize_t writeResult = write(handle.handle, content, contentLen);
-        result = writeResult == contentLen ? prb_Success : prb_Failure;
-        close(handle.handle);
-    }
-
+        prb_linux_OpenResult handle = prb_linux_open(arena, path, O_CREAT | O_TRUNC | O_WRONLY, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
+        if (handle.success) {
+            ssize_t writeResult = write(handle.handle, content, contentLen);
+            result = writeResult == contentLen ? prb_Success : prb_Failure;
+            close(handle.handle);
+        }
 #else
 #error unimplemented
 #endif
-
-    return result;
-}
-
-prb_PUBLICDEF prb_Str
-prb_binaryToCArray(prb_Arena* arena, prb_Str arrayName, void* data, int32_t dataLen) {
-    prb_GrowingStr arrayGstr = prb_beginStr(arena);
-    prb_addStrSegment(&arrayGstr, "unsigned char %.*s[] = {\n    ", prb_LIT(arrayName));
-    for (int32_t byteIndex = 0; byteIndex < dataLen; byteIndex++) {
-        uint8_t byte = ((uint8_t*)data)[byteIndex];
-        prb_addStrSegment(&arrayGstr, "0x%x", byte);
-        if (byteIndex != dataLen - 1) {
-            prb_addStrSegment(&arrayGstr, ",");
-            if ((byteIndex + 1) % 10 == 0) {
-                prb_addStrSegment(&arrayGstr, "\n    ");
-            } else {
-                prb_addStrSegment(&arrayGstr, " ");
-            }
-        } else {
-            prb_addStrSegment(&arrayGstr, "\n");
-        }
     }
-    prb_addStrSegment(&arrayGstr, "};");
-    prb_Str arrayStr = prb_endStr(&arrayGstr);
-    return arrayStr;
+    prb_endTempMemory(temp);
+    return result;
 }
 
 prb_PUBLICDEF prb_FileHash
 prb_getFileHash(prb_Arena* arena, prb_Str filepath) {
-    prb_FileHash             result = {};
+    prb_FileHash             result = {.valid = false, .hash = 0};
     prb_TempMemory           temp = prb_beginTempMemory(arena);
     prb_ReadEntireFileResult readRes = prb_readEntireFile(arena, filepath);
     if (readRes.success) {
         result.valid = true;
-        result.hash = prb_stbds_hash_bytes(readRes.content.data, readRes.content.len, 1);
+        result.hash = prb_stbds_hash_bytes(readRes.content.data, (size_t)readRes.content.len, (size_t)1);
     }
     prb_endTempMemory(temp);
     return result;
@@ -1795,15 +1963,8 @@ prb_streq(prb_Str str1, prb_Str str2) {
 }
 
 prb_PUBLICDEF prb_Str
-prb_strSliceForward(prb_Str str, int32_t bytes) {
-    prb_assert(bytes <= str.len);
-    prb_Str result = {str.ptr + bytes, str.len - bytes};
-    return result;
-}
-
-prb_PUBLICDEF prb_Str
-prb_strSliceBetween(prb_Str str, int32_t start, int32_t onePastEnd) {
-    prb_assert(onePastEnd > start);
+prb_strSlice(prb_Str str, int32_t start, int32_t onePastEnd) {
+    prb_assert(onePastEnd >= start);
     prb_Str result = {str.ptr + start, onePastEnd - start};
     return result;
 }
@@ -1812,16 +1973,6 @@ prb_PUBLICDEF const char*
 prb_strGetNullTerminated(prb_Arena* arena, prb_Str str) {
     const char* result = prb_fmt(arena, "%.*s", prb_LIT(str)).ptr;
     return result;
-}
-
-prb_PUBLICDEF prb_Str
-prb_strMallocCopy(prb_Str str) {
-    prb_Str copy = {};
-    copy.len = str.len;
-    copy.ptr = (const char*)prb_malloc(str.len + 1);
-    prb_memcpy((char*)copy.ptr, str.ptr, str.len);
-    ((char*)copy.ptr)[copy.len] = '\0';
-    return copy;
 }
 
 prb_PUBLICDEF prb_Str
@@ -1855,7 +2006,7 @@ prb_strTrimSide(prb_Str str, prb_StrDirection dir) {
 
     if (found) {
         switch (dir) {
-            case prb_StrDirection_FromStart: result = prb_strSliceForward(str, index); break;
+            case prb_StrDirection_FromStart: result = prb_strSlice(str, index, str.len); break;
             case prb_StrDirection_FromEnd: result.len = index + 1; break;
         }
     } else {
@@ -1873,98 +2024,95 @@ prb_strTrim(prb_Str str) {
 }
 
 prb_PUBLICDEF prb_StrFindResult
-prb_strFind(prb_StrFindSpec spec) {
-    prb_assert(spec.str.ptr && spec.pattern.ptr && spec.str.len >= 0 && spec.pattern.len >= 0);
-    prb_StrFindResult result = {};
+prb_strFind(prb_Str str, prb_StrFindSpec spec) {
+    prb_StrFindResult result;
+    prb_memset(&result, 0, sizeof(result));
 
-    if (spec.pattern.len > 0) {
-        prb_StrFindMode mode = spec.mode;
-        if (spec.pattern.len == 1 && mode == prb_StrFindMode_Exact) {
-            mode = prb_StrFindMode_AnyChar;
-        }
+    prb_StrFindMode mode = spec.mode;
+    if (spec.pattern.len == 1 && mode == prb_StrFindMode_Exact) {
+        mode = prb_StrFindMode_AnyChar;
+    }
 
-        switch (mode) {
-            case prb_StrFindMode_Exact: {
-                // Raita string matching algorithm
-                // https://en.wikipedia.org/wiki/Raita_algorithm
+    switch (mode) {
+        case prb_StrFindMode_Exact: {
+            // Raita string matching algorithm
+            // https://en.wikipedia.org/wiki/Raita_algorithm
 
-                if (spec.str.len >= spec.pattern.len) {
-                    uint8_t* str = (uint8_t*)spec.str.ptr;
-                    uint8_t* pat = (uint8_t*)spec.pattern.ptr;
-                    int32_t  charOffsets[256];
+            if (str.len >= spec.pattern.len && spec.pattern.len > 0) {
+                uint8_t* bstr = (uint8_t*)str.ptr;
+                uint8_t* pat = (uint8_t*)spec.pattern.ptr;
+                int32_t  charOffsets[256];
 
-                    for (int32_t i = 0; i < 256; ++i) {
-                        charOffsets[i] = spec.pattern.len;
-                    }
+                for (int32_t i = 0; i < 256; ++i) {
+                    charOffsets[i] = spec.pattern.len;
+                }
 
-                    {
-                        int32_t from = 0;
-                        int32_t to = spec.pattern.len - 1;
-                        int32_t delta = 1;
-                        if (spec.direction == prb_StrDirection_FromEnd) {
-                            from = spec.pattern.len - 1;
-                            to = 0;
-                            delta = -1;
-                        }
-
-                        int32_t count = 0;
-                        for (int32_t i = from; i != to; i += delta) {
-                            uint8_t patternChar = pat[i];
-                            charOffsets[patternChar] = spec.pattern.len - count++ - 1;
-                        }
-
-                        if (spec.direction == prb_StrDirection_FromEnd) {
-                            for (int32_t i = 0; i < 256; ++i) {
-                                charOffsets[i] *= -1;
-                            }
-                        }
-                    }
-
-                    uint8_t patFirstCh = pat[0];
-                    uint8_t patMiddleCh = pat[spec.pattern.len / 2];
-                    uint8_t patLastCh = pat[spec.pattern.len - 1];
-
-                    if (spec.direction == prb_StrDirection_FromEnd && spec.str.len < 0) {
-                        spec.str.len = prb_strlen(spec.str.ptr);
-                    }
-
-                    int32_t off = 0;
+                {
+                    int32_t from = 0;
+                    int32_t to = spec.pattern.len - 1;
+                    int32_t delta = 1;
                     if (spec.direction == prb_StrDirection_FromEnd) {
-                        off = spec.str.len - spec.pattern.len;
+                        from = spec.pattern.len - 1;
+                        to = 0;
+                        delta = -1;
                     }
 
-                    for (;;) {
-                        bool notEnoughStrLeft = false;
-                        switch (spec.direction) {
-                            case prb_StrDirection_FromStart: notEnoughStrLeft = off + spec.pattern.len > spec.str.len; break;
-                            case prb_StrDirection_FromEnd: notEnoughStrLeft = off < 0; break;
-                        }
+                    int32_t count = 0;
+                    for (int32_t i = from; i != to; i += delta) {
+                        uint8_t patternChar = pat[i];
+                        charOffsets[patternChar] = spec.pattern.len - count++ - 1;
+                    }
 
-                        if (notEnoughStrLeft) {
-                            break;
+                    if (spec.direction == prb_StrDirection_FromEnd) {
+                        for (int32_t i = 0; i < 256; ++i) {
+                            charOffsets[i] *= -1;
                         }
-
-                        uint8_t strFirstChar = str[off];
-                        uint8_t strLastCh = str[off + spec.pattern.len - 1];
-                        if (patLastCh == strLastCh && patMiddleCh == str[off + spec.pattern.len / 2] && patFirstCh == strFirstChar
-                            && prb_memeq(pat + 1, str + off + 1, spec.pattern.len - 2)) {
-                            result.found = true;
-                            result.matchByteIndex = off;
-                            result.matchLen = spec.pattern.len;
-                            break;
-                        }
-
-                        uint8_t relChar = strLastCh;
-                        if (spec.direction == prb_StrDirection_FromEnd) {
-                            relChar = strFirstChar;
-                        }
-                        off += charOffsets[relChar];
                     }
                 }
-            } break;
 
-            case prb_StrFindMode_AnyChar: {
-                for (prb_Utf8CharIter iter = prb_createUtf8CharIter(spec.str, spec.direction);
+                uint8_t patFirstCh = pat[0];
+                uint8_t patMiddleCh = pat[spec.pattern.len / 2];
+                uint8_t patLastCh = pat[spec.pattern.len - 1];
+
+                int32_t off = 0;
+                if (spec.direction == prb_StrDirection_FromEnd) {
+                    off = str.len - spec.pattern.len;
+                }
+
+                for (;;) {
+                    bool notEnoughStrLeft = false;
+                    switch (spec.direction) {
+                        case prb_StrDirection_FromStart: notEnoughStrLeft = off + spec.pattern.len > str.len; break;
+                        case prb_StrDirection_FromEnd: notEnoughStrLeft = off < 0; break;
+                    }
+
+                    if (notEnoughStrLeft) {
+                        break;
+                    }
+
+                    uint8_t strFirstChar = bstr[off];
+                    uint8_t strLastCh = bstr[off + spec.pattern.len - 1];
+                    if (patLastCh == strLastCh && patMiddleCh == bstr[off + spec.pattern.len / 2] && patFirstCh == strFirstChar
+                        && prb_memeq(pat + 1, bstr + off + 1, spec.pattern.len - 2)) {
+                        result.found = true;
+                        result.beforeMatch = prb_strSlice(str, 0, off);
+                        result.match = prb_strSlice(str, off, off + spec.pattern.len);
+                        result.afterMatch = prb_strSlice(str, off + spec.pattern.len, str.len);
+                        break;
+                    }
+
+                    uint8_t relChar = strLastCh;
+                    if (spec.direction == prb_StrDirection_FromEnd) {
+                        relChar = strFirstChar;
+                    }
+                    off += charOffsets[relChar];
+                }
+            }
+        } break;
+
+        case prb_StrFindMode_AnyChar: {
+            if (str.len > 0) {
+                for (prb_Utf8CharIter iter = prb_createUtf8CharIter(str, spec.direction);
                      prb_utf8CharIterNext(&iter) == prb_Success && !result.found;) {
                     if (iter.curIsValid) {
                         for (prb_Utf8CharIter patIter = prb_createUtf8CharIter(spec.pattern, prb_StrDirection_FromStart);
@@ -1972,79 +2120,71 @@ prb_strFind(prb_StrFindSpec spec) {
                             if (patIter.curIsValid) {
                                 if (iter.curUtf32Char == patIter.curUtf32Char) {
                                     result.found = true;
-                                    result.matchByteIndex = iter.curByteOffset;
-                                    result.matchLen = iter.curUtf8Bytes;
+                                    result.beforeMatch = prb_strSlice(str, 0, iter.curByteOffset);
+                                    result.match = prb_strSlice(str, iter.curByteOffset, iter.curByteOffset + iter.curUtf8Bytes);
+                                    result.afterMatch = prb_strSlice(str, iter.curByteOffset + iter.curUtf8Bytes, str.len);
                                     break;
                                 }
                             }
                         }
                     }
                 }
-            } break;
 
-            case prb_StrFindMode_RegexPosix: {
-                prb_TempMemory temp = prb_beginTempMemory(spec.regexPosix.arena);
-
-                regex_t     regexCompiled = {};
-                const char* pat = prb_strGetNullTerminated(spec.regexPosix.arena, spec.pattern);
-                int         compResult = regcomp(&regexCompiled, pat, REG_EXTENDED);
-                prb_assert(compResult == 0);
-                regmatch_t  pos = {};
-                const char* str = prb_strGetNullTerminated(spec.regexPosix.arena, spec.str);
-                int         execResult = regexec(&regexCompiled, str, 1, &pos, 0);
-                if (execResult == 0) {
-                    result.found = true;
-                    result.matchByteIndex = pos.rm_so;
-                    result.matchLen = pos.rm_eo - pos.rm_so;
-
-                    // NOTE(khvorov) Match forward and report last result.
-                    // Janky, but I don't want to implement sane backwards regex matching myself.
+                if (!result.found && spec.alwaysMatchEnd) {
+                    int32_t matchPos = str.len;
                     if (spec.direction == prb_StrDirection_FromEnd) {
-                        while (regexec(&regexCompiled, str + result.matchByteIndex + result.matchLen, 1, &pos, 0) == 0) {
-                            result.matchByteIndex += result.matchLen + pos.rm_so;
-                            result.matchLen = pos.rm_eo - pos.rm_so;
-                        }
+                        matchPos = 0;
+                    }
+                    result.found = true;
+                    result.beforeMatch = prb_strSlice(str, 0, matchPos);
+                    result.match = prb_strSlice(str, matchPos, matchPos);
+                    result.afterMatch = prb_strSlice(str, matchPos, str.len);
+                }
+            }
+        } break;
+
+        case prb_StrFindMode_LineBreak: {
+            if (str.len > 0) {
+                int32_t start = 0;
+                int32_t onePastEnd = str.len;
+                int32_t delta = 1;
+                if (spec.direction == prb_StrDirection_FromEnd) {
+                    start = str.len - 1;
+                    onePastEnd = -1;
+                    delta = -1;
+                }
+
+                bool    found = false;
+                int32_t index = start;
+                for (; index != onePastEnd; index += delta) {
+                    char ch = str.ptr[index];
+                    if (ch == '\n' || ch == '\r') {
+                        found = true;
+                        break;
                     }
                 }
 
-                regfree(&regexCompiled);
-                prb_endTempMemory(temp);
-            } break;
+                int32_t lineEndLen = 0;
+                if (found) {
+                    lineEndLen = 1;
+                    bool isForwardDouble = spec.direction == prb_StrDirection_FromStart && index + 1 < str.len && str.ptr[index] == '\r' && str.ptr[index + 1] == '\n';
+                    bool isBackwardDouble = spec.direction == prb_StrDirection_FromEnd && index - 1 >= 0 && str.ptr[index] == '\n' && str.ptr[index - 1] == '\r';
+                    if (isForwardDouble || isBackwardDouble) {
+                        lineEndLen = 2;
+                    }
+                }
+
+                int32_t lineEndIndex = index;
+                if (spec.direction == prb_StrDirection_FromEnd) {
+                    lineEndIndex = index - lineEndLen + 1;
+                }
+
+                result.found = true;
+                result.beforeMatch = prb_strSlice(str, 0, lineEndIndex);
+                result.match = prb_strSlice(str, lineEndIndex, lineEndIndex + lineEndLen);
+                result.afterMatch = prb_strSlice(str, lineEndIndex + lineEndLen, str.len);
+            }
         }
-    }
-
-    return result;
-}
-
-prb_PUBLICDEF prb_StrFindIter
-prb_createStrFindIter(prb_StrFindSpec spec) {
-    prb_StrFindIter iter = {.spec = spec, .curResult = (prb_StrFindResult) {}, .curMatchCount = 0};
-    return iter;
-}
-
-prb_PUBLICDEF prb_Status
-prb_strFindIterNext(prb_StrFindIter* iter) {
-    prb_StrFindSpec spec = iter->spec;
-    int32_t         strOffset = 0;
-    if (iter->curResult.found) {
-        switch (spec.direction) {
-            case prb_StrDirection_FromStart:
-                strOffset = iter->curResult.matchByteIndex + iter->curResult.matchLen;
-                spec.str = prb_strSliceForward(spec.str, strOffset);
-                break;
-            case prb_StrDirection_FromEnd:
-                spec.str.len = iter->curResult.matchByteIndex;
-        }
-    }
-
-    iter->curResult = prb_strFind(spec);
-    prb_Status result = prb_Failure;
-    if (iter->curResult.found) {
-        result = prb_Success;
-        if (spec.direction == prb_StrDirection_FromStart) {
-            iter->curResult.matchByteIndex += strOffset;
-        }
-        iter->curMatchCount += 1;
     }
 
     return result;
@@ -2064,26 +2204,6 @@ prb_strEndsWith(prb_Str str, prb_Str pattern) {
     bool result = false;
     if (str.len > pattern.len) {
         result = prb_memeq(str.ptr + str.len - pattern.len, pattern.ptr, pattern.len);
-    }
-    return result;
-}
-
-prb_PUBLICDEF prb_Str
-prb_strReplace(prb_Arena* arena, prb_StrFindSpec spec, prb_Str replacement) {
-    prb_Str           result = spec.str;
-    prb_StrFindResult findResult = prb_strFind(spec);
-    if (findResult.found) {
-        prb_Str strAfterMatch = prb_strSliceForward(spec.str, findResult.matchByteIndex + findResult.matchLen);
-        result = prb_fmt(
-            arena,
-            "%.*s%.*s%.*s",
-            findResult.matchByteIndex,
-            spec.str.ptr,
-            replacement.len,
-            replacement.ptr,
-            strAfterMatch.len,
-            strAfterMatch.ptr
-        );
     }
     return result;
 }
@@ -2128,7 +2248,7 @@ prb_endStr(prb_GrowingStr* gstr) {
     gstr->arena->lockedForStr = false;
     prb_arenaAllocAndZero(gstr->arena, 1, 1);  // NOTE(khvorov) Null terminator
     prb_Str result = gstr->str;
-    *gstr = (prb_GrowingStr) {};
+    prb_memset(gstr, 0, sizeof(*gstr));
     return result;
 }
 
@@ -2157,7 +2277,7 @@ prb_writeToStdout(prb_Str msg) {
 #if prb_PLATFORM_WINDOWS
 
     HANDLE out = GetStdHandle(STD_OUTPUT_HANDLE);
-    WriteFile(out, msg.ptr, msg.len, 0, 0);
+    WriteFile(out, msg.ptr, (DWORD)msg.len, 0, 0);
 
 #elif prb_PLATFORM_LINUX
 
@@ -2181,7 +2301,7 @@ prb_writelnToStdout(prb_Arena* arena, prb_Str str) {
 
 prb_PUBLICDEF prb_Str
 prb_colorEsc(prb_ColorID color) {
-    prb_Str str = {};
+    prb_Str str = {.ptr = 0, .len = 0};
     switch (color) {
         case prb_ColorID_Reset: str = prb_STR("\x1b[0m"); break;
         case prb_ColorID_Black: str = prb_STR("\x1b[30m"); break;
@@ -2249,7 +2369,7 @@ prb_utf8CharIterNext(prb_Utf8CharIter* iter) {
         int32_t  chBytes = 0;
         bool     isValid = false;
 
-        uint8_t firstByte = iter->str.ptr[iter->curByteOffset];
+        uint8_t firstByte = (uint8_t)iter->str.ptr[iter->curByteOffset];
         bool    isAscii = firstByte < 0b10000000;
         if (isAscii) {
             isValid = true;
@@ -2273,9 +2393,9 @@ prb_utf8CharIterNext(prb_Utf8CharIter* iter) {
                                 chBytes = 4;
                             }
                         }
-                        ch = firstByte & firstByteMask[chBytes - 2];
+                        ch = (uint32_t)(firstByte & firstByteMask[chBytes - 2]);
                         for (int32_t byteIndex = 1; byteIndex < chBytes; byteIndex++) {
-                            uint8_t byte = iter->str.ptr[iter->curByteOffset + byteIndex];
+                            uint8_t byte = (uint8_t)iter->str.ptr[iter->curByteOffset + byteIndex];
                             if (byte >= 0b10000000 && byte < 0b11000000) {
                                 ch = (ch << 6) | (byte & 0b00111111);
                             } else {
@@ -2288,10 +2408,10 @@ prb_utf8CharIterNext(prb_Utf8CharIter* iter) {
 
                 case prb_StrDirection_FromEnd: {
                     if (firstByte < 0b11000000) {
-                        ch = firstByte & 0b00111111;
+                        ch = (uint32_t)(firstByte & 0b00111111);
                         int32_t maxExtraBytes = prb_min(3, iter->curByteOffset);
                         for (int32_t byteIndex = 0; byteIndex < maxExtraBytes; byteIndex++) {
-                            uint8_t byte = iter->str.ptr[iter->curByteOffset - 1 - byteIndex];
+                            uint8_t byte = (uint8_t)iter->str.ptr[iter->curByteOffset - 1 - byteIndex];
                             int32_t chBytesTaken = 6 * (byteIndex + 1);
                             if (byte >= 0b10000000 && byte < 0b11000000) {
                                 ch = ((byte & 0b00111111) << chBytesTaken) | ch;
@@ -2334,116 +2454,283 @@ prb_utf8CharIterNext(prb_Utf8CharIter* iter) {
     return result;
 }
 
-prb_PUBLICDEF prb_LineIter
-prb_createLineIter(prb_Str str) {
+prb_PUBLICDEF prb_StrScanner
+prb_createStrScanner(prb_Str str) {
     prb_assert(str.ptr && str.len >= 0);
-    prb_LineIter iter = {
+    prb_StrScanner iter = {
         .ogstr = str,
-        .curLineCount = 0,
-        .curByteOffset = 0,
-        .curLine = (prb_Str) {},
-        .curLineEndLen = 0,
+        .beforeMatch = prb_strSlice(str, 0, 0),
+        .match = str,
+        .afterMatch = str,
+        .matchCount = 0,
+        .betweenLastMatches = prb_strSlice(str, 0, 0),
     };
+    iter.match.len = 0;
     return iter;
 }
 
 prb_PUBLICDEF prb_Status
-prb_lineIterNext(prb_LineIter* iter) {
+prb_strScannerMove(prb_StrScanner* scanner, prb_StrFindSpec spec, prb_StrScannerSide side) {
     prb_Status result = prb_Failure;
 
-    iter->curByteOffset += iter->curLine.len + iter->curLineEndLen;
-    iter->curLine = (prb_Str) {};
-    iter->curLineEndLen = 0;
+    prb_Str search = scanner->afterMatch;
+    if (side == prb_StrScannerSide_BeforeMatch) {
+        search = scanner->beforeMatch;
+    }
 
-    if (iter->curByteOffset < iter->ogstr.len) {
-        iter->curLine = prb_strSliceForward(iter->ogstr, iter->curByteOffset);
-        prb_StrFindSpec spec = {};
-        spec.str = iter->curLine;
-        spec.pattern = prb_STR("\r\n");
-        spec.mode = prb_StrFindMode_AnyChar;
-        spec.direction = prb_StrDirection_FromStart;
-        prb_StrFindResult lineEndResult = prb_strFind(spec);
-        if (lineEndResult.found) {
-            iter->curLine.len = lineEndResult.matchByteIndex;
-            iter->curLineEndLen = 1;
-            if (iter->curLine.ptr[iter->curLine.len] == '\r'
-                && iter->curByteOffset + iter->curLine.len + 1 < iter->ogstr.len
-                && iter->curLine.ptr[iter->curLine.len + 1] == '\n') {
-                iter->curLineEndLen += 1;
-            }
+    prb_StrFindResult find = prb_strFind(search, spec);
+    if (find.found) {
+        scanner->betweenLastMatches = find.beforeMatch;
+        if (side == prb_StrScannerSide_BeforeMatch) {
+            scanner->betweenLastMatches = find.afterMatch;
         }
-        iter->curLineCount += 1;
+
+        scanner->match = find.match;
+        scanner->matchCount += 1;
+
+        scanner->beforeMatch = (prb_Str) {scanner->ogstr.ptr, (int32_t)(scanner->match.ptr - scanner->ogstr.ptr)};
+        const char* afterStart = scanner->match.ptr + scanner->match.len;
+        scanner->afterMatch = (prb_Str) {afterStart, (int32_t)((scanner->ogstr.ptr + scanner->ogstr.len) - afterStart)};
+
         result = prb_Success;
     }
 
     return result;
 }
 
-prb_PUBLICDEF prb_WordIter
-prb_createWordIter(prb_Str str) {
-    prb_WordIter iter = {};
-    iter.ogstr = str;
-    return iter;
-}
-
-prb_PUBLICDEF prb_Status
-prb_wordIterNext(prb_WordIter* iter) {
-    prb_unused(iter);
-    prb_Status result = prb_Failure;
-    // TODO(khvorov) Implement
-    prb_assert(!"unimplemented");
+prb_PUBLICDEF prb_ParseUintResult
+prb_parseUint(prb_Str digits, uint64_t base) {
+    prb_assert(base == 16 || base == 10);
+    prb_ParseUintResult result = {.success = false, .number = 0};
+    if (digits.len > 0) {
+        result.success = true;
+        for (int32_t digitsIndex = 0; digitsIndex < digits.len && result.success; digitsIndex++) {
+            uint64_t value = 0;
+            char     ch = digits.ptr[digitsIndex];
+            if (ch >= '0' && ch <= '9') {
+                value = (uint64_t)(ch - '0');
+            } else if (base == 16 && ch >= 'A' && ch <= 'F') {
+                value = (uint64_t)(ch - 'A' + 10);
+            } else if (base == 16 && ch >= 'a' && ch <= 'f') {
+                value = (uint64_t)(ch - 'a' + 10);
+            } else {
+                result.success = false;
+            }
+            result.number = result.number * base + value;
+        }
+    }
     return result;
 }
 
 prb_PUBLICDEF prb_ParsedNumber
 prb_parseNumber(prb_Str str) {
-    prb_unused(str);
-    prb_ParsedNumber number = {};
+    prb_ParsedNumber number;
+    prb_memset(&number, 0, sizeof(number));
+
+    bool leadingMinus = false;
     if (str.len > 0) {
-        // NOTE(khvorov) Hex 0xabc123
-        if (prb_strStartsWith(str, prb_STR("0x"))) {
-            prb_Str digits = prb_strSliceForward(str, 2);
-            if (digits.len > 0) {
-                number.kind = prb_ParsedNumberKind_U64;
-                for (int32_t digitsIndex = 0; digitsIndex < digits.len && number.kind == prb_ParsedNumberKind_U64; digitsIndex++) {
-                    uint64_t value = 0;
-                    char     ch = digits.ptr[digitsIndex];
-                    if (ch >= '0' && ch <= '9') {
-                        value = ch - '0';
-                    } else if (ch >= 'A' && ch <= 'F') {
-                        value = ch - 'A' + 10;
-                    } else if (ch >= 'a' && ch <= 'f') {
-                        value = ch - 'a' + 10;
-                    } else {
-                        number.kind = prb_ParsedNumberKind_None;
-                    }
-                    number.parsedU64 = number.parsedU64 * 16 + value;
-                }
-            }
-        } else {
-            // TODO(khvorov) Implement
-            prb_assert(!"unimplemented");
+        leadingMinus = str.ptr[0] == '-';
+        if (leadingMinus) {
+            str = prb_strSlice(str, 1, str.len);
         }
     }
+
+    prb_ParseUintResult intParse = {.success = false, .number = 0};
+    bool                isReal = false;
+    double              realValue = 0.0;
+    if (str.len > 0) {
+        // NOTE(khvorov) Hex integer
+        if (prb_strStartsWith(str, prb_STR("0x"))) {
+            prb_Str digits = prb_strSlice(str, 2, str.len);
+            intParse = prb_parseUint(digits, 16);
+        } else {
+            prb_StrFindSpec dotFindSpec = {
+                .mode = prb_StrFindMode_AnyChar,
+                .direction = prb_StrDirection_FromStart,
+                .pattern = prb_STR("."),
+                .alwaysMatchEnd = false,
+            };
+            prb_StrFindResult dotFind = prb_strFind(str, dotFindSpec);
+            if (dotFind.found) {
+                // NOTE(khvorov) Real number
+                prb_ParseUintResult leftOfDot = {.success = false, .number = 0};
+                if (dotFind.beforeMatch.len == 0) {
+                    leftOfDot.success = true;
+                } else {
+                    leftOfDot = prb_parseUint(dotFind.beforeMatch, 10);
+                }
+
+                if (leftOfDot.success) {
+                    realValue = (double)leftOfDot.number;
+
+                    prb_ParseUintResult rightOfDot = {.success = false, .number = 0};
+                    if (dotFind.afterMatch.len == 0) {
+                        rightOfDot.success = true;
+                    } else {
+                        rightOfDot = prb_parseUint(dotFind.afterMatch, 10);
+                    }
+
+                    if (rightOfDot.success) {
+                        isReal = true;
+                        int32_t  digitsLeft = dotFind.afterMatch.len - 1;
+                        uint64_t divisor = 10;
+                        while (digitsLeft > 0) {
+                            divisor *= 10;
+                            digitsLeft -= 1;
+                        }
+                        double fraction = (double)rightOfDot.number / (double)divisor;
+                        realValue += fraction;
+                    }
+                }
+            } else {
+                // NOTE(khvorov) Decimal integer
+                intParse = prb_parseUint(str, 10);
+            }
+        }
+    }
+
+    if (intParse.success) {
+        if (leadingMinus) {
+            // NOTE(khvorov) Won't be supporting parsing INT64_MIN for fear of undefined behaviour
+            if (intParse.number <= (((uint64_t)INT64_MAX))) {
+                number.kind = prb_ParsedNumberKind_I64;
+                number.parsedI64 = -((int64_t)intParse.number);
+            }
+        } else {
+            number.kind = prb_ParsedNumberKind_U64;
+            number.parsedU64 = intParse.number;
+        }
+    } else if (isReal) {
+        number.kind = prb_ParsedNumberKind_F64;
+        number.parsedF64 = realValue;
+        if (leadingMinus) {
+            number.parsedF64 *= -1.0;
+        }
+    }
+
     return number;
+}
+
+prb_PUBLICDEF prb_Str
+prb_binaryToCArray(prb_Arena* arena, prb_Str arrayName, void* data, int32_t dataLen) {
+    prb_GrowingStr arrayGstr = prb_beginStr(arena);
+    prb_addStrSegment(&arrayGstr, "unsigned char %.*s[] = {\n    ", prb_LIT(arrayName));
+    for (int32_t byteIndex = 0; byteIndex < dataLen; byteIndex++) {
+        uint8_t byte = ((uint8_t*)data)[byteIndex];
+        prb_addStrSegment(&arrayGstr, "0x%x", byte);
+        if (byteIndex != dataLen - 1) {
+            prb_addStrSegment(&arrayGstr, ",");
+            if ((byteIndex + 1) % 10 == 0) {
+                prb_addStrSegment(&arrayGstr, "\n    ");
+            } else {
+                prb_addStrSegment(&arrayGstr, " ");
+            }
+        } else {
+            prb_addStrSegment(&arrayGstr, "\n");
+        }
+    }
+    prb_addStrSegment(&arrayGstr, "};");
+    prb_Str arrayStr = prb_endStr(&arrayGstr);
+    return arrayStr;
 }
 
 //
 // SECTION Processes (implementation)
 //
 
-#if prb_PLATFORM_LINUX
+#if prb_PLATFORM_WINDOWS
+
+static void
+prb_windows_waitForProcess(prb_Process* handle) {
+    WaitForSingleObject(handle->processInfo.hProcess, INFINITE);
+    handle->status = prb_ProcessStatus_CompletedFailed;
+    DWORD exitCode = 0;
+    if (GetExitCodeProcess(handle->processInfo.hProcess, &exitCode)) {
+        if (exitCode == 0) {
+            handle->status = prb_ProcessStatus_CompletedSuccess;
+        }
+    }
+    CloseHandle(handle->processInfo.hProcess);
+    CloseHandle(handle->processInfo.hThread);
+}
+
+typedef struct prb_windows_GetAffinityResult {
+    bool      success;
+    DWORD_PTR affinity;
+    int32_t   setBits;
+} prb_windows_GetAffinityResult;
+
+static prb_windows_GetAffinityResult
+prb_windows_getAffinity(void) {
+    prb_windows_GetAffinityResult result = {.success = false, .affinity = 0, .setBits = 0};
+    HANDLE                        thisProc = GetCurrentProcess();
+    DWORD_PTR                     procAffinity = 0;
+    DWORD_PTR                     sysAffinity = 0;
+    if (GetProcessAffinityMask(thisProc, &procAffinity, &sysAffinity)) {
+        result.success = true;
+        result.affinity = procAffinity;
+        for (size_t bitIndex = 0; bitIndex < sizeof(DWORD_PTR) * 8; bitIndex++) {
+            DWORD_PTR mask = 1ULL << bitIndex;
+            result.setBits += (result.affinity & mask) != 0;
+        }
+    }
+    return result;
+}
+
+#elif prb_PLATFORM_LINUX
 
 static prb_Bytes
-prb_linux_readFromProcSelf(prb_Arena* arena, prb_Str filename) {
-    prb_linux_OpenResult handle = prb_linux_open(arena, prb_fmt(arena, "/proc/self/%.*s", prb_LIT(filename)), O_RDONLY, 0);
+prb_linux_readFromProc(prb_Arena* arena, prb_Str filename) {
+    prb_linux_OpenResult handle = prb_linux_open(arena, prb_fmt(arena, "/proc/%.*s", prb_LIT(filename)), O_RDONLY, 0);
     prb_assert(handle.success);
     prb_GrowingStr gstr = prb_beginStr(arena);
     gstr.str.len = read(handle.handle, (void*)gstr.str.ptr, prb_arenaFreeSize(arena));
     prb_assert(gstr.str.len > 0);
     prb_arenaChangeUsed(arena, gstr.str.len);
-    prb_Str   str = prb_endStr(&gstr);
+    prb_Str str = prb_endStr(&gstr);
     prb_Bytes result = {(uint8_t*)str.ptr, str.len};
+    return result;
+}
+
+static void
+prb_linux_waitForProcess(prb_Process* handle) {
+    int32_t status = 0;
+    pid_t waitResult = waitpid(handle->pid, &status, 0);
+    handle->status = prb_ProcessStatus_CompletedFailed;
+    if (waitResult == handle->pid && status == 0) {
+        handle->status = prb_ProcessStatus_CompletedSuccess;
+    }
+}
+
+typedef struct prb_linux_GetAffinityResult {
+    bool success;
+    uint8_t* affinity;
+    int32_t size;
+    int32_t setBits;
+} prb_linux_GetAffinityResult;
+
+static prb_linux_GetAffinityResult
+prb_linux_getAffinity(prb_Arena* arena) {
+    // NOTE(khvorov) The syscall is picky about alignment and can't handle buffers that are too big.
+    // I don't know how big is too big but a megabyte is apparently not too big.
+    prb_linux_GetAffinityResult result = {};
+    int32_t reqAlign = prb_alignof(unsigned long);
+    prb_arenaAlignFreePtr(arena, reqAlign);
+    result.affinity = (uint8_t*)prb_arenaFreePtr(arena);
+    int32_t arenaSize = prb_arenaFreeSize(arena);
+    int32_t arenaSizeAligned = arenaSize & (~(reqAlign - 1));
+    int32_t sizeReduced = prb_min(arenaSizeAligned, prb_MEGABYTE);
+    result.size = syscall(SYS_sched_getaffinity, 0, sizeReduced, result.affinity);
+    if (result.size > 0) {
+        result.success = true;
+        for (int32_t byteIndex = 0; byteIndex < result.size; byteIndex++) {
+            uint8_t byte = ((uint8_t*)result.affinity)[byteIndex];
+            for (int32_t bitIndex = 0; bitIndex < 8; bitIndex++) {
+                uint8_t mask = 1 << bitIndex;
+                result.setBits += (byte & mask) != 0;
+            }
+        }
+    }
     return result;
 }
 
@@ -2452,13 +2739,9 @@ prb_linux_readFromProcSelf(prb_Arena* arena, prb_Str filename) {
 prb_PUBLICDEF void
 prb_terminate(int32_t code) {
 #if prb_PLATFORM_WINDOWS
-
-#error unimplemented
-
+    ExitProcess((UINT)code);
 #elif prb_PLATFORM_LINUX
-
     exit(code);
-
 #else
 #error unimplemented
 #endif
@@ -2466,22 +2749,27 @@ prb_terminate(int32_t code) {
 
 prb_PUBLICDEF prb_Str
 prb_getCmdline(prb_Arena* arena) {
-    prb_Str result = {};
+    prb_Str result = {.ptr = 0, .len = 0};
 
 #if prb_PLATFORM_WINDOWS
 
-#error unimplemented
+    LPWSTR  wstr = GetCommandLineW();
+    int32_t len = 0;
+    while (wstr[len]) {
+        len += 1;
+    }
+    result = prb_windows_strFromWideStr(arena, (prb_windows_WideStr) {wstr, len});
 
 #elif prb_PLATFORM_LINUX
 
-    prb_Bytes procSelfContent = prb_linux_readFromProcSelf(arena, prb_STR("cmdline"));
-    for (int32_t byteIndex = 0; byteIndex < procSelfContent.len; byteIndex++) {
+    prb_Bytes procSelfContent = prb_linux_readFromProc(arena, prb_STR("self/cmdline"));
+    for (int32_t byteIndex = 0; byteIndex < procSelfContent.len - 1; byteIndex++) {
         if (procSelfContent.data[byteIndex] == '\0') {
             procSelfContent.data[byteIndex] = ' ';
         }
     }
 
-    result = (prb_Str) {(const char*)procSelfContent.data, procSelfContent.len};
+    result = (prb_Str) {(const char*)procSelfContent.data, procSelfContent.len - 1};
 
 #elif
 #error unimplemented
@@ -2496,18 +2784,30 @@ prb_getCmdArgs(prb_Arena* arena) {
 
 #if prb_PLATFORM_WINDOWS
 
-#error unimplemented
+    prb_Str         str = prb_getCmdline(arena);
+    prb_StrFindSpec spec = {
+        .mode = prb_StrFindMode_AnyChar,
+        .direction = prb_StrDirection_FromStart,
+        .pattern = prb_STR(" "),
+        .alwaysMatchEnd = true,
+    };
+    prb_StrScanner scanner = prb_createStrScanner(str);
+    while (prb_strScannerMove(&scanner, spec, prb_StrScannerSide_AfterMatch)) {
+        if (scanner.betweenLastMatches.len > 0) {
+            prb_stbds_arrput(result, scanner.betweenLastMatches);
+        }
+    }
 
 #elif prb_PLATFORM_LINUX
 
-    prb_Bytes procSelfContent = prb_linux_readFromProcSelf(arena, prb_STR("cmdline"));
-    prb_Str   procSelfContentLeft = {(const char*)procSelfContent.data, procSelfContent.len};
+    prb_Bytes procSelfContent = prb_linux_readFromProc(arena, prb_STR("self/cmdline"));
+    prb_Str procSelfContentLeft = {(const char*)procSelfContent.data, procSelfContent.len};
     for (int32_t byteIndex = 0; byteIndex < procSelfContent.len; byteIndex++) {
         if (procSelfContent.data[byteIndex] == '\0') {
             int32_t processed = procSelfContent.len - procSelfContentLeft.len;
             prb_Str arg = {procSelfContentLeft.ptr, byteIndex - processed};
             prb_stbds_arrput(result, arg);
-            procSelfContentLeft = prb_strSliceForward(procSelfContentLeft, arg.len + 1);
+            procSelfContentLeft = prb_strSlice(procSelfContentLeft, arg.len + 1, procSelfContentLeft.len);
         }
     }
 
@@ -2520,143 +2820,84 @@ prb_getCmdArgs(prb_Arena* arena) {
 
 prb_PUBLICDEF const char**
 prb_getArgArrayFromStr(prb_Arena* arena, prb_Str str) {
-    const char**    args = 0;
-    prb_StrFindSpec spec = {};
-    spec.str = str;
-    spec.pattern = prb_STR(" ");
-    spec.mode = prb_StrFindMode_AnyChar;
-    spec.direction = prb_StrDirection_FromStart;
+    const char** args = 0;
 
-    int32_t         prevSpaceIndex = -1;
-    prb_StrFindIter iter = prb_createStrFindIter(spec);
-    for (;;) {
-        int32_t spaceIndex = 0;
-        if (prb_strFindIterNext(&iter) == prb_Success) {
-            prb_assert(iter.curResult.found);
-            spaceIndex = iter.curResult.matchByteIndex;
-        } else {
-            spaceIndex = str.len;
-        }
-        int32_t arglen = spaceIndex - prevSpaceIndex - 1;
-        if (arglen > 0) {
-            prb_Str     arg = {str.ptr + prevSpaceIndex + 1, arglen};
-            const char* argNull = prb_fmt(arena, "%.*s", prb_LIT(arg)).ptr;
-            prb_stbds_arrput(args, argNull);
-        }
-        prevSpaceIndex = spaceIndex;
-        if (spaceIndex == str.len) {
-            break;
+    {
+        prb_StrScanner  scanner = prb_createStrScanner(str);
+        prb_StrFindSpec space = {
+            .mode = prb_StrFindMode_AnyChar,
+            .direction = prb_StrDirection_FromStart,
+            .pattern = prb_STR(" "),
+            .alwaysMatchEnd = true,
+        };
+        while (prb_strScannerMove(&scanner, space, prb_StrScannerSide_AfterMatch)) {
+            if (scanner.betweenLastMatches.len > 0) {
+                const char* argNull = prb_fmt(arena, "%.*s", prb_LIT(scanner.betweenLastMatches)).ptr;
+                prb_stbds_arrput(args, argNull);
+            }
         }
     }
 
     // NOTE(khvorov) Arg array needs a null at the end
-    prb_stbds_arrsetcap(args, prb_stbds_arrlen(args) + 1);
+    prb_stbds_arrsetcap(args, (size_t)(prb_stbds_arrlen(args) + 1));
     args[prb_stbds_arrlen(args)] = 0;
 
     return args;
 }
 
-prb_PUBLICDEF prb_ProcessHandle
-prb_execCmd(prb_Arena* arena, prb_ExecCmdSpec spec) {
-    prb_ProcessHandle result = {};
-    prb_TempMemory    temp = prb_beginTempMemory(arena);
+prb_PUBLICDEF prb_CoreCountResult
+prb_getCoreCount(prb_Arena* arena) {
+    prb_TempMemory      temp = prb_beginTempMemory(arena);
+    prb_CoreCountResult result = {.success = false, .cores = 0};
+#if prb_PLATFORM_WINDOWS
+    SYSTEM_INFO sysinfo;
+    prb_memset(&sysinfo, 0, sizeof(sysinfo));
+    GetSystemInfo(&sysinfo);
+    result.success = true;
+    result.cores = (int32_t)sysinfo.dwNumberOfProcessors;
+#elif prb_PLATFORM_LINUX
+    prb_Str cpuinfo = prb_strFromBytes(prb_linux_readFromProc(arena, prb_STR("cpuinfo")));
+    prb_StrScanner scanner = prb_createStrScanner(cpuinfo);
+    prb_StrFindSpec spec = {};
+    spec.pattern = prb_STR("siblings");
+    if (prb_strScannerMove(&scanner, spec, prb_StrScannerSide_AfterMatch)) {
+        spec.pattern = prb_STR(":");
+        if (prb_strScannerMove(&scanner, spec, prb_StrScannerSide_AfterMatch)) {
+            spec.mode = prb_StrFindMode_LineBreak;
+            if (prb_strScannerMove(&scanner, spec, prb_StrScannerSide_AfterMatch)) {
+                prb_Str coresStr = prb_strTrim(scanner.betweenLastMatches);
+                prb_ParseUintResult parse = prb_parseUint(coresStr, 10);
+                if (parse.success) {
+                    result.success = true;
+                    result.cores = parse.number;
+                }
+            }
+        }
+    }
+#else
+#error unimplemented
+#endif
+    prb_endTempMemory(temp);
+    return result;
+}
+
+prb_PUBLICDEF prb_CoreCountResult
+prb_getAllowExecutionCoreCount(prb_Arena* arena) {
+    prb_CoreCountResult result = {.success = false, .cores = 0};
+    prb_TempMemory      temp = prb_beginTempMemory(arena);
 
 #if prb_PLATFORM_WINDOWS
-
-    STARTUPINFOA        startupInfo = {.cb = sizeof(STARTUPINFOA)};
-    PROCESS_INFORMATION processInfo;
-    if (CreateProcessA(0, cmd.ptr, 0, 0, 0, 0, 0, 0, &startupInfo, &processInfo)) {
-        WaitForSingleObject(processInfo.hProcess, INFINITE);
-        DWORD exitCode;
-        if (GetExitCodeProcess(processInfo.hProcess, &exitCode)) {
-            if (exitCode == 0) {
-                cmdStatus = prb_Success;
-            }
-        }
+    prb_windows_GetAffinityResult affinityRes = prb_windows_getAffinity();
+    if (affinityRes.success) {
+        result.success = true;
+        result.cores = affinityRes.setBits;
     }
-
-#error unimplemented
-
 #elif prb_PLATFORM_LINUX
-
-    const char* stdoutPath = 0;
-    if (spec.redirectStdout) {
-        if (spec.stdoutFilepath.ptr && spec.stdoutFilepath.len > 0) {
-            stdoutPath = prb_strGetNullTerminated(arena, spec.stdoutFilepath);
-        } else {
-            stdoutPath = "/dev/null";
-        }
+    prb_linux_GetAffinityResult affinityRes = prb_linux_getAffinity(arena);
+    if (affinityRes.success) {
+        result.success = true;
+        result.cores = affinityRes.setBits;
     }
-
-    const char* stderrPath = 0;
-    if (spec.redirectStderr) {
-        if (spec.stderrFilepath.ptr && spec.stderrFilepath.len > 0) {
-            stderrPath = prb_strGetNullTerminated(arena, spec.stderrFilepath);
-        } else {
-            stderrPath = "/dev/null";
-        }
-    }
-
-    bool                        fileActionsSucceeded = true;
-    bool                        fileActionsInited = false;
-    posix_spawn_file_actions_t* fileActionsPtr = 0;
-    posix_spawn_file_actions_t  fileActions = {};
-    if (spec.redirectStdout || spec.redirectStderr) {
-        fileActionsPtr = &fileActions;
-        int initResult = posix_spawn_file_actions_init(&fileActions);
-        fileActionsSucceeded = initResult == 0;
-        fileActionsInited = initResult == 0;
-        if (fileActionsSucceeded) {
-            if (spec.redirectStdout) {
-                int stdoutRedirectResult = posix_spawn_file_actions_addopen(
-                    &fileActions,
-                    STDOUT_FILENO,
-                    stdoutPath,
-                    O_WRONLY | O_CREAT | O_TRUNC,
-                    S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR
-                );
-                fileActionsSucceeded = stdoutRedirectResult == 0;
-            }
-
-            if (fileActionsSucceeded && spec.redirectStderr) {
-                if (spec.redirectStdout && prb_streq(prb_STR(stdoutPath), prb_STR(stderrPath))) {
-                    int dupResult = posix_spawn_file_actions_adddup2(&fileActions, STDOUT_FILENO, STDERR_FILENO);
-                    fileActionsSucceeded = dupResult == 0;
-                } else {
-                    int stderrRedirectResult = posix_spawn_file_actions_addopen(
-                        &fileActions,
-                        STDERR_FILENO,
-                        stderrPath,
-                        O_WRONLY | O_CREAT | O_TRUNC,
-                        S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR
-                    );
-                    fileActionsSucceeded = stderrRedirectResult == 0;
-                }
-            }
-        }
-    }
-
-    if (fileActionsSucceeded) {
-        const char** args = prb_getArgArrayFromStr(arena, spec.cmd);
-        int          spawnResult = posix_spawnp(&result.pid, args[0], fileActionsPtr, 0, (char**)args, __environ);
-        if (spawnResult == 0) {
-            result.status = prb_ProcessStatus_Launched;
-            if (!spec.dontwait) {
-                int   status = 0;
-                pid_t waitResult = waitpid(result.pid, &status, 0);
-                result.status = prb_ProcessStatus_CompletedFailed;
-                if (waitResult == result.pid && status == 0) {
-                    result.status = prb_ProcessStatus_CompletedSuccess;
-                }
-            }
-        }
-        prb_stbds_arrfree(args);
-    }
-
-    if (fileActionsInited) {
-        posix_spawn_file_actions_destroy(fileActionsPtr);
-    }
-
 #else
 #error unimplemented
 #endif
@@ -2666,32 +2907,417 @@ prb_execCmd(prb_Arena* arena, prb_ExecCmdSpec spec) {
 }
 
 prb_PUBLICDEF prb_Status
-prb_waitForProcesses(prb_ProcessHandle* handles, int32_t handleCount) {
-    prb_Status result = prb_Success;
-
+prb_allowExecutionOnCores(prb_Arena* arena, int32_t coreCount) {
+    prb_Status     result = prb_Failure;
+    prb_TempMemory temp = prb_beginTempMemory(arena);
+    if (coreCount >= 1) {
 #if prb_PLATFORM_WINDOWS
+        prb_windows_GetAffinityResult affinityRes = prb_windows_getAffinity();
+        if (affinityRes.success) {
+            DWORD_PTR newAffinityMask = affinityRes.affinity;
+            int32_t   coreDelta = coreCount - affinityRes.setBits;
+            for (int32_t bitIndex = 0; bitIndex < (int32_t)sizeof(DWORD_PTR) * 8 && coreDelta != 0; bitIndex++) {
+                DWORD_PTR mask = ((DWORD_PTR)1) << bitIndex;
+                bool      coreIsScheduled = (newAffinityMask & mask) == mask;
+                if (coreIsScheduled) {
+                    if (coreDelta > 0) {
+                        newAffinityMask = newAffinityMask | mask;
+                        coreDelta -= 1;
+                    } else {
+                        newAffinityMask = newAffinityMask & (~mask);
+                        coreDelta += 1;
+                    }
+                }
+            }
 
-#error unimplemented
+            if (coreCount != affinityRes.setBits) {
+                if (SetProcessAffinityMask(GetCurrentProcess(), newAffinityMask)) {
+                    result = prb_Success;
+                }
+            } else {
+                result = prb_Success;
+            }
+        }
 
 #elif prb_PLATFORM_LINUX
 
-    for (int32_t handleIndex = 0; handleIndex < handleCount; handleIndex++) {
-        prb_ProcessHandle* handle = handles + handleIndex;
-        if (handle->status == prb_ProcessStatus_Launched) {
-            int32_t status = 0;
-            pid_t   waitResult = waitpid(handle->pid, &status, 0);
-            handle->status = prb_ProcessStatus_CompletedFailed;
-            if (waitResult == handle->pid && status == 0) {
-                handle->status = prb_ProcessStatus_CompletedSuccess;
+        prb_linux_GetAffinityResult affinityRes = prb_linux_getAffinity(arena);
+        if (affinityRes.success) {
+            if (coreCount > affinityRes.setBits) {
+                int32_t coresToSchedule = coreCount - affinityRes.setBits;
+                for (int32_t byteIndex = 0; byteIndex < affinityRes.size && coresToSchedule > 0; byteIndex++) {
+                    uint8_t byte = affinityRes.affinity[byteIndex];
+                    for (int32_t bitIndex = 0; bitIndex < 8 && coresToSchedule > 0; bitIndex++) {
+                        uint8_t mask = 1 << bitIndex;
+                        bool coreIsScheduled = (byte & mask) != 0;
+                        if (!coreIsScheduled) {
+                            byte = byte | mask;
+                            affinityRes.affinity[byteIndex] = byte;
+                            coresToSchedule -= 1;
+                        }
+                    }
+                }
+            } else if (coreCount < affinityRes.setBits) {
+                int32_t coresToUnschedule = affinityRes.setBits - coreCount;
+                for (int32_t byteIndex = 0; byteIndex < affinityRes.size && coresToUnschedule > 0; byteIndex++) {
+                    uint8_t byte = affinityRes.affinity[byteIndex];
+                    for (int32_t bitIndex = 0; bitIndex < 8 && coresToUnschedule > 0; bitIndex++) {
+                        uint8_t mask = 1 << bitIndex;
+                        bool coreIsScheduled = (byte & mask) != 0;
+                        if (coreIsScheduled) {
+                            byte = byte & (~mask);
+                            affinityRes.affinity[byteIndex] = byte;
+                            coresToUnschedule -= 1;
+                        }
+                    }
+                }
+            }
+
+            if (coreCount != affinityRes.setBits) {
+                int setAffinityResult = syscall(SYS_sched_setaffinity, 0, affinityRes.size, affinityRes.affinity);
+                if (setAffinityResult == 0) {
+                    result = prb_Success;
+                }
             } else {
+                result = prb_Success;
+            }
+        }
+#else
+#error unimplemented
+#endif
+    }
+    prb_endTempMemory(temp);
+    return result;
+}
+
+prb_PUBLICDEF prb_Process
+prb_createProcess(prb_Str cmd, prb_ProcessSpec spec) {
+    prb_Process proc;
+    prb_memset(&proc, 0, sizeof(proc));
+    proc.cmd = cmd;
+    proc.spec = spec;
+    return proc;
+}
+
+prb_PUBLICDEF prb_Status
+prb_launchProcesses(prb_Arena* arena, prb_Process* procs, int32_t procCount, prb_Background mode) {
+    prb_Status     result = prb_Success;
+    prb_TempMemory temp = prb_beginTempMemory(arena);
+
+    for (int32_t procIndex = 0; procIndex < procCount; procIndex++) {
+        prb_Process* proc = procs + procIndex;
+        if (proc->status == prb_ProcessStatus_NotLaunched) {
+            prb_ProcessSpec spec = proc->spec;
+
+#if prb_PLATFORM_WINDOWS
+
+            STARTUPINFOW startupInfo;
+            prb_memset(&startupInfo, 0, sizeof(startupInfo));
+            startupInfo.cb = sizeof(STARTUPINFOW);
+
+            bool    redirectSuccessful = true;
+            BOOL    inheritHandles = spec.redirectStdout || spec.redirectStderr;
+            HANDLE  handlesToClose[2] = {0, 0};
+            int32_t handlesToCloseCount = 0;
+
+            if (inheritHandles) {
+                startupInfo.dwFlags = STARTF_USESTDHANDLES;
+
+                SECURITY_ATTRIBUTES securityAttr = {
+                    .nLength = sizeof(securityAttr),
+                    .lpSecurityDescriptor = NULL,
+                    .bInheritHandle = TRUE,
+                };
+
+                prb_Str stdoutPath = spec.stdoutFilepath;
+                if (stdoutPath.ptr == 0 || stdoutPath.len == 0) {
+                    stdoutPath = prb_STR("NUL");
+                }
+
+                prb_Str stderrPath = spec.stderrFilepath;
+                if (stderrPath.ptr == 0 || stderrPath.len == 0) {
+                    stderrPath = prb_STR("NUL");
+                }
+
+                if (spec.redirectStdout && spec.redirectStderr && prb_streq(stdoutPath, stderrPath)) {
+                    prb_windows_OpenResult openRes = prb_windows_open(arena, stdoutPath, GENERIC_WRITE, FILE_SHARE_WRITE, CREATE_ALWAYS, &securityAttr);
+                    if (openRes.success) {
+                        startupInfo.hStdOutput = openRes.handle;
+                        startupInfo.hStdError = openRes.handle;
+                        handlesToClose[handlesToCloseCount++] = openRes.handle;
+                    } else {
+                        redirectSuccessful = false;
+                    }
+                } else {
+                    if (spec.redirectStdout) {
+                        prb_windows_OpenResult openRes = prb_windows_open(arena, stdoutPath, GENERIC_WRITE, 0, CREATE_ALWAYS, &securityAttr);
+                        if (openRes.success) {
+                            startupInfo.hStdOutput = openRes.handle;
+                            handlesToClose[handlesToCloseCount++] = openRes.handle;
+                        } else {
+                            redirectSuccessful = false;
+                        }
+                    }
+
+                    if (spec.redirectStderr) {
+                        prb_windows_OpenResult openRes = prb_windows_open(arena, stderrPath, GENERIC_WRITE, 0, CREATE_ALWAYS, &securityAttr);
+                        if (openRes.success) {
+                            startupInfo.hStdError = openRes.handle;
+                            handlesToClose[handlesToCloseCount++] = openRes.handle;
+                        } else {
+                            redirectSuccessful = false;
+                        }
+                    }
+                }
+            }
+
+            if (redirectSuccessful) {
+                // NOTE(khvorov) Just replace spaces with null terminators and stick that to the start of the
+                // existing environment and call it a day.
+                LPWCH env = 0;
+                if (spec.addEnv.ptr && spec.addEnv.len > 0) {
+                    prb_windows_WideStr envCopy = prb_windows_getWideStr(arena, spec.addEnv);
+                    for (int32_t envIndex = 0; envIndex < envCopy.len; envIndex++) {
+                        if (envCopy.ptr[envIndex] == ' ') {
+                            envCopy.ptr[envIndex] = '\0';
+                        }
+                    }
+                    LPWCH   existingEnv = GetEnvironmentStringsW();
+                    int32_t existingEnvLen = 0;
+                    for (;;) {
+                        if (existingEnv[existingEnvLen] == '\0' && existingEnv[existingEnvLen + 1] == '\0') {
+                            break;
+                        } else {
+                            existingEnvLen += 1;
+                        }
+                    }
+                    env = (LPWCH)prb_arenaAllocArray(arena, uint16_t, envCopy.len + 1 + existingEnvLen + 2);
+                    prb_memcpy(env, envCopy.ptr, envCopy.len * sizeof(*envCopy.ptr));
+                    prb_memcpy(env + envCopy.len + 1, existingEnv, existingEnvLen * sizeof(*existingEnv));
+                    FreeEnvironmentStringsW(existingEnv);
+                }
+
+                prb_windows_WideStr wcmd = prb_windows_getWideStr(arena, proc->cmd);
+                if (CreateProcessW(0, wcmd.ptr, 0, 0, inheritHandles, CREATE_UNICODE_ENVIRONMENT, env, 0, &startupInfo, &proc->processInfo)) {
+                    proc->status = prb_ProcessStatus_Launched;
+                    if (mode == prb_Background_No) {
+                        prb_windows_waitForProcess(proc);
+                    }
+                }
+            }
+
+            for (int32_t handleIndex = 0; handleIndex < handlesToCloseCount; handleIndex++) {
+                CloseHandle(handlesToClose[handleIndex]);
+            }
+
+#elif prb_PLATFORM_LINUX
+
+            const char* stdoutPath = 0;
+            if (spec.redirectStdout) {
+                if (spec.stdoutFilepath.ptr && spec.stdoutFilepath.len > 0) {
+                    stdoutPath = prb_strGetNullTerminated(arena, spec.stdoutFilepath);
+                } else {
+                    stdoutPath = "/dev/null";
+                }
+            }
+
+            const char* stderrPath = 0;
+            if (spec.redirectStderr) {
+                if (spec.stderrFilepath.ptr && spec.stderrFilepath.len > 0) {
+                    stderrPath = prb_strGetNullTerminated(arena, spec.stderrFilepath);
+                } else {
+                    stderrPath = "/dev/null";
+                }
+            }
+
+            bool fileActionsSucceeded = true;
+            bool fileActionsInited = false;
+            posix_spawn_file_actions_t* fileActionsPtr = 0;
+            posix_spawn_file_actions_t fileActions = {};
+            if (spec.redirectStdout || spec.redirectStderr) {
+                fileActionsPtr = &fileActions;
+                int initResult = posix_spawn_file_actions_init(&fileActions);
+                fileActionsSucceeded = initResult == 0;
+                fileActionsInited = initResult == 0;
+                if (fileActionsSucceeded) {
+                    if (spec.redirectStdout) {
+                        int stdoutRedirectResult = posix_spawn_file_actions_addopen(
+                            &fileActions,
+                            STDOUT_FILENO,
+                            stdoutPath,
+                            O_WRONLY | O_CREAT | O_TRUNC,
+                            S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR
+                        );
+                        fileActionsSucceeded = stdoutRedirectResult == 0;
+                    }
+
+                    if (fileActionsSucceeded && spec.redirectStderr) {
+                        if (spec.redirectStdout && prb_streq(prb_STR(stdoutPath), prb_STR(stderrPath))) {
+                            int dupResult = posix_spawn_file_actions_adddup2(&fileActions, STDOUT_FILENO, STDERR_FILENO);
+                            fileActionsSucceeded = dupResult == 0;
+                        } else {
+                            int stderrRedirectResult = posix_spawn_file_actions_addopen(
+                                &fileActions,
+                                STDERR_FILENO,
+                                stderrPath,
+                                O_WRONLY | O_CREAT | O_TRUNC,
+                                S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR
+                            );
+                            fileActionsSucceeded = stderrRedirectResult == 0;
+                        }
+                    }
+                }
+            }
+
+            if (fileActionsSucceeded) {
+                bool envSucceeded = true;
+                char** env = __environ;
+                bool envAllocated = false;
+                if (proc->spec.addEnv.ptr && proc->spec.addEnv.len > 0) {
+                    envAllocated = true;
+                    env = 0;
+
+                    prb_StrFindSpec space = {};
+                    space.pattern = prb_STR(" ");
+                    space.alwaysMatchEnd = true;
+                    prb_StrFindSpec equals = {};
+                    equals.pattern = prb_STR("=");
+                    prb_StrScanner scanner = prb_createStrScanner(proc->spec.addEnv);
+                    prb_Str* newVarNames = 0;
+                    while (envSucceeded && prb_strScannerMove(&scanner, space, prb_StrScannerSide_AfterMatch)) {
+                        if (scanner.betweenLastMatches.len > 0) {
+                            envSucceeded = false;
+                            prb_StrScanner nameScanner = prb_createStrScanner(scanner.betweenLastMatches);
+                            if (prb_strScannerMove(&nameScanner, equals, prb_StrScannerSide_AfterMatch)) {
+                                if (nameScanner.betweenLastMatches.len > 0) {
+                                    char* newEnvEntry = (char*)prb_strGetNullTerminated(arena, scanner.betweenLastMatches);
+                                    prb_stbds_arrput(env, newEnvEntry);
+                                    prb_stbds_arrput(newVarNames, nameScanner.betweenLastMatches);
+                                    envSucceeded = true;
+                                }
+                            }
+                        }
+                    }
+
+                    if (envSucceeded) {
+                        for (int32_t envIndex = 0;; envIndex++) {
+                            char* existingEntry = __environ[envIndex];
+                            if (existingEntry) {
+                                prb_StrScanner nameScanner = prb_createStrScanner(prb_STR(existingEntry));
+                                prb_assert(prb_strScannerMove(&nameScanner, equals, prb_StrScannerSide_AfterMatch));
+                                prb_assert(nameScanner.betweenLastMatches.len > 0);
+                                prb_Str existingName = nameScanner.betweenLastMatches;
+                                bool existingInNew = false;
+                                for (int32_t newVarIndex = 0; newVarIndex < prb_stbds_arrlen(newVarNames) && !existingInNew; newVarIndex++) {
+                                    prb_Str newVarName = newVarNames[newVarIndex];
+                                    existingInNew = prb_streq(newVarName, existingName);
+                                }
+                                if (!existingInNew) {
+                                    prb_stbds_arrput(env, existingEntry);
+                                }
+                            } else {
+                                break;
+                            }
+                        }
+
+                        // NOTE(khvorov) Null-terminate the new env array
+                        prb_stbds_arrput(env, 0);
+                    }
+
+                    prb_stbds_arrfree(newVarNames);
+                }
+
+                if (envSucceeded) {
+                    const char** args = prb_getArgArrayFromStr(arena, proc->cmd);
+                    int spawnResult = posix_spawnp(&proc->pid, args[0], fileActionsPtr, 0, (char**)args, env);
+                    if (spawnResult == 0) {
+                        proc->status = prb_ProcessStatus_Launched;
+                        if (mode == prb_Background_No) {
+                            prb_linux_waitForProcess(proc);
+                        }
+                    }
+                    prb_stbds_arrfree(args);
+                }
+
+                if (envAllocated) {
+                    prb_stbds_arrfree(env);
+                }
+            }
+
+            if (fileActionsInited) {
+                posix_spawn_file_actions_destroy(fileActionsPtr);
+            }
+
+#else
+#error unimplemented
+#endif
+
+            prb_ProcessStatus reqStatus = prb_ProcessStatus_CompletedSuccess;
+            if (mode == prb_Background_Yes) {
+                reqStatus = prb_ProcessStatus_Launched;
+            }
+            if (proc->status != reqStatus) {
                 result = prb_Failure;
             }
         }
     }
 
+    prb_endTempMemory(temp);
+    return result;
+}
+
+prb_PUBLICDEF prb_Status
+prb_waitForProcesses(prb_Process* handles, int32_t handleCount) {
+    prb_Status result = prb_Success;
+
+    for (int32_t handleIndex = 0; handleIndex < handleCount; handleIndex++) {
+        prb_Process* handle = handles + handleIndex;
+        prb_assert(handle->status != prb_ProcessStatus_NotLaunched);
+        if (handle->status == prb_ProcessStatus_Launched) {
+#if prb_PLATFORM_WINDOWS
+            prb_windows_waitForProcess(handle);
+#elif prb_PLATFORM_LINUX
+            prb_linux_waitForProcess(handle);
 #else
 #error unimplemented
 #endif
+
+            if (handle->status != prb_ProcessStatus_CompletedSuccess) {
+                result = prb_Failure;
+            }
+        }
+    }
+
+    return result;
+}
+
+prb_PUBLICDEF prb_Status
+prb_killProcesses(prb_Process* handles, int32_t handleCount) {
+    prb_Status result = prb_Success;
+
+    for (int32_t handleIndex = 0; handleIndex < handleCount; handleIndex++) {
+        prb_Process* handle = handles + handleIndex;
+        prb_assert(handle->status != prb_ProcessStatus_NotLaunched);
+        if (handle->status == prb_ProcessStatus_Launched) {
+#if prb_PLATFORM_WINDOWS
+            if (TerminateProcess(handle->processInfo.hProcess, 9)) {
+                handle->status = prb_ProcessStatus_CompletedFailed;
+                CloseHandle(handle->processInfo.hProcess);
+                CloseHandle(handle->processInfo.hThread);
+            }
+#elif prb_PLATFORM_LINUX
+            if (kill(handle->pid, SIGKILL) == 0) {
+                handle->status = prb_ProcessStatus_CompletedFailed;
+            }
+#else
+#error unimplemented
+#endif
+
+            if (handle->status != prb_ProcessStatus_CompletedFailed) {
+                result = prb_Failure;
+            }
+        }
+    }
 
     return result;
 }
@@ -2700,13 +3326,23 @@ prb_PUBLICDEF void
 prb_sleep(float ms) {
 #if prb_PLATFORM_WINDOWS
 
-#error unimplemented
+    prb_TimeStart timeStart = prb_timeStart();
+    DWORD         msec = (DWORD)(ms);
+    Sleep(msec);
+    float msSpentSleeping = prb_getMsFrom(timeStart);
+
+    float left = ms - msSpentSleeping;
+    float msSpentSpinning = 0.0f;
+    timeStart = prb_timeStart();
+    while (msSpentSpinning < left) {
+        msSpentSpinning = prb_getMsFrom(timeStart);
+    }
 
 #elif prb_PLATFORM_LINUX
 
-    float           secf = ms * 0.001f;
-    long int        sec = (long int)(secf);
-    long int        nsec = (long int)((secf - (float)sec) * 1000.0f * 1000.0f * 1000.0f);
+    float secf = ms * 0.001f;
+    long int sec = (long int)(secf);
+    long int nsec = (long int)((secf - (float)sec) * 1000.0f * 1000.0f * 1000.0f);
     struct timespec ts = {.tv_sec = sec, .tv_nsec = nsec};
     nanosleep(&ts, 0);
 
@@ -2722,17 +3358,19 @@ prb_debuggerPresent(prb_Arena* arena) {
 
 #if prb_PLATFORM_WINDOWS
 
-#error unimplemented
+    result = IsDebuggerPresent();
 
 #elif prb_PLATFORM_LINUX
 
-    prb_Bytes    content = prb_linux_readFromProcSelf(arena, prb_STR("status"));
-    prb_Str      str = {(const char*)content.data, content.len};
-    prb_LineIter iter = prb_createLineIter(str);
-    while (prb_lineIterNext(&iter)) {
+    prb_Bytes content = prb_linux_readFromProc(arena, prb_STR("self/status"));
+    prb_Str str = {(const char*)content.data, content.len};
+    prb_StrScanner iter = prb_createStrScanner(str);
+    prb_StrFindSpec lineBreakSpec = {};
+    lineBreakSpec.mode = prb_StrFindMode_LineBreak;
+    while (prb_strScannerMove(&iter, lineBreakSpec, prb_StrScannerSide_AfterMatch)) {
         prb_Str search = prb_STR("TracerPid:");
-        if (prb_strStartsWith(iter.curLine, search)) {
-            prb_Str number = prb_strTrim(prb_strSliceForward(iter.curLine, search.len));
+        if (prb_strStartsWith(iter.betweenLastMatches, search)) {
+            prb_Str number = prb_strTrim(prb_strSlice(iter.betweenLastMatches, search.len, iter.betweenLastMatches.len));
             result = number.len > 1 || number.ptr[0] != '0';
             break;
         }
@@ -2750,17 +3388,19 @@ prb_PUBLICDEF prb_Status
 prb_setenv(prb_Arena* arena, prb_Str name, prb_Str value) {
     prb_TempMemory temp = prb_beginTempMemory(arena);
     prb_Status     result = prb_Failure;
-    const char*    nameNull = prb_strGetNullTerminated(arena, name);
-    const char*    valueNull = prb_strGetNullTerminated(arena, value);
 
 #if prb_PLATFORM_WINDOWS
 
-#error unimplemented
+    prb_windows_WideStr wname = prb_windows_getWideStr(arena, name);
+    prb_windows_WideStr wvalue = prb_windows_getWideStr(arena, value);
+    if (SetEnvironmentVariableW(wname.ptr, wvalue.ptr)) {
+        result = prb_Success;
+    }
 
 #elif prb_PLATFORM_LINUX
-
+    const char* nameNull = prb_strGetNullTerminated(arena, name);
+    const char* valueNull = prb_strGetNullTerminated(arena, value);
     result = setenv(nameNull, valueNull, 1) == 0 ? prb_Success : prb_Failure;
-
 #else
 #error unimplemented
 #endif
@@ -2771,27 +3411,36 @@ prb_setenv(prb_Arena* arena, prb_Str name, prb_Str value) {
 
 prb_PUBLICDEF prb_GetenvResult
 prb_getenv(prb_Arena* arena, prb_Str name) {
-    prb_TempMemory   temp = prb_beginTempMemory(arena);
-    prb_GetenvResult result = {};
-    const char*      nameNull = prb_strGetNullTerminated(arena, name);
+    prb_GetenvResult result;
+    prb_memset(&result, 0, sizeof(result));
 
 #if prb_PLATFORM_WINDOWS
 
-#error unimplemented
+    prb_arenaAlignFreePtr(arena, prb_alignof(uint16_t));
+    prb_windows_WideStr wname = prb_windows_getWideStr(arena, name);
+    LPWSTR              wptr = (LPWSTR)prb_arenaFreePtr(arena);
+    DWORD               getEnvResult = GetEnvironmentVariableW(wname.ptr, wptr, (DWORD)prb_arenaFreeSize(arena));
+    if (getEnvResult > 0) {
+        prb_arenaChangeUsed(arena, (int32_t)getEnvResult * (int32_t)sizeof(*wptr));
+        prb_arenaAllocAndZero(arena, 2, 1);  // NOTE(khvorov) Null terminator
+        result.str = prb_windows_strFromWideStr(arena, (prb_windows_WideStr) {wptr, (int32_t)getEnvResult});
+        result.found = true;
+    }
 
 #elif prb_PLATFORM_LINUX
-
+    prb_TempMemory temp = prb_beginTempMemory(arena);
+    const char* nameNull = prb_strGetNullTerminated(arena, name);
     char* str = getenv(nameNull);
     if (str) {
         result.found = true;
         result.str = prb_STR(str);
     }
+    prb_endTempMemory(temp);
 
 #else
 #error unimplemented
 #endif
 
-    prb_endTempMemory(temp);
     return result;
 }
 
@@ -2799,14 +3448,17 @@ prb_PUBLICDEF prb_Status
 prb_unsetenv(prb_Arena* arena, prb_Str name) {
     prb_TempMemory temp = prb_beginTempMemory(arena);
     prb_Status     result = prb_Failure;
-    const char*    nameNull = prb_strGetNullTerminated(arena, name);
 
 #if prb_PLATFORM_WINDOWS
 
-#error unimplemented
+    prb_windows_WideStr wname = prb_windows_getWideStr(arena, name);
+    if (SetEnvironmentVariableW(wname.ptr, NULL)) {
+        result = prb_Success;
+    }
 
 #elif prb_PLATFORM_LINUX
 
+    const char* nameNull = prb_strGetNullTerminated(arena, name);
     result = unsetenv(nameNull) == 0 ? prb_Success : prb_Failure;
 
 #else
@@ -2823,25 +3475,25 @@ prb_unsetenv(prb_Arena* arena, prb_Str name) {
 
 prb_PUBLICDEF prb_TimeStart
 prb_timeStart(void) {
-    prb_TimeStart result = {};
-
+    prb_TimeStart result;
+    prb_memset(&result, 0, sizeof(result));
 #if prb_PLATFORM_WINDOWS
-
-#error unimplemented
-
+    LARGE_INTEGER ticks;
+    prb_memset(&ticks, 0, sizeof(ticks));
+    if (QueryPerformanceCounter(&ticks)) {
+        result.valid = true;
+        result.ticks = ticks.QuadPart;
+    }
 #elif prb_PLATFORM_LINUX
-
     struct timespec tp = {};
     if (clock_gettime(CLOCK_MONOTONIC, &tp) == 0) {
         prb_assert(tp.tv_nsec >= 0 && tp.tv_sec >= 0);
         result.nsec = (uint64_t)tp.tv_nsec + (uint64_t)tp.tv_sec * 1000 * 1000 * 1000;
         result.valid = true;
     }
-
 #else
 #error unimplemented
 #endif
-
     return result;
 }
 
@@ -2850,8 +3502,20 @@ prb_getMsFrom(prb_TimeStart timeStart) {
     prb_TimeStart now = prb_timeStart();
     float         result = 0.0f;
     if (now.valid && timeStart.valid) {
+#if prb_PLATFORM_WINDOWS
+        LARGE_INTEGER ticksPerSecond;
+        prb_memset(&ticksPerSecond, 0, sizeof(ticksPerSecond));
+        if (QueryPerformanceFrequency(&ticksPerSecond)) {
+            LONGLONG ticksDiff = now.ticks - timeStart.ticks;
+            float    secs = (float)ticksDiff / (float)ticksPerSecond.QuadPart;
+            result = secs * 1000.0f;
+        }
+#elif prb_PLATFORM_LINUX
         uint64_t nsec = now.nsec - timeStart.nsec;
         result = (float)nsec / 1000.0f / 1000.0f;
+#else
+#error unimplemented
+#endif
     }
     return result;
 }
@@ -2860,12 +3524,20 @@ prb_getMsFrom(prb_TimeStart timeStart) {
 // SECTION Multithreading (implementation)
 //
 
-#if prb_PLATFORM_LINUX
+#if prb_PLATFORM_WINDOWS
+
+static DWORD WINAPI
+prb_windows_threadProc(void* data) {
+    prb_Job* job = (prb_Job*)data;
+    job->proc(&job->arena, job->data);
+    return 0;
+}
+
+#elif prb_PLATFORM_LINUX
 
 static void*
-prb_linux_pthreadProc(void* data) {
+prb_linux_threadProc(void* data) {
     prb_Job* job = (prb_Job*)data;
-    prb_assert(job->status == prb_ProcessStatus_Launched);
     job->proc(&job->arena, job->data);
     return 0;
 }
@@ -2874,7 +3546,8 @@ prb_linux_pthreadProc(void* data) {
 
 prb_PUBLICDEF prb_Job
 prb_createJob(prb_JobProc proc, void* data, prb_Arena* arena, int32_t arenaBytes) {
-    prb_Job job = {};
+    prb_Job job;
+    prb_memset(&job, 0, sizeof(job));
     job.proc = proc;
     job.data = data;
     job.arena = prb_createArenaFromArena(arena, arenaBytes);
@@ -2882,53 +3555,74 @@ prb_createJob(prb_JobProc proc, void* data, prb_Arena* arena, int32_t arenaBytes
 }
 
 prb_PUBLICDEF prb_Status
-prb_execJobs(prb_Job* jobs, int32_t jobsCount, prb_ThreadMode mode) {
+prb_launchJobs(prb_Job* jobs, int32_t jobsCount, prb_Background mode) {
     prb_Status result = prb_Success;
 
-#if prb_PLATFORM_WINDOWS
-
-#error unimplemented
-
-#elif prb_PLATFORM_LINUX
-
     switch (mode) {
-        case prb_ThreadMode_Single: {
+        case prb_Background_No: {
             for (int32_t jobIndex = 0; jobIndex < jobsCount && result == prb_Success; jobIndex++) {
                 prb_Job* job = jobs + jobIndex;
-                if (job->status == prb_ProcessStatus_NotLaunched) {
-                    job->status = prb_ProcessStatus_Launched;
-                    prb_linux_pthreadProc(job);
+                if (job->status == prb_JobStatus_NotLaunched) {
+                    job->status = prb_JobStatus_Launched;
+                    job->proc(&job->arena, job->data);
+                    job->status = prb_JobStatus_Completed;
                 }
             }
         } break;
 
-        case prb_ThreadMode_Multi: {
+        case prb_Background_Yes: {
             for (int32_t jobIndex = 0; jobIndex < jobsCount && result == prb_Success; jobIndex++) {
                 prb_Job* job = jobs + jobIndex;
-                if (job->status == prb_ProcessStatus_NotLaunched) {
-                    job->status = prb_ProcessStatus_Launched;
-                    if (pthread_create(&job->threadid, 0, prb_linux_pthreadProc, job) != 0) {
+                if (job->status == prb_JobStatus_NotLaunched) {
+                    job->status = prb_JobStatus_Launched;
+#if prb_PLATFORM_WINDOWS
+                    job->threadhandle = CreateThread(0, 0, prb_windows_threadProc, job, 0, &job->threadid);
+                    if (job->threadhandle == NULL) {
                         result = prb_Failure;
                     }
-                }
-            }
-
-            for (int32_t jobIndex = 0; jobIndex < jobsCount; jobIndex++) {
-                prb_Job* job = jobs + jobIndex;
-                if (job->status == prb_ProcessStatus_Launched) {
-                    if (pthread_join(job->threadid, 0) == 0) {
-                        job->status = prb_ProcessStatus_CompletedSuccess;
-                    } else {
+#elif prb_PLATFORM_LINUX
+                    if (pthread_create(&job->threadid, 0, prb_linux_threadProc, job) != 0) {
                         result = prb_Failure;
                     }
+#else
+#error unimplemented
+#endif
                 }
             }
         } break;
     }
 
+    return result;
+}
+
+prb_PUBLICDEF prb_Status
+prb_waitForJobs(prb_Job* jobs, int32_t jobsCount) {
+    prb_Status result = prb_Success;
+    for (int32_t jobIndex = 0; jobIndex < jobsCount; jobIndex++) {
+        prb_Job* job = jobs + jobIndex;
+        prb_assert(job->status != prb_JobStatus_NotLaunched);
+        if (job->status == prb_JobStatus_Launched) {
+#if prb_PLATFORM_WINDOWS
+
+            if (WaitForSingleObject(job->threadhandle, INFINITE) == WAIT_OBJECT_0) {
+                job->status = prb_JobStatus_Completed;
+            } else {
+                result = prb_Failure;
+            }
+
+#elif prb_PLATFORM_LINUX
+
+            if (pthread_join(job->threadid, 0) == 0) {
+                job->status = prb_JobStatus_Completed;
+            } else {
+                result = prb_Failure;
+            }
+
 #else
 #error unimplemented
 #endif
+        }
+    }
 
     return result;
 }
@@ -3281,7 +3975,7 @@ prb_STB_SPRINTF_DECORATE(vsprintfcb)(prb_STBSP_SPRINTFCB* callback, void* user, 
 
         // get the field width
         if (f[0] == '*') {
-            fw = va_arg(va, prb_stbsp__uint32);
+            fw = va_arg(va, prb_stbsp__int32);
             ++f;
         } else {
             while ((f[0] >= '0') && (f[0] <= '9')) {
@@ -3293,7 +3987,7 @@ prb_STB_SPRINTF_DECORATE(vsprintfcb)(prb_STBSP_SPRINTFCB* callback, void* user, 
         if (f[0] == '.') {
             ++f;
             if (f[0] == '*') {
-                pr = va_arg(va, prb_stbsp__uint32);
+                pr = va_arg(va, prb_stbsp__int32);
                 ++f;
             } else {
                 pr = 0;
@@ -3457,11 +4151,11 @@ prb_STB_SPRINTF_DECORATE(vsprintfcb)(prb_STBSP_SPRINTFCB* callback, void* user, 
                 sn = s;
 
                 // print the bits
-                n = pr;
+                n = (unsigned int)pr;
                 if (n > 13)
                     n = 13;
                 if (pr > (prb_stbsp__int32)n)
-                    tz = pr - n;
+                    tz = (int)(pr - n);
                 pr = 0;
                 while (n--) {
                     *s++ = h[(n64 >> 60) & 15];
@@ -3475,7 +4169,7 @@ prb_STB_SPRINTF_DECORATE(vsprintfcb)(prb_STBSP_SPRINTFCB* callback, void* user, 
                     dp = -dp;
                 } else
                     tail[2] = '+';
-                n = (dp >= 1000) ? 6 : ((dp >= 100) ? 5 : ((dp >= 10) ? 4 : 3));
+                n = (dp >= 1000) ? (unsigned int)6 : ((dp >= 100) ? 5 : ((dp >= 10) ? 4 : 3));
                 tail[0] = (char)n;
                 for (;;) {
                     tail[n] = '0' + dp % 10;
@@ -3486,7 +4180,7 @@ prb_STB_SPRINTF_DECORATE(vsprintfcb)(prb_STBSP_SPRINTFCB* callback, void* user, 
                 }
 
                 dp = (int)(s - sn);
-                l = (int)(s - (num + 64));
+                l = (unsigned int)(s - (num + 64));
                 s = num + 64;
                 cs = 1 + (3 << 24);
                 goto scopy;
@@ -3504,9 +4198,9 @@ prb_STB_SPRINTF_DECORATE(vsprintfcb)(prb_STBSP_SPRINTFCB* callback, void* user, 
                     fl |= prb_STBSP__NEGATIVE;
 
                 // clamp the precision and delete extra zeros after clamp
-                n = pr;
+                n = (unsigned int)pr;
                 if (l > (prb_stbsp__uint32)pr)
-                    l = pr;
+                    l = (unsigned int)pr;
                 while ((l > 1) && (pr) && (sn[l - 1] == '0')) {
                     --pr;
                     --l;
@@ -3515,14 +4209,14 @@ prb_STB_SPRINTF_DECORATE(vsprintfcb)(prb_STBSP_SPRINTFCB* callback, void* user, 
                 // should we use %e
                 if ((dp <= -4) || (dp > (prb_stbsp__int32)n)) {
                     if (pr > (prb_stbsp__int32)l)
-                        pr = l - 1;
+                        pr = (int)(l - 1);
                     else if (pr)
                         --pr;  // when using %e, there is one digit before the decimal
                     goto doexpfromg;
                 }
                 // this is the insane action to get the pr to match %g semantics for %f
                 if (dp > 0) {
-                    pr = (dp < (prb_stbsp__int32)l) ? l - dp : 0;
+                    pr = (dp < (prb_stbsp__int32)l) ? (int)(l - dp) : 0;
                 } else {
                     pr = -dp + ((pr > (prb_stbsp__int32)l) ? (prb_stbsp__int32)l : pr);
                 }
@@ -3555,11 +4249,11 @@ prb_STB_SPRINTF_DECORATE(vsprintfcb)(prb_STBSP_SPRINTFCB* callback, void* user, 
 
                 // handle after decimal
                 if ((l - 1) > (prb_stbsp__uint32)pr)
-                    l = pr + 1;
+                    l = (unsigned int)(pr + 1);
                 for (n = 1; n < l; n++)
                     *s++ = sn[n];
                 // trailing zeros
-                tz = pr - (l - 1);
+                tz = (int)(pr - (l - 1));
                 pr = 0;
                 // dump expo
                 tail[1] = h[0xe];
@@ -3572,7 +4266,7 @@ prb_STB_SPRINTF_DECORATE(vsprintfcb)(prb_STBSP_SPRINTFCB* callback, void* user, 
 #ifdef prb_STB_SPRINTF_MSVC_MODE
                 n = 5;
 #else
-                n = (dp >= 100) ? 5 : 4;
+                n = (dp >= 100) ? (unsigned int)5 : (unsigned int)4;
 #endif
                 tail[0] = (char)n;
                 for (;;) {
@@ -3604,7 +4298,7 @@ prb_STB_SPRINTF_DECORATE(vsprintfcb)(prb_STBSP_SPRINTFCB* callback, void* user, 
                 if (pr == -1)
                     pr = 6;  // default is 6
                 // read the double into a string
-                if (prb_stbsp__real_to_str(&sn, &l, num, &dp, fv, pr))
+                if (prb_stbsp__real_to_str(&sn, &l, num, &dp, fv, (unsigned int)pr))
                     fl |= prb_STBSP__NEGATIVE;
             dofloatfromg:
                 tail[0] = 0;
@@ -3624,10 +4318,10 @@ prb_STB_SPRINTF_DECORATE(vsprintfcb)(prb_STBSP_SPRINTFCB* callback, void* user, 
                     *s++ = '0';
                     if (pr)
                         *s++ = prb_stbsp__period;
-                    n = -dp;
+                    n = (unsigned int)(-dp);
                     if ((prb_stbsp__int32)n > pr)
-                        n = pr;
-                    i = n;
+                        n = (unsigned int)pr;
+                    i = (int)n;
                     while (i) {
                         if ((((prb_stbsp__uintptr)s) & 3) == 0)
                             break;
@@ -3645,12 +4339,12 @@ prb_STB_SPRINTF_DECORATE(vsprintfcb)(prb_STBSP_SPRINTFCB* callback, void* user, 
                     }
                     if ((prb_stbsp__int32)(l + n) > pr)
                         l = pr - n;
-                    i = l;
+                    i = (int)l;
                     while (i) {
                         *s++ = *sn++;
                         --i;
                     }
-                    tz = pr - (n + l);
+                    tz = (int)(pr - (n + l));
                     cs = 1 + (3 << 24);  // how many tens did we write (for commas below)
                 } else {
                     cs = (fl & prb_STBSP__TRIPLET_COMMA) ? ((600 - (prb_stbsp__uint32)dp) % 3) : 0;
@@ -3693,7 +4387,7 @@ prb_STB_SPRINTF_DECORATE(vsprintfcb)(prb_STBSP_SPRINTFCB* callback, void* user, 
                                 }
                             }
                         }
-                        cs = (int)(s - (num + 64)) + (3 << 24);  // cs is how many tens
+                        cs = (unsigned int)((int)(s - (num + 64)) + (3 << 24));  // cs is how many tens
                         if (pr) {
                             *s++ = prb_stbsp__period;
                             tz = pr;
@@ -3712,16 +4406,16 @@ prb_STB_SPRINTF_DECORATE(vsprintfcb)(prb_STBSP_SPRINTFCB* callback, void* user, 
                                     break;
                             }
                         }
-                        cs = (int)(s - (num + 64)) + (3 << 24);  // cs is how many tens
+                        cs = (unsigned int)((int)(s - (num + 64)) + (3 << 24));  // cs is how many tens
                         if (pr)
                             *s++ = prb_stbsp__period;
                         if ((l - dp) > (prb_stbsp__uint32)pr)
-                            l = pr + dp;
+                            l = (unsigned int)(pr + dp);
                         while (n < l) {
                             *s++ = sn[n];
                             ++n;
                         }
-                        tz = pr - (l - dp);
+                        tz = pr - ((int)l - dp);
                     }
                 }
                 pr = 0;
@@ -3784,6 +4478,7 @@ prb_STB_SPRINTF_DECORATE(vsprintfcb)(prb_STBSP_SPRINTFCB* callback, void* user, 
                 fl |= (sizeof(void*) == 8) ? prb_STBSP__INTMAX : 0;
                 pr = sizeof(void*) * 2;
                 fl &= ~prb_STBSP__LEADINGZERO;  // 'p' only prints the pointer with zeros
+                prb_FALLTHROUGH;
                     // fall through - to X
 
             case 'X':  // upper hex
@@ -3929,10 +4624,10 @@ prb_STB_SPRINTF_DECORATE(vsprintfcb)(prb_STBSP_SPRINTFCB* callback, void* user, 
             scopy:
                 // get fw=leading/trailing space, pr=leading zeros
                 if (pr < (prb_stbsp__int32)l)
-                    pr = l;
-                n = pr + lead[0] + tail[0] + tz;
+                    pr = (int)l;
+                n = pr + lead[0] + tail[0] + (unsigned int)tz;
                 if (fw < (prb_stbsp__int32)n)
-                    fw = n;
+                    fw = (int)n;
                 fw -= n;
                 pr -= l;
 
@@ -4038,7 +4733,7 @@ prb_STB_SPRINTF_DECORATE(vsprintfcb)(prb_STBSP_SPRINTFCB* callback, void* user, 
                 n = l;
                 while (n) {
                     prb_stbsp__int32 i;
-                    prb_stbsp__cb_buf_clamp(i, n);
+                    prb_stbsp__cb_buf_clamp(i, (int)n);
                     n -= i;
                     prb_STBSP__UNALIGNED(while (i >= 4) {
                         *(prb_stbsp__uint32 volatile*)bf = *(prb_stbsp__uint32 volatile*)s;
@@ -4119,7 +4814,8 @@ prb_STB_SPRINTF_DECORATE(vsprintfcb)(prb_STBSP_SPRINTFCB* callback, void* user, 
                 s = num + prb_STBSP__NUMSZ - 1;
                 *s = f[0];
                 l = 1;
-                fw = fl = 0;
+                fl = 0;
+                fw = 0;
                 lead[0] = 0;
                 tail[0] = 0;
                 pr = 0;
@@ -4282,7 +4978,7 @@ prb_stbsp__real_to_parts(prb_stbsp__int64* bits, prb_stbsp__int32* expo, double 
 
     prb_STBSP__COPYFP(b, d);
 
-    *bits = b & ((((prb_stbsp__uint64)1) << 52) - 1);
+    *bits = b & (signed long long)((((prb_stbsp__uint64)1) << 52) - 1);
     *expo = (prb_stbsp__int32)(((b >> 52) & 2047) - 1023);
 
     return (prb_stbsp__int32)((prb_stbsp__uint64)b >> 63);
@@ -4554,11 +5250,11 @@ prb_stbsp__real_to_str(
         if (frac_digits < dg) {
             prb_stbsp__uint64 r;
             // add 0.5 at the right position and round
-            e = dg - frac_digits;
+            e = (signed int)(dg - frac_digits);
             if ((prb_stbsp__uint32)e >= 24)
                 goto noround;
             r = prb_stbsp__powten[e];
-            bits = bits + (r / 2);
+            bits = bits + (signed long long)(r / 2);
             if ((prb_stbsp__uint64)bits >= prb_stbsp__powten[dg])
                 ++tens;
             bits /= r;
@@ -4618,7 +5314,7 @@ prb_stbsp__real_to_str(
 
     *decimal_pos = tens;
     *start = out;
-    *len = e;
+    *len = (unsigned int)e;
     return ng;
 }
 
@@ -4668,7 +5364,7 @@ size_t prb_stbds_rehash_items;
 
 prb_STBDS__PUBLICDEF void*
 prb_stbds_arrgrowf(void* a, size_t elemsize, size_t addlen, size_t min_cap) {
-    prb_stbds_array_header temp = {};  // force debugging
+    prb_stbds_array_header temp = {.length = 0, .capacity = 0, .hash_table = 0, .temp = 0};  // force debugging
     void*                  b;
     size_t                 min_len = prb_stbds_arrlen(a) + addlen;
     (void)sizeof(temp);
@@ -5008,13 +5704,13 @@ prb_stbds_siphash_bytes(void* p, size_t len, size_t seed) {
     }
     data = len << (prb_STBDS_SIZE_T_BITS - 8);
     switch (len - i) {
-        case 7: data |= ((size_t)d[6] << 24) << 24;  // fall through
-        case 6: data |= ((size_t)d[5] << 20) << 20;  // fall through
-        case 5: data |= ((size_t)d[4] << 16) << 16;  // fall through
-        case 4: data |= (d[3] << 24);  // fall through
-        case 3: data |= (d[2] << 16);  // fall through
-        case 2: data |= (d[1] << 8);  // fall through
-        case 1: data |= d[0];  // fall through
+        case 7: data |= ((size_t)d[6] << 24) << 24; prb_FALLTHROUGH;  // fall through
+        case 6: data |= ((size_t)d[5] << 20) << 20; prb_FALLTHROUGH; // fall through
+        case 5: data |= ((size_t)d[4] << 16) << 16; prb_FALLTHROUGH; // fall through
+        case 4: data |= (d[3] << 24); prb_FALLTHROUGH; // fall through
+        case 3: data |= (d[2] << 16); prb_FALLTHROUGH; // fall through
+        case 2: data |= (d[1] << 8); prb_FALLTHROUGH; // fall through
+        case 1: data |= d[0]; prb_FALLTHROUGH; // fall through
         case 0: break;
     }
     v3 ^= data;
@@ -5041,7 +5737,7 @@ prb_stbds_hash_bytes(void* p, size_t len, size_t seed) {
     unsigned char* d = (unsigned char*)p;
 
     if (len == 4) {
-        unsigned int hash = d[0] | (d[1] << 8) | (d[2] << 16) | (d[3] << 24);
+        unsigned int hash = (unsigned int)d[0] | (unsigned int)(d[1] << 8) | (unsigned int)(d[2] << 16) | (unsigned int)(d[3] << 24);
 #if 0
     // HASH32-A  Bob Jenkin's hash function w/o large constants
     hash ^= seed;
@@ -5097,7 +5793,7 @@ prb_stbds_hash_bytes(void* p, size_t len, size_t seed) {
 
         return (((size_t)hash << 16 << 16) | hash) ^ seed;
     } else if (len == 8 && sizeof(size_t) == 8) {
-        size_t hash = d[0] | (d[1] << 8) | (d[2] << 16) | (d[3] << 24);
+        size_t hash = (size_t)d[0] | (size_t)(d[1] << 8) | (size_t)(d[2] << 16) | (size_t)(d[3] << 24);
         hash |= (size_t)(d[4] | (d[5] << 8) | (d[6] << 16) | (d[7] << 24)) << 16 << 16;  // avoid warning if size_t == 4
         hash ^= seed;
         hash = (~hash) + (hash << 21);
@@ -5124,7 +5820,7 @@ prb_stbds_is_key_equal(void* a, size_t elemsize, void* key, size_t keysize, size
     if (mode >= prb_STBDS_HM_STRING)
         return 0 == prb_strcmp((char*)key, *(char**)((char*)a + elemsize * i + keyoffset));
     else
-        return prb_memeq(key, (char*)a + elemsize * i + keyoffset, keysize);
+        return prb_memeq(key, (char*)a + elemsize * i + keyoffset, (int32_t)keysize);
 }
 
 #define prb_STBDS_HASH_TO_ARR(x, elemsize) ((char*)(x) - (elemsize))
@@ -5173,8 +5869,8 @@ prb_stbds_hm_find_slot(void* a, size_t elemsize, void* key, size_t keysize, size
         // start searching from pos to end of bucket, this should help performance on small hash tables that fit in cache
         for (i = pos & prb_STBDS_BUCKET_MASK; i < prb_STBDS_BUCKET_LENGTH; ++i) {
             if (bucket->hash[i] == hash) {
-                if (prb_stbds_is_key_equal(a, elemsize, key, keysize, keyoffset, mode, bucket->index[i])) {
-                    return (pos & ~prb_STBDS_BUCKET_MASK) + i;
+                if (prb_stbds_is_key_equal(a, elemsize, key, keysize, keyoffset, mode, (size_t)bucket->index[i])) {
+                    return (ptrdiff_t)((pos & ~prb_STBDS_BUCKET_MASK) + i);
                 }
             } else if (bucket->hash[i] == prb_STBDS_HASH_EMPTY) {
                 return -1;
@@ -5185,8 +5881,8 @@ prb_stbds_hm_find_slot(void* a, size_t elemsize, void* key, size_t keysize, size
         limit = pos & prb_STBDS_BUCKET_MASK;
         for (i = 0; i < limit; ++i) {
             if (bucket->hash[i] == hash) {
-                if (prb_stbds_is_key_equal(a, elemsize, key, keysize, keyoffset, mode, bucket->index[i])) {
-                    return (pos & ~prb_STBDS_BUCKET_MASK) + i;
+                if (prb_stbds_is_key_equal(a, elemsize, key, keysize, keyoffset, mode, (size_t)bucket->index[i])) {
+                    return (ptrdiff_t)((pos & ~prb_STBDS_BUCKET_MASK) + i);
                 }
             } else if (bucket->hash[i] == prb_STBDS_HASH_EMPTY) {
                 return -1;
@@ -5286,7 +5982,7 @@ prb_stbds_hmput_key(void* a, size_t elemsize, void* key, size_t keysize, int mod
         if (table)
             prb_STBDS_FREE(NULL, table);
         else
-            nt->string.mode = mode >= prb_STBDS_HM_STRING ? prb_STBDS_SH_DEFAULT : 0;
+            nt->string.mode = mode >= prb_STBDS_HM_STRING ? (unsigned char)prb_STBDS_SH_DEFAULT : (unsigned char)0;
         prb_stbds_header(a)->hash_table = table = nt;
         prb_STBDS_STATS(++prb_stbds_hash_grow);
     }
@@ -5314,7 +6010,7 @@ prb_stbds_hmput_key(void* a, size_t elemsize, void* key, size_t keysize, int mod
             // start searching from pos to end of bucket
             for (i = pos & prb_STBDS_BUCKET_MASK; i < prb_STBDS_BUCKET_LENGTH; ++i) {
                 if (bucket->hash[i] == hash) {
-                    if (prb_stbds_is_key_equal(raw_a, elemsize, key, keysize, keyoffset, mode, bucket->index[i])) {
+                    if (prb_stbds_is_key_equal(raw_a, elemsize, key, keysize, keyoffset, mode, (size_t)bucket->index[i])) {
                         prb_stbds_temp(a) = bucket->index[i];
                         if (mode >= prb_STBDS_HM_STRING)
                             prb_stbds_temp_key(a) = *(char**)((char*)raw_a + elemsize * bucket->index[i] + keyoffset);
@@ -5333,7 +6029,7 @@ prb_stbds_hmput_key(void* a, size_t elemsize, void* key, size_t keysize, int mod
             limit = pos & prb_STBDS_BUCKET_MASK;
             for (i = 0; i < limit; ++i) {
                 if (bucket->hash[i] == hash) {
-                    if (prb_stbds_is_key_equal(raw_a, elemsize, key, keysize, keyoffset, mode, bucket->index[i])) {
+                    if (prb_stbds_is_key_equal(raw_a, elemsize, key, keysize, keyoffset, mode, (size_t)bucket->index[i])) {
                         prb_stbds_temp(a) = bucket->index[i];
                         return prb_STBDS_ARR_TO_HASH(a, elemsize);
                     }
@@ -5353,7 +6049,7 @@ prb_stbds_hmput_key(void* a, size_t elemsize, void* key, size_t keysize, int mod
         }
     found_empty_slot:
         if (tombstone >= 0) {
-            pos = tombstone;
+            pos = (size_t)tombstone;
             --table->tombstone_count;
         }
         ++table->used_count;
@@ -5367,7 +6063,7 @@ prb_stbds_hmput_key(void* a, size_t elemsize, void* key, size_t keysize, int mod
             prb_unused(raw_a);
 
             prb_STBDS_ASSERT((size_t)i + 1 <= prb_stbds_arrcap(a));
-            prb_stbds_header(a)->length = i + 1;
+            prb_stbds_header(a)->length = (size_t)(i + 1);
             bucket = &table->storage[pos >> prb_STBDS_BUCKET_SHIFT];
             bucket->hash[pos & prb_STBDS_BUCKET_MASK] = hash;
             bucket->index[pos & prb_STBDS_BUCKET_MASK] = i - 1;
@@ -5487,7 +6183,7 @@ static char*
 prb_stbds_strdup(char* str) {
     // to keep replaceable allocator simple, we don't want to use strdup.
     // rolling our own also avoids problem of strdup vs _strdup
-    size_t len = prb_strlen(str) + 1;
+    size_t len = (size_t)prb_strlen(str) + 1;
     char*  p = (char*)prb_STBDS_REALLOC(NULL, 0, len);
     prb_memmove(p, str, len);
     return p;
@@ -5503,7 +6199,7 @@ prb_stbds_strdup(char* str) {
 prb_STBDS__PUBLICDEF char*
 prb_stbds_stralloc(prb_stbds_string_arena* a, char* str) {
     char*  p;
-    size_t len = prb_strlen(str) + 1;
+    size_t len = (size_t)prb_strlen(str) + 1;
     if (len > a->remaining) {
         // compute the next blocksize
         size_t blocksize = a->block;
@@ -5564,6 +6260,14 @@ prb_stbds_strreset(prb_stbds_string_arena* a) {
 
 #ifdef __GNUC__
 #pragma GCC diagnostic pop
+#endif
+
+#ifdef __clang__
+#pragma clang diagnostic pop
+#endif
+
+#ifdef _MSC_VER
+#pragma warning(pop)
 #endif
 
 // NOLINTEND(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)

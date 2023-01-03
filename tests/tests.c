@@ -41,7 +41,7 @@ getRandomU32BiasedBound(Rng* rng, i32 bound) {
 typedef struct GenerateSequencesResult {
     prb_Str  full;
     prb_Str* seqs;
-    i32         seqCount;
+    i32      seqCount;
 } GenerateSequencesResult;
 
 function GenerateSequencesResult
@@ -96,27 +96,28 @@ generateSequences(prb_Arena* arena, Rng* rng, char* choices, i32 choicesCount, i
 
 function prb_Str*
 getSeqsFromFile(prb_Arena* arena, prb_Str filepath) {
-    prb_Str*              seqs = 0;
+    prb_Str*                 seqs = 0;
     prb_ReadEntireFileResult readRes = prb_readEntireFile(arena, filepath);
     prb_assert(readRes.success);
-    prb_Str       contentLeft = prb_strFromBytes(readRes.content);
-    prb_LineIter lineIter = prb_createLineIter(contentLeft);
+    prb_Str        contentLeft = prb_strFromBytes(readRes.content);
+    prb_StrScanner lineIter = prb_createStrScanner(contentLeft);
     for (;;) {
-        if (prb_lineIterNext(&lineIter) == prb_Failure) {
+        prb_StrFindSpec linebr = {.mode = prb_StrFindMode_LineBreak};
+        if (prb_strScannerMove(&lineIter, linebr, prb_StrScannerSide_AfterMatch) == prb_Failure) {
             break;
         }
-        prb_assert(lineIter.curLine.ptr[0] == '>');
+        prb_assert(lineIter.betweenLastMatches.ptr[0] == '>');
         prb_GrowingStr gstr = prb_beginStr(arena);
         for (;;) {
-            prb_LineIter lineIterCopy = lineIter;
-            if (prb_lineIterNext(&lineIterCopy) == prb_Failure) {
+            prb_StrScanner lineIterCopy = lineIter;
+            if (prb_strScannerMove(&lineIterCopy, linebr, prb_StrScannerSide_AfterMatch) == prb_Failure) {
                 break;
             }
-            if (lineIterCopy.curLine.ptr[0] == '>') {
+            if (lineIterCopy.betweenLastMatches.ptr[0] == '>') {
                 break;
             }
             lineIter = lineIterCopy;
-            prb_addStrSegment(&gstr, "%.*s", prb_LIT(lineIter.curLine));
+            prb_addStrSegment(&gstr, "%.*s", prb_LIT(lineIter.betweenLastMatches));
         }
         prb_Str seq = prb_endStr(&gstr);
         arrput(seqs, seq);
@@ -129,8 +130,8 @@ alignWithMafft(prb_Arena* arena, prb_Str mafftExe, prb_Str inputPath, prb_Str ma
     {
         prb_Str cmd = prb_fmt(arena, "%.*s --globalpair --maxiterate 1000 %.*s", prb_LIT(mafftExe), prb_LIT(inputPath));
         prb_writelnToStdout(arena, cmd);
-        prb_ProcessHandle proc = prb_execCmd(arena, (prb_ExecCmdSpec) {.cmd = cmd, .redirectStdout = true, .stdoutFilepath = mafftOuputPath});
-        prb_assert(proc.status == prb_ProcessStatus_CompletedSuccess);
+        prb_Process proc = prb_createProcess(cmd, (prb_ProcessSpec) {.redirectStdout = true, .stdoutFilepath = mafftOuputPath});
+        prb_assert(prb_launchProcesses(arena, &proc, 1, prb_Background_No));
     }
     prb_Str* mafftAlignedSeqs = getSeqsFromFile(arena, mafftOuputPath);
     return mafftAlignedSeqs;
@@ -145,13 +146,13 @@ main() {
     prb_Arena*    arena = &arena_;
     Rng           rng_ = createRng(1, 3);
     Rng*          rng = &rng_;
-    prb_Str    testsDir = prb_getParentDir(arena, prb_STR(__FILE__));
-    prb_Str    rootDir = prb_getParentDir(arena, testsDir);
+    prb_Str       testsDir = prb_getParentDir(arena, prb_STR(__FILE__));
+    prb_Str       rootDir = prb_getParentDir(arena, testsDir);
 
     GenerateSequencesResult genSeq = {};
     {
         char aminoAcids[] = {'A', 'R', 'N', 'D', 'C', 'E', 'Q', 'G', 'H', 'I', 'L', 'K', 'M', 'F', 'P', 'S', 'T', 'W', 'Y', 'V'};
-        i32  aminoAcidsCount = prb_arrayLength(aminoAcids);
+        i32  aminoAcidsCount = prb_arrayCount(aminoAcids);
         prb_assert(aminoAcidsCount == 20);
         genSeq = generateSequences(arena, rng, aminoAcids, aminoAcidsCount, 100, 3);
         prb_writelnToStdout(arena, genSeq.full);
@@ -170,17 +171,16 @@ main() {
         prb_writeEntireFile(arena, fastaOutputPath, fastaContent.ptr, fastaContent.len);
     }
 
-    prb_assert(prb_removeFileIfExists(arena, prb_pathJoin(arena, rootDir, prb_STR("mafft/core/logfile.txt"))) == prb_Success);
+    prb_assert(prb_removePathIfExists(arena, prb_pathJoin(arena, rootDir, prb_STR("mafft/core/logfile.txt"))) == prb_Success);
 
-    // TODO(sen) Change to portable when available
-    prb_Str mafftBinEnvName = prb_STR("MAFFT_BINARIES");
-    char*      oldMafftBin = getenv(mafftBinEnvName.ptr);
-    prb_assert(oldMafftBin);
-    prb_assert(unsetenv(mafftBinEnvName.ptr) == 0);
+    prb_Str          mafftBinEnvName = prb_STR("MAFFT_BINARIES");
+    prb_GetenvResult oldMafftBin = prb_getenv(arena, mafftBinEnvName);
+    prb_assert(oldMafftBin.found);
+    prb_assert(prb_unsetenv(arena, mafftBinEnvName));
     prb_Str  mafftOuputPath = prb_pathJoin(arena, testsDir, prb_STR("mafft-testseqs.fasta"));
     prb_Str* mafftAlignedSeqs = alignWithMafft(arena, prb_STR("mafft"), fastaOutputPath, mafftOuputPath);
     prb_assert(arrlen(mafftAlignedSeqs) == genSeq.seqCount);
-    prb_assert(setenv(mafftBinEnvName.ptr, oldMafftBin, 1) == 0);
+    prb_assert(prb_setenv(arena, mafftBinEnvName, oldMafftBin.str));
 
     prb_Str  localMafftExe = prb_pathJoin(arena, rootDir, prb_STR("mafft/core/mafft.tmpl"));
     prb_Str  localMafftOuputPath = prb_pathJoin(arena, testsDir, prb_STR("localmafft-testseqs.fasta"));
