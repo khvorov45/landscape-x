@@ -1700,7 +1700,7 @@ typedef struct _TopDep {
     int***   topol;
 } TopDep;
 
-static TLS TopDep* tdpglobal = NULL;
+static TopDep* tdpglobal = NULL;
 static int*
 topolorder_lessargs(int* order, int pos) {
     if ((tdpglobal->dep)[pos].child0 == -1) {
@@ -7178,15 +7178,15 @@ fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(int nseq, double** eff, int
     int*    intpt;
     double  tmpdouble;
     double  eff1, eff0;
-    double* tmptmplen = NULL;  // static TLS -> local, 2012/02/25
-    int*    hist = NULL;  // static TLS -> local, 2012/02/25
-    Bchain* ac = NULL;  // static TLS -> local, 2012/02/25
+    double* tmptmplen = NULL;  // static -> local, 2012/02/25
+    int*    hist = NULL;  // static -> local, 2012/02/25
+    Bchain* ac = NULL;  // static -> local, 2012/02/25
     int     im = -1, jm = -1;
     Bchain *acjmnext, *acjmprev;
     int     prevnode;
     Bchain* acpti;
     int *   pt1, *pt2, *pt11;
-    int*    nmemar;  // static TLS -> local, 2012/02/25
+    int*    nmemar;  // static -> local, 2012/02/25
     int     nmemim, nmemjm;
     double  minscore;
     int*    nearest = NULL;  // by Mathog, a guess
@@ -7431,15 +7431,15 @@ fixed_musclesupg_double_realloc_nobk_halfmtx(int nseq, double** eff, int*** topo
     int *   intpt, *intpt2;
     double  tmpdouble;
     double  eff1, eff0;
-    double* tmptmplen = NULL;  // static TLS -> local, 2012/02/25
-    int*    hist = NULL;  // static TLS -> local, 2012/02/25
-    Bchain* ac = NULL;  // static TLS -> local, 2012/02/25
+    double* tmptmplen = NULL;  // static -> local, 2012/02/25
+    int*    hist = NULL;  // static -> local, 2012/02/25
+    Bchain* ac = NULL;  // static -> local, 2012/02/25
     int     im = -1, jm = -1;
     Bchain *acjmnext, *acjmprev;
     int     prevnode;
     Bchain* acpti;
     int *   pt1, *pt2, *pt11, *pt22;
-    int*    nmemar;  // static TLS -> local, 2012/02/25
+    int*    nmemar;  // static -> local, 2012/02/25
     int     nmemim, nmemjm;
     double  minscore;
     int*    nearest = NULL;  // by Mathog, a guess
@@ -14354,9 +14354,9 @@ commonsextet_p(int* table, int* pointt) {
     int             value = 0;
     int             tmp;
     int             point;
-    static TLS int* memo = NULL;
-    static TLS int* ct = NULL;
-    static TLS int* cp;
+    static int* memo = NULL;
+    static int* ct = NULL;
+    static int* cp;
 
     if (table == NULL) {
         if (memo)

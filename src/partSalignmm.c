@@ -52,8 +52,8 @@ static void st_FinalGapCount( double *fgcp, int clus, char **seq, double *eff, i
 }
 #endif
 
-static TLS int      impalloclen = 0;
-static TLS double** impmtx = NULL;
+static int      impalloclen = 0;
+static double** impmtx = NULL;
 double
 part_imp_match_out_sc(int i1, int j1) {
     //	fprintf( stderr, "impalloclen = %d\n", impalloclen );
@@ -102,8 +102,8 @@ part_imp_match_init_strict(int clus1, int clus2, int lgth1, int lgth2, char** se
     //	double effij_kozo;
     //	double effijx;
     //	char *pt, *pt1, *pt2;
-    //	static TLS char *nocount1 = NULL;
-    //	static TLS char *nocount2 = NULL;
+    //	static char *nocount1 = NULL;
+    //	static char *nocount2 = NULL;
     //	LocalHom *tmpptr;
 
     if (seq1 == NULL) {
@@ -612,27 +612,27 @@ partA__align(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int
     double *mjpt, *prept, *curpt;
     int*    mpjpt;
 #endif
-    static TLS double   mi, *m;
-    static TLS int**    ijp;
-    static TLS int      mpi, *mp;
-    static TLS double * w1, *w2;
-    static TLS double*  match;
-    static TLS double*  initverticalw; /* kufuu sureba iranai */
-    static TLS double*  lastverticalw; /* kufuu sureba iranai */
-    static TLS char**   mseq1;
-    static TLS char**   mseq2;
-    static TLS char**   mseq;
-    static TLS double*  ogcp1;
-    static TLS double*  ogcp2;
-    static TLS double*  fgcp1;
-    static TLS double*  fgcp2;
-    static TLS double** cpmx1;
-    static TLS double** cpmx2;
-    static TLS double*  gapfreq1;
-    static TLS double*  gapfreq2;
-    static TLS int**    intwork;
-    static TLS double** doublework;
-    static TLS int      orlgth1 = 0, orlgth2 = 0;
+    static double   mi, *m;
+    static int**    ijp;
+    static int      mpi, *mp;
+    static double * w1, *w2;
+    static double*  match;
+    static double*  initverticalw; /* kufuu sureba iranai */
+    static double*  lastverticalw; /* kufuu sureba iranai */
+    static char**   mseq1;
+    static char**   mseq2;
+    static char**   mseq;
+    static double*  ogcp1;
+    static double*  ogcp2;
+    static double*  fgcp1;
+    static double*  fgcp2;
+    static double** cpmx1;
+    static double** cpmx2;
+    static double*  gapfreq1;
+    static double*  gapfreq2;
+    static int**    intwork;
+    static double** doublework;
+    static int      orlgth1 = 0, orlgth2 = 0;
     double              fpenalty = (double)penalty;
     double              fpenalty_shift = (double)penalty_shift;
 #if USE_PENALTY_EX
@@ -1253,27 +1253,27 @@ partA__align_variousdist(int** which, double*** matrices, char** seq1, char** se
     double *mjpt, *prept, *curpt;
     int*    mpjpt;
 #endif
-    static TLS double    mi, *m;
-    static TLS int**     ijp;
-    static TLS int       mpi, *mp;
-    static TLS double *  w1, *w2;
-    static TLS double*   match;
-    static TLS double*   initverticalw; /* kufuu sureba iranai */
-    static TLS double*   lastverticalw; /* kufuu sureba iranai */
-    static TLS char**    mseq1;
-    static TLS char**    mseq2;
-    static TLS char**    mseq;
-    static TLS double*   ogcp1;
-    static TLS double*   ogcp2;
-    static TLS double*   fgcp1;
-    static TLS double*   fgcp2;
-    static TLS double*** cpmx1s;
-    static TLS double*** cpmx2s;
-    static TLS double*   gapfreq1;
-    static TLS double*   gapfreq2;
-    static TLS int***    intwork;
-    static TLS double*** doublework;
-    static TLS int       orlgth1 = 0, orlgth2 = 0;
+    static double    mi, *m;
+    static int**     ijp;
+    static int       mpi, *mp;
+    static double *  w1, *w2;
+    static double*   match;
+    static double*   initverticalw; /* kufuu sureba iranai */
+    static double*   lastverticalw; /* kufuu sureba iranai */
+    static char**    mseq1;
+    static char**    mseq2;
+    static char**    mseq;
+    static double*   ogcp1;
+    static double*   ogcp2;
+    static double*   fgcp1;
+    static double*   fgcp2;
+    static double*** cpmx1s;
+    static double*** cpmx2s;
+    static double*   gapfreq1;
+    static double*   gapfreq2;
+    static int***    intwork;
+    static double*** doublework;
+    static int       orlgth1 = 0, orlgth2 = 0;
     double               fpenalty = (double)penalty;
     double               fpenalty_shift = (double)penalty_shift;
 #if USE_PENALTY_EX

@@ -146,22 +146,22 @@ Aalign(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc,
     double              wm = 0.0; /* int ?????? */
     double              g;
     double              x;
-    static TLS double   mi, *m;
-    static TLS int**    ijp;
-    static TLS int      mpi, *mp;
-    static TLS double*  currentw;
-    static TLS double*  previousw;
-    static TLS double*  match;
-    static TLS double*  initverticalw; /* kufuu sureba iranai */
-    static TLS double*  lastverticalw; /* kufuu sureba iranai */
-    static TLS char**   mseq1;
-    static TLS char**   mseq2;
-    static TLS char**   mseq;
-    static TLS double** cpmx1;
-    static TLS double** cpmx2;
-    static TLS int**    intwork;
-    static TLS double** doublework;
-    static TLS int      orlgth1 = 0, orlgth2 = 0;
+    static double   mi, *m;
+    static int**    ijp;
+    static int      mpi, *mp;
+    static double*  currentw;
+    static double*  previousw;
+    static double*  match;
+    static double*  initverticalw; /* kufuu sureba iranai */
+    static double*  lastverticalw; /* kufuu sureba iranai */
+    static char**   mseq1;
+    static char**   mseq2;
+    static char**   mseq;
+    static double** cpmx1;
+    static double** cpmx2;
+    static int**    intwork;
+    static double** doublework;
+    static int      orlgth1 = 0, orlgth2 = 0;
 
 #if DEBUG
     fprintf(stderr, "eff in SA+++align\n");

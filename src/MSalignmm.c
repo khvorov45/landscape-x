@@ -12,7 +12,7 @@
 
 #define ATO 1
 
-static TLS int reccycle = 0;
+static int reccycle = 0;
 
 // [seq][alphabet]
 static void
@@ -970,8 +970,8 @@ MSalignmm_rec(double** n_dynamicmtx, int icyc, int jcyc, double* eff1, double* e
     double  firstm;
     int     firstmp;
 #if STOREWM
-    static TLS char ttt1[50000];
-    static TLS char ttt2[50000];
+    static char ttt1[50000];
+    static char ttt2[50000];
 #endif
     double* gapfreq1f;
     double* gapfreq2f;
@@ -2802,8 +2802,8 @@ MSalignmm_rec_variousdist(double*** matrices, int icyc, int jcyc, char** seq1, c
     double  firstm;
     int     firstmp;
 #if STOREWM
-    static TLS char ttt1[50000];
-    static TLS char ttt2[50000];
+    static char ttt1[50000];
+    static char ttt2[50000];
 #endif
     double* gapfreq1f;
     double* gapfreq2f;

@@ -33,8 +33,8 @@
 static int PFACERROR = 0;
 #endif
 
-static TLS double** impmtx = NULL;
-static TLS int      impalloclen = 0;
+static double** impmtx = NULL;
+static int      impalloclen = 0;
 
 double
 imp_match_out_scD(int i1, int j1) {
@@ -118,8 +118,8 @@ imp_match_init_strictD(int clus1, int clus2, int lgth1, int lgth2, char** seq1, 
     //	double effij_kozo;
     //	double effijx;
     //	char *pt, *pt1, *pt2;
-    //	static TLS char *nocount1 = NULL;
-    //	static TLS char *nocount2 = NULL;
+    //	static char *nocount1 = NULL;
+    //	static char *nocount2 = NULL;
     //	LocalHom *tmpptr;
 
     if (seq1 == NULL) {
@@ -2312,21 +2312,21 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
     double *mjpt, *prept, *curpt;
     int*    mpjpt;
 #endif
-    static TLS double   mi, *m;
-    static TLS int**    ijp;
-    static TLS int      mpi, *mp;
-    static TLS double * w1, *w2;
-    static TLS double*  match;
-    static TLS double*  initverticalw; /* kufuu sureba iranai */
-    static TLS double*  lastverticalw; /* kufuu sureba iranai */
-    static TLS char**   mseq1;
-    static TLS char**   mseq2;
-    static TLS char**   mseq;
-    static TLS double** cpmx1;
-    static TLS double** cpmx2;
-    static TLS int**    intwork;
-    static TLS double** doublework;
-    static TLS int      orlgth1 = 0, orlgth2 = 0;
+    static double   mi, *m;
+    static int**    ijp;
+    static int      mpi, *mp;
+    static double * w1, *w2;
+    static double*  match;
+    static double*  initverticalw; /* kufuu sureba iranai */
+    static double*  lastverticalw; /* kufuu sureba iranai */
+    static char**   mseq1;
+    static char**   mseq2;
+    static char**   mseq;
+    static double** cpmx1;
+    static double** cpmx2;
+    static int**    intwork;
+    static double** doublework;
+    static int      orlgth1 = 0, orlgth2 = 0;
 #if USEGAPLENHALF
     Gaplen**** gaplen1half = NULL;  // NULL ga iru to omou.
     Gaplen**** gaplen2half = NULL;  // NULL ga iru to omou.
@@ -2335,23 +2335,23 @@ D__align(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* 
     Gaplen**** gaplen1mtx = NULL;  // NULL ga iru to omou.
     Gaplen**** gaplen2mtx = NULL;  // NULL ga iru to omou.
 #endif
-    static TLS Gaplen**   gaplen1 = NULL;  // NULL ga iru to omou.
-    static TLS Gaplen**   gaplen2 = NULL;  // NULL ga iru to omou.
-    static TLS Gaplen***  gaplen1jprev = NULL;
-    static TLS Gaplen***  gaplen2jprev = NULL;
-    static TLS Gaplen***  gaplen1jcurr = NULL;
-    static TLS Gaplen***  gaplen2jcurr = NULL;
-    static TLS Gaplen***  gaplen1icurr = NULL;
-    static TLS Gaplen***  gaplen2icurr = NULL;
-    static TLS Gaplen***  gaplen1jbestkamo = NULL;
-    static TLS Gaplen***  gaplen2jbestkamo = NULL;
-    static TLS Gaplen***  gaplen1ibestkamo = NULL;
-    static TLS Gaplen***  gaplen2ibestkamo = NULL;
-    static TLS Gaplen***  gaplen1jbest = NULL;
-    static TLS Gaplen***  gaplen2jbest = NULL;
+    static Gaplen**   gaplen1 = NULL;  // NULL ga iru to omou.
+    static Gaplen**   gaplen2 = NULL;  // NULL ga iru to omou.
+    static Gaplen***  gaplen1jprev = NULL;
+    static Gaplen***  gaplen2jprev = NULL;
+    static Gaplen***  gaplen1jcurr = NULL;
+    static Gaplen***  gaplen2jcurr = NULL;
+    static Gaplen***  gaplen1icurr = NULL;
+    static Gaplen***  gaplen2icurr = NULL;
+    static Gaplen***  gaplen1jbestkamo = NULL;
+    static Gaplen***  gaplen2jbestkamo = NULL;
+    static Gaplen***  gaplen1ibestkamo = NULL;
+    static Gaplen***  gaplen2ibestkamo = NULL;
+    static Gaplen***  gaplen1jbest = NULL;
+    static Gaplen***  gaplen2jbest = NULL;
     double                fpenalty = (double)penalty;
     double                fpenalty_shift = (double)penalty_shift;
-    static TLS Gaplen**** gaplens = NULL;
+    static Gaplen**** gaplens = NULL;
 
     Gaplen*** gaplentmp = NULL;
     int*      warpis = NULL;
@@ -3875,21 +3875,21 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
     double *mjpt, *prept, *curpt;
     int*    mpjpt;
 #endif
-    static TLS double    mi, *m;
-    static TLS int**     ijp;
-    static TLS int       mpi, *mp;
-    static TLS double *  w1, *w2;
-    static TLS double*   match;
-    static TLS double*   initverticalw; /* kufuu sureba iranai */
-    static TLS double*   lastverticalw; /* kufuu sureba iranai */
-    static TLS char**    mseq1;
-    static TLS char**    mseq2;
-    static TLS char**    mseq;
-    static TLS double*** cpmx1s;
-    static TLS double*** cpmx2s;
-    static TLS int***    intwork;
-    static TLS double*** doublework;
-    static TLS int       orlgth1 = 0, orlgth2 = 0;
+    static double    mi, *m;
+    static int**     ijp;
+    static int       mpi, *mp;
+    static double *  w1, *w2;
+    static double*   match;
+    static double*   initverticalw; /* kufuu sureba iranai */
+    static double*   lastverticalw; /* kufuu sureba iranai */
+    static char**    mseq1;
+    static char**    mseq2;
+    static char**    mseq;
+    static double*** cpmx1s;
+    static double*** cpmx2s;
+    static int***    intwork;
+    static double*** doublework;
+    static int       orlgth1 = 0, orlgth2 = 0;
 #if USEGAPLENHALF
     Gaplen**** gaplen1half = NULL;  // NULL ga iru to omou.
     Gaplen**** gaplen2half = NULL;  // NULL ga iru to omou.
@@ -3898,23 +3898,23 @@ D__align_variousdist(int** which, double*** matrices, char** seq1, char** seq2, 
     Gaplen**** gaplen1mtx = NULL;  // NULL ga iru to omou.
     Gaplen**** gaplen2mtx = NULL;  // NULL ga iru to omou.
 #endif
-    static TLS Gaplen**   gaplen1 = NULL;  // NULL ga iru to omou.
-    static TLS Gaplen**   gaplen2 = NULL;  // NULL ga iru to omou.
-    static TLS Gaplen***  gaplen1jprev = NULL;
-    static TLS Gaplen***  gaplen2jprev = NULL;
-    static TLS Gaplen***  gaplen1jcurr = NULL;
-    static TLS Gaplen***  gaplen2jcurr = NULL;
-    static TLS Gaplen***  gaplen1icurr = NULL;
-    static TLS Gaplen***  gaplen2icurr = NULL;
-    static TLS Gaplen***  gaplen1jbestkamo = NULL;
-    static TLS Gaplen***  gaplen2jbestkamo = NULL;
-    static TLS Gaplen***  gaplen1ibestkamo = NULL;
-    static TLS Gaplen***  gaplen2ibestkamo = NULL;
-    static TLS Gaplen***  gaplen1jbest = NULL;
-    static TLS Gaplen***  gaplen2jbest = NULL;
+    static Gaplen**   gaplen1 = NULL;  // NULL ga iru to omou.
+    static Gaplen**   gaplen2 = NULL;  // NULL ga iru to omou.
+    static Gaplen***  gaplen1jprev = NULL;
+    static Gaplen***  gaplen2jprev = NULL;
+    static Gaplen***  gaplen1jcurr = NULL;
+    static Gaplen***  gaplen2jcurr = NULL;
+    static Gaplen***  gaplen1icurr = NULL;
+    static Gaplen***  gaplen2icurr = NULL;
+    static Gaplen***  gaplen1jbestkamo = NULL;
+    static Gaplen***  gaplen2jbestkamo = NULL;
+    static Gaplen***  gaplen1ibestkamo = NULL;
+    static Gaplen***  gaplen2ibestkamo = NULL;
+    static Gaplen***  gaplen1jbest = NULL;
+    static Gaplen***  gaplen2jbest = NULL;
     double                fpenalty = (double)penalty;
     double                fpenalty_shift = (double)penalty_shift;
-    static TLS Gaplen**** gaplens = NULL;
+    static Gaplen**** gaplens = NULL;
 
     Gaplen*** gaplentmp = NULL;
     int*      warpis = NULL;

@@ -58,9 +58,9 @@ make_bitrev(int n, int bitrev[]) {
 */
 int
 fft(int n, Fukusosuu* x, int freeflag) {
-    static TLS int     last_n = 0; /*  {\tt n} */
-    static TLS int*    bitrev = NULL; /*  */
-    static TLS double* sintbl = NULL; /*  */
+    static int     last_n = 0; /*  {\tt n} */
+    static int*    bitrev = NULL; /*  */
+    static double* sintbl = NULL; /*  */
     int                i, j, k, ik, h, d, k2, n4, inverse;
     double             t, s, c, dR, dI;
 

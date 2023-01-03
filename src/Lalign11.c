@@ -6,7 +6,7 @@
 #define XXXXXXX 0
 #define USE_PENALTY_EX 1
 
-static TLS int localstop;  // 060910
+static int localstop;  // 060910
 
 #if 1
 static void
@@ -211,20 +211,20 @@ L__align11(double** n_dynamicmtx, double scoreoffset, char** seq1, char** seq2, 
     double *mjpt, *prept, *curpt;
     int*    mpjpt;
 #endif
-    static TLS double  mi, *m;
-    static TLS int**   ijp;
-    static TLS int     mpi, *mp;
-    static TLS double *w1, *w2;
-    static TLS double* match;
-    static TLS double* initverticalw; /* kufuu sureba iranai */
-    static TLS double* lastverticalw; /* kufuu sureba iranai */
-    static TLS char**  mseq1;
-    static TLS char**  mseq2;
-    static TLS char**  mseq;
-    //	static TLS int **intwork;
-    //	static TLS double **doublework;
-    static TLS int      orlgth1 = 0, orlgth2 = 0;
-    static TLS double** amino_dynamicmtx = NULL;  // ??
+    static double  mi, *m;
+    static int**   ijp;
+    static int     mpi, *mp;
+    static double *w1, *w2;
+    static double* match;
+    static double* initverticalw; /* kufuu sureba iranai */
+    static double* lastverticalw; /* kufuu sureba iranai */
+    static char**  mseq1;
+    static char**  mseq2;
+    static char**  mseq;
+    //	static int **intwork;
+    //	static double **doublework;
+    static int      orlgth1 = 0, orlgth2 = 0;
+    static double** amino_dynamicmtx = NULL;  // ??
     double              maxwm;
     int                 endali = 0, endalj = 0;  // by D.Mathog, a guess
     //	int endali, endalj;
@@ -712,20 +712,20 @@ L__align11_noalign(double** n_dynamicmtx, char** seq1, char** seq2)
     double *mjpt, *prept, *curpt;
 //	int *mpjpt;
 #endif
-    static TLS double mi, *m;
-    //	static TLS int **ijp;
-    //	static TLS int mpi, *mp;
-    static TLS double *w1, *w2;
-    static TLS double* match;
-    static TLS double* initverticalw; /* kufuu sureba iranai */
-    static TLS double* lastverticalw; /* kufuu sureba iranai */
-    //	static TLS char **mseq1;
-    //	static TLS char **mseq2;
-    //	static TLS char **mseq;
-    //	static TLS int **intwork;
-    //	static TLS double **doublework;
-    static TLS int      orlgth1 = 0, orlgth2 = 0;
-    static TLS double** amino_dynamicmtx = NULL;  // ??
+    static double mi, *m;
+    //	static int **ijp;
+    //	static int mpi, *mp;
+    static double *w1, *w2;
+    static double* match;
+    static double* initverticalw; /* kufuu sureba iranai */
+    static double* lastverticalw; /* kufuu sureba iranai */
+    //	static char **mseq1;
+    //	static char **mseq2;
+    //	static char **mseq;
+    //	static int **intwork;
+    //	static double **doublework;
+    static int      orlgth1 = 0, orlgth2 = 0;
+    static double** amino_dynamicmtx = NULL;  // ??
     double              maxwm;
     //	int endali = 0, endalj = 0; // by D.Mathog, a guess
     //	int endali, endalj;

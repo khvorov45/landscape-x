@@ -7,7 +7,7 @@ static int upperCase = 0;
 
 char
 creverse(char f) {
-    static TLS char* table = NULL;
+    static char* table = NULL;
 
     if (f == 0) {
         free(table);

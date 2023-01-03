@@ -100,7 +100,7 @@ mccaskillextract(char** seq, char** nogap, int nseq, RNApair** pairprob, RNApair
     int             i, j;
     int             left, right, adpos;
     double          prob;
-    static TLS int* pairnum;
+    static int* pairnum;
     RNApair *       pt, *pt2;
 
     lgth = strlen(seq[0]);
@@ -176,16 +176,16 @@ void
 rnaalifoldcall(char** seq, int nseq, RNApair** pairprob) {
     int               lgth;
     int               i;
-    static TLS int*   order = NULL;
-    static TLS char** name = NULL;
+    static int*   order = NULL;
+    static char** name = NULL;
     char              gett[1000];
     FILE*             fp;
     int               left, right, dumm;
     double            prob;
-    static TLS int    pid;
-    static TLS char   fnamein[100];
-    static TLS char   cmd[1000];
-    static TLS int*   pairnum;
+    static int    pid;
+    static char   fnamein[100];
+    static char   cmd[1000];
+    static int*   pairnum;
 
     lgth = strlen(seq[0]);
     if (order == NULL) {
@@ -324,14 +324,14 @@ foldrna(int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* ef
     //	int ui, uj;
     //	int uiup, ujup;
     int                  uido, ujdo;
-    static TLS char **   useq1, **useq2;
-    static TLS char **   oseq1, **oseq2, **oseq1r, **oseq2r, *odir1, *odir2;
-    static TLS RNApair **pairprob1, **pairprob2;
-    static TLS RNApair * pairpt1, *pairpt2;
+    static char **   useq1, **useq2;
+    static char **   oseq1, **oseq2, **oseq1r, **oseq2r, *odir1, *odir2;
+    static RNApair **pairprob1, **pairprob2;
+    static RNApair * pairpt1, *pairpt2;
     int                  lgth1 = strlen(seq1[0]);
     int                  lgth2 = strlen(seq2[0]);
-    static TLS double**  impmtx2;
-    static TLS double**  map;
+    static double**  impmtx2;
+    static double**  map;
     //	double lenfac;
     double prob;
     int ** sgapmap1, **sgapmap2;

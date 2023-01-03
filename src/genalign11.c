@@ -6,7 +6,7 @@
 #define XXXXXXX 0
 #define USE_PENALTY_EX 1
 
-static TLS int localstop;
+static int localstop;
 
 #if 1
 static void
@@ -128,25 +128,25 @@ genL__align11(double** n_dynamicmtx, char** seq1, char** seq2, int alloclen, int
     double *mjpt, *Mjpt, *prept, *curpt;
     int *   mpjpt, *Mpjpt;
 #endif
-    static TLS double   mi, *m;
-    static TLS double   Mi, *largeM;
-    static TLS int**    ijpi;
-    static TLS int**    ijpj;
-    static TLS int      mpi, *mp;
-    static TLS int      Mpi, *Mp;
-    static TLS double * w1, *w2;
-    static TLS double*  match;
-    static TLS double*  initverticalw; /* kufuu sureba iranai */
-    static TLS double*  lastverticalw; /* kufuu sureba iranai */
-    static TLS char**   mseq1;
-    static TLS char**   mseq2;
-    static TLS char**   mseq;
-    static TLS double** cpmx1;
-    static TLS double** cpmx2;
-    static TLS int**    intwork;
-    static TLS double** doublework;
-    static TLS int      orlgth1 = 0, orlgth2 = 0;
-    static TLS double** amino_dynamicmtx = NULL;  // ??
+    static double   mi, *m;
+    static double   Mi, *largeM;
+    static int**    ijpi;
+    static int**    ijpj;
+    static int      mpi, *mp;
+    static int      Mpi, *Mp;
+    static double * w1, *w2;
+    static double*  match;
+    static double*  initverticalw; /* kufuu sureba iranai */
+    static double*  lastverticalw; /* kufuu sureba iranai */
+    static char**   mseq1;
+    static char**   mseq2;
+    static char**   mseq;
+    static double** cpmx1;
+    static double** cpmx2;
+    static int**    intwork;
+    static double** doublework;
+    static int      orlgth1 = 0, orlgth2 = 0;
+    static double** amino_dynamicmtx = NULL;  // ??
     double              maxwm;
     double              tbk;
     int                 tbki, tbkj;

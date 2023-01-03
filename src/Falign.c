@@ -3,7 +3,7 @@
 #if 0
 static FILE *fftfp;
 #endif
-static TLS int n20or4or2;
+static int n20or4or2;
 
 #define KEIKA 0
 #define RND 0
@@ -40,7 +40,7 @@ static void vec_init2( Fukusosuu **result, char *seq, double eff, int st, int ed
 
 static void
 seq_vec_2(Fukusosuu* result, double* score, double incr, char* seq) {
-    static TLS int n;
+    static int n;
     for (; *seq; result++) {
         n = amino_n[(int)*seq++];
         if (n < 20 && n >= 0)
@@ -149,9 +149,9 @@ static int segcmp( void *ptr1, void *ptr2 )
 static void
 mymergesort(int first, int last, Segment** seg) {
     int                  middle;
-    static TLS int       i, j, k, p;
-    static TLS int       allo = 0;
-    static TLS Segment** work = NULL;
+    static int       i, j, k, p;
+    static int       allo = 0;
+    static Segment** work = NULL;
 
     if (seg == NULL) {
         if (work)
@@ -202,35 +202,35 @@ Fgetlag(
 ) {
     int               i, j, k, l, m;
     int               nlen, nlen2;
-    static TLS int    crossscoresize = 0;
-    static TLS char** tmpseq1 = NULL;
-    static TLS char** tmpseq2 = NULL;
-    static TLS char** tmpptr1 = NULL;
-    static TLS char** tmpptr2 = NULL;
-    static TLS char** tmpres1 = NULL;
-    static TLS char** tmpres2 = NULL;
-    static TLS char** result1 = NULL;
-    static TLS char** result2 = NULL;
+    static int    crossscoresize = 0;
+    static char** tmpseq1 = NULL;
+    static char** tmpseq2 = NULL;
+    static char** tmpptr1 = NULL;
+    static char** tmpptr2 = NULL;
+    static char** tmpres1 = NULL;
+    static char** tmpres2 = NULL;
+    static char** result1 = NULL;
+    static char** result2 = NULL;
 #if RND
-    static TLS char** rndseq1 = NULL;
-    static TLS char** rndseq2 = NULL;
+    static char** rndseq1 = NULL;
+    static char** rndseq2 = NULL;
 #endif
-    static TLS Fukusosuu** seqVector1 = NULL;
-    static TLS Fukusosuu** seqVector2 = NULL;
-    static TLS Fukusosuu** naiseki = NULL;
-    static TLS Fukusosuu*  naisekiNoWa = NULL;
-    static TLS double*     soukan = NULL;
-    static TLS double**    crossscore = NULL;
+    static Fukusosuu** seqVector1 = NULL;
+    static Fukusosuu** seqVector2 = NULL;
+    static Fukusosuu** naiseki = NULL;
+    static Fukusosuu*  naisekiNoWa = NULL;
+    static double*     soukan = NULL;
+    static double**    crossscore = NULL;
     int                    nlentmp;
-    static TLS int*        kouho = NULL;
-    static TLS Segment*    segment = NULL;
-    static TLS Segment*    segment1 = NULL;
-    static TLS Segment*    segment2 = NULL;
-    static TLS Segment**   sortedseg1 = NULL;
-    static TLS Segment**   sortedseg2 = NULL;
-    static TLS int*        cut1 = NULL;
-    static TLS int*        cut2 = NULL;
-    static TLS int         localalloclen = 0;
+    static int*        kouho = NULL;
+    static Segment*    segment = NULL;
+    static Segment*    segment1 = NULL;
+    static Segment*    segment2 = NULL;
+    static Segment**   sortedseg1 = NULL;
+    static Segment**   sortedseg2 = NULL;
+    static int*        cut1 = NULL;
+    static int*        cut2 = NULL;
+    static int         localalloclen = 0;
     int                    lag;
     int                    tmpint;
     int                    count, count0;
@@ -758,7 +758,7 @@ double
 Falign(int** whichmtx, double*** scoringmatrices, double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int clus1, int clus2, int alloclen, int* fftlog) {
     int            i, j, k, l, m, maxk;
     int            nlen, nlen2;
-    static TLS int crossscoresize = 0;
+    static int crossscoresize = 0;
     char**         tmpseq1 = NULL;
     char**         tmpseq2 = NULL;
     char**         tmpptr1 = NULL;
@@ -771,23 +771,23 @@ Falign(int** whichmtx, double*** scoringmatrices, double** n_dynamicmtx, char** 
     char** rndseq1 = NULL;
     char** rndseq2 = NULL;
 #endif
-    static TLS Fukusosuu** seqVector1 = NULL;
-    static TLS Fukusosuu** seqVector2 = NULL;
-    static TLS Fukusosuu** naiseki = NULL;
-    static TLS Fukusosuu*  naisekiNoWa = NULL;
-    static TLS double*     soukan = NULL;
-    static TLS double**    crossscore = NULL;
+    static Fukusosuu** seqVector1 = NULL;
+    static Fukusosuu** seqVector2 = NULL;
+    static Fukusosuu** naiseki = NULL;
+    static Fukusosuu*  naisekiNoWa = NULL;
+    static double*     soukan = NULL;
+    static double**    crossscore = NULL;
     int                    nlentmp;
-    static TLS int*        kouho = NULL;
-    static TLS Segment*    segment = NULL;
-    static TLS Segment*    segment1 = NULL;
-    static TLS Segment*    segment2 = NULL;
-    static TLS Segment**   sortedseg1 = NULL;
-    static TLS Segment**   sortedseg2 = NULL;
-    static TLS int*        cut1 = NULL;
-    static TLS int*        cut2 = NULL;
+    static int*        kouho = NULL;
+    static Segment*    segment = NULL;
+    static Segment*    segment1 = NULL;
+    static Segment*    segment2 = NULL;
+    static Segment**   sortedseg1 = NULL;
+    static Segment**   sortedseg2 = NULL;
+    static int*        cut1 = NULL;
+    static int*        cut2 = NULL;
     char *                 sgap1, *egap1, *sgap2, *egap2;
-    static TLS int         localalloclen = 0;
+    static int         localalloclen = 0;
     int                    lag;
     int                    tmpint;
     int                    count, count0;
@@ -796,9 +796,9 @@ Falign(int** whichmtx, double*** scoringmatrices, double** n_dynamicmtx, char** 
     double                 totalscore;
     double                 dumdb = 0.0;
     int                    headgp, tailgp;
-    static TLS double*     gstart = NULL;
-    static TLS double*     gend = NULL;
-    static TLS double**    codonscoremtx;
+    static double*     gstart = NULL;
+    static double*     gend = NULL;
+    static double**    codonscoremtx;
 
     if (seq1 == NULL) {
         if (kouho) {
@@ -1841,38 +1841,38 @@ double
 Falign_givenanchors(ExtAnch* pairanch, int** whichmtx, double*** scoringmatrices, double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int clus1, int clus2, int alloclen, int* fftlog) {
     int            i, j;
     int            nlen;
-    static TLS int prevalloclen = 0;
-    //static TLS int crossscoresize = 0;
-    //static TLS char **tmpseq1 = NULL;
-    //static TLS char **tmpseq2 = NULL;
-    //static TLS char **tmpptr1 = NULL;
-    //static TLS char **tmpptr2 = NULL;
-    static TLS char** tmpres1 = NULL;
-    static TLS char** tmpres2 = NULL;
-    static TLS char** result1 = NULL;
-    static TLS char** result2 = NULL;
+    static int prevalloclen = 0;
+    //static int crossscoresize = 0;
+    //static char **tmpseq1 = NULL;
+    //static char **tmpseq2 = NULL;
+    //static char **tmpptr1 = NULL;
+    //static char **tmpptr2 = NULL;
+    static char** tmpres1 = NULL;
+    static char** tmpres2 = NULL;
+    static char** result1 = NULL;
+    static char** result2 = NULL;
 #if RND
-    //static TLS char **rndseq1 = NULL;
-    //static TLS char **rndseq2 = NULL;
+    //static char **rndseq1 = NULL;
+    //static char **rndseq2 = NULL;
 #endif
-    //static TLS Fukusosuu **seqVector1 = NULL;
-    //static TLS Fukusosuu **seqVector2 = NULL;
-    //static TLS Fukusosuu **naiseki = NULL;
-    //static TLS Fukusosuu *naisekiNoWa = NULL;
-    //static TLS double *soukan = NULL;
-    //static TLS double **crossscore = NULL;
+    //static Fukusosuu **seqVector1 = NULL;
+    //static Fukusosuu **seqVector2 = NULL;
+    //static Fukusosuu **naiseki = NULL;
+    //static Fukusosuu *naisekiNoWa = NULL;
+    //static double *soukan = NULL;
+    //static double **crossscore = NULL;
     int nlentmp;
-    //static TLS int *kouho = NULL;
-    //static TLS Segment *segment = NULL;
-    //static TLS Segment *segment1 = NULL;
-    //static TLS Segment *segment2 = NULL;
-    //static TLS Segment **sortedseg1 = NULL;
-    //static TLS Segment **sortedseg2 = NULL;
-    static TLS int*  alignorcopy = NULL;
-    static TLS int*  cut1 = NULL;
-    static TLS int*  cut2 = NULL;
-    static TLS char *sgap1, *egap1, *sgap2, *egap2;
-    static TLS int   localalloclen = 0;
+    //static int *kouho = NULL;
+    //static Segment *segment = NULL;
+    //static Segment *segment1 = NULL;
+    //static Segment *segment2 = NULL;
+    //static Segment **sortedseg1 = NULL;
+    //static Segment **sortedseg2 = NULL;
+    static int*  alignorcopy = NULL;
+    static int*  cut1 = NULL;
+    static int*  cut2 = NULL;
+    static char *sgap1, *egap1, *sgap2, *egap2;
+    static int   localalloclen = 0;
     //	int lag;
     //	int tmpint;
     int    count, count0;
@@ -2842,7 +2842,7 @@ Falign_udpari_long(
 ) {
     int            i, j, k, l, m, maxk;
     int            nlen, nlen2;
-    static TLS int crossscoresize = 0;
+    static int crossscoresize = 0;
     char**         tmpseq1 = NULL;
     char**         tmpseq2 = NULL;
     char**         tmpptr1 = NULL;
@@ -2855,23 +2855,23 @@ Falign_udpari_long(
     char** rndseq1 = NULL;
     char** rndseq2 = NULL;
 #endif
-    static TLS Fukusosuu** seqVector1 = NULL;
-    static TLS Fukusosuu** seqVector2 = NULL;
-    static TLS Fukusosuu** naiseki = NULL;
-    static TLS Fukusosuu*  naisekiNoWa = NULL;
-    static TLS double*     soukan = NULL;
-    static TLS double**    crossscore = NULL;
+    static Fukusosuu** seqVector1 = NULL;
+    static Fukusosuu** seqVector2 = NULL;
+    static Fukusosuu** naiseki = NULL;
+    static Fukusosuu*  naisekiNoWa = NULL;
+    static double*     soukan = NULL;
+    static double**    crossscore = NULL;
     int                    nlentmp;
-    static TLS int*        kouho = NULL;
-    static TLS Segment*    segment = NULL;
-    static TLS Segment*    segment1 = NULL;
-    static TLS Segment*    segment2 = NULL;
-    static TLS Segment**   sortedseg1 = NULL;
-    static TLS Segment**   sortedseg2 = NULL;
-    static TLS int*        cut1 = NULL;
-    static TLS int*        cut2 = NULL;
+    static int*        kouho = NULL;
+    static Segment*    segment = NULL;
+    static Segment*    segment1 = NULL;
+    static Segment*    segment2 = NULL;
+    static Segment**   sortedseg1 = NULL;
+    static Segment**   sortedseg2 = NULL;
+    static int*        cut1 = NULL;
+    static int*        cut2 = NULL;
     char *                 sgap1, *egap1, *sgap2, *egap2;
-    static TLS int         localalloclen = 0;
+    static int         localalloclen = 0;
     int                    lag;
     int                    tmpint;
     int                    count, count0;

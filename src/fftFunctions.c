@@ -169,15 +169,15 @@ alignableReagion(int clus1, int clus2, char** seq1, char** seq2, double* eff1, d
     int                value = 0;
     int                len, maxlen;
     int                length = 0;  // by D.Mathog, a gess
-    static TLS double* stra = NULL;
-    static TLS int     alloclen = 0;
+    static double* stra = NULL;
+    static int     alloclen = 0;
     double             totaleff;
     double             cumscore;
-    static TLS double  threshold;
-    static TLS double* prf1 = NULL;
-    static TLS double* prf2 = NULL;
-    static TLS int*    hat1 = NULL;
-    static TLS int*    hat2 = NULL;
+    static double  threshold;
+    static double* prf1 = NULL;
+    static double* prf2 = NULL;
+    static int*    hat1 = NULL;
+    static int*    hat2 = NULL;
     int                pre1, pre2;
 #if 0
 	char **seq1pt;
@@ -372,16 +372,16 @@ permit(Segment* seg1, Segment* seg2) {
 void
 blockAlign2(int* cut1, int* cut2, Segment** seg1, Segment** seg2, double** ocrossscore, int* ncut) {
     int                 i, j, k, shift, cur1, cur2, count, klim;
-    static TLS int      crossscoresize = 0;
-    static TLS int*     result1 = NULL;
-    static TLS int*     result2 = NULL;
-    static TLS int*     ocut1 = NULL;
-    static TLS int*     ocut2 = NULL;
+    static int      crossscoresize = 0;
+    static int*     result1 = NULL;
+    static int*     result2 = NULL;
+    static int*     ocut1 = NULL;
+    static int*     ocut2 = NULL;
     double              maximum;
-    static TLS double** crossscore = NULL;
-    static TLS int**    track = NULL;
-    static TLS double   maxj, maxi;
-    static TLS int      pointj, pointi;
+    static double** crossscore = NULL;
+    static int**    track = NULL;
+    static double   maxj, maxi;
+    static int      pointj, pointi;
 
     if (cut1 == NULL) {
         if (result1) {
@@ -558,16 +558,16 @@ blockAlign3(int* cut1, int* cut2, Segment** seg1, Segment** seg2, double** ocros
 // memory complexity = O(n^3), time complexity = O(n^2)
 {
     int                 i, j, shift, cur1, cur2, count;
-    static TLS int      crossscoresize = 0;
-    static TLS int      jumpposi, *jumppos;
-    static TLS double   jumpscorei, *jumpscore;
-    static TLS int*     result1 = NULL;
-    static TLS int*     result2 = NULL;
-    static TLS int*     ocut1 = NULL;
-    static TLS int*     ocut2 = NULL;
+    static int      crossscoresize = 0;
+    static int      jumpposi, *jumppos;
+    static double   jumpscorei, *jumpscore;
+    static int*     result1 = NULL;
+    static int*     result2 = NULL;
+    static int*     ocut1 = NULL;
+    static int*     ocut2 = NULL;
     double              maximum;
-    static TLS double** crossscore = NULL;
-    static TLS int**    track = NULL;
+    static double** crossscore = NULL;
+    static int**    track = NULL;
 
     if (result1 == NULL) {
         result1 = AllocateIntVec(MAXSEG);

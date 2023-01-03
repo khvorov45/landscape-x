@@ -12,8 +12,8 @@
 #define TERMGAPFAC 0.0
 #define TERMGAPFAC_EX 0.0
 
-static TLS double** impmtx = NULL;
-static TLS int      impalloclen = 0;
+static double** impmtx = NULL;
+static int      impalloclen = 0;
 double
 imp_match_out_sc(int i1, int j1) {
     //	fprintf( stderr, "imp+match = %f\n", impmtx[i1][j1] * fastathreshold );
@@ -84,8 +84,8 @@ imp_match_init_strict(int clus1, int clus2, int lgth1, int lgth2, char** seq1, c
     //	double effij_kozo;
     //	double effijx;
     //	char *pt, *pt1, *pt2;
-    //	static TLS char *nocount1 = NULL;
-    //	static TLS char *nocount2 = NULL;
+    //	static char *nocount1 = NULL;
+    //	static char *nocount2 = NULL;
     //	LocalHom *tmpptr;
 
     if (seq1 == NULL) {
@@ -979,10 +979,10 @@ Atracking(double* lasthorizontalw, double* lastverticalw, double fpenalty, doubl
 double
 A__align(double** n_dynamicmtx, int penalty_l, int penalty_ex_l, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, char* sgap1, char* sgap2, char* egap1, char* egap2, int headgp, int tailgp, int firstmem, int calledbyfulltreebase, double*** cpmxchild0, double*** cpmxchild1, double*** cpmxresult, double orieff1, double orieff2) {
     int            reuseprofiles;
-    static TLS int previousfirstlen;  // 2016/Feb/1 // MEMBER NO CHECK GA HITSUYOU!!!!
-    static TLS int previousicyc;  // 2016/Feb/1 // MEMBER NO CHECK GA HITSUYOU!!!!
-    static TLS int previousfirstmem;
-    static TLS int previouscall;
+    static int previousfirstlen;  // 2016/Feb/1 // MEMBER NO CHECK GA HITSUYOU!!!!
+    static int previousicyc;  // 2016/Feb/1 // MEMBER NO CHECK GA HITSUYOU!!!!
+    static int previousfirstmem;
+    static int previouscall;
     int            ngap1, ngap2;
     //	int k;
     register int i, j;
@@ -1003,31 +1003,31 @@ A__align(double** n_dynamicmtx, int penalty_l, int penalty_ex_l, char** seq1, ch
     double *mjpt, *prept, *curpt;
     int*    mpjpt;
 #endif
-    static TLS double   mi, *m;
-    static TLS int**    ijp;
-    static TLS int      mpi, *mp;
-    static TLS double * w1, *w2;
-    static TLS double*  match;
-    static TLS double*  initverticalw; /* kufuu sureba iranai */
-    static TLS double*  lastverticalw; /* kufuu sureba iranai */
+    static double   mi, *m;
+    static int**    ijp;
+    static int      mpi, *mp;
+    static double * w1, *w2;
+    static double*  match;
+    static double*  initverticalw; /* kufuu sureba iranai */
+    static double*  lastverticalw; /* kufuu sureba iranai */
     char**              mseq1;
     char**              mseq2;
     char**              mseq;
-    static TLS double * ogcp1, *ogcp1o;
-    static TLS double * ogcp2, *ogcp2o;
-    static TLS double * fgcp1, *fgcp1o;
-    static TLS double * fgcp2, *fgcp2o;
+    static double * ogcp1, *ogcp1o;
+    static double * ogcp2, *ogcp2o;
+    static double * fgcp1, *fgcp1o;
+    static double * fgcp2, *fgcp2o;
     double *            ogcp1opt, *ogcp2opt, *fgcp1opt, *fgcp2opt;
-    static TLS double** cpmx1;
+    static double** cpmx1;
     double***           cpmx1pt = NULL;
-    static TLS double** cpmx2;
+    static double** cpmx2;
     double***           cpmx2pt = NULL;
-    static TLS int**    intwork;
-    static TLS double** doublework;
-    static TLS int      orlgth1 = 0, orlgth2 = 0;
-    static TLS double*  gapfreq1;
+    static int**    intwork;
+    static double** doublework;
+    static int      orlgth1 = 0, orlgth2 = 0;
+    static double*  gapfreq1;
     double*             gapfreq1pt;
-    static TLS double*  gapfreq2;
+    static double*  gapfreq2;
     double*             gapfreq2pt;
     double              fpenalty = (double)penalty_l;
     double              fpenalty_shift = (double)penalty_shift;
@@ -2061,27 +2061,27 @@ A__align_variousdist(int** which, double*** matrices, int penalty_l, int penalty
     double *mjpt, *prept, *curpt;
     int*    mpjpt;
 #endif
-    static TLS double    mi, *m;
-    static TLS int**     ijp;
-    static TLS int       mpi, *mp;
-    static TLS double *  w1, *w2;
-    static TLS double*   match;
-    static TLS double*   initverticalw; /* kufuu sureba iranai */
-    static TLS double*   lastverticalw; /* kufuu sureba iranai */
-    static TLS char**    mseq1;
-    static TLS char**    mseq2;
-    static TLS char**    mseq;
-    static TLS double*   ogcp1;
-    static TLS double*   ogcp2;
-    static TLS double*   fgcp1;
-    static TLS double*   fgcp2;
-    static TLS double*** cpmx1s;
-    static TLS double*** cpmx2s;
-    static TLS int***    intwork;
-    static TLS double*** doublework;
-    static TLS int       orlgth1 = 0, orlgth2 = 0;
-    static TLS double*   gapfreq1;
-    static TLS double*   gapfreq2;
+    static double    mi, *m;
+    static int**     ijp;
+    static int       mpi, *mp;
+    static double *  w1, *w2;
+    static double*   match;
+    static double*   initverticalw; /* kufuu sureba iranai */
+    static double*   lastverticalw; /* kufuu sureba iranai */
+    static char**    mseq1;
+    static char**    mseq2;
+    static char**    mseq;
+    static double*   ogcp1;
+    static double*   ogcp2;
+    static double*   fgcp1;
+    static double*   fgcp2;
+    static double*** cpmx1s;
+    static double*** cpmx2s;
+    static int***    intwork;
+    static double*** doublework;
+    static int       orlgth1 = 0, orlgth2 = 0;
+    static double*   gapfreq1;
+    static double*   gapfreq2;
     double               fpenalty = (double)penalty_l;
     double               fpenalty_shift = (double)penalty_shift;
     double*              fgcp2pt;

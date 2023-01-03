@@ -460,7 +460,7 @@ extern double       MSalignmm(double** n_dynamicmtx, char** seq1, char** seq2, d
 extern double       MSalignmm_variousdist(double*** matrices, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, char*, char*, char*, char*, int headgp, int tailgp);
 extern double       Lalignmm_hmout(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, char*, char*, char*, double** map);
 // extern double       Lalign2m2m_hmout(char** seq1, char** seq2, char** seq1r, char** seq2r, char* dir1, char* dir2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, char*, char*, char*, char*, double** map);
-extern double       MSalign11(char** seq1, char** seq2, int alloclen);
+extern double MSalign11(char** seq1, char** seq2, int alloclen);
 //extern double rnalocal( char **seq1, char **seq2, double *eff1, double *eff2, int icyc, int jcyc, int alloclen, RNApair **pair );
 extern double A__align(double** scoringmtx, int penalty, int penalty_ex, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, char* gs1, char* gs2, char* ge1, char* ge2, int headgp, int tailgp, int firstmem, int calledby, double*** cpmxchild0, double*** cpmxchild1, double*** cpmxresult, double orieff1, double orieff2);
 extern double A__align_variousdist(int** which, double*** scoringmatrices, int penalty, int penalty_ex, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, char* gs1, char* gs2, char* ge1, char* ge2, int headgp, int tailgp);
@@ -740,21 +740,15 @@ extern void     readexternalanchors(ExtAnch** extanch, int nseq, int* nogaplen);
 extern double** loadcodonscore(FILE*, double** mtx);
 extern int      codon2id(char*);
 
-#ifdef enablemultithread
-#define TLS __thread
-#else
-#define TLS
-#endif
-
-extern TLS int   commonAlloc1;
-extern TLS int   commonAlloc2;
-extern TLS int** commonIP;
-extern TLS int** commonJP;
-extern int       nthread;
-extern int       nthreadreadlh;
-extern int       nthreadpair;
-extern int       randomseed;
-extern int       parallelizationstrategy;
+extern int   commonAlloc1;
+extern int   commonAlloc2;
+extern int** commonIP;
+extern int** commonJP;
+extern int   nthread;
+extern int   nthreadreadlh;
+extern int   nthreadpair;
+extern int   randomseed;
+extern int   parallelizationstrategy;
 #define BESTFIRST 0
 #define BAATARI0 1
 #define BAATARI1 2
@@ -768,7 +762,7 @@ extern int    legacygapcost;
 extern double minimumweight;
 extern int    nwildcard;
 
-extern TLS char* newgapstr;
+extern char* newgapstr;
 
 extern int    nalphabets;
 extern int    nscoredalphabets;

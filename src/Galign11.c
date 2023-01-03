@@ -260,25 +260,25 @@ G__align11psg(double** codonmtx, double** n_dynamicmtx, char** seq1, char** seq2
     double *mjpt, *prept, *curpt;
     int*    mpjpt;
 #endif
-    static TLS double   mi = 0.0;
-    static TLS double*  m = NULL;
-    static TLS int**    ijp = NULL;
-    static TLS int      mpi = 0;
-    static TLS int*     mp = NULL;
-    static TLS double*  w1 = NULL;
-    static TLS double*  w2 = NULL;
-    static TLS double*  match = NULL;
-    static TLS double*  initverticalw = NULL; /* kufuu sureba iranai */
-    static TLS double*  lastverticalw = NULL; /* kufuu sureba iranai */
-    static TLS char**   mseq1 = NULL;
-    static TLS char**   mseq2 = NULL;
-    static TLS char**   mseq = NULL;
-    static TLS int**    intwork = NULL;
-    static TLS double** doublework = NULL;
-    static TLS int      orlgth1 = 0, orlgth2 = 0;
-    static TLS double** amino_dynamicmtx = NULL;  // ??
-    static TLS int**    codonseq1 = NULL;
-    static TLS int**    codonseq2 = NULL;
+    static double   mi = 0.0;
+    static double*  m = NULL;
+    static int**    ijp = NULL;
+    static int      mpi = 0;
+    static int*     mp = NULL;
+    static double*  w1 = NULL;
+    static double*  w2 = NULL;
+    static double*  match = NULL;
+    static double*  initverticalw = NULL; /* kufuu sureba iranai */
+    static double*  lastverticalw = NULL; /* kufuu sureba iranai */
+    static char**   mseq1 = NULL;
+    static char**   mseq2 = NULL;
+    static char**   mseq = NULL;
+    static int**    intwork = NULL;
+    static double** doublework = NULL;
+    static int      orlgth1 = 0, orlgth2 = 0;
+    static double** amino_dynamicmtx = NULL;  // ??
+    static int**    codonseq1 = NULL;
+    static int**    codonseq2 = NULL;
 
     int*    warpis = NULL;
     int*    warpjs = NULL;
@@ -883,23 +883,23 @@ G__align11(double** n_dynamicmtx, char** seq1, char** seq2, int alloclen, int he
     double *mjpt, *prept, *curpt;
     int*    mpjpt;
 #endif
-    static TLS double   mi = 0.0;
-    static TLS double*  m = NULL;
-    static TLS int**    ijp = NULL;
-    static TLS int      mpi = 0;
-    static TLS int*     mp = NULL;
-    static TLS double*  w1 = NULL;
-    static TLS double*  w2 = NULL;
-    static TLS double*  match = NULL;
-    static TLS double*  initverticalw = NULL; /* kufuu sureba iranai */
-    static TLS double*  lastverticalw = NULL; /* kufuu sureba iranai */
-    static TLS char**   mseq1 = NULL;
-    static TLS char**   mseq2 = NULL;
-    static TLS char**   mseq = NULL;
-    static TLS int**    intwork = NULL;
-    static TLS double** doublework = NULL;
-    static TLS int      orlgth1 = 0, orlgth2 = 0;
-    static TLS double** amino_dynamicmtx = NULL;  // ??
+    static double   mi = 0.0;
+    static double*  m = NULL;
+    static int**    ijp = NULL;
+    static int      mpi = 0;
+    static int*     mp = NULL;
+    static double*  w1 = NULL;
+    static double*  w2 = NULL;
+    static double*  match = NULL;
+    static double*  initverticalw = NULL; /* kufuu sureba iranai */
+    static double*  lastverticalw = NULL; /* kufuu sureba iranai */
+    static char**   mseq1 = NULL;
+    static char**   mseq2 = NULL;
+    static char**   mseq = NULL;
+    static int**    intwork = NULL;
+    static double** doublework = NULL;
+    static int      orlgth1 = 0, orlgth2 = 0;
+    static double** amino_dynamicmtx = NULL;  // ??
 
     int*    warpis = NULL;
     int*    warpjs = NULL;
@@ -1429,15 +1429,15 @@ G__align11_noalign(double** n_dynamicmtx, int penal, int penal_ex, char** seq1, 
     double *mjpt, *prept, *curpt;
 //	int *mpjpt;
 #endif
-    static TLS double   mi, *m;
-    static TLS double * w1, *w2;
-    static TLS double*  match;
-    static TLS double*  initverticalw; /* kufuu sureba iranai */
-    static TLS double*  lastverticalw; /* kufuu sureba iranai */
-    static TLS int**    intwork;
-    static TLS double** doublework;
-    static TLS int      orlgth1 = 0, orlgth2 = 0;
-    static TLS double** amino_dynamicmtx;
+    static double   mi, *m;
+    static double * w1, *w2;
+    static double*  match;
+    static double*  initverticalw; /* kufuu sureba iranai */
+    static double*  lastverticalw; /* kufuu sureba iranai */
+    static int**    intwork;
+    static double** doublework;
+    static int      orlgth1 = 0, orlgth2 = 0;
+    static double** amino_dynamicmtx;
 
     if (seq1 == NULL) {
         if (orlgth1 > 0 && orlgth2 > 0) {
