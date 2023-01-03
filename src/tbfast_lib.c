@@ -10,13 +10,7 @@
 
 #define REPORTCOSTS 0
 
-typedef struct _jobtable {
-    int i;
-    int j;
-} Jobtable;
-
-typedef struct _msacompactdistmtxthread_arg  // single thread demo tsukau
-{
+typedef struct msacompactdistmtxthread_arg {
     int      njob;
     int      thread_no;
     int*     selfscore;
@@ -26,45 +20,7 @@ typedef struct _msacompactdistmtxthread_arg  // single thread demo tsukau
     double*  mindist;
     int*     mindistfrom;
     int*     jobpospt;
-#ifdef enablemultithread
-    pthread_mutex_t* mutex;
-#endif
 } msacompactdistmtxthread_arg_t;
-
-#ifdef enablemultithread
-typedef struct _distancematrixthread_arg {
-    int              njob;
-    int              thread_no;
-    int*             selfscore;
-    double**         iscore;
-    char**           seq;
-    int**            skiptable;
-    Jobtable*        jobpospt;
-    pthread_mutex_t* mutex;
-} distancematrixthread_arg_t;
-
-typedef struct _treebasethread_arg {
-    int              thread_no;
-    int*             nrunpt;
-    int              njob;
-    int*             nlen;
-    int*             jobpospt;
-    int***           topol;
-    Treedep*         dep;
-    char**           aseq;
-    double*          effarr;
-    int*             alloclenpt;
-    LocalHom**       localhomtable;
-    RNApair***       singlerna;
-    double*          effarr_kozo;
-    int*             fftlog;
-    char*            mergeoralign;
-    int*             targetmap;
-    int*             uselh;
-    pthread_mutex_t* mutex;
-    pthread_cond_t*  treecond;
-} treebasethread_arg_t;
-#endif
 
 typedef struct TbfastOpts {
     int32_t treein;
@@ -272,9 +228,7 @@ arguments(int argc, char* argv[], int* pac, char** pav, int* tac, char** tav)  /
                 case 'C':
                     nthreadpair = nthread = myatoi(*++argv);
                     --argc;
-#ifndef enablemultithread
                     nthread = 0;
-#endif
                     goto nextoption;
                 case 's':
                     specificityconsideration = (double)myatof(*++argv);
@@ -497,19 +451,18 @@ preferenceval(int ori, int pos, int max) {
 }
 
 static void*
-msacompactdisthalfmtxthread(void* arg) {
-    msacompactdistmtxthread_arg_t* targ = (msacompactdistmtxthread_arg_t*)arg;
-    int                            njob = targ->njob;
-    int                            thread_no = targ->thread_no;
-    int*                           selfscore = targ->selfscore;
-    double**                       partmtx = targ->partmtx;
-    char**                         seq = targ->seq;
-    int**                          skiptable = targ->skiptable;
-    double*                        mindist = targ->mindist;
-    int*                           mindistfrom = targ->mindistfrom;
-    int*                           jobpospt = targ->jobpospt;
-    double                         tmpdist, preference, tmpdistx, tmpdisty;
-    int                            i, j;
+msacompactdisthalfmtxthread(msacompactdistmtxthread_arg_t* targ) {
+    int      njob = targ->njob;
+    int      thread_no = targ->thread_no;
+    int*     selfscore = targ->selfscore;
+    double** partmtx = targ->partmtx;
+    char**   seq = targ->seq;
+    int**    skiptable = targ->skiptable;
+    double*  mindist = targ->mindist;
+    int*     mindistfrom = targ->mindistfrom;
+    int*     jobpospt = targ->jobpospt;
+    double   tmpdist, preference, tmpdistx, tmpdisty;
+    int      i, j;
 
     while (1) {
         {
@@ -1149,23 +1102,6 @@ tbfast_main(int argc, char* argv[]) {
 
     nkozo = 0;
 
-    if (njob < 2) {
-        initFiles();
-        seq = AllocateCharMtx(2, nlenmax * 1 + 1);
-        name = AllocateCharMtx(2, B + 1);
-        nlen = AllocateIntVec(2);
-        readData_pointer(infp, name, nlen, seq);
-        fclose(infp);
-        gappick0(seq[1], seq[0]);
-        writeData_pointer(prep_g, njob, name, seq + 1);
-        reporterr("Warning: Only %d sequence found.\n", njob);
-        FreeCharMtx(seq);
-        FreeCharMtx(name);
-        free(nlen);
-        closeFiles();
-        exit(0);
-    }
-
 #if !defined(mingw) && !defined(_MSC_VER)
     setstacksize(200 * njob);
 #endif
@@ -1567,88 +1503,31 @@ tbfast_main(int argc, char* argv[]) {
             for (i = 0; i < njob; i++) {
                 selfscore[i] = (int)naivepairscorefast(seq[i], seq[i], skiptable[i], skiptable[i], penalty_dist);
             }
-#ifdef enablemultithread
-            if (nthreadpair > 0) {
-                msacompactdistmtxthread_arg_t* targ;
-                int                            jobpos;
-                pthread_t*                     handle;
-                pthread_mutex_t                mutex;
-                double**                       mindistthread;
-                int**                          mindistfromthread;
 
-                mindistthread = AllocateDoubleMtx(nthreadpair, njob);
-                mindistfromthread = AllocateIntMtx(nthreadpair, njob);
-                targ = calloc(nthreadpair, sizeof(msacompactdistmtxthread_arg_t));
-                handle = calloc(nthreadpair, sizeof(pthread_t));
-                pthread_mutex_init(&mutex, NULL);
-                jobpos = 0;
-
-                for (i = 0; i < nthreadpair; i++) {
-                    for (j = 0; j < njob; j++) {
-                        mindistthread[i][j] = 999.9;
-                        mindistfromthread[i][j] = -1;
-                    }
-                    targ[i].thread_no = i;
-                    targ[i].njob = njob;
-                    targ[i].selfscore = selfscore;
-                    targ[i].partmtx = partmtx;
-                    targ[i].seq = seq;
-                    targ[i].skiptable = skiptable;
-                    targ[i].jobpospt = &jobpos;
-                    targ[i].mindistfrom = mindistfromthread[i];
-                    targ[i].mindist = mindistthread[i];
-                    targ[i].mutex = &mutex;
-
-                    pthread_create(handle + i, NULL, msacompactdisthalfmtxthread, (void*)(targ + i));
-                }
-
-                for (i = 0; i < nthreadpair; i++)
-                    pthread_join(handle[i], NULL);
-                pthread_mutex_destroy(&mutex);
-
-                for (i = 0; i < njob; i++) {
-                    mindist[i] = 999.9;
-                    mindistfrom[i] = -1;
-                    for (j = 0; j < nthreadpair; j++) {
-                        if (mindistthread[j][i] < mindist[i]) {
-                            mindist[i] = mindistthread[j][i];
-                            mindistfrom[i] = mindistfromthread[j][i];
-                        }
-                    }
-                }
-                for (i = 0; i < njob; i++)
-                    mindist[i] -= preferenceval(i, mindistfrom[i], njob);  // for debug
-
-                free(handle);
-                free(targ);
-                FreeDoubleMtx(mindistthread);
-                FreeIntMtx(mindistfromthread);
-            } else
-#endif
             {
-                msacompactdistmtxthread_arg_t* targ;
-                int                            jobpos;
-                jobpos = 0;
-                targ = calloc(1, sizeof(msacompactdistmtxthread_arg_t));
+                int jobpos = 0;
 
                 {
                     for (j = 0; j < njob; j++) {
                         mindist[j] = 999.9;
                         mindistfrom[j] = -1;
                     }
-                    targ[0].thread_no = 0;
-                    targ[0].njob = njob;
-                    targ[0].selfscore = selfscore;
-                    targ[0].partmtx = partmtx;
-                    targ[0].seq = seq;
-                    targ[0].skiptable = skiptable;
-                    targ[0].jobpospt = &jobpos;
-                    targ[0].mindistfrom = mindistfrom;
-                    targ[0].mindist = mindist;
 
-                    msacompactdisthalfmtxthread(targ);
+                    msacompactdistmtxthread_arg_t targ = {
+                        .thread_no = 0,
+                        .njob = njob,
+                        .selfscore = selfscore,
+                        .partmtx = partmtx,
+                        .seq = seq,
+                        .skiptable = skiptable,
+                        .jobpospt = &jobpos,
+                        .mindistfrom = mindistfrom,
+                        .mindist = mindist,
+                    };
+
+                    msacompactdisthalfmtxthread(&targ);
                 }
-                free(targ);
+
                 for (i = 0; i < njob; i++)
                     mindist[i] -= preferenceval(i, mindistfrom[i], njob);
             }
@@ -1670,41 +1549,7 @@ tbfast_main(int argc, char* argv[]) {
             for (i = 0; i < njob; i++) {
                 selfscore[i] = (int)naivepairscorefast(seq[i], seq[i], skiptable[i], skiptable[i], penalty_dist);
             }
-#ifdef enablemultithread
-            if (nthreadpair > 0) {
-                distancematrixthread_arg_t* targ;
-                Jobtable                    jobpos;
-                pthread_t*                  handle;
-                pthread_mutex_t             mutex;
 
-                jobpos.i = 0;
-                jobpos.j = 0;
-
-                targ = calloc(nthreadpair, sizeof(distancematrixthread_arg_t));
-                handle = calloc(nthreadpair, sizeof(pthread_t));
-                pthread_mutex_init(&mutex, NULL);
-
-                for (i = 0; i < nthreadpair; i++) {
-                    targ[i].thread_no = i;
-                    targ[i].njob = njob;
-                    targ[i].selfscore = selfscore;
-                    targ[i].iscore = iscore;
-                    targ[i].seq = seq;
-                    targ[i].skiptable = skiptable;
-                    targ[i].jobpospt = &jobpos;
-                    targ[i].mutex = &mutex;
-
-                    pthread_create(handle + i, NULL, distancematrixthread, (void*)(targ + i));
-                }
-
-                for (i = 0; i < nthreadpair; i++) {
-                    pthread_join(handle[i], NULL);
-                }
-                pthread_mutex_destroy(&mutex);
-                free(handle);
-                free(targ);
-            } else
-#endif
             {
                 for (i = 0; i < ien; i++) {
                     if (i % 10 == 0) {
