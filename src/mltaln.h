@@ -1,12 +1,4 @@
-#define USE_XCED 0
-
 #define _XOPEN_SOURCE
-
-#if USE_XCED
-#include "config.h"
-#include "share.h"
-#else
-#endif
 
 extern int disttbfast(int ngui, int lgui, char** namegui, char** seqgui, int argc, char** argv, int (*callback)(int, int, char*));
 #define GUI_ERROR 1

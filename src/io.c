@@ -3227,7 +3227,6 @@ ReadBlastm7_scoreonly(FILE* fp, double* dis, int nin) {
 
         //		fprintf( stderr, "t=%d, score = %f, qstart=%d, qend=%d, tstart=%d, tend=%d, overlapaa=%d\n", junban[count], score, qstart, qend, tstart, tend, overlapaa );
 
-
         while (fgets(b, B - 1, fp))
             if (!strncmp("            </Hsp>:", b, 18))
                 break;
@@ -3505,7 +3504,7 @@ ReadFasta34m10_nuc(FILE* fp, double* dis, LocalHom* localhomlist) {
 
         putlocalhom2(qal2, tal2, localhomlist + junban[count - 1], qstart, tstart, 'h');
     }
- 
+
     return count;
 }
 
@@ -3946,75 +3945,11 @@ ReadOpt2(FILE* fp, int opt[M], int nseq) {
 
 int
 writePre(int nseq, char** name, char** aseq, int force) {
-#if USE_XCED
-    int i, value;
-    if (!signalSM) {
-        if (force) {
-            rewind(prep_g);
-            if (devide)
-                dvWrite(prep_g, nseq, name, nlen, aseq);
-            else
-                writeData(prep_g, nseq, name, aseq);
-        }
-        return (0);
-    }
-    for (i = 0; i < 10; i++) {
-#if IODEBUG
-        fprintf(stderr, "SEMAPHORE = %d\n", signalSM[SEMAPHORE]);
-#endif
-        if (signalSM[SEMAPHORE]-- > 0) {
-#if 0 /* /tmp/pre �δط��ǤϤ����� */
-			if( ferror( prep_g ) ) prep_g = fopen( "pre", "w" );
-			if( !prep_g ) ErrorExit( "Cannot re-open pre." );
-#endif
-            rewind(prep_g);
-            signalSM[STATUS] = IMA_KAITERU;
-#if IODEBUG
-            if (force)
-                fprintf(stderr, "FINAL ");
-#endif
-            if (devide)
-                dvWrite(prep_g, nseq, name, nlen, aseq);
-            else
-                WriteGapFill(prep_g, nseq, name, nlen, aseq);
-            /*
-			fprintf( prep_g, '\EOF' );
-			*/
-            fflush(prep_g);
-            if (force)
-                signalSM[STATUS] = OSHIMAI;
-            else
-                signalSM[STATUS] = KAKIOWATTA;
-            value = 1;
-            signalSM[SEMAPHORE]++;
-#if IODEBUG
-            fprintf(stderr, "signalSM[STATUS] = %c\n", signalSM[STATUS]);
-#endif
-            break;
-        } else {
-#if IODEBUG
-            fprintf(stderr, "YONDERUKARA_AKIRAMERU\n");
-#endif
-            value = 0;
-            signalSM[SEMAPHORE]++;
-            if (!force)
-                break;
-#if IODEBUG
-            fprintf(stderr, "MATSU\n");
-#endif
-            sleep(1);
-        }
-    }
-    if (force && !value)
-        ErrorExit("xced ga pre wo hanasanai \n");
-    return (value);
-#else
     if (force) {
         rewind(prep_g);
         writeData_pointer(prep_g, nseq, name, aseq);
     }
-#endif
-    return (0);
+    return 0;
 }
 
 void
@@ -5888,7 +5823,7 @@ commongappick(int nseq, char** seq) {
     -- -- -- -- -- -- -- -- -- -- -- -- --
 
                                         int* mapfromoldtonew;
-    int                                      pos;
+    int pos;
 
     mapfromoldtonew = calloc(len + 1, sizeof(int));
     for (i = 0; i <= len; i++)
