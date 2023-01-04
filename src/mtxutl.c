@@ -2,7 +2,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include "mtxutl.h"
+#include "mltaln.h"
 
 void
 MtxuntDouble(double** mtx, int n) {

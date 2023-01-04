@@ -1,5 +1,4 @@
 #include "mltaln.h"
-#include "mtxutl.h"
 
 /*
   from "C gengo niyoru saishin algorithm jiten" ISBN4-87408-414-1 Haruhiko Okumura
