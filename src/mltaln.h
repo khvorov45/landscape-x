@@ -206,7 +206,6 @@ typedef struct Context {
     int      ppid;
 } Context;
 
-extern double thrinter;
 extern double fastathreshold;
 extern int    pslocal, ppslocal;
 extern int    constraint;
