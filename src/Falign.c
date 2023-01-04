@@ -499,7 +499,7 @@ system( "less input_of_Falign < /dev/tty > /dev/tty" );
         if (fftscore && scoremtx != -1) {
             for (i = 0; i < clus1; i++) {
 #if 1
-                seq_vec_5(ctx, seqVector1[0], polarity, volume, eff1[i], tmpseq1[i]);
+                seq_vec_5(ctx, seqVector1[0], ctx->polarity, volume, eff1[i], tmpseq1[i]);
 #else
                 seq_vec_2(seqVector1[0], polarity, eff1[i], tmpseq1[i]);
                 seq_vec_2(seqVector1[1], volume, eff1[i], tmpseq1[i]);
@@ -538,7 +538,7 @@ system( "less seqVec < /dev/tty > /dev/tty" );
         if (fftscore && scoremtx != -1) {
             for (i = 0; i < clus2; i++) {
 #if 1
-                seq_vec_5(ctx, seqVector2[0], polarity, volume, eff2[i], tmpseq2[i]);
+                seq_vec_5(ctx, seqVector2[0], ctx->polarity, volume, eff2[i], tmpseq2[i]);
 #else
                 seq_vec_2(seqVector2[0], polarity, eff2[i], tmpseq2[i]);
                 seq_vec_2(seqVector2[1], volume, eff2[i], tmpseq2[i]);
@@ -1337,7 +1337,7 @@ system( "less input_of_Falign < /dev/tty > /dev/tty" );
 				seq_vec_2( seqVector1[0], polarity, eff1[i], tmpseq1[i] );
 				seq_vec_2( seqVector1[1], volume,   eff1[i], tmpseq1[i] );
 #else
-                seq_vec_5(ctx, seqVector1[0], polarity, volume, eff1[i], tmpseq1[i]);
+                seq_vec_5(ctx, seqVector1[0], ctx->polarity, volume, eff1[i], tmpseq1[i]);
 #endif
             }
         } else {
@@ -1370,12 +1370,7 @@ system( "less seqVec < /dev/tty > /dev/tty" );
                 seq_vec_4(seqVector2[0], eff2[i], tmpseq2[i]);
         } else if (fftscore) {
             for (i = 0; i < clus2; i++) {
-#if 0
-				seq_vec_2( seqVector2[0], polarity, eff2[i], tmpseq2[i] );
-				seq_vec_2( seqVector2[1], volume,   eff2[i], tmpseq2[i] );
-#else
-                seq_vec_5(ctx, seqVector2[0], polarity, volume, eff2[i], tmpseq2[i]);
-#endif
+                seq_vec_5(ctx, seqVector2[0], ctx->polarity, volume, eff2[i], tmpseq2[i]);
             }
         } else {
             for (i = 0; i < clus2; i++)
@@ -1387,35 +1382,10 @@ system( "less seqVec < /dev/tty > /dev/tty" );
         }
 #endif
 
-#if 0
-fftfp = fopen( "seqVec2", "w" );
-fprintf( fftfp, "before fft\n" );
-for( k=0; k<n20or4or2; k++ ) 
-{
-   fprintf( fftfp, "%c\n", amino[k] );
-   for( l=0; l<nlen; l++ )
-   fprintf( fftfp, "%f %f\n", seqVector2[k][l].R, seqVector2[k][l].I );
-}
-fclose( fftfp );
-system( "less seqVec2 < /dev/tty > /dev/tty" );
-#endif
-
         for (j = 0; j < n20or4or2; j++) {
             fft(nlen, seqVector2[j], 0);
             fft(nlen, seqVector1[j], 0);
         }
-#if 0
-fftfp = fopen( "seqVec2", "w" );
-fprintf( fftfp, "#after fft\n" );
-for( k=0; k<n20or4or2; k++ ) 
-{
-   fprintf( fftfp, "#%c\n", amino[k] );
-   for( l=0; l<nlen; l++ )
-	   fprintf( fftfp, "%f %f\n", seqVector2[k][l].R, seqVector2[k][l].I );
-}
-fclose( fftfp );
-system( "less seqVec2 < /dev/tty > /dev/tty" );
-#endif
 
         for (k = 0; k < n20or4or2; k++) {
             for (l = 0; l < nlen; l++)

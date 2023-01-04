@@ -200,9 +200,9 @@ typedef struct Context {
     int**    n_disFFT;
     double** n_dis_consweight_multi;
     uint8_t  amino[0x100];
+    double        polarity[0x100];
 } Context;
 
-extern double        polarity[0x100];
 extern double        volume[0x100];
 extern int           ribosumdis[37][37];
 
