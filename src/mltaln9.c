@@ -277,193 +277,6 @@ intergroup_score_gapnomi(char** seq1, char** seq2, double* eff1, double* eff2, i
     //	return( score );
 }
 
-double
-score_calc5(char** seq, int s, double** eff, int ex) {
-    int    i, j, k;
-    int    len = strlen(seq[0]);
-    double score;
-    double tmpscore;
-    char * mseq1, *mseq2;
-    double efficient;
-#if DEBUG
-    FILE* fp;
-#endif
-
-    score = 0.0;
-
-    for (i = 0; i < s; i++) {
-        if (i == ex)
-            continue;
-        efficient = eff[i][ex];
-        mseq1 = seq[i];
-        mseq2 = seq[ex];
-        tmpscore = 0.0;
-        for (k = 0; k < len; k++) {
-            if (mseq1[k] == '-' && mseq2[k] == '-')
-                continue;
-            tmpscore += amino_dis[(unsigned char)mseq1[k]][(unsigned char)mseq2[k]];
-
-            if (mseq1[k] == '-') {
-                tmpscore += penalty;
-                while (mseq1[++k] == '-')
-                    tmpscore += amino_dis[(unsigned char)mseq1[k]][(unsigned char)mseq2[k]];
-                k--;
-                if (k > len - 2)
-                    break;
-                continue;
-            }
-            if (mseq2[k] == '-') {
-                tmpscore += penalty;
-                while (mseq2[++k] == '-')
-                    tmpscore += amino_dis[(unsigned char)mseq1[k]][(unsigned char)mseq2[k]];
-                k--;
-                if (k > len - 2)
-                    break;
-                continue;
-            }
-        }
-        score += (double)tmpscore * efficient;
-        /*
-			fprintf( stdout, "%d-%d tmpscore = %f, eff = %f, tmpscore*eff = %f\n", i, ex, tmpscore, efficient, tmpscore*efficient );
-*/
-    }
-    /*
-	fprintf( stdout, "total score = %f\n", score );
-	*/
-
-    for (i = 0; i < s - 1; i++) {
-        for (j = i + 1; j < s; j++) {
-            if (i == ex || j == ex)
-                continue;
-
-            efficient = eff[i][j];
-            mseq1 = seq[i];
-            mseq2 = seq[j];
-            tmpscore = 0.0;
-            for (k = 0; k < len; k++) {
-                if (mseq1[k] == '-' && mseq2[k] == '-')
-                    continue;
-                tmpscore += amino_dis[(unsigned char)mseq1[k]][(unsigned char)mseq2[k]];
-
-                if (mseq1[k] == '-') {
-                    tmpscore += penalty;
-                    while (mseq1[++k] == '-')
-                        tmpscore += amino_dis[(unsigned char)mseq1[k]][(unsigned char)mseq2[k]];
-                    k--;
-                    if (k > len - 2)
-                        break;
-                    continue;
-                }
-                if (mseq2[k] == '-') {
-                    tmpscore += penalty;
-                    while (mseq2[++k] == '-')
-                        tmpscore += amino_dis[(unsigned char)mseq1[k]][(unsigned char)mseq2[k]];
-                    k--;
-                    if (k > len - 2)
-                        break;
-                    continue;
-                }
-            }
-            score += (double)tmpscore * efficient;
-        }
-    }
-    /*
-	reporterr(       "score in score_calc5 = %f\n", score );
-*/
-    return ((double)score);
-    /*
-
-fprintf( trap_g, "score by fast = %f\n", (double)score );
-
-tmpscore = score = 0.0;
-	for( i=0; i<s; i++ ) 
-	{
-		if( i == ex ) continue;
-		tmpscore = Cscore_m_1( seq, i, eff );
-		fprintf( stdout, "%d %f\n", i, tmpscore );
-
-		score += tmpscore;
-	}
-	tmpscore = Cscore_m_1( seq, ex, eff );
-	fprintf( stdout, "ex%d %f\n", i, tmpscore );
-	score += tmpscore;
-
-	return( score );
-*/
-}
-
-double
-score_calc4(char** seq, int s, double** eff) /* method 3 deha nai */
-{
-    int    i, j, k;
-    double c;
-    int    len = strlen(seq[0]);
-    double score;
-    long   tmpscore;
-    char * mseq1, *mseq2;
-    double efficient;
-
-    score = 0.0;
-    c = 0.0;
-    /*
-	printf( "in score_calc4\n" );
-	for( i=0; i<s; i++ )
-	{
-		for( j=0; j<s; j++ ) 
-		{
-			printf( "% 5.3f", eff[i][j] ); 
-		}
-		printf( "\n" );
-		
-	}
-*/
-    for (i = 0; i < s - 1; i++) {
-        for (j = i + 1; j < s; j++) {
-            efficient = eff[i][j];
-            if (mix == 1)
-                efficient = 1.0;
-            /*
-			printf( "weight for %d v.s. %d = %f\n", i, j, efficient );
-			*/
-            mseq1 = seq[i];
-            mseq2 = seq[j];
-            tmpscore = 0;
-            for (k = 0; k < len; k++) {
-                if (mseq1[k] == '-' && mseq2[k] == '-')
-                    continue;
-                tmpscore += amino_dis[(unsigned char)mseq1[k]][(unsigned char)mseq2[k]] + 400 * !scoremtx;
-
-                c += efficient;
-
-                if (mseq1[k] == '-') {
-                    tmpscore += penalty - n_dis[24][0];
-                    while (mseq1[++k] == '-')
-                        ;
-                    k--;
-                    if (k > len - 2)
-                        break;
-                    continue;
-                }
-                if (mseq2[k] == '-') {
-                    tmpscore += penalty - n_dis[24][0];
-                    while (mseq2[++k] == '-')
-                        ;
-                    k--;
-                    if (k > len - 2)
-                        break;
-                    continue;
-                }
-            }
-            /*
-			if( x == 65 ) printf( "i=%d j=%d tmpscore=%d l=%d\n", i, j, tmpscore, len );
-			*/
-            score += (double)tmpscore * efficient;
-        }
-    }
-    score /= c;
-    return ((double)score);
-}
-
 void
 upg2(Context* ctx, int nseq, double** eff, int*** topol, double** len) {
     int    i, j, k;
@@ -544,10 +357,10 @@ upg2(Context* ctx, int nseq, double** eff, int*** topol, double** len) {
 #define BLOCKSIZE 100
 #define LARGEBLOCKSIZE 100
 
-typedef struct _generaltdistarrthread_arg {
+typedef struct generaldistarrthread_arg_t {
+    Context* ctx;
     int para;
     int njob;
-    //	int thread_no;
     int     m;
     int*    nlen;
     char**  seq;
@@ -558,9 +371,6 @@ typedef struct _generaltdistarrthread_arg {
     int*    posshared;
     int*    joblist;
     double* result;
-#ifdef enablemultithread
-    pthread_mutex_t* mutex;
-#endif
 } generaldistarrthread_arg_t;
 
 static void*
@@ -601,9 +411,8 @@ generalkmerdistarrthread(void* arg)  // enablemultithread == 0 demo tsukau
 }
 
 static void*
-generalmsadistarrthread(void* arg)  // enablemultithread == 0 demo tsukau
-{
-    generaldistarrthread_arg_t* targ = (generaldistarrthread_arg_t*)arg;
+generalmsadistarrthread(generaldistarrthread_arg_t* targ) {
+    Context* ctx = targ->ctx;
     int                         njob = targ->njob;
     int                         m = targ->m;
     int*                        tselfscore = targ->tselfscore;
@@ -612,10 +421,7 @@ generalmsadistarrthread(void* arg)  // enablemultithread == 0 demo tsukau
     int*                        joblist = targ->joblist;
     int*                        posshared = targ->posshared;
     double*                     result = targ->result;
-    //	double **partmtx = targ->partmtx;
     int i, posinjoblist, n;
-
-    //			for( acpti=ac; acpti!=NULL; acpti=acpti->next )
 
     while (1) {
 #ifdef enablemultithread
@@ -642,14 +448,13 @@ generalmsadistarrthread(void* arg)  // enablemultithread == 0 demo tsukau
 
             //				if( i == m ) continue; // iranai
 
-            result[i] = distcompact_msa(seq[m], seq[i], skiptable[m], skiptable[i], tselfscore[m], tselfscore[i]);
+            result[i] = distcompact_msa(ctx, seq[m], seq[i], skiptable[m], skiptable[i], tselfscore[m], tselfscore[i]);
         }
     }
 }
 
-#if 1
 static void
-kmerresetnearest(Bchain* acpt, double** distfrompt, double* mindisfrompt, int* nearestpt, int pos, int* tselfscore, int** pointt, int* nlen, int* singlettable1, double* result, int* joblist) {
+kmerresetnearest(Context* ctx, Bchain* acpt, double** distfrompt, double* mindisfrompt, int* nearestpt, int pos, int* tselfscore, int** pointt, int* nlen, int* singlettable1, double* result, int* joblist) {
     int    i, j;
     double tmpdouble;
     double mindisfrom;
@@ -714,64 +519,23 @@ kmerresetnearest(Bchain* acpt, double** distfrompt, double* mindisfrompt, int* n
     }
 
     if (j) {
-        //		reporterr( "resetting in parallel!! j=%d\n", j );
-        //		exit( 1 );
-        int                         posshared;
-        generaldistarrthread_arg_t* targ;
+        int posshared = 0;
+        generaldistarrthread_arg_t targ = {
+            .ctx = ctx,
+            .para = 0,
+            .njob = j,
+            .m = pos,
+            .tselfscore = tselfscore,
+            .nlen = nlen,
+            .pointt = pointt,
+            .ttable = singlettable1,
+            .joblist = joblist,
+            .result = result,
+            .posshared = &posshared,
+        };
+        generalkmerdistarrthread(&targ);
 
-#ifdef enablemultithread
-        if (nthread) {
-            pthread_t*      handle;
-            pthread_mutex_t mutex;
-
-            targ = calloc(nthread, sizeof(generaldistarrthread_arg_t));
-            handle = calloc(nthread, sizeof(pthread_t));
-            posshared = 0;
-            pthread_mutex_init(&mutex, NULL);
-            for (i = 0; i < nthread; i++) {
-                targ[i].para = 1;
-                targ[i].njob = j;
-                targ[i].m = pos;
-                targ[i].tselfscore = tselfscore;
-                targ[i].nlen = nlen;
-                targ[i].pointt = pointt;
-                targ[i].ttable = singlettable1;
-                targ[i].joblist = joblist;
-                targ[i].result = result;
-                targ[i].posshared = &posshared;
-                targ[i].mutex = &mutex;
-
-                pthread_create(handle + i, NULL, generalkmerdistarrthread, (void*)(targ + i));
-            }
-
-            for (j = 0; j < nthread; j++)
-                pthread_join(handle[j], NULL);
-            pthread_mutex_destroy(&mutex);
-            free(handle);
-        } else
-#endif
-        {
-            targ = calloc(1, sizeof(generaldistarrthread_arg_t));
-            posshared = 0;
-            {
-                targ[0].para = 0;
-                targ[0].njob = j;
-                targ[0].m = pos;
-                targ[0].tselfscore = tselfscore;
-                targ[0].nlen = nlen;
-                targ[0].pointt = pointt;
-                targ[0].ttable = singlettable1;
-                targ[0].joblist = joblist;
-                targ[0].result = result;
-                targ[0].posshared = &posshared;
-
-                generalkmerdistarrthread(targ);
-            }
-        }
-        free(targ);
-        // sukoshi muda
-        for (acptj = (acpt + pos)->next; acptj != NULL; acptj = acptj->next)  // setnearest ni awaseru
-        {
+        for (acptj = (acpt + pos)->next; acptj != NULL; acptj = acptj->next) {
             j = acptj->pos;
             tmpdouble = result[j];
             if (tmpdouble < mindisfrom) {
@@ -798,72 +562,8 @@ kmerresetnearest(Bchain* acpt, double** distfrompt, double* mindisfrompt, int* n
     //	free( result );
 }
 
-#else
 static void
-kmerresetnearest(int nseq, Bchain* acpt, double** distfrompt, double* mindisfrompt, int* nearestpt, int pos, int* tselfscore, int** pointt, int* nlen, int* singlettable1, double* resultnotused, int* joblistnotused) {
-    int    j;
-    double tmpdouble;
-    double mindisfrom;
-    int    nearest;
-    //	double **effptpt;
-    Bchain* acptj;
-
-    mindisfrom = 999.9;
-    nearest = -1;
-
-    //	reporterr( "resetnearest..\r" );
-    //	printf( "[%d], %f, dist=%d ->", pos, *distfrompt, *nearestpt );
-
-    //	mindisfrom = 999.9;
-    //	nearest = -1;
-
-    for (acptj = (acpt + pos)->next; acptj != NULL; acptj = acptj->next)  // setnearest ni awaseru
-    {
-        j = acptj->pos;
-
-        if (distfrompt[pos])
-            tmpdouble = distfrompt[pos][j];
-        else if (distfrompt[j])
-            tmpdouble = distfrompt[j][pos];
-        //		else if( seq )
-        //			tmpdouble=distcompact_msa( seq[pos], seq[j], skiptable[pos], skiptable[j], tselfscore[pos], tselfscore[j] );
-        else
-            tmpdouble = distcompact(nlen[pos], nlen[j], singlettable1, pointt[j], tselfscore[pos], tselfscore[j]);
-
-        if (tmpdouble < mindisfrom) {
-            mindisfrom = tmpdouble;
-            nearest = j;
-        }
-    }
-
-    for (acptj = acpt; (acptj && acptj->pos != pos); acptj = acptj->next)  // setnearest ni awaseru
-    {
-        j = acptj->pos;
-
-        if (distfrompt[pos])
-            tmpdouble = distfrompt[pos][j];
-        else if (distfrompt[j])
-            tmpdouble = distfrompt[j][pos];
-        //		else if( seq )
-        //			tmpdouble=distcompact_msa( seq[pos], seq[j], skiptable[pos], skiptable[j], tselfscore[pos], tselfscore[j] );
-        else
-            tmpdouble = distcompact(nlen[pos], nlen[j], singlettable1, pointt[j], tselfscore[pos], tselfscore[j]);
-
-        if (tmpdouble < mindisfrom) {
-            mindisfrom = tmpdouble;
-            nearest = j;
-        }
-    }
-    //	printf( "mindisfrom = %f\n", mindisfrom );
-
-    *mindisfrompt = mindisfrom;
-    *nearestpt = nearest;
-}
-#endif
-
-#if 1
-static void
-msaresetnearest(Bchain* acpt, double** distfrompt, double* mindisfrompt, int* nearestpt, int pos, char** seq, int** skiptable, int* tselfscore, double* result, int* joblist) {
+msaresetnearest(Context* ctx, Bchain* acpt, double** distfrompt, double* mindisfrompt, int* nearestpt, int pos, char** seq, int** skiptable, int* tselfscore, double* result, int* joblist) {
     int    i, j;
     double tmpdouble;
     double mindisfrom;
@@ -876,16 +576,6 @@ msaresetnearest(Bchain* acpt, double** distfrompt, double* mindisfrompt, int* ne
     mindisfrom = 999.9;
     nearest = -1;
 
-    //	reporterr( "resetnearest..\r" );
-    //	printf( "[%d], %f, dist=%d ->", pos, *distfrompt, *nearestpt );
-
-    //	mindisfrom = 999.9;
-    //	nearest = -1;
-
-    //	result = calloc( nseq, sizeof( double ) );
-    //	joblist = calloc( nseq, sizeof( int ) );
-
-    //	for( acptj=acpt,j=0; acptj!=NULL; acptj=acptj->next ) // setnearest ni awaseru
     for (acptj = (acpt + pos)->next, j = 0; acptj != NULL; acptj = acptj->next)  // setnearest ni awaseru
     {
         i = acptj->pos;
@@ -929,59 +619,22 @@ msaresetnearest(Bchain* acpt, double** distfrompt, double* mindisfrompt, int* ne
     }
 
     if (j) {
-        //		reporterr( "resetting in parallel!! j=%d\r", j );
-        //		exit( 1 );
-        int                         posshared;
-        generaldistarrthread_arg_t* targ;
-        posshared = 0;
+        int                         posshared = 0;
+        generaldistarrthread_arg_t targ = {
+            .ctx = ctx,
+            .para = 0,
+            .njob = j,
+            .m = pos,
+            .tselfscore = tselfscore,
+            .seq = seq,
+            .skiptable = skiptable,
+            .joblist = joblist,
+            .result = result,
+            .posshared = &posshared,
+        };
+        generalmsadistarrthread(&targ);
 
-#ifdef enablemultithread
-        if (nthread) {
-            pthread_t*      handle;
-            pthread_mutex_t mutex;
-            targ = calloc(nthread, sizeof(generaldistarrthread_arg_t));
-            handle = calloc(nthread, sizeof(pthread_t));
-            pthread_mutex_init(&mutex, NULL);
-            for (i = 0; i < nthread; i++) {
-                targ[i].para = 1;
-                targ[i].njob = j;
-                targ[i].m = pos;
-                targ[i].tselfscore = tselfscore;
-                targ[i].seq = seq;
-                targ[i].skiptable = skiptable;
-                targ[i].joblist = joblist;
-                targ[i].result = result;
-                targ[i].posshared = &posshared;
-                targ[i].mutex = &mutex;
-
-                pthread_create(handle + i, NULL, generalmsadistarrthread, (void*)(targ + i));
-            }
-            for (j = 0; j < nthread; j++)
-                pthread_join(handle[j], NULL);
-            pthread_mutex_destroy(&mutex);
-            free(handle);
-        } else
-#endif
-        {
-            targ = calloc(1, sizeof(generaldistarrthread_arg_t));
-            {
-                targ[0].para = 0;
-                targ[0].njob = j;
-                targ[0].m = pos;
-                targ[0].tselfscore = tselfscore;
-                targ[0].seq = seq;
-                targ[0].skiptable = skiptable;
-                targ[0].joblist = joblist;
-                targ[0].result = result;
-                targ[0].posshared = &posshared;
-
-                generalmsadistarrthread(targ);
-            }
-        }
-        free(targ);
-        // sukoshi muda
-        for (acptj = (acpt + pos)->next; acptj != NULL; acptj = acptj->next)  // setnearest ni awaseru
-        {
+        for (acptj = (acpt + pos)->next; acptj != NULL; acptj = acptj->next) {
             j = acptj->pos;
             tmpdouble = result[j];
             if (tmpdouble < mindisfrom) {
@@ -1009,68 +662,6 @@ msaresetnearest(Bchain* acpt, double** distfrompt, double* mindisfrompt, int* ne
     //	free( joblist );
     //	free( result );
 }
-#else
-static void
-msaresetnearest(int nseq, Bchain* acpt, double** distfrompt, double* mindisfrompt, int* nearestpt, int pos, char** seq, int** skiptable, int* tselfscore, double* resultnotused, int* joblistnotused) {
-    int    j;
-    double tmpdouble;
-    double mindisfrom;
-    int    nearest;
-    //	double **effptpt;
-    Bchain* acptj;
-
-    mindisfrom = 999.9;
-    nearest = -1;
-
-    //	reporterr( "resetnearest..\r" );
-    //	printf( "[%d], %f, dist=%d ->", pos, *distfrompt, *nearestpt );
-
-    //	mindisfrom = 999.9;
-    //	nearest = -1;
-
-    for (acptj = (acpt + pos)->next; acptj != NULL; acptj = acptj->next)  // setnearest ni awaseru
-    {
-        j = acptj->pos;
-
-        if (distfrompt[pos])
-            tmpdouble = distfrompt[pos][j];
-        else if (distfrompt[j])
-            tmpdouble = distfrompt[j][pos];
-        else
-            tmpdouble = distcompact_msa(seq[pos], seq[j], skiptable[pos], skiptable[j], tselfscore[pos], tselfscore[j]);
-        //		else
-        //			tmpdouble=distcompact( nlen[pos], nlen[j], singlettable1, pointt[j], tselfscore[pos], tselfscore[j] );
-
-        if (tmpdouble < mindisfrom) {
-            mindisfrom = tmpdouble;
-            nearest = j;
-        }
-    }
-
-    for (acptj = acpt; (acptj && acptj->pos != pos); acptj = acptj->next)  // setnearest ni awaseru
-    {
-        j = acptj->pos;
-
-        if (distfrompt[pos])
-            tmpdouble = distfrompt[pos][j];
-        else if (distfrompt[j])
-            tmpdouble = distfrompt[j][pos];
-        else
-            tmpdouble = distcompact_msa(seq[pos], seq[j], skiptable[pos], skiptable[j], tselfscore[pos], tselfscore[j]);
-        //		else
-        //			tmpdouble=distcompact( nlen[pos], nlen[j], singlettable1, pointt[j], tselfscore[pos], tselfscore[j] );
-
-        if (tmpdouble < mindisfrom) {
-            mindisfrom = tmpdouble;
-            nearest = j;
-        }
-    }
-    //	printf( "mindisfrom = %f\n", mindisfrom );
-
-    *mindisfrompt = mindisfrom;
-    *nearestpt = nearest;
-}
-#endif
 
 static int
 getdensest(int* m, double* d) {
@@ -2972,9 +2563,9 @@ makecompositiontable_global(int* table, int* pointt) {
         table[point]++;
 }
 
-typedef struct _resetnearestthread_arg {
+typedef struct resetnearestthread_arg_t {
+    Context* ctx;
     int para;
-    //	int thread_no;
     int      im;
     int      nseq;
     double** partmtx;
@@ -2989,15 +2580,12 @@ typedef struct _resetnearestthread_arg {
     int*     joblist;
     Bchain** acpt;
     Bchain*  ac;
-#ifdef enablemultithread
-    pthread_mutex_t* mutex;
-#endif
 } resetnearestthread_arg_t;
 
 static void*
 msaresetnearestthread(void* arg) {
     resetnearestthread_arg_t* targ = (resetnearestthread_arg_t*)arg;
-    //	int thread_no = targ->thread_no;
+    Context* ctx = targ->ctx;
     int      im = targ->im;
     double** partmtx = targ->partmtx;
     double*  mindist = targ->mindist;
@@ -3030,14 +2618,10 @@ msaresetnearestthread(void* arg) {
         acptbk = *acpt;
         *acpt = (*acpt)->next;
 
-#ifdef enablemultithread
-        if (para)
-            pthread_mutex_unlock(targ->mutex);
-#endif
         i = acptbk->pos;
         if (nearest[i] == im) {
             if (partmtx[im][i] > mindist[i]) {
-                msaresetnearest(ac, partmtx, mindist + i, nearest + i, i, seq, skiptable, tselfscore, result, joblist);
+                msaresetnearest(ctx, ac, partmtx, mindist + i, nearest + i, i, seq, skiptable, tselfscore, result, joblist);
             }
         }
     }
@@ -3046,7 +2630,7 @@ msaresetnearestthread(void* arg) {
 static void*
 kmerresetnearestthread(void* arg) {
     resetnearestthread_arg_t* targ = (resetnearestthread_arg_t*)arg;
-    //	int thread_no = targ->thread_no;
+    Context* ctx = targ->ctx;
     int      im = targ->im;
     double** partmtx = targ->partmtx;
     double*  mindist = targ->mindist;
@@ -3093,7 +2677,7 @@ kmerresetnearestthread(void* arg) {
                     singlettable1 = (int*)calloc(tsize, sizeof(int));
                     makecompositiontable_global(singlettable1, pointt[i]);
                 }
-                kmerresetnearest(ac, partmtx, mindist + i, nearest + i, i, tselfscore, pointt, nlen, singlettable1, result, joblist);
+                kmerresetnearest(ctx, ac, partmtx, mindist + i, nearest + i, i, tselfscore, pointt, nlen, singlettable1, result, joblist);
                 if (pointt)
                     free(singlettable1);
                 singlettable1 = NULL;  // kmer
@@ -3104,7 +2688,8 @@ kmerresetnearestthread(void* arg) {
     }
 }
 
-typedef struct _compactdistarrthread_arg {
+typedef struct compactdistarrthread_arg_t {
+    Context* ctx;
     int para;
     int njob;
     //	int thread_no;
@@ -3124,9 +2709,6 @@ typedef struct _compactdistarrthread_arg {
     double** partmtx;
     int*     nearest;
     int*     joblist;
-#ifdef enablemultithread
-    pthread_mutex_t* mutex;
-#endif
 } compactdistarrthread_arg_t;
 
 static void*
@@ -3199,16 +2781,6 @@ verycompactkmerdistarrthreadjoblist(void* arg)  // enablemultithread == 0 demo t
             //			else
             tmpdist2 = distcompact(nlen[jm], nlen[i], table2, pointt[i], tselfscore[jm], tselfscore[i]);
 
-            //			if( seq )
-            //			{
-            //				tmpdist1 = distcompact_msa( seq[im], seq[i], skiptable[im], skiptable[i], tselfscore[im], tselfscore[i] );
-            //				tmpdist2 = distcompact_msa( seq[jm], seq[i], skiptable[jm], skiptable[i], tselfscore[jm], tselfscore[i] );
-            //			}
-            //			else
-            //			{
-            //				tmpdist1 = distcompact( nlen[im], nlen[i], table1, pointt[i], tselfscore[im], tselfscore[i] );
-            //				tmpdist2 = distcompact( nlen[jm], nlen[i], table2, pointt[i], tselfscore[jm], tselfscore[i] );
-            //			}
             tmpdouble = cluster_mix_double(tmpdist1, tmpdist2);
             newarr[i] = tmpdouble;
 
@@ -3302,16 +2874,6 @@ kmerdistarrthreadjoblist(void* arg)  // enablemultithread == 0 demo tsukau
             else
                 tmpdist2 = distcompact(nlen[jm], nlen[i], table2, pointt[i], tselfscore[jm], tselfscore[i]);
 
-            //			if( seq )
-            //			{
-            //				tmpdist1 = distcompact_msa( seq[im], seq[i], skiptable[im], skiptable[i], tselfscore[im], tselfscore[i] );
-            //				tmpdist2 = distcompact_msa( seq[jm], seq[i], skiptable[jm], skiptable[i], tselfscore[jm], tselfscore[i] );
-            //			}
-            //			else
-            //			{
-            //				tmpdist1 = distcompact( nlen[im], nlen[i], table1, pointt[i], tselfscore[im], tselfscore[i] );
-            //				tmpdist2 = distcompact( nlen[jm], nlen[i], table2, pointt[i], tselfscore[jm], tselfscore[i] );
-            //			}
             tmpdouble = cluster_mix_double(tmpdist1, tmpdist2);
             newarr[i] = tmpdouble;
 
@@ -3340,6 +2902,7 @@ static void*
 verycompactmsadistarrthreadjoblist(void* arg)  // enablemultithread == 0 demo tsukau
 {
     compactdistarrthread_arg_t* targ = (compactdistarrthread_arg_t*)arg;
+    Context* ctx = targ->ctx;
     int                         njob = targ->njob;
     int                         im = targ->im;
     int                         jm = targ->jm;
@@ -3390,19 +2953,8 @@ verycompactmsadistarrthreadjoblist(void* arg)  // enablemultithread == 0 demo ts
             if (i == jm)
                 continue;
 
-            //			if( partmtx[im] )
-            //				tmpdist1 = partmtx[im][i];
-            //			else if( partmtx[i] )
-            //				tmpdist1 = partmtx[i][im];
-            //			else
-            tmpdist1 = distcompact_msa(seq[im], seq[i], skiptable[im], skiptable[i], tselfscore[im], tselfscore[i]);
-
-            //			if( partmtx[jm] )
-            //				tmpdist2 = partmtx[jm][i];
-            //			else if( partmtx[i] )
-            //				tmpdist2 = partmtx[i][jm];
-            //			else
-            tmpdist2 = distcompact_msa(seq[jm], seq[i], skiptable[jm], skiptable[i], tselfscore[jm], tselfscore[i]);
+            tmpdist1 = distcompact_msa(ctx, seq[im], seq[i], skiptable[im], skiptable[i], tselfscore[im], tselfscore[i]);
+            tmpdist2 = distcompact_msa(ctx, seq[jm], seq[i], skiptable[jm], skiptable[i], tselfscore[jm], tselfscore[i]);
 
             tmpdouble = cluster_mix_double(tmpdist1, tmpdist2);
             newarr[i] = tmpdouble;
@@ -3431,6 +2983,7 @@ static void*
 msadistarrthreadjoblist(void* arg)  // enablemultithread == 0 demo tsukau
 {
     compactdistarrthread_arg_t* targ = (compactdistarrthread_arg_t*)arg;
+    Context* ctx = targ->ctx;
     int                         njob = targ->njob;
     int                         im = targ->im;
     int                         jm = targ->jm;
@@ -3486,14 +3039,14 @@ msadistarrthreadjoblist(void* arg)  // enablemultithread == 0 demo tsukau
             else if (partmtx[i])
                 tmpdist1 = partmtx[i][im];
             else
-                tmpdist1 = distcompact_msa(seq[im], seq[i], skiptable[im], skiptable[i], tselfscore[im], tselfscore[i]);
+                tmpdist1 = distcompact_msa(ctx, seq[im], seq[i], skiptable[im], skiptable[i], tselfscore[im], tselfscore[i]);
 
             if (partmtx[jm])
                 tmpdist2 = partmtx[jm][i];
             else if (partmtx[i])
                 tmpdist2 = partmtx[i][jm];
             else
-                tmpdist2 = distcompact_msa(seq[jm], seq[i], skiptable[jm], skiptable[i], tselfscore[jm], tselfscore[i]);
+                tmpdist2 = distcompact_msa(ctx, seq[jm], seq[i], skiptable[jm], skiptable[i], tselfscore[jm], tselfscore[i]);
 
             tmpdouble = cluster_mix_double(tmpdist1, tmpdist2);
             newarr[i] = tmpdouble;
@@ -3777,7 +3330,7 @@ distdpN_noalign(Context* ctx, char* s1, char* s2, double selfscore1, double self
     v = genL__align11(ctx, n_dis_consweight_multi, &t1, &t2, alloclen, &off1, &off2);
 
     if (usenaivescoreinsteadofalignmentscore)
-        v = (double)naivepairscore11(t1, t2, 0.0);  // uwagaki
+        v = (double)naivepairscore11(ctx, t1, t2, 0.0);  // uwagaki
     free(t1);  // maikai free surunoha muda
     free(t2);  // maikai free surunoha muda
     return (score2dist(v, selfscore1, selfscore2));
@@ -4911,86 +4464,16 @@ compacttree_memsaveselectable(Context* ctx, int nseq, double** partmtx, int* nea
         for (acpti = ac, nactive = 0; acpti != NULL; acpti = acpti->next)
             joblist[nactive++] = acpti->pos;  // sukoshi muda...
 
-#ifdef enablemultithread
-        if (nthreadpair > 0) {
-            compactdistarrthread_arg_t* targ;
-            pthread_t*                  handle;
-            pthread_mutex_t             mutex;
-
-            posshared = 0;
-            //			targ = calloc( nthreadpair, sizeof( compactdistarrthread_arg_t ) );
-            targ = distarrarg;
-            handle = calloc(nthreadpair, sizeof(pthread_t));
-            pthread_mutex_init(&mutex, NULL);
-
-            if (k % 100 == 0)
-                reporterr(" (%d threads, nactive=%d, nfilled=%d)     \r", nthreadpair, nactive, numfilled);
-            for (i = 0; i < nthreadpair; i++) {
-                targ[i].para = 1;
-                targ[i].njob = nactive;
-                //				targ[i].thread_no = i;
-                targ[i].im = im;
-                targ[i].jm = jm;
-                targ[i].tselfscore = tselfscore;
-                targ[i].nlen = nlen;
-                targ[i].seq = seq;
-                targ[i].skiptable = skiptable;
-                targ[i].pointt = pointt;
-                targ[i].table1 = singlettable1;
-                targ[i].table2 = singlettable2;
-                targ[i].joblist = joblist;
-                targ[i].posshared = &posshared;
-                targ[i].mindist = mindist;
-                targ[i].nearest = nearest;
-                targ[i].newarr = newarr;
-                targ[i].partmtx = partmtx;
-                targ[i].mutex = &mutex;
-
-                pthread_create(handle + i, NULL, distarrfunc, (void*)(targ + i));
-            }
-
-            for (j = 0; j < nthreadpair; j++)
-                pthread_join(handle[j], NULL);
-            pthread_mutex_destroy(&mutex);
-            free(handle);
-            //			free( targ );
-
-#if 0
-			for( acpti=ac; acpti!=NULL; acpti=acpti->next ) // antei sei no tame
-			{
-				i = acpti->pos;
-				if( i != im && i != jm )
-				{
-//					if( partmtx[i] ) partmtx[i][im] = partmtx[i][jm] = newarr[i]; // heiretsu demo ii.
-//					if( newarr[i] < mindist[i]  )
-//					{
-//						mindist[i] = newarr[i];
-//						nearest[i] = im;
-//					}
-					if( newarr[i] < mindist[im]  )
-					{
-						mindist[im] = newarr[i];
-						nearest[im] = i;
-					}
-//					if( nearest[i] == jm )
-//					{
-//						nearest[i] = im;
-//					}
-				}
-			}
-#endif
-        } else
-#endif
         {
             if (k % 100 == 0)
                 reporterr(" (serial, nactive=%d, nfilled=%d)             \r", nactive, numfilled);
             compactdistarrthread_arg_t* targ;
 
             posshared = 0;
-            //			targ = calloc( 1, sizeof( compactdistarrthread_arg_t ) );
             targ = distarrarg;
 
             for (i = 0; i < 1; i++) {
+                targ[i].ctx = ctx;
                 targ[i].para = 0;
                 targ[i].njob = nactive;
                 //				targ[i].thread_no = i;
@@ -5129,54 +4612,12 @@ compacttree_memsaveselectable(Context* ctx, int nseq, double** partmtx, int* nea
         if (howcompact == 2)
             continue;
 
-#if 0
-		if( 0 && nthreadpair > 0  )
-		{
-			resetnearestthread_arg_t *targ;
-			pthread_t *handle;
-			pthread_mutex_t mutex;
-			Bchain *acshared;
-		
-			acshared = ac;
-//			targ = calloc( nthreadpair, sizeof( resetnearestthread_arg_t ) );
-			targ = resetarg;
-			handle = calloc( nthreadpair, sizeof( pthread_t ) );
-			pthread_mutex_init( &mutex, NULL );
-		
-			for( i=0; i<nthreadpair; i++ )
-			{
-				targ[i].para = 1;
-				targ[i].nseq = nseq;
-				targ[i].im = im;
-				targ[i].partmtx = partmtx;
-				targ[i].mindist = mindist;
-				targ[i].nearest = nearest;
-				targ[i].seq = seq;
-				targ[i].skiptable = skiptable;
-				targ[i].tselfscore = tselfscore;
-				targ[i].pointt = pointt;
-				targ[i].nlen = nlen;
-				targ[i].acpt = &acshared;
-				targ[i].ac = ac;
-				targ[i].mutex = &mutex;
 
-				pthread_create( handle+i, NULL, resetnearestfunc, (void *)(targ+i) );
-			}
-		
-			for( j=0; j<nthreadpair; j++ ) pthread_join( handle[j], NULL );
-			pthread_mutex_destroy( &mutex );
-			free( handle );
-//			free( targ );
-		}
-		else
-#endif
         {
-            Bchain* acshared;
-            acshared = ac;
-            resetnearestthread_arg_t* targ;
-            //			targ = calloc( 1, sizeof( resetnearestthread_arg_t ) );
-            targ = resetarg;
+            Bchain* acshared = ac;
+            resetnearestthread_arg_t* targ = resetarg;
             {
+                targ[0].ctx = ctx;
                 targ[0].para = 0;
                 targ[0].nseq = nseq;
                 targ[0].im = im;
@@ -5195,7 +4636,6 @@ compacttree_memsaveselectable(Context* ctx, int nseq, double** partmtx, int* nea
 
                 resetnearestfunc(targ);
             }
-            //			free( targ );
         }
 #endif
 
@@ -6993,219 +6433,6 @@ counteff(int nseq, int*** topol, double** len, double** node) {
 #endif
 }
 
-double
-score_calcp(char* seq1, char* seq2, int len) {
-    int           k;
-    unsigned char ms1, ms2;
-    double        tmpscore;
-    int           len2 = len - 2;
-
-    tmpscore = 0.0;
-    for (k = 0; k < len; k++) {
-        ms1 = (unsigned char)seq1[k];
-        ms2 = (unsigned char)seq2[k];
-        if (ms1 == '-' && ms2 == '-')
-            continue;
-        tmpscore += (double)amino_dis[ms1][ms2];
-
-        if (ms1 == (int)'-') {
-            tmpscore += (double)penalty;
-            tmpscore += (double)amino_dis[ms1][ms2];
-            while ((ms1 = (unsigned char)seq1[++k]) == '-')
-                tmpscore += (double)amino_dis[ms1][ms2];
-            k--;
-            if (k > len2)
-                break;
-            continue;
-        }
-        if (ms2 == (int)'-') {
-            tmpscore += (double)penalty;
-            tmpscore += (double)amino_dis[ms1][ms2];
-            while ((ms2 = (unsigned char)seq2[++k]) == '-')
-                tmpscore += (double)amino_dis[ms1][ms2];
-            k--;
-            if (k > len2)
-                break;
-            continue;
-        }
-    }
-    return (tmpscore);
-}
-
-double
-score_calc1(char* seq1, char* seq2) /* method 1 */
-{
-    int    k;
-    double score = 0.0;
-    int    count = 0;
-    int    len = strlen(seq1);
-
-    for (k = 0; k < len; k++) {
-        if (seq1[k] != '-' && seq2[k] != '-') {
-            score += (double)amino_dis[(unsigned char)seq1[k]][(unsigned char)seq2[k]];
-            count++;
-        }
-    }
-    if (count)
-        score /= (double)count;
-    else
-        score = 1.0;
-    return (score);
-}
-
-double
-substitution_nid(char* seq1, char* seq2) {
-    int    k;
-    double s12;
-    int    len = strlen(seq1);
-
-    s12 = 0.0;
-    for (k = 0; k < len; k++)
-        if (seq1[k] != '-' && seq2[k] != '-')
-            s12 += (seq1[k] == seq2[k]);
-
-    //	fprintf( stdout, "s12 = %f\n", s12 );
-    return (s12);
-}
-
-double
-substitution_score(char* seq1, char* seq2) {
-    int    k;
-    double s12;
-    int    len = strlen(seq1);
-
-    s12 = 0.0;
-    for (k = 0; k < len; k++)
-        if (seq1[k] != '-' && seq2[k] != '-')
-            s12 += amino_dis[(unsigned char)seq1[k]][(unsigned char)seq2[k]];
-
-    //	fprintf( stdout, "s12 = %f\n", s12 );
-    return (s12);
-}
-
-double
-substitution_hosei(char* seq1, char* seq2) /* method 1 */
-#if 0
-{
-	int k;
-	double score = 0.0;
-	int count = 0;
-	int len = strlen( seq1 );
-
-	for( k=0; k<len; k++ )
-	{	
-		if( seq1[k] != '-' && seq2[k] != '-' )
-		{
-			score += (double)( seq1[k] != seq2[k] );
-			count++;
-		}
-	}
-	if( count ) score /= (double)count;
-	else score = 1.0;
-	if( score < 0.95 ) score = - log( 1.0 - score );
-	else score = 3.0;
-	return( score );
-}
-#else
-{
-    int    count = 0;
-    double score;
-    int    iscore = 0;
-    char   s1, s2;
-
-    while ((s1 = *seq1++)) {
-        s2 = *seq2++;
-        if (s1 == '-')
-            continue;
-        if (s2 == '-')
-            continue;
-        iscore += (s1 != s2);
-        count++;
-    }
-    if (count)
-        score = (double)iscore / count;
-    else
-        score = 1.0;
-    if (score < 0.95)
-        score = -log(1.0 - score);
-    else
-        score = 3.0;
-    return (score);
-}
-#endif
-
-double
-substitution(char* seq1, char* seq2) /* method 1 */
-{
-    int    k;
-    double score = 0.0;
-    int    count = 0;
-    int    len = strlen(seq1);
-
-    for (k = 0; k < len; k++) {
-        if (seq1[k] != '-' && seq2[k] != '-') {
-            score += (double)(seq1[k] != seq2[k]);
-            count++;
-        }
-    }
-    if (count)
-        score /= (double)count;
-    else
-        score = 1.0;
-    return (score);
-}
-
-double
-bscore_calc(char** seq, int s, double** eff) /* algorithm B */
-{
-    int  i, j, k;
-    int  gb1, gb2, gc1, gc2;
-    int  cob;
-    int  nglen;
-    int  len = strlen(seq[0]);
-    long score;
-
-    score = 0;
-    nglen = 0;
-    for (i = 0; i < s - 1; i++)
-        for (j = i + 1; j < s; j++) {
-            double efficient = eff[i][j];
-
-            gc1 = 0;
-            gc2 = 0;
-            for (k = 0; k < len; k++) {
-                gb1 = gc1;
-                gb2 = gc2;
-
-                gc1 = (seq[i][k] == '-');
-                gc2 = (seq[j][k] == '-');
-
-                cob =
-                    !gb1 * gc1
-                        * !gb2 * !gc2
-
-                    + !gb1 * !gc1
-                        * !gb2 * gc2
-
-                    + !gb1 * gc1
-                        * gb2 * !gc2
-
-                    + gb1 * !gc1
-                        * !gb2 * gc2
-
-                    + gb1 * !gc1
-                        * gb2 * gc2 * BEFF
-
-                    + gb1 * gc1
-                        * gb2 * !gc2 * BEFF;
-                score += (long)cob * penalty * efficient;
-                score += (long)amino_dis[(unsigned char)seq[i][k]][(unsigned char)seq[j][k]] * efficient;
-                nglen += (!gc1 * !gc2);
-            }
-        }
-    return ((double)score / nglen + 400.0 * !scoremtx);
-}
-
 void
 FreeTmpSeqs(char** mseq2, char* mseq1) {
     FreeCharMtx(mseq2);
@@ -7309,20 +6536,6 @@ void commongaprecord( int nseq, char **seq, char *originallygapped )
 	originallygapped[len] = 0;
 }
 #endif
-
-double
-score_calc0(char** seq, int s, double** eff, int ex) {
-    double tmp;
-
-    if (scmtd == 4)
-        tmp = score_calc4(seq, s, eff);
-    if (scmtd == 5)
-        tmp = score_calc5(seq, s, eff, ex);
-    else
-        tmp = score_calc5(seq, s, eff, ex);
-
-    return (tmp);
-}
 
 /*
 double score_m_1( char **seq, int ex, double **eff )
@@ -7490,478 +6703,13 @@ isaligned(int nseq, char** seq) {
     return (1);
 }
 
-double
-score_calc_for_score(int nseq, char** seq) {
-    int    i, j, k, c;
-    int    len = strlen(seq[0]);
-    double score;
-    double tmpscore;
-    char * mseq1, *mseq2;
-
-    score = 0.0;
-    for (i = 0; i < nseq - 1; i++) {
-        for (j = i + 1; j < nseq; j++) {
-            mseq1 = seq[i];
-            mseq2 = seq[j];
-            tmpscore = 0.0;
-            c = 0;
-            for (k = 0; k < len; k++) {
-                if (mseq1[k] == '-' && mseq2[k] == '-')
-                    continue;
-                tmpscore += amino_dis[(unsigned char)mseq1[k]][(unsigned char)mseq2[k]];
-                c++;
-                if (mseq1[k] == '-') {
-                    tmpscore += penalty - n_dis[0][24];
-                    while (mseq1[++k] == '-')
-                        ;
-                    k--;
-                    if (k > len - 2)
-                        break;
-                    continue;
-                }
-                if (mseq2[k] == '-') {
-                    tmpscore += penalty - n_dis[0][24];
-                    while (mseq2[++k] == '-')
-                        ;
-                    k--;
-                    if (k > len - 2)
-                        break;
-                    continue;
-                }
-            }
-            score += (double)tmpscore / (double)c;
-#if DEBUG
-            printf("tmpscore in mltaln9.c = %f\n", tmpscore);
-            printf("tmpscore / c          = %f\n", tmpscore / (double)c);
-#endif
-        }
-    }
-    reporterr("raw score = %f\n", score);
-    score /= (double)nseq * (nseq - 1.0) / 2.0;
-    score += 400.0;
-#if DEBUG
-    printf("score in mltaln9.c = %f\n", score);
-#endif
-    return ((double)score);
-}
-
 void
 doublencpy(double* vec1, double* vec2, int len) {
     while (len--)
         *vec1++ = *vec2++;
 }
 
-double
-score_calc_a(char** seq, int s, double** eff) /* algorithm A+ */
-{
-    int    i, j, k;
-    int    gb1, gb2, gc1, gc2;
-    int    cob;
-    int    nglen;
-    int    len = strlen(seq[0]);
-    double score;
-
-    score = 0;
-    nglen = 0;
-    for (i = 0; i < s - 1; i++)
-        for (j = i + 1; j < s; j++) {
-            double efficient = eff[i][j];
-
-            gc1 = 0;
-            gc2 = 0;
-            for (k = 0; k < len; k++) {
-                gb1 = gc1;
-                gb2 = gc2;
-
-                gc1 = (seq[i][k] == '-');
-                gc2 = (seq[j][k] == '-');
-
-                cob =
-                    !gb1 * gc1
-                        * !gb2 * !gc2
-
-                    + gb1 * !gc1
-                        * !gb2 * !gc2
-
-                    + !gb1 * !gc1
-                        * !gb2 * gc2
-
-                    + !gb1 * !gc1
-                        * gb2 * !gc2
-
-                    + !gb1 * gc1
-                        * gb2 * !gc2
-
-                    + gb1 * !gc1
-                        * !gb2 * gc2
-
-                    + gb1 * !gc1
-                        * gb2 * gc2
-
-                    + gb1 * gc1
-                        * gb2 * !gc2
-
-                    + !gb1 * gc1
-                        * gb2 * gc2
-
-                    + gb1 * gc1
-                        * !gb2 * gc2;
-                score += 0.5 * (double)cob * penalty * efficient;
-                score += (double)amino_dis[(unsigned char)seq[i][k]][(unsigned char)seq[j][k]] * (double)efficient;
-                nglen += (!gc1 * !gc2);
-            }
-        }
-    return ((double)score / nglen + 400.0 * !scoremtx);
-}
-
-double
-score_calc_s(char** seq, int s, double** eff) /* algorithm S, not used */
-{
-    int    i, j, k;
-    int    gb1, gb2, gc1, gc2;
-    int    cob;
-    int    nglen;
-    int    len = strlen(seq[0]);
-    double score;
-
-    score = 0;
-    nglen = 0;
-    for (i = 0; i < s - 1; i++)
-        for (j = i + 1; j < s; j++) {
-            double efficient = eff[i][j];
-
-            gc1 = 0;
-            gc2 = 0;
-            for (k = 0; k < len; k++) {
-                gb1 = gc1;
-                gb2 = gc2;
-
-                gc1 = (seq[i][k] == '-');
-                gc2 = (seq[j][k] == '-');
-
-                cob =
-                    !gb1 * gc1
-                        * !gb2 * !gc2
-
-                    + gb1 * !gc1
-                        * !gb2 * !gc2
-
-                    + !gb1 * !gc1
-                        * !gb2 * gc2
-
-                    + !gb1 * !gc1
-                        * gb2 * !gc2
-
-                    + !gb1 * gc1
-                        * gb2 * !gc2
-
-                    + gb1 * !gc1
-                        * !gb2 * gc2
-
-#if 0
-				 +  gb1  * !gc1
-				 *  gb2  *  gc2
-
-				 +  gb1  *  gc1
-				 *  gb2  * !gc2
-      
-				 + !gb1  *  gc1
-				 *  gb2  *  gc2
-
-				 +  gb1  *  gc1
-				 * !gb2  *  gc2
-#endif
-                    ;
-                score += 0.5 * (double)cob * penalty * efficient;
-                score += (double)amino_dis[(unsigned char)seq[i][k]][(int)seq[j][k]] * (double)efficient;
-                nglen += (!gc1 * !gc2);
-            }
-        }
-    return ((double)score / nglen + 400.0);
-}
-
-double
-score_calc_for_score_s(int s, char** seq) /* algorithm S */
-{
-    int    i, j, k;
-    int    gb1, gb2, gc1, gc2;
-    int    cob;
-    int    nglen;
-    int    len = strlen(seq[0]);
-    double score;
-
-    score = 0;
-    nglen = 0;
-    for (i = 0; i < s - 1; i++)
-        for (j = i + 1; j < s; j++) {
-            gc1 = 0;
-            gc2 = 0;
-            for (k = 0; k < len; k++) {
-                gb1 = gc1;
-                gb2 = gc2;
-
-                gc1 = (seq[i][k] == '-');
-                gc2 = (seq[j][k] == '-');
-
-                cob =
-                    !gb1 * gc1
-                        * !gb2 * !gc2
-
-                    + gb1 * !gc1
-                        * !gb2 * !gc2
-
-                    + !gb1 * !gc1
-                        * !gb2 * gc2
-
-                    + !gb1 * !gc1
-                        * gb2 * !gc2
-
-                    + !gb1 * gc1
-                        * gb2 * !gc2
-
-                    + gb1 * !gc1
-                        * !gb2 * gc2
-
-#if 0
-				 +  gb1  * !gc1
-				 *  gb2  *  gc2
-
-				 +  gb1  *  gc1
-				 *  gb2  * !gc2
-      
-				 + !gb1  *  gc1
-				 *  gb2  *  gc2
-
-				 +  gb1  *  gc1
-				 * !gb2  *  gc2
-#endif
-                    ;
-                score += 0.5 * (double)cob * penalty;
-                score += (double)amino_dis[(int)seq[i][k]][(unsigned char)seq[j][k]];
-                nglen += (!gc1 * !gc2);
-            }
-#if 0
-		reporterr(       "i = %d, j=%d\n", i+1, j+1 );
-		reporterr(       "score = %f\n", score );
-#endif
-        }
-    return ((double)score / nglen + 400.0);
-}
-
-double
-SSPscore___(int s, char** seq, int ex) /* algorithm S */
-{
-    int    i, j, k;
-    int    gb1, gb2, gc1, gc2;
-    int    cob;
-    int    len = strlen(seq[0]);
-    double score;
-
-    score = 0;
-    i = ex;
-    for (j = 0; j < s; j++) {
-        if (j == ex)
-            continue;
-
-        gc1 = 0;
-        gc2 = 0;
-        for (k = 0; k < len; k++) {
-            gb1 = gc1;
-            gb2 = gc2;
-
-            gc1 = (seq[i][k] == '-');
-            gc2 = (seq[j][k] == '-');
-
-            cob =
-                !gb1 * gc1
-                    * !gb2 * !gc2
-
-                + gb1 * !gc1
-                    * !gb2 * !gc2
-
-                + !gb1 * !gc1
-                    * !gb2 * gc2
-
-                + !gb1 * !gc1
-                    * gb2 * !gc2
-
-                + !gb1 * gc1
-                    * gb2 * !gc2 * 2.0
-
-                + gb1 * !gc1
-                    * !gb2 * gc2 * 2.0
-
-#if 0
-				 +  gb1  * !gc1
-				 *  gb2  *  gc2
-
-				 +  gb1  *  gc1
-				 *  gb2  * !gc2
-      
-				 + !gb1  *  gc1
-				 *  gb2  *  gc2
-
-				 +  gb1  *  gc1
-				 * !gb2  *  gc2
-#endif
-                ;
-            score += 0.5 * (double)cob * penalty;
-            score += (double)amino_dis[(unsigned char)seq[i][k]][(unsigned char)seq[j][k]];
-        }
-#if 0
-		reporterr(       "i = %d, j=%d\n", i+1, j+1 );
-		reporterr(       "score = %f\n", score );
-#endif
-    }
-    return ((double)score);
-}
-
-double
-SSPscore(int s, char** seq) /* algorithm S */
-{
-    int    i, j, k;
-    int    gb1, gb2, gc1, gc2;
-    int    cob;
-    int    len = strlen(seq[0]);
-    double score;
-
-    score = 0;
-    for (i = 0; i < s - 1; i++)
-        for (j = i + 1; j < s; j++) {
-            gc1 = 0;
-            gc2 = 0;
-            for (k = 0; k < len; k++) {
-                gb1 = gc1;
-                gb2 = gc2;
-
-                gc1 = (seq[i][k] == '-');
-                gc2 = (seq[j][k] == '-');
-
-                cob =
-                    !gb1 * gc1
-                        * !gb2 * !gc2
-
-                    + gb1 * !gc1
-                        * !gb2 * !gc2
-
-                    + !gb1 * !gc1
-                        * !gb2 * gc2
-
-                    + !gb1 * !gc1
-                        * gb2 * !gc2
-
-                    + !gb1 * gc1
-                        * gb2 * !gc2
-
-                    + gb1 * !gc1
-                        * !gb2 * gc2
-
-#if 0
-				 +  gb1  * !gc1
-				 *  gb2  *  gc2
-
-				 +  gb1  *  gc1
-				 *  gb2  * !gc2
-      
-				 + !gb1  *  gc1
-				 *  gb2  *  gc2
-
-				 +  gb1  *  gc1
-				 * !gb2  *  gc2
-#endif
-                    ;
-                score += 0.5 * (double)cob * penalty;
-                score += (double)amino_dis[(unsigned char)seq[i][k]][(unsigned char)seq[j][k]];
-            }
-#if 0
-		reporterr(       "i = %d, j=%d\n", i+1, j+1 );
-		reporterr(       "score = %f\n", score );
-#endif
-        }
-    return ((double)score);
-}
-
-double
-DSPscore(int s, char** seq) /* method 3 deha nai */
-{
-    int    i, j, k;
-    int    len = strlen(seq[0]);
-    double score;
-    double tmpscore;
-    char * mseq1, *mseq2;
-#if DEBUG
-    FILE* fp;
-#endif
-
-    score = 0.0;
-
-    for (i = 0; i < s - 1; i++) {
-        for (j = i + 1; j < s; j++) {
-            mseq1 = seq[i];
-            mseq2 = seq[j];
-            tmpscore = 0.0;
-            for (k = 0; k < len; k++) {
-                if (mseq1[k] == '-' && mseq2[k] == '-')
-                    continue;
-                tmpscore += amino_dis[(unsigned char)mseq1[k]][(unsigned char)mseq2[k]];
-
-                if (mseq1[k] == '-') {
-                    tmpscore += penalty;
-                    while (mseq1[++k] == '-')
-                        tmpscore += amino_dis[(unsigned char)mseq1[k]][(unsigned char)mseq2[k]];
-                    k--;
-                    if (k > len - 2)
-                        break;
-                    continue;
-                }
-                if (mseq2[k] == '-') {
-                    tmpscore += penalty;
-                    while (mseq2[++k] == '-')
-                        tmpscore += amino_dis[(unsigned char)mseq1[k]][(unsigned char)mseq2[k]];
-                    k--;
-                    if (k > len - 2)
-                        break;
-                    continue;
-                }
-            }
-            score += (double)tmpscore;
-        }
-    }
-
-    return (score);
-}
-
 #define SEGMENTSIZE 150
-
-void
-dontcalcimportance_target(int nseq, char** seq, LocalHom** localhom, int ntarget) {
-    int       i, j;
-    LocalHom* ptr;
-    int*      nogaplen;
-
-    nogaplen = AllocateIntVec(nseq);
-
-    for (i = 0; i < nseq; i++) {
-        nogaplen[i] = seqlen(seq[i]);
-        //		reporterr(       "nogaplen[%d] = %d\n", i, nogaplen[i] );
-    }
-
-    for (i = 0; i < ntarget; i++) {
-        for (j = 0; j < nseq; j++) {
-            for (ptr = localhom[i] + j; ptr; ptr = ptr->next) {
-//				reporterr(       "i,j=%d,%d,ptr=%p\n", i, j, ptr );
-#if 1
-                //				ptr->importance = ptr->opt / ptr->overlapaa;
-                ptr->importance = ptr->opt;
-//				ptr->fimportance = (double)ptr->importance;
-#else
-                ptr->importance = ptr->opt / MIN(nogaplen[i], nogaplen[j]);
-#endif
-            }
-        }
-    }
-    free(nogaplen);
-}
 
 void
 dontcalcimportance_half(int nseq, char** seq, LocalHom** localhom) {
@@ -8505,171 +7253,6 @@ exit( 1 );
     free(nogaplen);
     free(ieff);
 }
-
-int
-makelocal(char* s1, char* s2, int thr) {
-    int    start, maxstart, maxend;
-    char * pt1, *pt2;
-    double score;
-    double maxscore;
-
-    pt1 = s1;
-    pt2 = s2;
-
-    maxend = 0;  // by D.Mathog, a guess
-
-    //	reporterr(       "thr = %d, \ns1 = %s\ns2 = %s\n", thr, s1, s2 );
-    maxscore = 0.0;
-    score = 0.0;
-    start = 0;
-    maxstart = 0;
-    while (*pt1) {
-        //		reporterr(       "*pt1 = %c*pt2 = %c\n", *pt1, *pt2 );
-        if (*pt1 == '-' || *pt2 == '-') {
-            //			reporterr(       "penalty = %d\n", penalty );
-            score += penalty;
-            while (*pt1 == '-' || *pt2 == '-') {
-                pt1++;
-                pt2++;
-            }
-            continue;
-        }
-
-        score += (amino_dis[(unsigned char)*pt1++][(unsigned char)*pt2++] - thr);
-        //		score += ( amino_dis[(int)*pt1++][(int)*pt2++] );
-        if (score > maxscore) {
-            //			reporterr(       "score = %f\n", score );
-            maxscore = score;
-            maxstart = start;
-            //			reporterr(       "## max! maxstart = %d, start = %d\n", maxstart, start );
-        }
-        if (score < 0.0) {
-            //			reporterr(       "## resetting, start = %d, maxstart = %d\n", start, maxstart );
-            if (start == maxstart) {
-                maxend = pt1 - s1;
-                //				reporterr(       "maxend = %d\n", maxend );
-            }
-            score = 0.0;
-            start = pt1 - s1;
-        }
-    }
-    if (start == maxstart)
-        maxend = pt1 - s1 - 1;
-
-    //	reporterr(       "maxstart = %d, maxend = %d, maxscore = %f\n", maxstart, maxend, maxscore );
-    s1[maxend + 1] = 0;
-    s2[maxend + 1] = 0;
-    return (maxstart);
-}
-
-void
-resetlocalhom(int nseq, LocalHom** lh) {
-    int       i, j;
-    LocalHom* pt;
-
-    for (i = 0; i < nseq - 1; i++)
-        for (j = i + 1; j < nseq; j++) {
-            for (pt = lh[i] + j; pt; pt = pt->next)
-                pt->opt = 1.0;
-        }
-}
-#if 0
-void gapmatometeireru( int n, char **res, char **ori, char *gt ) // i loop no tame osoi
-{
-	char g;
-	int pr=0, po=0, i;
-	while( (g = *gt++) )
-	{
-		if( g == '-' )
-		{
-			for( i=0; i<n; i++ ) res[i][pr] = *newgapstr;
-			pr++;
-//			*res++ = *newgapstr;
-		}
-		else
-		{
-			for( i=0; i<n; i++ ) res[i][pr] = ori[i][po];
-			pr++;
-			po++;
-//			*res++ = *ori++;
-		}
-	}
-	for( i=0; i<n; i++ ) res[i][pr] = 0;
-//	*res = 0;
-}
-void gapmatometeireru( int n, char **res, char **ori, char *gt ) // fukuzatsuna warini hayakunai
-{
-	char *rp, *op;
-	char g = *newgapstr;
-	int i, j, s;
-	int *stbk;
-	int glen = strlen( gt );
-	int *st = (int *)calloc( sizeof( int ), glen+1 );
-
-	for( i=0; i<glen; i++ )
-	{
-		if( gt[i] == '-' )
-			st[i] = 1;
-		else
-		{
-			st[i] = 0;
-			for( j=i-1; j>-1&&st[j]==1; j-- )
-				st[j] = i-j;
-		}
-	}
-	st[i] = -1;
-	stbk = st;
-
-	for( i=0; i<n; i++ )
-	{
-		rp = res[i];
-		op = ori[i];
-		st = stbk;
-		s = glen;
-		while( s-- ) *rp++ = g;
-
-		rp = res[i];
-		while( (s=*st++)!=-1 )
-		{
-			if( s > 0 )
-			{
-//				reporterr( "s=%d\n", s );
-				st += s-1;
-				rp += s;
-//				while( s-- )
-//					*rp++ = *newgapstr;
-			}
-			else
-				*rp++ = *op++;
-		}
-		*rp = 0;
-	}
-
-	free( stbk );
-}
-static void gapirerustatic( char *res, char *ori, char *gt, char gapchar )
-{
-	char g;
-	while( (g = *gt++) )
-	{
-		if( g == '-' )
-		{
-			*res++ = gapchar;
-		}
-		else
-		{
-			*res++ = *ori++;
-		}
-	}
-	*res = 0;
-}
-void gapmatometeireru( int n, char **res, char **ori, char *gt )
-{
-	int i;
-	char gapchar = *newgapstr;
-	for( i=0; i<n; i++ ) gapirerustatic( res[i], ori[i], gt, gapchar );
-}
-#endif
 
 void
 gapireru(char* res, char* ori, char* gt) {
@@ -9522,291 +8105,7 @@ commongappickpair(char* r1, char* r2, char* i1, char* i2) {
 }
 
 double
-naiveRpairscore(int n1, int n2, char** seq1, char** seq2, double* eff1, double* eff2, int penal) {
-    //	return( 0 );
-    int    i, j;
-    double val;
-    double valf;
-    int    pv;
-    double deff;
-    char * p1, *p2, *p1p, *p2p;
-    val = 0.0;
-    for (i = 0; i < n1; i++)
-        for (j = 0; j < n2; j++) {
-            deff = eff1[i] * eff2[j];
-            //		reporterr(       "feff %d-%d = %f\n", i, j, feff );
-            //		reporterr(       "i1 = %s\n", seq1[i] );
-            //		reporterr(       "i2 = %s\n", seq2[j] );
-            //		reporterr(       "s1 = %s\n", s1 );
-            //		reporterr(       "s2 = %s\n", s2 );
-            //		reporterr(       "penal = %d\n", penal );
-
-            valf = 0;
-            p1 = seq1[i];
-            p2 = seq2[j];
-            pv = 0;
-            if (*p1 == '-' && *p2 != '-')
-                pv = penal;
-            if (*p1 != '-' && *p2 == '-')
-                pv = penal;
-            //		if( pv ) reporterr(       "Penal!, %f, %d-%d, pos1,pos2=%d,%d\n", pv * deff * 0.5,  i, j, p1-seq1[i], p2-seq2[j] );
-            p1p = p1;
-            p2p = p2;
-            valf += (double)amino_dis[(unsigned char)*p1++][(unsigned char)*p2++] + 0.5 * pv;
-            while (*p1p) {
-                pv = 0;
-                if (*p1p != '-' && *p2p != '-') {
-                    if (*p1 == '-' && *p2 != '-')
-                        pv = penal;
-                    if (*p1 != '-' && *p2 == '-')
-                        pv = penal;
-                    if (*p1 != '-' && *p2 != '-')
-                        ;
-                    if (*p1 == '-' && *p2 == '-')
-                        ;
-                }
-                if (*p1p == '-' && *p2p == '-') {
-                    if (*p1 == '-' && *p2 != '-')
-                        pv = penal;
-                    //					;
-                    if (*p1 != '-' && *p2 == '-')
-                        pv = penal;
-                    //					;
-                    if (*p1 != '-' && *p2 != '-')
-                        ;
-                    if (*p1 == '-' && *p2 == '-')
-                        ;
-                }
-                if (*p1p != '-' && *p2p == '-') {
-                    if (*p1 == '-' && *p2 != '-')
-                        pv = penal * 2;  // ??
-                    //					;
-                    if (*p1 != '-' && *p2 == '-')
-                        ;
-                    if (*p1 != '-' && *p2 != '-')
-                        pv = penal;
-                    //					;
-                    if (*p1 == '-' && *p2 == '-')
-                        pv = penal;
-                    //					;
-                }
-                if (*p1p == '-' && *p2p != '-') {
-                    if (*p1 == '-' && *p2 != '-')
-                        ;
-                    if (*p1 != '-' && *p2 == '-')
-                        pv = penal * 2;  // ??
-                    //					;
-                    if (*p1 != '-' && *p2 != '-')
-                        pv = penal;
-                    //					;
-                    if (*p1 == '-' && *p2 == '-')
-                        pv = penal;
-                    //					;
-                }
-                //			reporterr(       "adding %c-%c, %d\n", *p1, *p2, amino_dis[*p1][*p2] );
-                //			if( pv ) reporterr(       "Penal!, %f, %d-%d, pos1,pos2=%d,%d\n", pv * deff * 0.5,  i, j, p1-seq1[i], p2-seq2[j] );
-                valf += amino_dis[(unsigned char)*p1++][(unsigned char)*p2++] + 0.5 * pv;
-                p1p++;
-                p2p++;
-            }
-            //		reporterr(       "valf = %d\n", valf );
-            val += deff * (valf);
-        }
-    reporterr("val = %f\n", val);
-    return (val);
-    //	exit( 1 );
-}
-double
-naiveQpairscore(int n1, int n2, char** seq1, char** seq2, double* eff1, double* eff2, int penal) {
-    int    i, j;
-    double val;
-    double valf;
-    int    pv;
-    double deff;
-    char * p1, *p2, *p1p, *p2p;
-    return (0);
-    val = 0.0;
-    for (i = 0; i < n1; i++)
-        for (j = 0; j < n2; j++) {
-            deff = eff1[i] * eff2[j];
-            //		reporterr(       "feff %d-%d = %f\n", i, j, feff );
-            //		reporterr(       "i1 = %s\n", seq1[i] );
-            //		reporterr(       "i2 = %s\n", seq2[j] );
-            //		reporterr(       "s1 = %s\n", s1 );
-            //		reporterr(       "s2 = %s\n", s2 );
-            //		reporterr(       "penal = %d\n", penal );
-
-            valf = 0;
-            p1 = seq1[i];
-            p2 = seq2[j];
-            pv = 0;
-            if (*p1 == '-' && *p2 != '-')
-                pv = penal;
-            if (*p1 != '-' && *p2 == '-')
-                pv = penal;
-            //		if( pv ) reporterr(       "Penal!, %f, %d-%d, pos1,pos2=%d,%d\n", pv * deff * 0.5,  i, j, p1-seq1[i], p2-seq2[j] );
-            p1p = p1;
-            p2p = p2;
-            valf += (double)amino_dis[(unsigned char)*p1++][(unsigned char)*p2++] + 0.5 * pv;
-            while (*p1p) {
-                pv = 0;
-                if (*p1p != '-' && *p2p != '-') {
-                    if (*p1 == '-' && *p2 != '-')
-                        pv = penal;
-                    if (*p1 != '-' && *p2 == '-')
-                        pv = penal;
-                    if (*p1 != '-' && *p2 != '-')
-                        ;
-                    if (*p1 == '-' && *p2 == '-')
-                        ;
-                }
-                if (*p1p == '-' && *p2p == '-') {
-                    if (*p1 == '-' && *p2 != '-')
-                        //					pv = penal;
-                        ;
-                    if (*p1 != '-' && *p2 == '-')
-                        //					pv = penal;
-                        ;
-                    if (*p1 != '-' && *p2 != '-')
-                        ;
-                    if (*p1 == '-' && *p2 == '-')
-                        ;
-                }
-                if (*p1p != '-' && *p2p == '-') {
-                    if (*p1 == '-' && *p2 != '-')
-                        pv = penal * 2;  // ??
-                    //					;
-                    if (*p1 != '-' && *p2 == '-')
-                        ;
-                    if (*p1 != '-' && *p2 != '-')
-                        pv = penal;
-                    //					;
-                    if (*p1 == '-' && *p2 == '-')
-                        //					pv = penal;
-                        ;
-                }
-                if (*p1p == '-' && *p2p != '-') {
-                    if (*p1 == '-' && *p2 != '-')
-                        ;
-                    if (*p1 != '-' && *p2 == '-')
-                        pv = penal * 2;  // ??
-                    //					;
-                    if (*p1 != '-' && *p2 != '-')
-                        pv = penal;
-                    //					;
-                    if (*p1 == '-' && *p2 == '-')
-                        //					pv = penal;
-                        ;
-                }
-                //			reporterr(       "adding %c-%c, %d\n", *p1, *p2, amino_dis[*p1][*p2] );
-                //			if( pv ) reporterr(       "Penal!, %f, %d-%d, pos1,pos2=%d,%d\n", pv * deff * 0.5,  i, j, p1-seq1[i], p2-seq2[j] );
-                valf += amino_dis[(unsigned char)*p1++][(unsigned char)*p2++] + 0.5 * pv;
-                p1p++;
-                p2p++;
-            }
-            //		reporterr(       "valf = %d\n", valf );
-            val += deff * (valf);
-        }
-    reporterr("val = %f\n", val);
-    return (val);
-    //	exit( 1 );
-}
-double
-naiveHpairscore(int n1, int n2, char** seq1, char** seq2, double* eff1, double* eff2, int penal) {
-    int    i, j;
-    double val;
-    double valf;
-    int    pv;
-    //	double feff = 0.0; // by D.Mathog, a guess
-    double deff;
-    char * p1, *p2, *p1p, *p2p;
-    val = 0.0;
-    for (i = 0; i < n1; i++)
-        for (j = 0; j < n2; j++) {
-            deff = eff1[i] * eff2[j];
-            //		reporterr(       "i1 = %s\n", seq1[i] );
-            //		reporterr(       "i2 = %s\n", seq2[j] );
-            //		reporterr(       "s1 = %s\n", s1 );
-            //		reporterr(       "s2 = %s\n", s2 );
-            //		reporterr(       "penal = %d\n", penal );
-
-            valf = 0;
-            p1 = seq1[i];
-            p2 = seq2[j];
-            pv = 0;
-            if (*p1 == '-' && *p2 != '-')
-                pv = penal;
-            if (*p1 != '-' && *p2 == '-')
-                pv = penal;
-            if (pv)
-                reporterr("Penal!, %f, %d-%d, pos1,pos2=%d,%d\n", pv * deff * 0.5, i, j, (int)(p1 - seq1[i]), (int)(p2 - seq2[j]));
-            p1p = p1;
-            p2p = p2;
-            valf += (double)amino_dis[(unsigned char)*p1++][(unsigned char)*p2++] + 0.5 * pv;
-            while (*p1p) {
-                pv = 0;
-                if (*p1p != '-' && *p2p != '-') {
-                    if (*p1 == '-' && *p2 != '-')
-                        pv = penal;
-                    if (*p1 != '-' && *p2 == '-')
-                        pv = penal;
-                    if (*p1 != '-' && *p2 != '-')
-                        ;
-                    if (*p1 == '-' && *p2 == '-')
-                        ;
-                }
-                if (*p1p == '-' && *p2p == '-') {
-                    if (*p1 == '-' && *p2 != '-')
-                        //					pv = penal;
-                        ;
-                    if (*p1 != '-' && *p2 == '-')
-                        //					pv = penal;
-                        ;
-                    if (*p1 != '-' && *p2 != '-')
-                        ;
-                    if (*p1 == '-' && *p2 == '-')
-                        ;
-                }
-                if (*p1p != '-' && *p2p == '-') {
-                    if (*p1 == '-' && *p2 != '-')
-                        //					pv = penal;
-                        ;
-                    if (*p1 != '-' && *p2 == '-')
-                        ;
-                    if (*p1 != '-' && *p2 != '-')
-                        pv = penal;
-                    if (*p1 == '-' && *p2 == '-')
-                        //					pv = penal;
-                        ;
-                }
-                if (*p1p == '-' && *p2p != '-') {
-                    if (*p1 == '-' && *p2 != '-')
-                        ;
-                    if (*p1 != '-' && *p2 == '-')
-                        //					pv = penal;
-                        ;
-                    if (*p1 != '-' && *p2 != '-')
-                        pv = penal;
-                    if (*p1 == '-' && *p2 == '-')
-                        //					pv = penal;
-                        ;
-                }
-                //			reporterr(       "adding %c-%c, %d\n", *p1, *p2, amino_dis[*p1][*p2] );
-                //			if( pv ) reporterr(       "Penal!, %f, %d-%d, pos1,pos2=%d,%d\n", pv * deff * 0.5,  i, j, p1-seq1[i], p2-seq2[j] );
-                valf += amino_dis[(unsigned char)*p1++][(unsigned char)*p2++] + 0.5 * pv;
-                p1p++;
-                p2p++;
-            }
-            //		reporterr(       "valf = %d\n", valf );
-            val += deff * (valf);
-        }
-    reporterr("val = %f\n", val);
-    return (val);
-    //	exit( 1 );
-}
-
-double
-naivepairscorefast(char* seq1, char* seq2, int* skip1, int* skip2, int penal) {
+naivepairscorefast(Context* ctx, char* seq1, char* seq2, int* skip1, int* skip2, int penal) {
     double vali;
     int    len = strlen(seq1);
     char * s1, *s2;
@@ -9851,7 +8150,7 @@ naivepairscorefast(char* seq1, char* seq2, int* skip1, int* skip2, int penal) {
                 continue;
             }
             //			reporterr(       "adding %c-%c, %d\n", *p1, *p2, amino_dis[*p1][*p2] );
-            vali += (double)amino_dis[(unsigned char)*p1++][(unsigned char)*p2++];
+            vali += (double)ctx->amino_dis[(unsigned char)*p1++][(unsigned char)*p2++];
         }
     }
     free(s1);
@@ -9913,7 +8212,7 @@ naivepairscore11_dynmtx(Context* ctx, double** mtx, char* seq1, char* seq2, int 
 }
 
 double
-naivepairscore11(char* seq1, char* seq2, int penal) {
+naivepairscore11(Context* ctx, char* seq1, char* seq2, int penal) {
     double vali;
     int    len = strlen(seq1);
     char * s1, *s2, *p1, *p2;
@@ -9952,8 +8251,7 @@ naivepairscore11(char* seq1, char* seq2, int penal) {
                 }
                 continue;
             }
-            //			reporterr(       "adding %c-%c, %d\n", *p1, *p2, amino_dis[*p1][*p2] );
-            vali += (double)amino_dis[(unsigned char)*p1++][(unsigned char)*p2++];
+            vali += (double)ctx->amino_dis[(unsigned char)*p1++][(unsigned char)*p2++];
         }
     }
     free(s1);
@@ -9963,76 +8261,14 @@ naivepairscore11(char* seq1, char* seq2, int penal) {
 }
 
 double
-naivepairscore(int n1, int n2, char** seq1, char** seq2, double* eff1, double* eff2, int penal) {
-    //	return( 0.0 );
-    int    i, j;
-    double val;
-    int    vali;
-    double feff;
-    int    len = strlen(seq1[0]);
-    char * s1, *s2, *p1, *p2;
-    s1 = calloc(len + 1, sizeof(char));
-    s2 = calloc(len + 1, sizeof(char));
-    val = 0.0;
-    for (i = 0; i < n1; i++)
-        for (j = 0; j < n2; j++) {
-            vali = 0;
-            feff = eff1[i] * eff2[j];
-            //		reporterr(       "feff %d-%d = %f\n", i, j, feff );
-            commongappickpair(s1, s2, seq1[i], seq2[j]);
-            //		reporterr(       "i1 = %s\n", seq1[i] );
-            //		reporterr(       "i2 = %s\n", seq2[j] );
-            //		reporterr(       "s1 = %s\n", s1 );
-            //		reporterr(       "s2 = %s\n", s2 );
-            //		reporterr(       "penal = %d\n", penal );
-
-            p1 = s1;
-            p2 = s2;
-            while (*p1) {
-                if (*p1 == '-') {
-                    //				reporterr(       "Penal! %c-%c in %d-%d, %f\n", *(p1-1), *(p2-1), i, j, feff );
-                    vali += penal;
-                    //				while( *p1 == '-' || *p2 == '-' )
-                    while (*p1 == '-')  // SP
-                    {
-                        p1++;
-                        p2++;
-                    }
-                    continue;
-                }
-                if (*p2 == '-') {
-                    //				reporterr(       "Penal! %c-%c in %d-%d, %f\n", *(p1-1), *(p2-1), i, j, feff );
-                    vali += penal;
-                    //				while( *p2 == '-' || *p1 == '-' )
-                    while (*p2 == '-')  // SP
-                    {
-                        p1++;
-                        p2++;
-                    }
-                    continue;
-                }
-                //			reporterr(       "adding %c-%c, %d\n", *p1, *p2, amino_dis[*p1][*p2] );
-                vali += amino_dis[(unsigned char)*p1++][(unsigned char)*p2++];
-            }
-            //		reporterr(       "vali = %d\n", vali );
-            val += feff * vali;
-        }
-    free(s1);
-    free(s2);
-    reporterr("val = %f\n", val);
-    return (val);
-    //	exit( 1 );
-}
-
-double
-plainscore(int nseq, char** s) {
+plainscore(Context* ctx, int nseq, char** s) {
     int    i, j, ilim;
     double v = 0.0;
 
     ilim = nseq - 1;
     for (i = 0; i < ilim; i++)
         for (j = i + 1; j < nseq; j++) {
-            v += (double)naivepairscore11(s[i], s[j], penalty);
+            v += (double)naivepairscore11(ctx, s[i], s[j], penalty);
         }
 
     reporterr("penalty = %d\n", penalty);
@@ -11393,12 +9629,12 @@ generatesubalignmentstable(int nseq, int*** tablept, int* nsubpt, int* maxmempt,
 }
 
 double
-sumofpairsscore(int nseq, char** seq) {
+sumofpairsscore(Context* ctx, int nseq, char** seq) {
     double v = 0;
     int    i, j;
     for (i = 1; i < nseq; i++) {
         for (j = 0; j < i; j++) {
-            v += naivepairscore11(seq[i], seq[j], penalty) / 600;
+            v += naivepairscore11(ctx, seq[i], seq[j], penalty) / 600;
         }
     }
     //	v /= ( (nseq-1) * nseq ) / 2;
@@ -11454,7 +9690,7 @@ commonsextet_p(int* table, int* pointt) {
 }
 
 double
-distcompact_msa(char* seq1, char* seq2, int* skiptable1, int* skiptable2, int ss1, int ss2)  // osoi!
+distcompact_msa(Context* ctx, char* seq1, char* seq2, int* skiptable1, int* skiptable2, int ss1, int ss2)  // osoi!
 {
     int    bunbo = MIN(ss1, ss2);
     double value;
@@ -11463,7 +9699,7 @@ distcompact_msa(char* seq1, char* seq2, int* skiptable1, int* skiptable2, int ss
     if (bunbo == 0)
         return (2.0);
     else {
-        value = (1.0 - (double)naivepairscorefast(seq1, seq2, skiptable1, skiptable2, penalty_dist) / bunbo) * 2.0;  // 2014/Aug/15 fast
+        value = (1.0 - (double)naivepairscorefast(ctx, seq1, seq2, skiptable1, skiptable2, penalty_dist) / bunbo) * 2.0;  // 2014/Aug/15 fast
         if (value > 10)
             value = 10.0;  // 2015/Mar/17
         return (value);

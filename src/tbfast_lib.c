@@ -11,6 +11,7 @@
 #define REPORTCOSTS 0
 
 typedef struct msacompactdistmtxthread_arg {
+    Context* ctx;
     int      njob;
     int      thread_no;
     int*     selfscore;
@@ -452,6 +453,7 @@ preferenceval(int ori, int pos, int max) {
 
 static void*
 msacompactdisthalfmtxthread(msacompactdistmtxthread_arg_t* targ) {
+    Context* ctx = targ->ctx;
     int      njob = targ->njob;
     int      thread_no = targ->thread_no;
     int*     selfscore = targ->selfscore;
@@ -481,7 +483,7 @@ msacompactdisthalfmtxthread(msacompactdistmtxthread_arg_t* targ) {
         }
 
         for (j = i + 1; j < njob; j++) {
-            tmpdist = distcompact_msa(seq[i], seq[j], skiptable[i], skiptable[j], selfscore[i], selfscore[j]);  // osoikedo,
+            tmpdist = distcompact_msa(ctx, seq[i], seq[j], skiptable[i], skiptable[j], selfscore[i], selfscore[j]);  // osoikedo,
 
             preference = preferenceval(i, j, njob);
             tmpdistx = tmpdist + preference;
@@ -1503,7 +1505,7 @@ tbfast_main(int argc, char* argv[]) {
             partmtx = preparepartmtx(ctx->njob);
 
             for (i = 0; i < ctx->njob; i++) {
-                selfscore[i] = (int)naivepairscorefast(seq[i], seq[i], skiptable[i], skiptable[i], penalty_dist);
+                selfscore[i] = (int)naivepairscorefast(ctx, seq[i], seq[i], skiptable[i], skiptable[i], penalty_dist);
             }
 
             {
@@ -1516,6 +1518,7 @@ tbfast_main(int argc, char* argv[]) {
                     }
 
                     msacompactdistmtxthread_arg_t targ = {
+                        .ctx = ctx,
                         .thread_no = 0,
                         .njob = ctx->njob,
                         .selfscore = selfscore,
@@ -1549,7 +1552,7 @@ tbfast_main(int argc, char* argv[]) {
             makeskiptable(ctx->njob, skiptable, seq);
             ien = ctx->njob - 1;
             for (i = 0; i < ctx->njob; i++) {
-                selfscore[i] = (int)naivepairscorefast(seq[i], seq[i], skiptable[i], skiptable[i], penalty_dist);
+                selfscore[i] = (int)naivepairscorefast(ctx, seq[i], seq[i], skiptable[i], skiptable[i], penalty_dist);
             }
 
             {
@@ -1564,7 +1567,7 @@ tbfast_main(int argc, char* argv[]) {
                         if (bunbo == 0.0)
                             iscore[i][j - i] = 2.0;
                         else
-                            iscore[i][j - i] = (1.0 - naivepairscorefast(seq[i], seq[j], skiptable[i], skiptable[j], penalty_dist) / bunbo) * 2.0;  // 2014/Aug/15 fast
+                            iscore[i][j - i] = (1.0 - naivepairscorefast(ctx, seq[i], seq[j], skiptable[i], skiptable[j], penalty_dist) / bunbo) * 2.0;  // 2014/Aug/15 fast
                         if (iscore[i][j - i] > 10)
                             iscore[i][j - i] = 10.0;
                     }
@@ -1636,7 +1639,7 @@ tbfast_main(int argc, char* argv[]) {
         {
             for (i = 0; i < ctx->njob; i++) {
                 if (kozoarivec[i])
-                    selfscore[i] = naivepairscore11(seq[i], seq[i], 0.0);
+                    selfscore[i] = naivepairscore11(ctx, seq[i], seq[i], 0.0);
                 else
                     selfscore[i] = -1;
             }
@@ -2029,7 +2032,7 @@ tbfast_main(int argc, char* argv[]) {
     }
 
     if (scoreout) {
-        unweightedspscore = plainscore(ctx->njob, bseq);
+        unweightedspscore = plainscore(ctx, ctx->njob, bseq);
         fprintf(stderr, "\nSCORE %s = %.0f, ", "(treebase)", unweightedspscore);
         fprintf(stderr, "SCORE / residue = %f", unweightedspscore / (ctx->njob * strlen(bseq[0])));
         fprintf(stderr, "\n\n");
@@ -2037,7 +2040,7 @@ tbfast_main(int argc, char* argv[]) {
 
     fprintf(trap_g, "done.\n");
     free(mergeoralign);
-    freeconstants();
+    freeconstants(ctx);
 
     if (rnakozo && rnaprediction == 'm') {
         if (singlerna)  // nen no tame
@@ -2080,7 +2083,7 @@ tbfast_main(int argc, char* argv[]) {
     uselh = NULL;
 
     if (spscoreout)
-        reporterr("Unweighted sum-of-pairs score = %10.5f\n", sumofpairsscore(ctx->njob, bseq));
+        reporterr("Unweighted sum-of-pairs score = %10.5f\n", sumofpairsscore(ctx, ctx->njob, bseq));
     nthread = MAX(opts.nthreadtb, nthreadreadlh);  // toriaezu
     if (opts.ndeleted > 0) {
         reporterr("\nTo keep the alignment length, %d letters were DELETED.\n", opts.ndeleted);
@@ -2204,7 +2207,7 @@ chudan:
         FreeIntMtx(localmem);
     localmem = NULL;
 
-    freeconstants();
+    freeconstants(ctx);
     closeFiles();
     FreeCommonIP();
     return (0);

@@ -239,8 +239,6 @@ recallpairfoldalign(Context* ctx, char** mseq1, char** mseq2, int m1, int m2, in
         value = L__align11(ctx, n_dis_consweight_multi, 0.0, mseq1, mseq2, alloclen, of1pt, of2pt);
     }
 
-    //	value = (double)naivepairscore11( *mseq1, *mseq2, penalty ); // nennnotame
-
     if (aln1[0] == 0) {
         fprintf(stderr, "FOLDALIGN returned no alignment between %d and %d.  Sequence alignment is used instead.\n", m1 + 1, m2 + 1);
     } else {
@@ -249,13 +247,6 @@ recallpairfoldalign(Context* ctx, char** mseq1, char** mseq2, int m1, int m2, in
         *of1pt = of1tmp;
         *of2pt = of2tmp;
     }
-
-    //	value = naivepairscore11( *mseq1, *mseq2, penalty ); // v6.511 ha kore wo tsukau, global nomi dakara.
-
-    //	fclose( fp ); // saigo dake yatta houga yoi.
-
-    //	fprintf( stderr, "*mseq1 = %s\n", *mseq1 );
-    //	fprintf( stderr, "*mseq2 = %s\n", *mseq2 );
 
     free(aln1);
     free(aln2);
@@ -1000,7 +991,7 @@ calllara(int nseq, char** mseq, char* laraarg) {
 }
 
 static double
-recalllara(char** mseq1, char** mseq2, int alloclen) {
+recalllara(Context* ctx, char** mseq1, char** mseq2, int alloclen) {
     static FILE* fp = NULL;
     static char* ungap1;
     static char* ungap2;
@@ -1049,7 +1040,7 @@ recalllara(char** mseq1, char** mseq2, int alloclen) {
         exit(1);
     }
 
-    value = (double)naivepairscore11(*mseq1, *mseq2, penalty);
+    value = (double)naivepairscore11(ctx, *mseq1, *mseq2, penalty);
 
     //	fclose( fp ); // saigo dake yatta houga yoi.
 
@@ -1057,7 +1048,7 @@ recalllara(char** mseq1, char** mseq2, int alloclen) {
 }
 
 static double
-calldafs_giving_bpp(char** mseq1, char** mseq2, char** bpp1, char** bpp2, int i, int j) {
+calldafs_giving_bpp(Context* ctx, char** mseq1, char** mseq2, char** bpp1, char** bpp2, int i, int j) {
     FILE*  fp;
     int    res;
     char*  com;
@@ -1148,7 +1139,7 @@ calldafs_giving_bpp(char** mseq1, char** mseq2, char** bpp1, char** bpp2, int i,
     //	fprintf( stderr, "*mseq1 = %s\n", *mseq1 );
     //	fprintf( stderr, "*mseq2 = %s\n", *mseq2 );
 
-    value = (double)naivepairscore11(*mseq1, *mseq2, penalty);
+    value = (double)naivepairscore11(ctx, *mseq1, *mseq2, penalty);
 
 #if 0
 	sprintf( com, "rm -rf %s > /dev/null 2>&1", dirname );
@@ -1167,7 +1158,7 @@ calldafs_giving_bpp(char** mseq1, char** mseq2, char** bpp1, char** bpp2, int i,
 }
 
 static double
-callmxscarna_giving_bpp(char** mseq1, char** mseq2, char** bpp1, char** bpp2, int i, int j) {
+callmxscarna_giving_bpp(Context* ctx, char** mseq1, char** mseq2, char** bpp1, char** bpp2, int i, int j) {
     FILE*  fp;
     int    res;
     char*  com;
@@ -1260,7 +1251,7 @@ callmxscarna_giving_bpp(char** mseq1, char** mseq2, char** bpp1, char** bpp2, in
     //	fprintf( stderr, "*mseq1 = %s\n", *mseq1 );
     //	fprintf( stderr, "*mseq2 = %s\n", *mseq2 );
 
-    value = (double)naivepairscore11(*mseq1, *mseq2, penalty);
+    value = (double)naivepairscore11(ctx, *mseq1, *mseq2, penalty);
 
 #if 0
 	sprintf( com, "rm -rf %s > /dev/null 2>&1", dirname );
@@ -1857,7 +1848,7 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
     for (i = 0; i < ctx->njob; i++) {
         pscore = 0.0;
         for (pt = seq[i]; *pt; pt++)
-            pscore += amino_dis[(unsigned char)*pt][(unsigned char)*pt];
+            pscore += ctx->amino_dis[(unsigned char)*pt][(unsigned char)*pt];
         selfscore[i] = pscore;
     }
 
@@ -1934,7 +1925,7 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
                         case ('A'):
                             if (usenaivescoreinsteadofalignmentscore) {
                                 G__align11(n_dis_consweight_multi, mseq1, mseq2, alloclen, outgap, outgap);
-                                pscore = (double)naivepairscore11(mseq1[0], mseq2[0], 0.0);  // uwagaki
+                                pscore = (double)naivepairscore11(ctx, mseq1[0], mseq2[0], 0.0);  // uwagaki
                             } else {
                                 //								if( store_localhom )
                                 if (store_localhom && (targetmap[i] != -1 || targetmap[j] != -1)) {
@@ -1955,7 +1946,6 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
                                             strcpy(mseq2[0], seq[j]);
                                             G__align11(dynamicmtx, mseq1, mseq2, alloclen, outgap, outgap);
                                         }
-                                        //										pscore = (double)naivepairscore11( *mseq1, *mseq2, 0.0 );
                                     }
 #endif
                                 } else
@@ -1966,7 +1956,7 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
                         case ('N'):
                             if (usenaivescoreinsteadofalignmentscore) {
                                 genL__align11(ctx, n_dis_consweight_multi, mseq1, mseq2, alloclen, &off1, &off2);
-                                pscore = (double)naivepairscore11(mseq1[0], mseq2[0], 0.0);  // uwagaki
+                                pscore = (double)naivepairscore11(ctx, mseq1[0], mseq2[0], 0.0);  // uwagaki
                             } else {
                                 pscore = genL__align11(ctx, n_dis_consweight_multi, mseq1, mseq2, alloclen, &off1, &off2);
                                 if (thereisx) {
@@ -2009,7 +1999,7 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
                             else {
                                 if (usenaivescoreinsteadofalignmentscore) {
                                     L__align11(ctx, n_dis_consweight_multi, 0.0, mseq1, mseq2, alloclen, &off1, &off2);
-                                    pscore = (double)naivepairscore11(mseq1[0], mseq2[0], 0.0);  // uwagaki
+                                    pscore = (double)naivepairscore11(ctx, mseq1[0], mseq2[0], 0.0);  // uwagaki
                                 } else {
                                     //									if( store_localhom )
                                     if (store_localhom && (targetmap[i] != -1 || targetmap[j] != -1)) {
@@ -2041,7 +2031,7 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
                             {
                                 if (usenaivescoreinsteadofalignmentscore) {
                                     L__align11(ctx, n_dis_consweight_multi, 0.0, mseq1, mseq2, alloclen, &off1, &off2);
-                                    pscore = (double)naivepairscore11(mseq1[0], mseq2[0], 0.0);  // uwagaki
+                                    pscore = (double)naivepairscore11(ctx, mseq1[0], mseq2[0], 0.0);  // uwagaki
                                 } else {
                                     if (store_localhom) {
                                         pscore = L__align11(ctx, n_dis_consweight_multi, 0.0, mseq1, mseq2, alloclen, &off1, &off2);
@@ -2068,15 +2058,15 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
                             break;
                         case ('B'):
                         case ('T'):
-                            pscore = recalllara(mseq1, mseq2, alloclen);
+                            pscore = recalllara(ctx, mseq1, mseq2, alloclen);
                             off1 = off2 = 0;
                             break;
                         case ('s'):
-                            pscore = callmxscarna_giving_bpp(mseq1, mseq2, bpp[i], bpp[j], i, j);
+                            pscore = callmxscarna_giving_bpp(ctx, mseq1, mseq2, bpp[i], bpp[j], i, j);
                             off1 = off2 = 0;
                             break;
                         case ('G'):
-                            pscore = calldafs_giving_bpp(mseq1, mseq2, bpp[i], bpp[j], i, j);
+                            pscore = calldafs_giving_bpp(ctx, mseq1, mseq2, bpp[i], bpp[j], i, j);
                             off1 = off2 = 0;
                             break;
                         case ('M'):
@@ -2428,7 +2418,7 @@ pairlocalalign(Context* ctx, int ngui, char** namegui, char** seqgui, double** d
     free(mseq2);
     free(nlen);
     free(thereisxineachseq);
-    freeconstants();
+    freeconstants(ctx);
 
     if (!ngui) {
         FreeCommonIP();

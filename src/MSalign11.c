@@ -34,12 +34,12 @@ extendmseq(char** mseq1, char** mseq2, char** seq1, char** seq2, int i, int j, i
 }
 
 static void
-match_calc(double* match, char** s1, char** s2, int i1, int lgth2) {
+match_calc(Context* ctx, double* match, char** s1, char** s2, int i1, int lgth2) {
     char  tmpc = s1[0][i1];
     char* seq2 = s2[0];
 
     while (lgth2--)
-        *match++ = amino_dis[(int)tmpc][(int)*seq2++];
+        *match++ = ctx->amino_dis[(int)tmpc][(int)*seq2++];
 }
 
 static double
@@ -107,7 +107,7 @@ Atracking(char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp) {
 }
 
 void
-backdp(double** WMMTX, double wmmax, double* maxinw, double* maxinh, int lgth1, int lgth2, double* w1, double* w2, double* initverticalw, double* m, int* mp, int iin, int jin, char** seq1, char** seq2, char** mseq1, char** mseq2) {
+backdp(Context* ctx, double** WMMTX, double wmmax, double* maxinw, double* maxinh, int lgth1, int lgth2, double* w1, double* w2, double* initverticalw, double* m, int* mp, int iin, int jin, char** seq1, char** seq2, char** mseq1, char** mseq2) {
     register int i, j;
     int          prevhiti, prevhitj;
     //	int lasti, lastj;
@@ -126,8 +126,8 @@ backdp(double** WMMTX, double wmmax, double* maxinw, double* maxinh, int lgth1, 
     currentw = w1;
     previousw = w2;
 
-    match_calc(initverticalw, seq2, seq1, lgth2 - 1, lgth1);
-    match_calc(currentw, seq1, seq2, lgth1 - 1, lgth2);
+    match_calc(ctx, initverticalw, seq2, seq1, lgth2 - 1, lgth1);
+    match_calc(ctx, currentw, seq1, seq2, lgth1 - 1, lgth2);
 
     prevhiti = iin;
     prevhitj = jin;
@@ -171,7 +171,7 @@ backdp(double** WMMTX, double wmmax, double* maxinw, double* maxinh, int lgth1, 
 
         previousw[lgth2 - 1] = initverticalw[i + 1];
 
-        match_calc(currentw, seq1, seq2, i, lgth2);
+        match_calc(ctx, currentw, seq1, seq2, i, lgth2);
 
 #if 0
 		fprintf( stderr, "i=%d, currentw = \n", i );
@@ -396,9 +396,9 @@ MSalign11(Context* ctx, char** seq1, char** seq2, int alloclen) {
     currentw = w1;
     previousw = w2;
 
-    match_calc(initverticalw, seq2, seq1, 0, lgth1);
+    match_calc(ctx, initverticalw, seq2, seq1, 0, lgth1);
 
-    match_calc(currentw, seq1, seq2, 0, lgth2);
+    match_calc(ctx, currentw, seq1, seq2, 0, lgth2);
 
     WMMTX[0][0] = initverticalw[0];
 
@@ -433,7 +433,7 @@ MSalign11(Context* ctx, char** seq1, char** seq2, int alloclen) {
 
         previousw[0] = initverticalw[i - 1];
 
-        match_calc(currentw, seq1, seq2, i, lgth2);
+        match_calc(ctx, currentw, seq1, seq2, i, lgth2);
 
         currentw[0] = initverticalw[i];
 
@@ -562,7 +562,7 @@ MSalign11(Context* ctx, char** seq1, char** seq2, int alloclen) {
     mseq2[0] += lgth1 + lgth2;
     *mseq2[0] = 0;
 
-    backdp(WMMTX, wmmax, maxinw, maxinh, lgth1, lgth2, w1, w2, initverticalw, m, mp, iin, jin, seq1, seq2, mseq1, mseq2);
+    backdp(ctx, WMMTX, wmmax, maxinw, maxinh, lgth1, lgth2, w1, w2, initverticalw, m, mp, iin, jin, seq1, seq2, mseq1, mseq2);
 
     fprintf(stderr, "\n");
 #if 1

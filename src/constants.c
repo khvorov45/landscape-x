@@ -2658,7 +2658,7 @@ constants(Context* ctx, int nseq, char** seq) {
     reporterr("amino[] = %s\n", amino);
 #endif
 
-    amino_dis = AllocateIntMtx(charsize, charsize);
+    ctx->amino_dis = AllocateIntMtx(charsize, charsize);
     amino_dis_consweight_multi = AllocateDoubleMtx(charsize, charsize);
 
     for (i = 0; i < charsize; i++)
@@ -2667,7 +2667,7 @@ constants(Context* ctx, int nseq, char** seq) {
         ctx->amino_n[(int)amino[i]] = i;
     for (i = 0; i < charsize; i++)
         for (j = 0; j < charsize; j++)
-            amino_dis[i][j] = 0;
+            ctx->amino_dis[i][j] = 0;
     for (i = 0; i < nalphabets; i++)
         for (j = 0; j < nalphabets; j++)
             n_disLN[i][j] = 0;
@@ -2679,32 +2679,19 @@ constants(Context* ctx, int nseq, char** seq) {
     n_disFFT = AllocateIntMtx(nalphabets, nalphabets);
     for (i = 0; i < nalphabets; i++)
         for (j = 0; j < nalphabets; j++) {
-            amino_dis[(int)amino[i]][(int)amino[j]] = n_dis[i][j];
+            ctx->amino_dis[(int)amino[i]][(int)amino[j]] = n_dis[i][j];
             n_dis_consweight_multi[i][j] = (double)n_dis[i][j] * consweight_multi;
             amino_dis_consweight_multi[(int)amino[i]][(int)amino[j]] = (double)n_dis[i][j] * consweight_multi;
         }
 
-    if (dorp == 'd') /* DNA */
-    {
-#if 0  // ???
-	    for( i=0; i<5; i++) for( j=0; j<5; j++ )
-        	n_disLN[i][j] = (double)n_dis[i][j] + offset - offsetLN;
-	    for( i=5; i<10; i++) for( j=5; j<10; j++ )
-        	n_disLN[i][j] = (double)n_dis[i][j] + offset - offsetLN;
-	    for( i=0; i<5; i++) for( j=0; j<5; j++ )
-        	n_disFFT[i][j] = n_dis[i][j] + offset - offsetFFT;
-	    for( i=5; i<10; i++) for( j=5; j<10; j++ )
-        	n_disFFT[i][j] = n_dis[i][j] + offset - offsetFFT;
-#else
+    if (dorp == 'd') {
         for (i = 0; i < 10; i++)
             for (j = 0; j < 10; j++)
                 n_disLN[i][j] = (double)n_dis[i][j] + offset - offsetLN;
         for (i = 0; i < 10; i++)
             for (j = 0; j < 10; j++)
                 n_disFFT[i][j] = n_dis[i][j] + offset - offsetFFT;
-#endif
-    } else  // protein
-    {
+    } else {
         for (i = 0; i < 20; i++)
             for (j = 0; j < 20; j++)
                 n_disLN[i][j] = (double)n_dis[i][j] + offset - offsetLN;
@@ -2712,49 +2699,6 @@ constants(Context* ctx, int nseq, char** seq) {
             for (j = 0; j < 20; j++)
                 n_disFFT[i][j] = n_dis[i][j] + offset - offsetFFT;
     }
-
-#if 0
-		reporterr(       "amino_dis (offset = %d): \n", offset );
-		for( i=0; i<20; i++ )
-		{
-			for( j=0; j<20; j++ ) 
-			{
-				reporterr(       "%5d", amino_dis[(int)amino[i]][(int)amino[j]] );
-			}
-			reporterr(       "\n" );
-		}
-
-		reporterr(       "amino_disLN (offsetLN = %d): \n", offsetLN );
-		for( i=0; i<20; i++ )
-		{
-			for( j=0; j<20; j++ ) 
-			{
-				reporterr(       "%5d", amino_disLN[(int)amino[i]][(int)amino[j]] );
-			}
-			reporterr(       "\n" );
-		}
-
-		reporterr(       "n_dis (offset = %d): \n", offset );
-		for( i=0; i<26; i++ )
-		{
-			for( j=0; j<26; j++ ) 
-			{
-				reporterr(       "%5d", n_dis[i][j] );
-			}
-			reporterr(       "\n" );
-		}
-
-		reporterr(       "n_disFFT (offsetFFT = %d): \n", offsetFFT );
-		for( i=0; i<26; i++ )
-		{
-			for( j=0; j<26; j++ ) 
-			{
-				reporterr(       "%5d", n_disFFT[i][j] );
-			}
-			reporterr(       "\n" );
-		}
-exit( 1 );
-#endif
 
     ppid = 0;
 
@@ -2798,16 +2742,11 @@ exit( 1 );
             volume[i] -= av;
         for (i = 0; i < 20; i++)
             volume[i] /= sd;
-
-#if 0
-		for( i=0; i<20; i++ ) fprintf( stdout, "amino=%c, pol = %f<-%f, vol = %f<-%f\n", amino[i], polarity[i], polarity_[i], volume[i], volume_[i] );
-		for( i=0; i<20; i++ ) fprintf( stdout, "%c %+5.3f %+5.3f\n", amino[i], volume[i], polarity[i] );
-#endif
     }
 }
 
 void
-freeconstants() {
+freeconstants(Context* ctx) {
     if (n_disLN)
         FreeDoubleMtx(n_disLN);
     n_disLN = NULL;
@@ -2820,9 +2759,9 @@ freeconstants() {
     if (n_dis_consweight_multi)
         FreeDoubleMtx(n_dis_consweight_multi);
     n_dis_consweight_multi = NULL;
-    if (amino_dis)
-        FreeIntMtx(amino_dis);
-    amino_dis = NULL;
+    if (ctx->amino_dis)
+        FreeIntMtx(ctx->amino_dis);
+    ctx->amino_dis = NULL;
     if (amino_dis_consweight_multi)
         FreeDoubleMtx(amino_dis_consweight_multi);
     amino_dis_consweight_multi = NULL;
