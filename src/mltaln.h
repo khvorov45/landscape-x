@@ -302,7 +302,6 @@ typedef struct _gappos {
 } GapPos;
 
 #include "fft.h"
-#include "dp.h"
 
 extern int  intlen(int* num);
 extern char seqcheck(char** seq);

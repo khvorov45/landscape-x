@@ -1,5 +1,4 @@
 #include "mltaln.h"
-#include "dp.h"
 
 #define MACHIGAI 0
 #define OUTGAP0TRY 1
