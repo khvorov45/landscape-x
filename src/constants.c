@@ -1531,7 +1531,7 @@ constants(Context* ctx, int nseq, char** seq) {
         charsize = 0x80;
 
         n_dis = AllocateIntMtx(nalphabets, nalphabets);
-        n_disLN = AllocateDoubleMtx(nalphabets, nalphabets);
+        ctx->n_disLN = AllocateDoubleMtx(nalphabets, nalphabets);
 
         scoremtx = -1;
         if (RNAppenalty == NOTSPECIFIED)
@@ -1923,7 +1923,7 @@ constants(Context* ctx, int nseq, char** seq) {
         reporterr("nalphabets = %d\n", nalphabets);
 
         n_dis = AllocateIntMtx(nalphabets, nalphabets);
-        n_disLN = AllocateDoubleMtx(nalphabets, nalphabets);
+        ctx->n_disLN = AllocateDoubleMtx(nalphabets, nalphabets);
         n_distmp = AllocateDoubleMtx(nalphabets, nalphabets);
         datafreq = AllocateDoubleVec(nalphabets);
         freq = AllocateDoubleVec(nalphabets);
@@ -2149,7 +2149,7 @@ constants(Context* ctx, int nseq, char** seq) {
         charsize = 0x80;
 
         n_dis = AllocateIntMtx(nalphabets, nalphabets);
-        n_disLN = AllocateDoubleMtx(nalphabets, nalphabets);
+        ctx->n_disLN = AllocateDoubleMtx(nalphabets, nalphabets);
         n_distmp = AllocateDoubleMtx(20, 20);
         datafreq = AllocateDoubleVec(20);
         freq = AllocateDoubleVec(20);
@@ -2359,7 +2359,7 @@ constants(Context* ctx, int nseq, char** seq) {
         charsize = 0x80;
 
         n_dis = AllocateIntMtx(nalphabets, nalphabets);
-        n_disLN = AllocateDoubleMtx(nalphabets, nalphabets);
+        ctx->n_disLN = AllocateDoubleMtx(nalphabets, nalphabets);
         rsr = AllocateDoubleMtx(20, 20);
         pam1 = AllocateDoubleMtx(20, 20);
         pamx = AllocateDoubleMtx(20, 20);
@@ -2670,7 +2670,7 @@ constants(Context* ctx, int nseq, char** seq) {
             ctx->amino_dis[i][j] = 0;
     for (i = 0; i < nalphabets; i++)
         for (j = 0; j < nalphabets; j++)
-            n_disLN[i][j] = 0;
+            ctx->n_disLN[i][j] = 0;
     for (i = 0; i < charsize; i++)
         for (j = 0; j < charsize; j++)
             amino_dis_consweight_multi[i][j] = 0.0;
@@ -2687,14 +2687,14 @@ constants(Context* ctx, int nseq, char** seq) {
     if (dorp == 'd') {
         for (i = 0; i < 10; i++)
             for (j = 0; j < 10; j++)
-                n_disLN[i][j] = (double)n_dis[i][j] + offset - offsetLN;
+                ctx->n_disLN[i][j] = (double)n_dis[i][j] + offset - offsetLN;
         for (i = 0; i < 10; i++)
             for (j = 0; j < 10; j++)
                 n_disFFT[i][j] = n_dis[i][j] + offset - offsetFFT;
     } else {
         for (i = 0; i < 20; i++)
             for (j = 0; j < 20; j++)
-                n_disLN[i][j] = (double)n_dis[i][j] + offset - offsetLN;
+                ctx->n_disLN[i][j] = (double)n_dis[i][j] + offset - offsetLN;
         for (i = 0; i < 20; i++)
             for (j = 0; j < 20; j++)
                 n_disFFT[i][j] = n_dis[i][j] + offset - offsetFFT;
@@ -2747,9 +2747,9 @@ constants(Context* ctx, int nseq, char** seq) {
 
 void
 freeconstants(Context* ctx) {
-    if (n_disLN)
-        FreeDoubleMtx(n_disLN);
-    n_disLN = NULL;
+    if (ctx->n_disLN)
+        FreeDoubleMtx(ctx->n_disLN);
+    ctx->n_disLN = NULL;
     if (n_dis)
         FreeIntMtx(n_dis);
     n_dis = NULL;

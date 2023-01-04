@@ -187,23 +187,23 @@ typedef struct GapPos {
 } GapPos;
 
 typedef struct Context {
-    char  modelname[500];
-    int   njob;
-    int   nlenmax;
-    int   amino_n[0x100];
-    char  amino_grp[0x100];
-    int** amino_dis;
+    char     modelname[500];
+    int      njob;
+    int      nlenmax;
+    int      amino_n[0x100];
+    char     amino_grp[0x100];
+    int**    amino_dis;
+    double** n_disLN;
 } Context;
 
-extern double**      n_disLN;
-extern double**      amino_dis_consweight_multi;
-extern int**         n_dis;
-extern int**         n_disFFT;
-extern double**      n_dis_consweight_multi;
-extern unsigned char amino[0x100];
-extern double        polarity[0x100];
-extern double        volume[0x100];
-extern int           ribosumdis[37][37];
+extern double** amino_dis_consweight_multi;
+extern int**           n_dis;
+extern int**           n_disFFT;
+extern double**        n_dis_consweight_multi;
+extern unsigned char   amino[0x100];
+extern double          polarity[0x100];
+extern double          volume[0x100];
+extern int             ribosumdis[37][37];
 
 extern int    ppid;
 extern double thrinter;
