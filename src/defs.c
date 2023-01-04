@@ -9,7 +9,7 @@ int   nthreadpair = 1;
 int   randomseed = 0;
 int   parallelizationstrategy = BAATARI1;
 
-int    pslocal, ppslocal;
+int    ppslocal;
 int    constraint;
 int    divpairscore;
 int    fmodel;  // 1-> fmodel 0->default -1->raw

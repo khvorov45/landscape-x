@@ -1320,7 +1320,7 @@ preparebpp(int nseq, char*** bpp) {
 }
 
 static void
-arguments(int argc, char* argv[]) {
+arguments(Context* ctx, int argc, char* argv[]) {
     int c;
 
     nthread = 1;
@@ -1333,7 +1333,7 @@ arguments(int argc, char* argv[]) {
     laraparams = NULL;
     inputfile = NULL;
     fftkeika = 0;
-    pslocal = -1000.0;
+    ctx->pslocal = -1000.0;
     constraint = 0;
     nblosum = 62;
     fmodel = 0;
@@ -2251,9 +2251,7 @@ pairlocalalign(Context* ctx, int ngui, char** namegui, char** seqgui, double** d
     int        alloclen;
     Lastresx** lastresx;
 
-    //	reporterr( "argc=%d, argv[0]=%s\n", argc, argv[0] );
-
-    arguments(argc, argv);
+    arguments(ctx, argc, argv);
 
     if (!ngui) {
         if (inputfile) {

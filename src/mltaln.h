@@ -205,9 +205,10 @@ typedef struct Context {
     int      ribosumdis[37][37];
     int      ppid;
     double   fastathreshold;
+    int      pslocal;
 } Context;
 
-extern int    pslocal, ppslocal;
+extern int    ppslocal;
 extern int    constraint;
 extern int    divpairscore;
 extern int    fmodel;  // 1-> fmodel 0->default -1->raw
