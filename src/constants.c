@@ -1190,11 +1190,10 @@ extendedmtx(double** matrix, double* freq, unsigned char* amino, char* amino_grp
     int userdefined;
 
     for (i = 0; i < nalphabets; i++) {
-        //		fprintf( stderr, "i=%d, i=%c\n", i, i );
         amino[i] = (unsigned char)i;
     }
     for (i = 0; i < nalphabets; i++)
-        amino_grp[(int)amino[i]] = i % 6;
+       amino_grp[(int)amino[i]] = i % 6;
     for (i = 0; i < nalphabets; i++)
         freq[i] = 1.0 / nalphabets;
 
@@ -1203,28 +1202,8 @@ extendedmtx(double** matrix, double* freq, unsigned char* amino, char* amino_grp
             matrix[i][j] = matrix[j][i] = (double)-1.0;
         }
     }
-    //	for( i=0; i<nalphabets; i++ )
-    //		matrix[i][i] = matrix[i][i] = (double)1.0;
 
     userdefined = overridematrix(matrix);
-
-#if 0  // user-defined matrix + user-defined freqency ga aru toki fukkatsu saseru.
-	if( tmpmtx[400] != -1.0 ) 
-	{
-		for( i=0; i<20; i++ ) freq[i] = tmpmtx[400+i];
-		av = 0.0;
-		for( i=0; i<20; i++ ) av += freq[i];
-		for( i=0; i<20; i++ ) freq[i] /= av;
-	}
-	else
-		for( i=0; i<20; i++ ) freq[i] = freqd[i];
-#endif
-#if 0
-	for( i=0; i<nalphabets; i++ )
-	{
-		fprintf( stderr, "%d: %c, %d, %f\n", i, amino[i], amino_grp[amino[i]], freq[i] );
-	}
-#endif
     return userdefined;
 }
 
@@ -1784,7 +1763,7 @@ constants(Context* ctx, int nseq, char** seq) {
         for (i = 0; i < 26; i++)
             amino[i] = locaminon[i];
         for (i = 0; i < 26; i++)
-            amino_grp[(int)amino[i]] = locgrpn[i];
+           ctx->amino_grp[(int)amino[i]] = locgrpn[i];
         for (i = 0; i < 26; i++)
             for (j = 0; j < 26; j++)
                 n_dis[i][j] = 0;
@@ -1977,7 +1956,7 @@ constants(Context* ctx, int nseq, char** seq) {
         penaltyLN = (int)(600.0 / 1000.0 * -2000 + 0.5);
         penalty_exLN = (int)(600.0 / 1000.0 * -100 + 0.5);
 
-        userdefined = extendedmtx(n_distmp, freq, amino, amino_grp);
+        userdefined = extendedmtx(n_distmp, freq, amino,ctx->amino_grp);
 
         if (trywarp)
             sprintf(shiftmodel, "%4.2f", -(double)penalty_shift / 600);
@@ -2203,7 +2182,7 @@ constants(Context* ctx, int nseq, char** seq) {
         penaltyLN = (int)(600.0 / 1000.0 * -2000 + 0.5);
         penalty_exLN = (int)(600.0 / 1000.0 * -100 + 0.5);
 
-        BLOSUMmtx(nblosum, n_distmp, freq, amino, amino_grp, &rescale);
+        BLOSUMmtx(nblosum, n_distmp, freq, amino,ctx->amino_grp, &rescale);
 
         reporterr("rescale = %d\n", rescale);
 
@@ -2216,12 +2195,7 @@ constants(Context* ctx, int nseq, char** seq) {
             sprintf(ctx->modelname, "User-defined, %4.2f, %+4.2f, %+4.2f, %s", -(double)ppenalty / 1000, -(double)poffset / 1000, -(double)ppenalty_ex / 1000, shiftmodel);
         else
             sprintf(ctx->modelname, "BLOSUM%d, %4.2f, %+4.2f, %+4.2f, %s", nblosum, -(double)ppenalty / 1000, -(double)poffset / 1000, -(double)ppenalty_ex / 1000, shiftmodel);
-#if 0
-		for( i=0; i<26; i++ ) amino[i] = locaminod[i];
-		for( i=0; i<26; i++ ) amino_grp[(int)amino[i]] = locgrpd[i];
-		for( i=0; i<0x80; i++ ) amino_n[i] = 0;
-		for( i=0; i<26; i++ ) amino_n[(int)amino[i]] = i;
-#endif
+
         for (i = 0; i < 0x80; i++)
             ctx->amino_n[i] = -1;
         for (i = 0; i < 26; i++)
@@ -2440,7 +2414,7 @@ constants(Context* ctx, int nseq, char** seq) {
 
         sprintf(ctx->modelname, "%s %dPAM, %4.2f, %4.2f, %s", (TMorJTT == TM) ? "Transmembrane" : "JTT", pamN, -(double)ppenalty / 1000, -(double)poffset / 1000, shiftmodel);
 
-        JTTmtx(rsr, freq, amino, amino_grp, (int)(TMorJTT == TM));
+        JTTmtx(rsr, freq, amino, ctx->amino_grp, (int)(TMorJTT == TM));
 
         for (i = 0; i < 0x80; i++)
             ctx->amino_n[i] = -1;

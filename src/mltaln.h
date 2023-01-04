@@ -191,9 +191,9 @@ typedef struct Context {
     int  njob;
     int  nlenmax;
     int  amino_n[0x100];
+    char amino_grp[0x100];
 } Context;
 
-extern char          amino_grp[0x100];
 extern int**         amino_dis;
 extern double**      n_disLN;
 extern double**      amino_dis_consweight_multi;

@@ -9,11 +9,8 @@ int   nthreadpair = 1;
 int   randomseed = 0;
 int   parallelizationstrategy = BAATARI1;
 
-char amino_grp[0x100];
-//int amino_dis[0x100][0x100];
 int**    amino_dis = NULL;
 double** n_disLN = NULL;
-//double amino_dis_consweight_multi[0x100][0x100];
 double**      amino_dis_consweight_multi = NULL;
 int**         n_dis = NULL;
 int**         n_disFFT = NULL;
