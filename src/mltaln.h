@@ -208,7 +208,6 @@ typedef struct Context {
     int      pslocal;
 } Context;
 
-extern int    ppslocal;
 extern int    constraint;
 extern int    divpairscore;
 extern int    fmodel;  // 1-> fmodel 0->default -1->raw
