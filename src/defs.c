@@ -9,7 +9,6 @@ int   nthreadpair = 1;
 int   randomseed = 0;
 int   parallelizationstrategy = BAATARI1;
 
-double**      n_dis_consweight_multi = NULL;
 unsigned char amino[0x100];
 double        polarity[0x100];
 double        volume[0x100];

@@ -666,7 +666,7 @@ treebase(Context* ctx, TbfastOpts opts, int* nlen, char** aseq, int nadd, char* 
             continue;
         }
 
-        makedynamicmtx(dynamicmtx, n_dis_consweight_multi, dep[l].distfromtip);
+        makedynamicmtx(dynamicmtx, ctx->n_dis_consweight_multi, dep[l].distfromtip);
 
         len1 = strlen(aseq[m1]);
         len2 = strlen(aseq[m2]);

@@ -2669,12 +2669,12 @@ constants(Context* ctx, int nseq, char** seq) {
         for (j = 0; j < charsize; j++)
             ctx->amino_dis_consweight_multi[i][j] = 0.0;
 
-    n_dis_consweight_multi = AllocateDoubleMtx(nalphabets, nalphabets);
+    ctx->n_dis_consweight_multi = AllocateDoubleMtx(nalphabets, nalphabets);
     ctx->n_disFFT = AllocateIntMtx(nalphabets, nalphabets);
     for (i = 0; i < nalphabets; i++)
         for (j = 0; j < nalphabets; j++) {
             ctx->amino_dis[(int)amino[i]][(int)amino[j]] = ctx->n_dis[i][j];
-            n_dis_consweight_multi[i][j] = (double)ctx->n_dis[i][j] * consweight_multi;
+            ctx->n_dis_consweight_multi[i][j] = (double)ctx->n_dis[i][j] * consweight_multi;
             ctx->amino_dis_consweight_multi[(int)amino[i]][(int)amino[j]] = (double)ctx->n_dis[i][j] * consweight_multi;
         }
 
@@ -2750,9 +2750,9 @@ freeconstants(Context* ctx) {
     if (ctx->n_disFFT)
         FreeIntMtx(ctx->n_disFFT);
     ctx->n_disFFT = NULL;
-    if (n_dis_consweight_multi)
-        FreeDoubleMtx(n_dis_consweight_multi);
-    n_dis_consweight_multi = NULL;
+    if (ctx->n_dis_consweight_multi)
+        FreeDoubleMtx(ctx->n_dis_consweight_multi);
+    ctx->n_dis_consweight_multi = NULL;
     if (ctx->amino_dis)
         FreeIntMtx(ctx->amino_dis);
     ctx->amino_dis = NULL;

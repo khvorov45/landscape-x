@@ -239,7 +239,6 @@ for (prb_Iter iter = prb_createIter(); prb_iterNext(&iter) == prb_Success;) {
     prb_writeToStdout(prb_STR(":"));\
     prb_writeToStdout(prb_STR(prb_LINE_STRING));\
     prb_writeToStdout(prb_STR("\n"));\
-    prb_debugbreak();\
     prb_terminate(1);\
 } while (0)
 #endif

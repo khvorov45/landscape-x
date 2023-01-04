@@ -197,13 +197,13 @@ typedef struct Context {
     int**    n_dis;
     double** n_disLN;
     int**    n_disFFT;
+    double** n_dis_consweight_multi;
 } Context;
 
-extern double**        n_dis_consweight_multi;
-extern unsigned char   amino[0x100];
-extern double          polarity[0x100];
-extern double          volume[0x100];
-extern int             ribosumdis[37][37];
+extern unsigned char amino[0x100];
+extern double        polarity[0x100];
+extern double        volume[0x100];
+extern int           ribosumdis[37][37];
 
 extern int    ppid;
 extern double thrinter;

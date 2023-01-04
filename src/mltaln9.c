@@ -3222,10 +3222,8 @@ distdp(Context* ctx, double** scoringmtx, char* s1, char* s2, LocalHom* lh, doub
 
 double
 distdp_noalign(Context* ctx, char* s1, char* s2, double selfscore1, double selfscore2, int alloclen) {
-    (void)ctx;
     (void)alloclen;
-    double v;
-    v = G__align11_noalign(n_dis_consweight_multi, penalty, penalty_ex, &s1, &s2);
+    double v = G__align11_noalign(ctx->n_dis_consweight_multi, penalty, penalty_ex, &s1, &s2);
     return (score2dist(v, selfscore1, selfscore2));
 }
 
@@ -3241,9 +3239,8 @@ distdpL(Context* ctx, double** scoringmtx, char* s1, char* s2, LocalHom* lh, dou
 
 static double
 distdpL_noalign(Context* ctx, char* s1, char* s2, double selfscore1, double selfscore2, int alloclen) {
-    (void)ctx;
     (void)alloclen;
-    double v = L__align11_noalign(n_dis_consweight_multi, &s1, &s2);
+    double v = L__align11_noalign(ctx->n_dis_consweight_multi, &s1, &s2);
     return (score2dist(v, selfscore1, selfscore2));
 }
 
@@ -3266,7 +3263,7 @@ distdpN_noalign(Context* ctx, char* s1, char* s2, double selfscore1, double self
     //	reporterr( "genafLOCAL noalign\n" );
     strcpy(t1, s1);
     strcpy(t2, s2);
-    v = genL__align11(ctx, n_dis_consweight_multi, &t1, &t2, alloclen, &off1, &off2);
+    v = genL__align11(ctx, ctx->n_dis_consweight_multi, &t1, &t2, alloclen, &off1, &off2);
 
     if (usenaivescoreinsteadofalignmentscore)
         v = (double)naivepairscore11(ctx, t1, t2, 0.0);  // uwagaki
@@ -3516,7 +3513,7 @@ recalcpairs4thread(recalcpairs4thread_arg_t* targ) {
         dynamicmtx = AllocateDoubleMtx(nalphabets, nalphabets);
         mtxptr = dynamicmtx;
     } else
-        mtxptr = n_dis_consweight_multi;
+        mtxptr = ctx->n_dis_consweight_multi;
 
     prevn = -1;
     while (1) {
@@ -3571,7 +3568,7 @@ recalcpairs4thread(recalcpairs4thread_arg_t* targ) {
 #if EXACTLYSAMEASPAIRLOCALALIGN
 #else
         if (specificityconsideration > 0.0)
-            makedynamicmtx(dynamicmtx, n_dis_consweight_multi, dep[n].distfromtip);
+            makedynamicmtx(dynamicmtx, ctx->n_dis_consweight_multi, dep[n].distfromtip);
 #endif
 
         if (step % 100 == 0)
