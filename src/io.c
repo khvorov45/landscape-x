@@ -299,7 +299,7 @@ putlocalhom_ext(Context* ctx, char* al1, char* al2, LocalHom* localhompt, int of
                 start2 = pos2;
                 st = 1;
             }
-            iscore += n_dis[(int)ctx->amino_n[(unsigned char)*pt1]][(int)ctx->amino_n[(unsigned char)*pt2]];  // - offset �Ϥ���ʤ�����
+            iscore += ctx->n_dis[(int)ctx->amino_n[(unsigned char)*pt1]][(int)ctx->amino_n[(unsigned char)*pt2]];  // - offset �Ϥ���ʤ�����
         }
         if (*pt1++ != '-')
             pos1++;
@@ -457,7 +457,7 @@ putlocalhom2(Context* ctx, char* al1, char* al2, LocalHom* localhompt, int off1,
                 start2 = pos2;
                 st = 1;
             }
-            iscore += n_dis[(int)ctx->amino_n[(unsigned char)*pt1]][(int)ctx->amino_n[(unsigned char)*pt2]];  // - offset �Ϥ���ʤ�����
+            iscore += ctx->n_dis[(int)ctx->amino_n[(unsigned char)*pt1]][(int)ctx->amino_n[(unsigned char)*pt2]];  // - offset �Ϥ���ʤ�����
         }
         if (*pt1++ != '-')
             pos1++;

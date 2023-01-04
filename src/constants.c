@@ -1530,7 +1530,7 @@ constants(Context* ctx, int nseq, char** seq) {
         nscoredalphabets = 10;
         charsize = 0x80;
 
-        n_dis = AllocateIntMtx(nalphabets, nalphabets);
+        ctx->n_dis = AllocateIntMtx(nalphabets, nalphabets);
         ctx->n_disLN = AllocateDoubleMtx(nalphabets, nalphabets);
 
         scoremtx = -1;
@@ -1766,20 +1766,20 @@ constants(Context* ctx, int nseq, char** seq) {
             ctx->amino_grp[(int)amino[i]] = locgrpn[i];
         for (i = 0; i < 26; i++)
             for (j = 0; j < 26; j++)
-                n_dis[i][j] = 0;
+                ctx->n_dis[i][j] = 0;
         for (i = 0; i < 10; i++)
             for (j = 0; j < 10; j++)
-                n_dis[i][j] = shishagonyuu(pamx[i][j]);
+                ctx->n_dis[i][j] = shishagonyuu(pamx[i][j]);
 
-        ambiguousscore(ctx->amino_n, n_dis);
+        ambiguousscore(ctx->amino_n, ctx->n_dis);
         if (nwildcard)
-            nscore(ctx->amino_n, n_dis);
+            nscore(ctx->amino_n, ctx->n_dis);
 
         if (disp) {
             reporterr(" score matrix  \n");
             for (i = 0; i < 26; i++) {
                 for (j = 0; j < 26; j++)
-                    reporterr("%+6d", n_dis[i][j]);
+                    reporterr("%+6d", ctx->n_dis[i][j]);
                 reporterr("\n");
             }
             reporterr("\n");
@@ -1922,7 +1922,7 @@ constants(Context* ctx, int nseq, char** seq) {
 
         reporterr("nalphabets = %d\n", nalphabets);
 
-        n_dis = AllocateIntMtx(nalphabets, nalphabets);
+        ctx->n_dis = AllocateIntMtx(nalphabets, nalphabets);
         ctx->n_disLN = AllocateDoubleMtx(nalphabets, nalphabets);
         n_distmp = AllocateDoubleMtx(nalphabets, nalphabets);
         datafreq = AllocateDoubleVec(nalphabets);
@@ -2113,13 +2113,13 @@ constants(Context* ctx, int nseq, char** seq) {
 
         for (i = 0; i < nalphabets; i++)
             for (j = 0; j < nalphabets; j++)
-                n_dis[i][j] = 0;
+                ctx->n_dis[i][j] = 0;
         for (i = 0; i < nalphabets; i++)
             for (j = 0; j < nalphabets; j++)
-                n_dis[i][j] = (int)n_distmp[i][j];
+                ctx->n_dis[i][j] = (int)n_distmp[i][j];
         for (i = 0; i < nalphabets; i++)
             for (j = 0; j < nalphabets; j++)
-                n_dis[i][ctx->amino_n['-']] = n_dis[ctx->amino_n['-']][i] = 0;
+                ctx->n_dis[i][ctx->amino_n['-']] = ctx->n_dis[ctx->amino_n['-']][i] = 0;
 
         FreeDoubleMtx(n_distmp);
         FreeDoubleVec(datafreq);
@@ -2130,7 +2130,6 @@ constants(Context* ctx, int nseq, char** seq) {
         double* datafreq;
         double  average;
         double  iaverage;
-        //		double tmp;
         double** n_distmp;
         int      rescale = 1;
 
@@ -2138,17 +2137,12 @@ constants(Context* ctx, int nseq, char** seq) {
             reporterr("nblosum=%d??\n", nblosum);
             exit(1);
         }
-        //		if( nblosum < 0 )
-        //		{
-        //			nblosum *= -1;
-        //			makeaverage0 = 0;
-        //		}
 
         nalphabets = 26;
         nscoredalphabets = 20;
         charsize = 0x80;
 
-        n_dis = AllocateIntMtx(nalphabets, nalphabets);
+        ctx->n_dis = AllocateIntMtx(nalphabets, nalphabets);
         ctx->n_disLN = AllocateDoubleMtx(nalphabets, nalphabets);
         n_distmp = AllocateDoubleMtx(20, 20);
         datafreq = AllocateDoubleVec(20);
@@ -2324,10 +2318,10 @@ constants(Context* ctx, int nseq, char** seq) {
 
         for (i = 0; i < 26; i++)
             for (j = 0; j < 26; j++)
-                n_dis[i][j] = 0;
+                ctx->n_dis[i][j] = 0;
         for (i = 0; i < 20; i++)
             for (j = 0; j < 20; j++)
-                n_dis[i][j] = (int)n_distmp[i][j];
+                ctx->n_dis[i][j] = (int)n_distmp[i][j];
 
         FreeDoubleMtx(n_distmp);
         FreeDoubleVec(datafreq);
@@ -2358,7 +2352,7 @@ constants(Context* ctx, int nseq, char** seq) {
         nscoredalphabets = 20;
         charsize = 0x80;
 
-        n_dis = AllocateIntMtx(nalphabets, nalphabets);
+        ctx->n_dis = AllocateIntMtx(nalphabets, nalphabets);
         ctx->n_disLN = AllocateDoubleMtx(nalphabets, nalphabets);
         rsr = AllocateDoubleMtx(20, 20);
         pam1 = AllocateDoubleMtx(20, 20);
@@ -2639,10 +2633,10 @@ constants(Context* ctx, int nseq, char** seq) {
 
         for (i = 0; i < 26; i++)
             for (j = 0; j < 26; j++)
-                n_dis[i][j] = 0;
+                ctx->n_dis[i][j] = 0;
         for (i = 0; i < 20; i++)
             for (j = 0; j < 20; j++)
-                n_dis[i][j] = (int)pamx[i][j];
+                ctx->n_dis[i][j] = (int)pamx[i][j];
 
         reporterr("done.\n");
         FreeDoubleMtx(rsr);
@@ -2659,7 +2653,7 @@ constants(Context* ctx, int nseq, char** seq) {
 #endif
 
     ctx->amino_dis = AllocateIntMtx(charsize, charsize);
-    amino_dis_consweight_multi = AllocateDoubleMtx(charsize, charsize);
+    ctx->amino_dis_consweight_multi = AllocateDoubleMtx(charsize, charsize);
 
     for (i = 0; i < charsize; i++)
         ctx->amino_n[i] = -1;
@@ -2673,31 +2667,31 @@ constants(Context* ctx, int nseq, char** seq) {
             ctx->n_disLN[i][j] = 0;
     for (i = 0; i < charsize; i++)
         for (j = 0; j < charsize; j++)
-            amino_dis_consweight_multi[i][j] = 0.0;
+            ctx->amino_dis_consweight_multi[i][j] = 0.0;
 
     n_dis_consweight_multi = AllocateDoubleMtx(nalphabets, nalphabets);
     n_disFFT = AllocateIntMtx(nalphabets, nalphabets);
     for (i = 0; i < nalphabets; i++)
         for (j = 0; j < nalphabets; j++) {
-            ctx->amino_dis[(int)amino[i]][(int)amino[j]] = n_dis[i][j];
-            n_dis_consweight_multi[i][j] = (double)n_dis[i][j] * consweight_multi;
-            amino_dis_consweight_multi[(int)amino[i]][(int)amino[j]] = (double)n_dis[i][j] * consweight_multi;
+            ctx->amino_dis[(int)amino[i]][(int)amino[j]] = ctx->n_dis[i][j];
+            n_dis_consweight_multi[i][j] = (double)ctx->n_dis[i][j] * consweight_multi;
+            ctx->amino_dis_consweight_multi[(int)amino[i]][(int)amino[j]] = (double)ctx->n_dis[i][j] * consweight_multi;
         }
 
     if (dorp == 'd') {
         for (i = 0; i < 10; i++)
             for (j = 0; j < 10; j++)
-                ctx->n_disLN[i][j] = (double)n_dis[i][j] + offset - offsetLN;
+                ctx->n_disLN[i][j] = (double)ctx->n_dis[i][j] + offset - offsetLN;
         for (i = 0; i < 10; i++)
             for (j = 0; j < 10; j++)
-                n_disFFT[i][j] = n_dis[i][j] + offset - offsetFFT;
+                n_disFFT[i][j] = ctx->n_dis[i][j] + offset - offsetFFT;
     } else {
         for (i = 0; i < 20; i++)
             for (j = 0; j < 20; j++)
-                ctx->n_disLN[i][j] = (double)n_dis[i][j] + offset - offsetLN;
+                ctx->n_disLN[i][j] = (double)ctx->n_dis[i][j] + offset - offsetLN;
         for (i = 0; i < 20; i++)
             for (j = 0; j < 20; j++)
-                n_disFFT[i][j] = n_dis[i][j] + offset - offsetFFT;
+                n_disFFT[i][j] = ctx->n_dis[i][j] + offset - offsetFFT;
     }
 
     ppid = 0;
@@ -2750,9 +2744,9 @@ freeconstants(Context* ctx) {
     if (ctx->n_disLN)
         FreeDoubleMtx(ctx->n_disLN);
     ctx->n_disLN = NULL;
-    if (n_dis)
-        FreeIntMtx(n_dis);
-    n_dis = NULL;
+    if (ctx->n_dis)
+        FreeIntMtx(ctx->n_dis);
+    ctx->n_dis = NULL;
     if (n_disFFT)
         FreeIntMtx(n_disFFT);
     n_disFFT = NULL;
@@ -2762,7 +2756,7 @@ freeconstants(Context* ctx) {
     if (ctx->amino_dis)
         FreeIntMtx(ctx->amino_dis);
     ctx->amino_dis = NULL;
-    if (amino_dis_consweight_multi)
-        FreeDoubleMtx(amino_dis_consweight_multi);
-    amino_dis_consweight_multi = NULL;
+    if (ctx->amino_dis_consweight_multi)
+        FreeDoubleMtx(ctx->amino_dis_consweight_multi);
+    ctx->amino_dis_consweight_multi = NULL;
 }

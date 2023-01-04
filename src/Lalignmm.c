@@ -15,7 +15,7 @@ static int reccycle = 0;
 static double localthr;
 
 static void
-match_calc(double* match, double** cpmx1, double** cpmx2, int i1, int lgth2, double** doublework, int** intwork, int initialize) {
+match_calc(Context* ctx, double* match, double** cpmx1, double** cpmx2, int i1, int lgth2, double** doublework, int** intwork, int initialize) {
     int j, k, l;
     //	double scarr[26];
     double** cpmxpd = doublework;
@@ -45,32 +45,10 @@ match_calc(double* match, double** cpmx1, double** cpmx2, int i1, int lgth2, dou
     for (l = 0; l < nalphabets; l++) {
         scarr[l] = 0.0;
         for (k = 0; k < nalphabets; k++) {
-            scarr[l] += (n_dis[k][l] - RNAthr) * cpmx1[i1][k];
+            scarr[l] += (ctx->n_dis[k][l] - RNAthr) * cpmx1[i1][k];
         }
     }
-#if 0 /* �����Ȥ��Ȥ���doublework�Υ��������Ȥ�դˤ��� */
-	{
-		double *fpt, **fptpt, *fpt2;
-		int *ipt, **iptpt;
-		fpt2 = match;
-		iptpt = cpmxpdn;
-		fptpt = cpmxpd;
-		while( lgth2-- )
-		{
-			*fpt2 = 0.0;
-			ipt=*iptpt,fpt=*fptpt;
-			while( *ipt > -1 )
-				*fpt2 += scarr[*ipt++] * *fpt++;
-			fpt2++,iptpt++,fptpt++;
-		} 
-	}
-	for( j=0; j<lgth2; j++ )
-	{
-		match[j] = 0.0;
-		for( k=0; cpmxpdn[j][k]>-1; k++ )
-			match[j] += scarr[cpmxpdn[j][k]] * cpmxpd[j][k];
-	}
-#else
+
     matchpt = match;
     cpmxpdnpt = cpmxpdn;
     cpmxpdpt = cpmxpd;
@@ -82,7 +60,7 @@ match_calc(double* match, double** cpmx1, double** cpmx2, int i1, int lgth2, dou
         cpmxpdnpt++;
         cpmxpdpt++;
     }
-#endif
+
     free(scarr);
 }
 
@@ -259,7 +237,7 @@ static double Atracking(
 #endif
 
 static double
-MSalignmm_rec(int icyc, int jcyc, char** seq1, double** cpmx1, double** cpmx2, int ist, int ien, int jst, int jen, char** mseq1, char** mseq2, double** gapinfo, double** map) {
+MSalignmm_rec(Context* ctx, int icyc, int jcyc, char** seq1, double** cpmx1, double** cpmx2, int ist, int ien, int jst, int jen, char** mseq1, char** mseq2, double** gapinfo, double** map) {
     double       value = 0.0;
     register int i, j;
     char **      aseq1, **aseq2;
@@ -448,9 +426,8 @@ MSalignmm_rec(int icyc, int jcyc, char** seq1, double** cpmx1, double** cpmx2, i
     currentw = w1;
     previousw = w2;
 
-    match_calc(initverticalw, cpmx2 + jst, cpmx1 + ist, 0, lgth1, doublework, intwork, 1);
-
-    match_calc(currentw, cpmx1 + ist, cpmx2 + jst, 0, lgth2, doublework, intwork, 1);
+    match_calc(ctx, initverticalw, cpmx2 + jst, cpmx1 + ist, 0, lgth1, doublework, intwork, 1);
+    match_calc(ctx, currentw, cpmx1 + ist, cpmx2 + jst, 0, lgth2, doublework, intwork, 1);
 
     for (i = 1; i < lgth1 + 1; i++) {
         initverticalw[i] += (ogcp1[0] + fgcp1[i - 1]);
@@ -493,7 +470,7 @@ MSalignmm_rec(int icyc, int jcyc, char** seq1, double** cpmx1, double** cpmx2, i
 
         previousw[0] = initverticalw[i - 1];
 
-        match_calc(currentw, cpmx1 + ist, cpmx2 + jst, i, lgth2, doublework, intwork, 0);
+        match_calc(ctx, currentw, cpmx1 + ist, cpmx2 + jst, i, lgth2, doublework, intwork, 0);
         currentw[0] = initverticalw[i];
 
         m[0] = ogcp1[i];
@@ -633,8 +610,8 @@ MSalignmm_rec(int icyc, int jcyc, char** seq1, double** cpmx1, double** cpmx2, i
 
     // gyakudp
 
-    match_calc(initverticalw, cpmx2 + jst, cpmx1 + ist, lgth2 - 1, lgth1, doublework, intwork, 1);
-    match_calc(currentw, cpmx1 + ist, cpmx2 + jst, lgth1 - 1, lgth2, doublework, intwork, 1);
+    match_calc(ctx, initverticalw, cpmx2 + jst, cpmx1 + ist, lgth2 - 1, lgth1, doublework, intwork, 1);
+    match_calc(ctx, currentw, cpmx1 + ist, cpmx2 + jst, lgth1 - 1, lgth2, doublework, intwork, 1);
 
     for (i = 0; i < lgth1 - 1; i++) {
         initverticalw[i] += (fgcp1[lgth1 - 1] + ogcp1[i + 1]);
@@ -673,8 +650,7 @@ MSalignmm_rec(int icyc, int jcyc, char** seq1, double** cpmx1, double** cpmx2, i
         previousw = currentw;
         currentw = wtmp;
         previousw[lgth2 - 1] = initverticalw[i + 1];
-        //		match_calc( currentw, seq1, seq2, i, lgth2 );
-        match_calc(currentw, cpmx1 + ist, cpmx2 + jst, i, lgth2, doublework, intwork, 0);
+        match_calc(ctx, currentw, cpmx1 + ist, cpmx2 + jst, i, lgth2, doublework, intwork, 0);
 
         currentw[lgth2 - 1] = initverticalw[i];
 
@@ -1216,7 +1192,7 @@ Lalignmm_hmout(Context* ctx, char** seq1, char** seq2, double* eff1, double* eff
     gapinfo[3] = fgcp2;
 #endif
 
-    wm = MSalignmm_rec(icyc, jcyc, seq1, cpmx1, cpmx2, 0, lgth1 - 1, 0, lgth2 - 1, mseq1, mseq2, gapinfo, map);
+    wm = MSalignmm_rec(ctx, icyc, jcyc, seq1, cpmx1, cpmx2, 0, lgth1 - 1, 0, lgth2 - 1, mseq1, mseq2, gapinfo, map);
 #if DEBUG
     fprintf(stderr, " seq1[0] = %s\n", seq1[0]);
     fprintf(stderr, " seq2[0] = %s\n", seq2[0]);

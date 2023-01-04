@@ -155,67 +155,6 @@ display(char** seq, int nseq) {
 }
 
 void
-intergroup_score_consweight(char** seq1, char** seq2, double* eff1, double* eff2, int clus1, int clus2, int len, double* value) {
-    int           i, j, k;
-    int           len2 = len - 2;
-    unsigned char ms1, ms2;
-    double        tmpscore;
-    char *        mseq1, *mseq2;
-    double        efficient;
-
-    //	totaleff1 = 0.0; for( i=0; i<clus1; i++ ) totaleff1 += eff1[i];
-    //	totaleff2 = 0.0; for( i=0; i<clus2; i++ ) totaleff2 += eff2[i];
-
-    *value = 0.0;
-    for (i = 0; i < clus1; i++) {
-        for (j = 0; j < clus2; j++) {
-            efficient = eff1[i] * eff2[j]; /* なぜか配列を使わないとおかしくなる, 多分バグ */
-            mseq1 = seq1[i];
-            mseq2 = seq2[j];
-            tmpscore = 0.0;
-            for (k = 0; k < len; k++) {
-                ms1 = (unsigned char)mseq1[k];
-                ms2 = (unsigned char)mseq2[k];
-                if (ms1 == '-' && ms2 == '-')
-                    continue;
-                tmpscore += (double)amino_dis_consweight_multi[ms1][ms2];
-
-                if (ms1 == '-') {
-                    tmpscore += (double)penalty;
-                    tmpscore += (double)amino_dis_consweight_multi[ms1][ms2];
-                    while ((ms1 = (unsigned char)mseq1[++k]) == '-')
-                        ;
-                    //						tmpscore += (double)amino_dis_consweight_multi[ms1][ms2];
-                    k--;
-                    if (k > len2)
-                        break;
-                    continue;
-                }
-                if (ms2 == '-') {
-                    tmpscore += (double)penalty;
-                    tmpscore += (double)amino_dis_consweight_multi[ms1][ms2];
-                    while ((ms2 = (unsigned char)mseq2[++k]) == '-')
-                        ;
-                    //						tmpscore += (double)amino_dis_consweight_multi[ms1][ms2];
-                    k--;
-                    if (k > len2)
-                        break;
-                    continue;
-                }
-            }
-            *value += (double)tmpscore * (double)efficient;
-            //			reporterr(       "val in _gapnomi = %f\n", *value );
-        }
-    }
-#if 0
-	fprintf( stdout, "###score = %f\n", score );
-#endif
-#if DEBUG
-    reporterr("score in intergroup_score = %f\n", score);
-#endif
-    //	return( score );
-}
-void
 intergroup_score_gapnomi(char** seq1, char** seq2, double* eff1, double* eff2, int clus1, int clus2, int len, double* value) {
     int    i, j, k;
     int    len2 = len - 2;

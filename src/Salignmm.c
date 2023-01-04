@@ -1163,16 +1163,6 @@ A__align(Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_l, c
             warpj[i] = -warpbase;
     }
 
-#if 0
-	fprintf( stderr, "####  eff in SA+++align\n" );
-	fprintf( stderr, "####  seq1[0] = %s\n", seq1[0] );
-	fprintf( stderr, "####  strlen( seq1[0] ) = %d\n", strlen( seq1[0] ) );
-	for( i=0; i<icyc; i++ ) fprintf( stderr, "eff1[%d] = %f\n", i, eff1[i] );
-	fprintf( stderr, "####  seq2[0] = %s\n", seq2[0] );
-	fprintf( stderr, "####  strlen( seq2[0] ) = %d\n", strlen( seq2[0] ) );
-	for( i=0; i<jcyc; i++ ) fprintf( stderr, "eff2[%d] = %f\n", i, eff2[i] );
-#endif
-
     mseq1 = AllocateCharMtx(icyc, 0);
     mseq2 = AllocateCharMtx(jcyc, 0);
     mseq = AllocateCharMtx(icyc + jcyc, lgth1 + lgth2 + 100);
@@ -1293,43 +1283,12 @@ A__align(Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_l, c
     }
     ijp = commonIP;
 
-#if 0
-	{
-		double t = 0.0;
-		for( i=0; i<icyc; i++ )
-			t += eff1[i];
-	fprintf( stderr, "## totaleff = %f\n", t );
-	}
-#endif
-
-#if 0
-	reporterr( "calledbyfulltreebase=%d\n", calledbyfulltreebase );
-	reporterr( "previouscall=%d\n", previouscall );
-	reporterr( "firstmem=%d\n", firstmem );
-	reporterr( "previousfirstmem=%d\n", previousfirstmem );
-	reporterr( "lgth1=%d\n", lgth1 );
-	reporterr( "previousfirstlen=%d\n", previousfirstlen );
-	reporterr( "icyc=%d\n", icyc );
-	reporterr( "previousicyc=%d\n", previousicyc );
-#endif
-    //	if( calledbyfulltreebase && previouscall && firstmem >= 0 && firstmem == previousfirstmem && lgth1 == previousfirstlen && nthread == 0 && icyc == previousicyc+1 ) // mouhitotsu jouken ga iru. firstmem >= 0 && firstmem == previousfirstmem && calledbytreebase && prevcalledbytreebase
     if (calledbyfulltreebase == 1 && previouscall && firstmem >= 0 && firstmem == previousfirstmem && lgth1 == previousfirstlen && nthread == 0 && icyc == previousicyc + 1)  // mouhitotsu jouken ga iru. firstmem >= 0 && firstmem == previousfirstmem && calledbytreebase && prevcalledbytreebase
         reuseprofiles = 1;
     else
         reuseprofiles = 0;
-        // Atracking de gapireru() wo skip surutameni reuseprofile flag wo tsukau.
 
-#if 0
-	reporterr( "nthread=%d\n", nthread );
-	reporterr( "reuseprofiles=%d\n", reuseprofiles );
-	reporterr( "calledbyfulltreebase=%d\n", calledbyfulltreebase );
-	reporterr( "previouscall=%d\n", previouscall );
-	reporterr( "firstmem=%d, prefiousfirstmem=%d\n", firstmem, previousfirstmem );
-	reporterr( "lgth1=%d, previousfirstlen=%d\n", lgth1, previousfirstlen );
-	if( reuseprofiles ) exit(1 );
-#endif
-
-    if (n_dis[0][ctx->amino_n['-']] != 0) {
+    if (ctx->n_dis[0][ctx->amino_n['-']] != 0) {
         reporterr("Bug probably in versions >7.36.  Please report this issue to katoh@ifrec.osaka-u.ac.jp\n");
         exit(1);
     }

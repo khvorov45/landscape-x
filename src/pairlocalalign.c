@@ -169,7 +169,7 @@ putlocalhom_last(Context* ctx, char* s1, char* s2, LocalHom* localhompt, Lastres
             pt2 = s2 + tmppt->start2;
             iscore = 0;
             while (len--) {
-                iscore += n_dis[(int)ctx->amino_n[(unsigned char)*pt1++]][(int)ctx->amino_n[(unsigned char)*pt2++]];  // - offset はいらないかも
+                iscore += ctx->n_dis[(int)ctx->amino_n[(unsigned char)*pt1++]][(int)ctx->amino_n[(unsigned char)*pt2++]];  // - offset はいらないかも
             }
 
             if (divpairscore) {
@@ -771,7 +771,7 @@ calllast_fast(Context* ctx, int nd, char** dseq, int nq, char** qseq, Lastresx**
         for (i = 0; i < 4; i++) {
             fprintf(lfp, "%c ", amino[i]);
             for (j = 0; j < 4; j++)
-                fprintf(lfp, " %d ", n_dis[i][j]);
+                fprintf(lfp, " %d ", ctx->n_dis[i][j]);
             fprintf(lfp, "\n");
         }
     } else {
@@ -782,7 +782,7 @@ calllast_fast(Context* ctx, int nd, char** dseq, int nq, char** qseq, Lastresx**
         for (i = 0; i < 20; i++) {
             fprintf(lfp, "%c ", amino[i]);
             for (j = 0; j < 20; j++)
-                fprintf(lfp, " %d ", n_dis[i][j]);
+                fprintf(lfp, " %d ", ctx->n_dis[i][j]);
             fprintf(lfp, "\n");
         }
     }
@@ -825,7 +825,7 @@ calllast_fast(Context* ctx, int nd, char** dseq, int nq, char** qseq, Lastresx**
 }
 
 static void
-calllast_once(int nd, char** dseq, int nq, char** qseq, Lastresx** lastresx) {
+calllast_once(Context* ctx, int nd, char** dseq, int nq, char** qseq, Lastresx** lastresx) {
     int   i, j;
     char  command[5000];
     FILE* lfp;
@@ -858,7 +858,7 @@ calllast_once(int nd, char** dseq, int nq, char** qseq, Lastresx** lastresx) {
         for (i = 0; i < 4; i++) {
             fprintf(lfp, "%c ", amino[i]);
             for (j = 0; j < 4; j++)
-                fprintf(lfp, " %d ", n_dis[i][j]);
+                fprintf(lfp, " %d ", ctx->n_dis[i][j]);
             fprintf(lfp, "\n");
         }
         fclose(lfp);
@@ -892,7 +892,7 @@ calllast_once(int nd, char** dseq, int nq, char** qseq, Lastresx** lastresx) {
         for (i = 0; i < 20; i++) {
             fprintf(lfp, "%c ", amino[i]);
             for (j = 0; j < 20; j++)
-                fprintf(lfp, " %d ", n_dis[i][j]);
+                fprintf(lfp, " %d ", ctx->n_dis[i][j]);
             fprintf(lfp, "\n");
         }
         fclose(lfp);
@@ -911,10 +911,7 @@ calllast_once(int nd, char** dseq, int nq, char** qseq, Lastresx** lastresx) {
 
     msize = MAX(10, nd * lastm);
 
-    //	fprintf( stderr, "Calling lastal from calllast_once, msize=%d\n", msize );
     sprintf(command, "%s/lastal -v -m %d -e %d -f 0 -s 1 -p _scoringmatrixforlast -a %d -b %d _db _q > _lastres", whereispairalign, msize, laste, -penalty, -penalty_ex);
-    //	sprintf( command, "lastal -v -m %d -e %d -f 0 -s 1 -p _scoringmatrixforlast -a %d -b %d _db _q > _lastres", 1, laste, -penalty, -penalty_ex );
-    //	sprintf( command, "lastal -v -e 40 -f 0 -s 1 -p _scoringmatrixforlast -a %d -b %d _db _q > _lastres", -penalty, -penalty_ex );
     res = system(command);
     if (res) {
         fprintf(stderr, "LAST aborted\n");
@@ -1795,7 +1792,7 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
     if (alg == 'R') {
         fprintf(stderr, "Calling last (http://last.cbrc.jp/)\n");
         if (lastonce)
-            calllast_once(ctx->njob, seq, ctx->njob, seq, lastresx);
+            calllast_once(ctx, ctx->njob, seq, ctx->njob, seq, lastresx);
         else
             calllast_fast(ctx, ctx->njob, seq, ctx->njob, seq, lastresx);
         fprintf(stderr, "done.\n");
@@ -1805,7 +1802,7 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
         fprintf(stderr, "Calling last (http://last.cbrc.jp/)\n");
         fprintf(stderr, "nadd=%d\n", nadd);
         if (lastonce)
-            calllast_once(ctx->njob - nadd, seq, nadd, seq + ctx->njob - nadd, lastresx);
+            calllast_once(ctx, ctx->njob - nadd, seq, nadd, seq + ctx->njob - nadd, lastresx);
         else
             calllast_fast(ctx, ctx->njob - nadd, seq, nadd, seq + ctx->njob - nadd, lastresx);
 

@@ -3,7 +3,7 @@
 #define DEBUG 0
 
 static void
-match_calc(double* match, double** cpmx1, double** cpmx2, int i1, int lgth2, double** doublework, int** intwork, int initialize) {
+match_calc(Context* ctx, double* match, double** cpmx1, double** cpmx2, int i1, int lgth2, double** doublework, int** intwork, int initialize) {
     int j, k, l;
     //	double scarr[26];
     double** cpmxpd = doublework;
@@ -29,7 +29,7 @@ match_calc(double* match, double** cpmx1, double** cpmx2, int i1, int lgth2, dou
     for (l = 0; l < nalphabets; l++) {
         scarr[l] = 0.0;
         for (k = 0; k < nalphabets; k++)
-            scarr[l] += n_dis[k][l] * cpmx1[k][i1];
+            scarr[l] += ctx->n_dis[k][l] * cpmx1[k][i1];
     }
     for (j = 0; j < lgth2; j++) {
         match[j] = 0;
@@ -253,8 +253,8 @@ Aalign(Context* ctx, char** seq1, char** seq2, double* eff1, double* eff2, int i
     cpmx_calc(ctx, seq1, cpmx1, eff1, strlen(seq1[0]), icyc);
     cpmx_calc(ctx, seq2, cpmx2, eff2, strlen(seq2[0]), jcyc);
 
-    match_calc(initverticalw, cpmx2, cpmx1, 0, lgth1, doublework, intwork, 1);
-    match_calc(currentw, cpmx1, cpmx2, 0, lgth2, doublework, intwork, 1);
+    match_calc(ctx, initverticalw, cpmx2, cpmx1, 0, lgth1, doublework, intwork, 1);
+    match_calc(ctx, currentw, cpmx1, cpmx2, 0, lgth2, doublework, intwork, 1);
 
     if (outgap == 1) {
         for (i = 1; i < lgth1 + 1; i++) {
@@ -281,7 +281,7 @@ Aalign(Context* ctx, char** seq1, char** seq2, double* eff1, double* eff2, int i
         doublencpy(previousw, currentw, lgth2 + 1);
         previousw[0] = initverticalw[i - 1];
 
-        match_calc(currentw, cpmx1, cpmx2, i, lgth2, doublework, intwork, 0);
+        match_calc(ctx, currentw, cpmx1, cpmx2, i, lgth2, doublework, intwork, 0);
         currentw[0] = initverticalw[i];
 
         mi = previousw[0] + penalty * 0.5;
