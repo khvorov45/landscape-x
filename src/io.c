@@ -1396,15 +1396,15 @@ getnumlen(Context* ctx, FILE* fp) {
     char* tmpname = AllocateCharVec(N);
     ctx->njob = countKUorWA(fp);
     searchKUorWA(fp);
-    nlenmax = 0;
+    ctx->nlenmax = 0;
     int atgcnum = 0;
     int total = 0;
     for (int i = 0; i < ctx->njob; i++) {
         myfgets(tmpname, N - 1, fp);
         char* tmpseq = load1SeqWithoutName_realloc(fp);
         int   tmp = strlen(tmpseq);
-        if (tmp > nlenmax)
-            nlenmax = tmp;
+        if (tmp > ctx->nlenmax)
+            ctx->nlenmax = tmp;
         if (total < 1000000) {
             atgcnum += countATGC(tmpseq, &nsite);
             total += nsite;
@@ -1423,71 +1423,6 @@ getnumlen(Context* ctx, FILE* fp) {
         }
     }
     free(tmpname);
-}
-
-void
-WriteGapFill(FILE* fp, int locnjob, char name[][B], char** aseq) {
-    static char b[N];
-    int         i, j;
-    int         nalen[M];
-    static char gap[N];
-    static char buff[N];
-
-#if IODEBUG
-    fprintf(stderr, "IMAKARA KAKU\n");
-#endif
-    nlenmax = 0;
-    for (i = 0; i < locnjob; i++) {
-        int len = strlen(aseq[i]);
-        if (nlenmax < len)
-            nlenmax = len;
-    }
-
-    for (i = 0; i < nlenmax; i++)
-        gap[i] = '-';
-    gap[nlenmax] = 0;
-
-    fprintf(fp, "%5d", locnjob);
-    fprintf(fp, "\n");
-
-    for (i = 0; i < locnjob; i++) {
-        strcpy(buff, aseq[i]);
-        strncat(buff, gap, nlenmax - strlen(aseq[i]));
-        buff[nlenmax] = 0;
-        nalen[i] = strlen(buff);
-        fprintf(fp, "%s\n", name[i]);
-        fprintf(fp, "%5d\n", nalen[i]);
-        for (j = 0; j < nalen[i]; j = j + C) {
-            strncpy_caseC(b, buff + j, C);
-            b[C] = 0;
-            fprintf(fp, "%s\n", b);
-        }
-    }
-#if DEBUG
-    fprintf(stderr, "nalen[0] = %d\n", nalen[0]);
-#endif
-#if IODEBUG
-    fprintf(stderr, "KAKIOWATTA\n");
-#endif
-}
-
-void
-writeDataforgaln(FILE* fp, int locnjob, char** name, char** aseq) {
-    int i, j;
-    int nalen;
-
-    for (i = 0; i < locnjob; i++) {
-        nalen = strlen(aseq[i]);
-        fprintf(fp, ">%s\n", name[i] + 1);
-        for (j = 0; j < nalen; j = j + C) {
-#if 0
-			strncpy( b, aseq[i]+j, C ); b[C] = 0;
-			fprintf( fp, "%s\n",b );
-#else
-            fprintf(fp, "%.*s\n", C, aseq[i] + j);
-#endif
-        }
-    }
 }
 
 void
@@ -1516,28 +1451,6 @@ writeData_pointer(FILE* fp, int locnjob, char** name, char** aseq) {
 }
 
 void
-writeData(FILE* fp, int locnjob, char name[][B], char** aseq) {
-    int i, j;
-    int nalen;
-
-    for (i = 0; i < locnjob; i++) {
-#if DEBUG
-        fprintf(stderr, "i = %d in writeData\n", i);
-#endif
-        nalen = strlen(aseq[i]);
-        fprintf(fp, ">%s\n", name[i] + 1);
-        for (j = 0; j < nalen; j = j + C) {
-#if 0
-			strncpy( b, aseq[i]+j, C ); b[C] = 0;
-			fprintf( fp, "%s\n",b );
-#else
-            fprintf(fp, "%.*s\n", C, aseq[i] + j);
-#endif
-        }
-    }
-}
-
-void
 write1seq(FILE* fp, char* aseq) {
     int j;
     int nalen;
@@ -1545,43 +1458,6 @@ write1seq(FILE* fp, char* aseq) {
     nalen = strlen(aseq);
     for (j = 0; j < nalen; j = j + C)
         fprintf(fp, "%.*s\n", C, aseq + j);
-}
-
-void
-readhat2_doublehalf_part_pointer(FILE* fp, int nseq, int nadd, double** mtx) {
-    int  i, j, nseq0, norg;
-    char b[B];
-
-    fgets(b, B, fp);
-    //  fgets( b, B, fp ); b[5] = 0; nseq0 = atoi( b ); if( nseq != nseq0 )
-    fgets(b, B, fp);
-    nseq0 = atoi(b);  // 2020/Oct/23
-    if (nseq != nseq0) {
-        fprintf(stderr, "%d != %d\n", nseq, nseq0);
-        ErrorExit("hat2 is wrong.");
-    }
-    fgets(b, B, fp);
-    for (i = 0; i < nseq; i++) {
-#if 0
-        getaline_fp_eof( b, B, fp );
-#else
-        myfgets(b, B - 2, fp);
-#endif
-#if 0
-		j = MIN( strlen( b+6 ), 10 );
-        if( strncmp( name[i], b+6 , j ) ) 
-		{
-			fprintf( stderr, "Error in hat2\n" );
-			fprintf( stderr, "%s != %s\n", b, name[i] );
-			exit( 1 );
-		}
-#endif
-    }
-    norg = nseq - nadd;
-    for (i = 0; i < norg; i++)
-        for (j = 0; j < nadd; j++) {
-            mtx[i][j] = (input_new(fp, D));
-        }
 }
 
 void
@@ -1597,40 +1473,6 @@ readhat2_doublehalf_pointer(FILE* fp, int nseq, double** mtx) {
         fprintf(stderr, "%d != %d\n", nseq, nseq0);
         ErrorExit("hat2 is wrong.");
     }
-    fgets(b, B, fp);
-    for (i = 0; i < nseq; i++) {
-#if 0
-        getaline_fp_eof( b, B, fp );
-#else
-        myfgets(b, B - 2, fp);
-#endif
-#if 0
-		j = MIN( strlen( b+6 ), 10 );
-        if( strncmp( name[i], b+6 , j ) ) 
-		{
-			fprintf( stderr, "Error in hat2\n" );
-			fprintf( stderr, "%s != %s\n", b, name[i] );
-			exit( 1 );
-		}
-#endif
-    }
-    for (i = 0; i < nseq - 1; i++)
-        for (j = i + 1; j < nseq; j++) {
-            mtx[i][j - i] = (input_new(fp, D));
-        }
-}
-
-void
-readhat2_doublehalf(FILE* fp, int nseq, double** mtx) {
-    int  i, j, nseq0;
-    char b[B];
-
-    fgets(b, B, fp);
-    fgets(b, B, fp);
-    b[5] = 0;
-    nseq0 = atoi(b);
-    if (nseq != nseq0)
-        ErrorExit("hat2 is wrong.");
     fgets(b, B, fp);
     for (i = 0; i < nseq; i++) {
 #if 0

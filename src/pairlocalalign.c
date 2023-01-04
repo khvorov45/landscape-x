@@ -2318,7 +2318,7 @@ pairlocalalign(Context* ctx, int ngui, char** namegui, char** seqgui, double** d
         exit(1);
     }
 
-    alloclen = nlenmax * 2;
+    alloclen = ctx->nlenmax * 2;
     if (ngui) {
         seq = seqgui;
         name = namegui;

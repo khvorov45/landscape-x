@@ -1123,7 +1123,7 @@ tbfast_main(int argc, char* argv[]) {
         readsubalignmentstable(ctx->njob, subtable, preservegaps, NULL, NULL);
     }
 
-    seq = AllocateCharMtx(ctx->njob, nlenmax + 1);
+    seq = AllocateCharMtx(ctx->njob, ctx->nlenmax + 1);
     mseq1 = AllocateCharMtx(ctx->njob, 0);
     mseq2 = AllocateCharMtx(ctx->njob, 0);
 
@@ -1471,7 +1471,7 @@ tbfast_main(int argc, char* argv[]) {
     }
 
     if (nadd && opts.keeplength) {
-        originalgaps = (char*)calloc(nlenmax + 1, sizeof(char));
+        originalgaps = (char*)calloc(ctx->nlenmax + 1, sizeof(char));
         recordoriginalgaps(originalgaps, ctx->njob - nadd, seq);
 
         if (opts.mapout) {
@@ -1773,7 +1773,7 @@ tbfast_main(int argc, char* argv[]) {
     eff_kozo = NULL;
     FreeFloatMtx(len);
 
-    alloclen = nlenmax * 2 + 1;  //chuui!
+    alloclen = ctx->nlenmax * 2 + 1;  //chuui!
     bseq = AllocateCharMtx(ctx->njob, alloclen);
 
     if (nadd) {

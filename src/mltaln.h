@@ -189,9 +189,9 @@ typedef struct GapPos {
 typedef struct Context {
     char modelname[500];
     int  njob;
+    int  nlenmax;
 } Context;
 
-extern int           nlenmax;
 extern int           amino_n[0x100];
 extern char          amino_grp[0x100];
 extern int**         amino_dis;
@@ -453,12 +453,10 @@ extern void         calcimportance_target(int nseq, int ntarget, double* eff, ch
 extern void         dontcalcimportance_lastone(int nseq, double* eff, char** seq, LocalHom** localhom);
 extern void         dontcalcimportance_firstone(int nseq, LocalHom** localhom);
 extern void         dontcalcimportance_half(int nseq, char** seq, LocalHom** localhom);
-extern void         calcimportance(int nseq, double* eff, char** seq, LocalHom** localhom);
 extern void         calcimportance_half(int nseq, double* eff, char** seq, LocalHom** localhom, int alloclen);
 extern void         weightimportance2(int nseq, double* eff, LocalHom** localhom);
 extern void         weightimportance4(int clus1, int clus2, double* eff1, double* eff2, LocalHom*** localhom);
 extern void         extendlocalhom(int nseq, LocalHom** localhom);
-extern void         extendlocalhom2(int nseq, LocalHom** localhom, double** mtx);
 extern int          makelocal(char* s1, char* s2, int thr);
 extern double       score_calc(char** seq, int s);
 extern void         cpmx_calc(char** seq, double** cpmx, double* eff, int lgth, int clus);
@@ -563,13 +561,9 @@ extern void         kake2hiku(char* str);
 extern void         readData_pointer(Context* ctx, FILE* fp, char** name, int* nlen, char** seq);
 extern int          countATGC(char* s, int* total);
 extern void         getnumlen(Context* ctx, FILE* fp);
-extern void         WriteGapFill(FILE* fp, int locnjob, char name[][B], char** aseq);
 extern void         writeDataforgaln(FILE* fp, int locnjob, char** name, char** aseq);
-extern void         writeData(FILE* fp, int locnjob, char name[][B], char** aseq);
 extern void         writeData_pointer(FILE* fp, int locnjob, char** name, char** aseq);
-extern void         readhat2_doublehalf(FILE* fp, int nseq, double** mtx);
 extern void         readhat2_doublehalf_pointer(FILE* fp, int nseq, double** mtx);
-extern void         readhat2_doublehalf_part_pointer(FILE* fp, int nseq, int nadd, double** mtx);
 extern void         readhat2_double(FILE* fp, int nseq, double** mtx);
 extern void         readhat2_int(FILE* fp, int nseq, int** mtx);
 extern void         readhat2_pointer(FILE* fp, int nseq, double** mtx);
