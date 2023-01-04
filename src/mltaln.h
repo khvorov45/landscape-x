@@ -186,7 +186,10 @@ typedef struct GapPos {
     int len;
 } GapPos;
 
-extern char          modelname[500];
+typedef struct Context {
+    char modelname[500];
+} Context;
+
 extern int           njob, nlenmax;
 extern int           amino_n[0x100];
 extern char          amino_grp[0x100];
@@ -363,7 +366,7 @@ short**   AllocateShortMtx(int, int);
 void      FreeShortMtx(short**);
 void      freeintmtx(int**, int);
 
-extern void   constants(int nseq, char** seq);
+extern void   constants(Context* ctx, int nseq, char** seq);
 extern char** Calignm1(double* wm, char** aseq, char* seq, double* effarr, int icyc, int ex);
 extern char** Dalignm1();
 extern char** align0();
@@ -653,7 +656,6 @@ extern void         FreeLocalHomTable_two(LocalHom** localhomtable, int n, int m
 extern void         FreeLocalHomTable_one(LocalHom** localhomtable, int n, int m);
 extern void         freelocalhom1(LocalHom* lh);
 extern void         initlocalhom1(LocalHom* lh);
-extern void         constants(int nseq, char** seq);
 extern void         clustalout_pointer(FILE* fp, int nseq, int maxlen, char** seq, char** name, char* mark, char* comment, int* order, int namelen);
 extern void         phylipout_pointer(FILE* fp, int nseq, int maxlen, char** seq, char** name, int* order, int namelen);
 extern void         writeData_reorder(FILE* fp, int locnjob, char name[][B], char** aseq, int* order);
@@ -789,7 +791,7 @@ extern double distcompact(int len1, int len2, int* table1, int* point2, int ss1,
 extern double distcompact_msa(char* seq1, char* seq2, int* skiptable1, int* skiptable2, int ss1, int ss2);
 extern void   fillimp(double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2);
 extern void   fillimp_file(double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, int* orinum1, int* orinum2, int* uselh, int* seedinlh1, int* seedinlh2, int nodeid, int nfiles);
-extern int    pairlocalalign(int ngui, char** namegui, char** seqgui, double** distancemtx, LocalHom** localhomtable, int argc, char** argv, double** expdist);
+extern int    pairlocalalign(Context* ctx, int ngui, char** namegui, char** seqgui, double** distancemtx, LocalHom** localhomtable, int argc, char** argv, double** expdist);
 extern char   creverse(char f);
 extern void   setstacksize(rlim_t);
 extern void   use_getrusage(void);

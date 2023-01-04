@@ -2487,7 +2487,7 @@ pairalign(char** name, char** seq, char** aseq, char** dseq, int* thereisxineach
 }
 
 int
-pairlocalalign(int ngui, char** namegui, char** seqgui, double** distancemtx, LocalHom** localhomtable, int argc, char** argv, double** expdist) {
+pairlocalalign(Context* ctx, int ngui, char** namegui, char** seqgui, double** distancemtx, LocalHom** localhomtable, int argc, char** argv, double** expdist) {
     int *      nlen, *thereisxineachseq;
     char **    name, **seq;
     char **    mseq1, **mseq2;
@@ -2592,7 +2592,7 @@ pairlocalalign(int ngui, char** namegui, char** seqgui, double** distancemtx, Lo
     }
 #endif
 
-    constants(njob, seq);
+    constants(ctx, njob, seq);
 
 #if 0
 	fprintf( stderr, "params = %d, %d, %d\n", penalty, penalty_ex, offset );

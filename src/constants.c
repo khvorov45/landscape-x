@@ -1523,7 +1523,7 @@ generatenuc1pam(double** pam1, int kimuraR, double* freq) {
 }
 
 void
-constants(int nseq, char** seq) {
+constants(Context* ctx, int nseq, char** seq) {
     int i, j, x;
     //	double tmp;
     char shiftmodel[100];
@@ -1600,7 +1600,7 @@ constants(int nseq, char** seq) {
         else
             sprintf(shiftmodel, "noshift");
 
-        sprintf(modelname, "%s%d (%d), %4.2f (%4.2f), %4.2f (%4.2f), %s", rnakozo ? "RNA" : "DNA", pamN, kimuraR, -(double)ppenalty * 0.001, -(double)ppenalty * 0.003, -(double)poffset * 0.001, -(double)poffset * 0.003, shiftmodel);
+        sprintf(ctx->modelname, "%s%d (%d), %4.2f (%4.2f), %4.2f (%4.2f), %s", rnakozo ? "RNA" : "DNA", pamN, kimuraR, -(double)ppenalty * 0.001, -(double)ppenalty * 0.003, -(double)poffset * 0.001, -(double)poffset * 0.003, shiftmodel);
 
         for (i = 0; i < 26; i++)
             amino[i] = locaminon[i];
@@ -1982,7 +1982,7 @@ constants(int nseq, char** seq) {
         else
             sprintf(shiftmodel, "noshift");
 
-        sprintf(modelname, "Extended, %4.2f, %+4.2f, %+4.2f, %s", -(double)ppenalty / 1000, -(double)poffset / 1000, -(double)ppenalty_ex / 1000, shiftmodel);
+        sprintf(ctx->modelname, "Extended, %4.2f, %+4.2f, %+4.2f, %s", -(double)ppenalty / 1000, -(double)poffset / 1000, -(double)ppenalty_ex / 1000, shiftmodel);
 #if 0
 		for( i=0; i<26; i++ ) amino[i] = locaminod[i];
 		for( i=0; i<26; i++ ) amino_grp[(int)amino[i]] = locgrpd[i];
@@ -2220,9 +2220,9 @@ constants(int nseq, char** seq) {
             sprintf(shiftmodel, "noshift");
 
         if (nblosum == -1)
-            sprintf(modelname, "User-defined, %4.2f, %+4.2f, %+4.2f, %s", -(double)ppenalty / 1000, -(double)poffset / 1000, -(double)ppenalty_ex / 1000, shiftmodel);
+            sprintf(ctx->modelname, "User-defined, %4.2f, %+4.2f, %+4.2f, %s", -(double)ppenalty / 1000, -(double)poffset / 1000, -(double)ppenalty_ex / 1000, shiftmodel);
         else
-            sprintf(modelname, "BLOSUM%d, %4.2f, %+4.2f, %+4.2f, %s", nblosum, -(double)ppenalty / 1000, -(double)poffset / 1000, -(double)ppenalty_ex / 1000, shiftmodel);
+            sprintf(ctx->modelname, "BLOSUM%d, %4.2f, %+4.2f, %+4.2f, %s", nblosum, -(double)ppenalty / 1000, -(double)poffset / 1000, -(double)ppenalty_ex / 1000, shiftmodel);
 #if 0
 		for( i=0; i<26; i++ ) amino[i] = locaminod[i];
 		for( i=0; i<26; i++ ) amino_grp[(int)amino[i]] = locgrpd[i];
@@ -2445,7 +2445,7 @@ constants(int nseq, char** seq) {
         else
             sprintf(shiftmodel, "noshift");
 
-        sprintf(modelname, "%s %dPAM, %4.2f, %4.2f, %s", (TMorJTT == TM) ? "Transmembrane" : "JTT", pamN, -(double)ppenalty / 1000, -(double)poffset / 1000, shiftmodel);
+        sprintf(ctx->modelname, "%s %dPAM, %4.2f, %4.2f, %s", (TMorJTT == TM) ? "Transmembrane" : "JTT", pamN, -(double)ppenalty / 1000, -(double)poffset / 1000, shiftmodel);
 
         JTTmtx(rsr, freq, amino, amino_grp, (int)(TMorJTT == TM));
 

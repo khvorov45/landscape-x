@@ -1005,6 +1005,8 @@ preparepartmtx(int nseq) {
 
 int
 tbfast_main(int argc, char* argv[]) {
+    Context* ctx = calloc(sizeof(Context), 1);
+
     int*     nlen = NULL;
     int*     selfscore = NULL;
     int      nogaplen;
@@ -1224,7 +1226,7 @@ tbfast_main(int argc, char* argv[]) {
         }
 
         if (opts.callpairlocalalign) {
-            pairlocalalign(njob, name, seq, iscore, localhomtable, pac, pav, expdist);
+            pairlocalalign(ctx, njob, name, seq, iscore, localhomtable, pac, pav, expdist);
             arguments(tac, tav, NULL, NULL, NULL, NULL);
             opts.callpairlocalalign = 1;
             if (expdist)
@@ -1340,7 +1342,7 @@ tbfast_main(int argc, char* argv[]) {
         }
     } else if (compacttree != 3) {
         if (opts.callpairlocalalign) {
-            pairlocalalign(njob, name, seq, iscore, NULL, pac, pav, expdist);
+            pairlocalalign(ctx, njob, name, seq, iscore, NULL, pac, pav, expdist);
             arguments(tac, tav, NULL, NULL, NULL, NULL);
             opts.callpairlocalalign = 1;
             if (expdist)
@@ -1438,7 +1440,7 @@ tbfast_main(int argc, char* argv[]) {
 
     free(tav);
     free(pav);
-    constants(njob, seq);
+    constants(ctx, njob, seq);
 
     if (sueff_global < 0.0001 || compacttree == 3) {
         nthreadreadlh = nthread;
