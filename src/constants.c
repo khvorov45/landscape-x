@@ -1865,20 +1865,20 @@ constants(Context* ctx, int nseq, char** seq) {
 #if 1
         for (i = 0; i < 37; i++)
             for (j = 0; j < 37; j++)
-                ribosumdis[i][j] = 0.0;  //iru
+                ctx->ribosumdis[i][j] = 0.0;  //iru
         for (m = 0; m < 9; m++)
             for (i = 0; i < 4; i++)  // loop
                 for (k = 0; k < 9; k++)
                     for (j = 0; j < 4; j++)
-                        ribosumdis[m * 4 + i][k * 4 + j] = ribosum4[i][j];  // loop-loop
+                        ctx->ribosumdis[m * 4 + i][k * 4 + j] = ribosum4[i][j];  // loop-loop
         //			for( k=0; k<9; k++ ) for( j=0; j<4; j++ ) ribosumdis[m*4+i][k*4+j] = n_dis[i][j]; // loop-loop
 
         for (i = 0; i < 16; i++)
             for (j = 0; j < 16; j++)
-                ribosumdis[i + 4][j + 4] = ribosum16[i][j];  // stem5-stem5
+                ctx->ribosumdis[i + 4][j + 4] = ribosum16[i][j];  // stem5-stem5
         for (i = 0; i < 16; i++)
             for (j = 0; j < 16; j++)
-                ribosumdis[i + 20][j + 20] = ribosum16[i][j];  // stem5-stem5
+                ctx->ribosumdis[i + 20][j + 20] = ribosum16[i][j];  // stem5-stem5
 #else  // do not use ribosum
         for (i = 0; i < 37; i++)
             for (j = 0; j < 37; j++)
@@ -1894,7 +1894,7 @@ constants(Context* ctx, int nseq, char** seq) {
             reporterr("ribosumdis\n");
             for (i = 0; i < 37; i++) {
                 for (j = 0; j < 37; j++)
-                    reporterr("%+5d", ribosumdis[i][j]);
+                    reporterr("%+5d", ctx->ribosumdis[i][j]);
                 reporterr("\n");
             }
             reporterr("\n");

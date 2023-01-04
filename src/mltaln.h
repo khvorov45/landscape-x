@@ -202,9 +202,8 @@ typedef struct Context {
     uint8_t  amino[0x100];
     double   polarity[0x100];
     double   volume[0x100];
+    int      ribosumdis[37][37];
 } Context;
-
-extern int ribosumdis[37][37];
 
 extern int    ppid;
 extern double thrinter;
