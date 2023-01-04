@@ -9,7 +9,6 @@ int   nthreadpair = 1;
 int   randomseed = 0;
 int   parallelizationstrategy = BAATARI1;
 
-int    fmodel;  // 1-> fmodel 0->default -1->raw
 int    nblosum;  // 45, 50, 62, 80
 int    kobetsubunkatsu;
 int    bunkatsu;

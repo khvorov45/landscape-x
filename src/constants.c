@@ -1589,7 +1589,7 @@ constants(Context* ctx, int nseq, char** seq) {
             ctx->amino_n[i] = -1;
         for (i = 0; i < 26; i++)
             ctx->amino_n[(int)ctx->amino[i]] = i;
-        if (fmodel == 1) {
+        if (ctx->fmodel == 1) {
             calcfreq_nuc(ctx, nseq, seq, freq);
             reporterr("a, freq[0] = %f\n", freq[0]);
             reporterr("g, freq[1] = %f\n", freq[1]);
@@ -1971,7 +1971,7 @@ constants(Context* ctx, int nseq, char** seq) {
             ctx->amino_n[(unsigned char)ctx->amino[i]] = i;
         }
 
-        if (fmodel == 1) {
+        if (ctx->fmodel == 1) {
             calcfreq_extended(ctx, nseq, seq, datafreq);
             freq1 = datafreq;
         } else {
@@ -1996,7 +1996,7 @@ constants(Context* ctx, int nseq, char** seq) {
             fprintf(stdout, "\n");
         }
 #endif
-        if (fmodel == -1)
+        if (ctx->fmodel == -1)
             average = 0.0;
         else {
 #if TEST
@@ -2194,7 +2194,7 @@ constants(Context* ctx, int nseq, char** seq) {
             ctx->amino_n[i] = -1;
         for (i = 0; i < 26; i++)
             ctx->amino_n[(int)ctx->amino[i]] = i;
-        if (fmodel == 1) {
+        if (ctx->fmodel == 1) {
             calcfreq(ctx, nseq, seq, datafreq);
             freq1 = datafreq;
         } else
@@ -2208,7 +2208,7 @@ constants(Context* ctx, int nseq, char** seq) {
             fprintf(stdout, "\n");
         }
 #endif
-        if (fmodel == -1)
+        if (ctx->fmodel == -1)
             average = 0.0;
         else {
 #if TEST
@@ -2414,7 +2414,7 @@ constants(Context* ctx, int nseq, char** seq) {
             ctx->amino_n[i] = -1;
         for (i = 0; i < 26; i++)
             ctx->amino_n[(int)ctx->amino[i]] = i;
-        if (fmodel == 1) {
+        if (ctx->fmodel == 1) {
             calcfreq(ctx, nseq, seq, datafreq);
             freq1 = datafreq;
         } else
@@ -2517,7 +2517,7 @@ constants(Context* ctx, int nseq, char** seq) {
 #endif
 
 #if NORMALIZE1
-        if (fmodel == -1)
+        if (ctx->fmodel == -1)
             average = 0.0;
         else {
 #if TEST

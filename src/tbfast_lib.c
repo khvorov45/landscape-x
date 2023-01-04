@@ -61,7 +61,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
     fftkeika = 0;
     ctx->constraint = 0;
     nblosum = 62;
-    fmodel = 0;
+    ctx->fmodel = 0;
     calledByXced = 0;
     devide = 0;
     use_fft = 0;  // chuui
@@ -238,7 +238,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
                     rnaprediction = 'r';
 #if 1
                 case 'a':
-                    fmodel = 1;
+                    ctx->fmodel = 1;
                     break;
 #endif
                 case 'K':
