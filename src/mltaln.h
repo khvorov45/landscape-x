@@ -196,9 +196,9 @@ typedef struct Context {
     double** amino_dis_consweight_multi;
     int**    n_dis;
     double** n_disLN;
+    int**    n_disFFT;
 } Context;
 
-extern int**           n_disFFT;
 extern double**        n_dis_consweight_multi;
 extern unsigned char   amino[0x100];
 extern double          polarity[0x100];

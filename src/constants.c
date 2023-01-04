@@ -2670,7 +2670,7 @@ constants(Context* ctx, int nseq, char** seq) {
             ctx->amino_dis_consweight_multi[i][j] = 0.0;
 
     n_dis_consweight_multi = AllocateDoubleMtx(nalphabets, nalphabets);
-    n_disFFT = AllocateIntMtx(nalphabets, nalphabets);
+    ctx->n_disFFT = AllocateIntMtx(nalphabets, nalphabets);
     for (i = 0; i < nalphabets; i++)
         for (j = 0; j < nalphabets; j++) {
             ctx->amino_dis[(int)amino[i]][(int)amino[j]] = ctx->n_dis[i][j];
@@ -2684,14 +2684,14 @@ constants(Context* ctx, int nseq, char** seq) {
                 ctx->n_disLN[i][j] = (double)ctx->n_dis[i][j] + offset - offsetLN;
         for (i = 0; i < 10; i++)
             for (j = 0; j < 10; j++)
-                n_disFFT[i][j] = ctx->n_dis[i][j] + offset - offsetFFT;
+                ctx->n_disFFT[i][j] = ctx->n_dis[i][j] + offset - offsetFFT;
     } else {
         for (i = 0; i < 20; i++)
             for (j = 0; j < 20; j++)
                 ctx->n_disLN[i][j] = (double)ctx->n_dis[i][j] + offset - offsetLN;
         for (i = 0; i < 20; i++)
             for (j = 0; j < 20; j++)
-                n_disFFT[i][j] = ctx->n_dis[i][j] + offset - offsetFFT;
+                ctx->n_disFFT[i][j] = ctx->n_dis[i][j] + offset - offsetFFT;
     }
 
     ppid = 0;
@@ -2747,9 +2747,9 @@ freeconstants(Context* ctx) {
     if (ctx->n_dis)
         FreeIntMtx(ctx->n_dis);
     ctx->n_dis = NULL;
-    if (n_disFFT)
-        FreeIntMtx(n_disFFT);
-    n_disFFT = NULL;
+    if (ctx->n_disFFT)
+        FreeIntMtx(ctx->n_disFFT);
+    ctx->n_disFFT = NULL;
     if (n_dis_consweight_multi)
         FreeDoubleMtx(n_dis_consweight_multi);
     n_dis_consweight_multi = NULL;

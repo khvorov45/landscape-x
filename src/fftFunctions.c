@@ -179,20 +179,6 @@ alignableReagion(Context* ctx, int clus1, int clus2, char** seq1, char** seq2, d
     static int*    hat1 = NULL;
     static int*    hat2 = NULL;
     int            pre1, pre2;
-#if 0
-	char **seq1pt;
-	char **seq2pt;
-	double *eff1pt;
-	double *eff2pt;
-#endif
-
-#if 0
-	fprintf( stderr, "### In alignableRegion, clus1=%d, clus2=%d \n", clus1, clus2 );
-	fprintf( stderr, "seq1[0] = %s\n", seq1[0] );
-	fprintf( stderr, "seq2[0] = %s\n", seq2[0] );
-	fprintf( stderr, "eff1[0] = %f\n", eff1[0] );
-	fprintf( stderr, "eff2[0] = %f\n", eff2[0] );
-#endif
 
     if (clus1 == 0) {
         if (stra)
@@ -267,7 +253,7 @@ alignableReagion(Context* ctx, int clus1, int clus2, char** seq1, char** seq2, d
         for (k = hat1[nalphabets]; k != -1; k = hat1[k])
             for (j = hat2[nalphabets]; j != -1; j = hat2[j])
                 //				stra[i] += n_dis[k][j] * prf1[k] * prf2[j];
-                stra[i] += n_disFFT[k][j] * prf1[k] * prf2[j];
+                stra[i] += ctx->n_disFFT[k][j] * prf1[k] * prf2[j];
         stra[i] /= totaleff;
     }
 
@@ -286,14 +272,6 @@ alignableReagion(Context* ctx, int clus1, int clus2, char** seq1, char** seq2, d
 #endif
 
         if (score > threshold) {
-#if 0
-			seg->start = i;
-			seg->end = i;
-			seg->center = ( seg->start + seg->end + fftWinSize ) / 2 ;
-			seg->score = score;
-			status = 0;
-			value++;
-#else
             if (!status) {
                 status = 1;
                 starttmp = i;
@@ -302,7 +280,6 @@ alignableReagion(Context* ctx, int clus1, int clus2, char** seq1, char** seq2, d
             }
             length++;
             cumscore += score;
-#endif
         }
         if (score <= threshold || length > SEGMENTSIZE) {
             if (status) {
