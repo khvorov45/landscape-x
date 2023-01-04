@@ -145,7 +145,7 @@ imp_match_init_strictD(Context* ctx, int clus1, int clus2, int lgth1, int lgth2,
     }
 
     if (nodeid == -1)
-        fillimp(impmtx, clus1, clus2, lgth1, lgth2, seq1, seq2, eff1, eff2, eff1_kozo, eff2_kozo, localhom, swaplist, orinum1, orinum2);
+        fillimp(ctx, impmtx, clus1, clus2, lgth1, lgth2, seq1, seq2, eff1, eff2, eff1_kozo, eff2_kozo, localhom, swaplist, orinum1, orinum2);
     else
         fillimp_file(ctx, impmtx, clus1, clus2, lgth1, lgth2, seq1, seq2, eff1, eff2, eff1_kozo, eff2_kozo, localhom, orinum1, orinum2, uselh, seedinlh1, seedinlh2, nodeid, nfiles);
 }

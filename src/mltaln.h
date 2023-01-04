@@ -204,9 +204,9 @@ typedef struct Context {
     double   volume[0x100];
     int      ribosumdis[37][37];
     int      ppid;
+    double   fastathreshold;
 } Context;
 
-extern double fastathreshold;
 extern int    pslocal, ppslocal;
 extern int    constraint;
 extern int    divpairscore;
@@ -384,7 +384,6 @@ extern double Falign(Context* ctx, int** whichmtx, double*** scoringmatrices, do
 extern double Conalign();
 extern double Aalign(Context* ctx, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen);
 extern double imp_match_out_sc(int, int);
-extern double part_imp_match_out_sc(int, int);
 extern void   ErrorExit(char* message);
 extern void   cpmx_calc(Context* ctx, char** seq, double** cpmx, double* eff, int lgth, int clus);
 extern void   intergroup_score(char**, char**, double*, double*, int, int, int, double*);
@@ -496,8 +495,6 @@ extern double       A__align_variousdist(Context* ctx, int** which, double*** sc
 extern double       A__align_gapmap(void);
 extern double       translate_and_Calign(char** mseq1, char** mseq2, double* effarr1, double* effarr2, int clus1, int clus2, int alloclen);
 extern double       Falign_udpari_long(Context* ctx, double*** scoringmatrices, double** scoringmtx, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int clus1, int clus2, int alloclen, int* fftlog);
-extern double       part_imp_match_out_sc(int i1, int j1);
-extern void         part_imp_match_init_strict(int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int* memlist1, int* memlist2);
 extern void         part_imp_match_init(double* imp, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, LocalHom*** localhom);
 extern double       G__align11psg(Context* ctx, double** codonmtx, double** scoringmtx, char** seq1, char** seq2, int alloclen, int headgp, int tailgp, double* gstart, double* gend);
 extern double       G__align11_noalign(Context* ctx, double** scoringmtx, int penal, int penal_ex, char** seq1, char** seq2);
@@ -693,7 +690,7 @@ extern void   compacttree_memsaveselectable(Context* ctx, int nseq, double** par
 extern void   compacttreedpdist(Context* ctx, int njob, char** seq, char** dseq, double* selfscore, int*** topol, double** len, char** name, Treedep* dep, int treeout, int alloclen, int* uselh, int* nfilesfornode, int treegiven);
 extern double distcompact(int len1, int len2, int* table1, int* point2, int ss1, int ss2);
 extern double distcompact_msa(Context* ctx, char* seq1, char* seq2, int* skiptable1, int* skiptable2, int ss1, int ss2);
-extern void   fillimp(double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2);
+extern void   fillimp(Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2);
 extern void   fillimp_file(Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, int* orinum1, int* orinum2, int* uselh, int* seedinlh1, int* seedinlh2, int nodeid, int nfiles);
 extern int    pairlocalalign(Context* ctx, int ngui, char** namegui, char** seqgui, double** distancemtx, LocalHom** localhomtable, int argc, char** argv, double** expdist);
 extern char   creverse(char f);
