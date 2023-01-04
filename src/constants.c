@@ -1584,11 +1584,11 @@ constants(Context* ctx, int nseq, char** seq) {
         sprintf(ctx->modelname, "%s%d (%d), %4.2f (%4.2f), %4.2f (%4.2f), %s", rnakozo ? "RNA" : "DNA", pamN, kimuraR, -(double)ppenalty * 0.001, -(double)ppenalty * 0.003, -(double)poffset * 0.001, -(double)poffset * 0.003, shiftmodel);
 
         for (i = 0; i < 26; i++)
-            amino[i] = locaminon[i];
+            ctx->amino[i] = locaminon[i];
         for (i = 0; i < 0x80; i++)
             ctx->amino_n[i] = -1;
         for (i = 0; i < 26; i++)
-            ctx->amino_n[(int)amino[i]] = i;
+            ctx->amino_n[(int)ctx->amino[i]] = i;
         if (fmodel == 1) {
             calcfreq_nuc(ctx, nseq, seq, freq);
             reporterr("a, freq[0] = %f\n", freq[0]);
@@ -1761,9 +1761,9 @@ constants(Context* ctx, int nseq, char** seq) {
         }
 
         for (i = 0; i < 26; i++)
-            amino[i] = locaminon[i];
+            ctx->amino[i] = locaminon[i];
         for (i = 0; i < 26; i++)
-            ctx->amino_grp[(int)amino[i]] = locgrpn[i];
+            ctx->amino_grp[(int)ctx->amino[i]] = locgrpn[i];
         for (i = 0; i < 26; i++)
             for (j = 0; j < 26; j++)
                 ctx->n_dis[i][j] = 0;
@@ -1956,7 +1956,7 @@ constants(Context* ctx, int nseq, char** seq) {
         penaltyLN = (int)(600.0 / 1000.0 * -2000 + 0.5);
         penalty_exLN = (int)(600.0 / 1000.0 * -100 + 0.5);
 
-        userdefined = extendedmtx(n_distmp, freq, amino, ctx->amino_grp);
+        userdefined = extendedmtx(n_distmp, freq, ctx->amino, ctx->amino_grp);
 
         if (trywarp)
             sprintf(shiftmodel, "%4.2f", -(double)penalty_shift / 600);
@@ -1968,7 +1968,7 @@ constants(Context* ctx, int nseq, char** seq) {
         for (i = 0; i < 0x100; i++)
             ctx->amino_n[i] = -1;
         for (i = 0; i < nalphabets; i++) {
-            ctx->amino_n[(unsigned char)amino[i]] = i;
+            ctx->amino_n[(unsigned char)ctx->amino[i]] = i;
         }
 
         if (fmodel == 1) {
@@ -2084,17 +2084,17 @@ constants(Context* ctx, int nseq, char** seq) {
         if (disp) {
             fprintf(stdout, "freq = \n");
             for (i = 0; i < nalphabets; i++)
-                fprintf(stdout, "%c %f\n", amino[i], freq1[i]);
+                fprintf(stdout, "%c %f\n", ctx->amino[i], freq1[i]);
             fprintf(stdout, " scoring matrix  \n");
             for (i = 0; i < nalphabets; i++) {
-                fprintf(stdout, "%c    ", amino[i]);
+                fprintf(stdout, "%c    ", ctx->amino[i]);
                 for (j = 0; j < nalphabets; j++)
                     fprintf(stdout, "%5.0f", n_distmp[i][j]);
                 fprintf(stdout, "\n");
             }
             fprintf(stdout, "     ");
             for (i = 0; i < nalphabets; i++)
-                fprintf(stdout, "    %c", amino[i]);
+                fprintf(stdout, "    %c", ctx->amino[i]);
 
             average = 0.0;
             for (i = 0; i < nalphabets; i++)
@@ -2176,7 +2176,7 @@ constants(Context* ctx, int nseq, char** seq) {
         penaltyLN = (int)(600.0 / 1000.0 * -2000 + 0.5);
         penalty_exLN = (int)(600.0 / 1000.0 * -100 + 0.5);
 
-        BLOSUMmtx(nblosum, n_distmp, freq, amino, ctx->amino_grp, &rescale);
+        BLOSUMmtx(nblosum, n_distmp, freq, ctx->amino, ctx->amino_grp, &rescale);
 
         reporterr("rescale = %d\n", rescale);
 
@@ -2193,7 +2193,7 @@ constants(Context* ctx, int nseq, char** seq) {
         for (i = 0; i < 0x80; i++)
             ctx->amino_n[i] = -1;
         for (i = 0; i < 26; i++)
-            ctx->amino_n[(int)amino[i]] = i;
+            ctx->amino_n[(int)ctx->amino[i]] = i;
         if (fmodel == 1) {
             calcfreq(ctx, nseq, seq, datafreq);
             freq1 = datafreq;
@@ -2292,14 +2292,14 @@ constants(Context* ctx, int nseq, char** seq) {
         if (disp) {
             fprintf(stderr, " scoring matrix  \n");
             for (i = 0; i < 20; i++) {
-                fprintf(stderr, "%c    ", amino[i]);
+                fprintf(stderr, "%c    ", ctx->amino[i]);
                 for (j = 0; j < 20; j++)
                     fprintf(stderr, "%5.0f", n_distmp[i][j]);
                 fprintf(stderr, "\n");
             }
             fprintf(stderr, "     ");
             for (i = 0; i < 20; i++)
-                fprintf(stderr, "    %c", amino[i]);
+                fprintf(stderr, "    %c", ctx->amino[i]);
 
             average = 0.0;
             for (i = 0; i < 20; i++)
@@ -2408,12 +2408,12 @@ constants(Context* ctx, int nseq, char** seq) {
 
         sprintf(ctx->modelname, "%s %dPAM, %4.2f, %4.2f, %s", (TMorJTT == TM) ? "Transmembrane" : "JTT", pamN, -(double)ppenalty / 1000, -(double)poffset / 1000, shiftmodel);
 
-        JTTmtx(rsr, freq, amino, ctx->amino_grp, (int)(TMorJTT == TM));
+        JTTmtx(rsr, freq, ctx->amino, ctx->amino_grp, (int)(TMorJTT == TM));
 
         for (i = 0; i < 0x80; i++)
             ctx->amino_n[i] = -1;
         for (i = 0; i < 26; i++)
-            ctx->amino_n[(int)amino[i]] = i;
+            ctx->amino_n[(int)ctx->amino[i]] = i;
         if (fmodel == 1) {
             calcfreq(ctx, nseq, seq, datafreq);
             freq1 = datafreq;
@@ -2607,14 +2607,14 @@ constants(Context* ctx, int nseq, char** seq) {
         if (disp) {
             fprintf(stdout, " scoring matrix  \n");
             for (i = 0; i < 20; i++) {
-                fprintf(stdout, "%c    ", amino[i]);
+                fprintf(stdout, "%c    ", ctx->amino[i]);
                 for (j = 0; j < 20; j++)
                     fprintf(stdout, "%5.0f", pamx[i][j]);
                 fprintf(stdout, "\n");
             }
             fprintf(stdout, "     ");
             for (i = 0; i < 20; i++)
-                fprintf(stdout, "    %c", amino[i]);
+                fprintf(stdout, "    %c", ctx->amino[i]);
 
             average = 0.0;
             for (i = 0; i < 20; i++)
@@ -2658,7 +2658,7 @@ constants(Context* ctx, int nseq, char** seq) {
     for (i = 0; i < charsize; i++)
         ctx->amino_n[i] = -1;
     for (i = 0; i < nalphabets; i++)
-        ctx->amino_n[(int)amino[i]] = i;
+        ctx->amino_n[(int)ctx->amino[i]] = i;
     for (i = 0; i < charsize; i++)
         for (j = 0; j < charsize; j++)
             ctx->amino_dis[i][j] = 0;
@@ -2673,9 +2673,9 @@ constants(Context* ctx, int nseq, char** seq) {
     ctx->n_disFFT = AllocateIntMtx(nalphabets, nalphabets);
     for (i = 0; i < nalphabets; i++)
         for (j = 0; j < nalphabets; j++) {
-            ctx->amino_dis[(int)amino[i]][(int)amino[j]] = ctx->n_dis[i][j];
+            ctx->amino_dis[(int)ctx->amino[i]][(int)ctx->amino[j]] = ctx->n_dis[i][j];
             ctx->n_dis_consweight_multi[i][j] = (double)ctx->n_dis[i][j] * consweight_multi;
-            ctx->amino_dis_consweight_multi[(int)amino[i]][(int)amino[j]] = (double)ctx->n_dis[i][j] * consweight_multi;
+            ctx->amino_dis_consweight_multi[(int)ctx->amino[i]][(int)ctx->amino[j]] = (double)ctx->n_dis[i][j] * consweight_multi;
         }
 
     if (dorp == 'd') {

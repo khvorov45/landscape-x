@@ -265,7 +265,7 @@ genL__align11(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int
 
     for (i = 0; i < nalphabets; i++)
         for (j = 0; j < nalphabets; j++)
-            amino_dynamicmtx[(unsigned char)amino[i]][(unsigned char)amino[j]] = (double)n_dynamicmtx[i][j];
+            amino_dynamicmtx[(unsigned char)ctx->amino[i]][(unsigned char)ctx->amino[j]] = (double)n_dynamicmtx[i][j];
 
     mseq1[0] = mseq[0];
     mseq2[0] = mseq[1];

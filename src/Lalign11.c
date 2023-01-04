@@ -355,7 +355,7 @@ L__align11(Context* ctx, double** n_dynamicmtx, double scoreoffset, char** seq1,
 
     for (i = 0; i < nalphabets; i++)
         for (j = 0; j < nalphabets; j++)
-            amino_dynamicmtx[(int)amino[i]][(int)amino[j]] = (double)n_dynamicmtx[i][j];
+            amino_dynamicmtx[(int)ctx->amino[i]][(int)ctx->amino[j]] = (double)n_dynamicmtx[i][j];
 
     mseq1[0] = mseq[0];
     mseq2[0] = mseq[1];
@@ -689,7 +689,7 @@ fprintf( stderr, "\n" );
 }
 
 double
-L__align11_noalign(double** n_dynamicmtx, char** seq1, char** seq2)
+L__align11_noalign(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2)
 // warp mitaiou
 {
     //	int k;
@@ -817,22 +817,7 @@ L__align11_noalign(double** n_dynamicmtx, char** seq1, char** seq2)
 
     for (i = 0; i < nalphabets; i++)
         for (j = 0; j < nalphabets; j++)
-            amino_dynamicmtx[(int)amino[i]][(int)amino[j]] = (double)n_dynamicmtx[i][j];
-
-            //	mseq1[0] = mseq[0];
-            //	mseq2[0] = mseq[1];
-
-            //	if( orlgth1 > commonAlloc1 || orlgth2 > commonAlloc2 )
-            //	{
-            //		int ll1, ll2;
-            //
-            //		if( commonAlloc1 && commonAlloc2 )
-            //		{
-            //			FreeIntMtx( commonIP );
-            //		}
-            //
-            //		ll1 = MAX( orlgth1, commonAlloc1 );
-            //		ll2 = MAX( orlgth2, commonAlloc2 );
+            amino_dynamicmtx[(int)ctx->amino[i]][(int)ctx->amino[j]] = (double)n_dynamicmtx[i][j];
 
 #if DEBUG
 //		fprintf( stderr, "\n\ntrying to allocate %dx%d matrices ... ", ll1+1, ll2+1 );

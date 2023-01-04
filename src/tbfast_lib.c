@@ -666,7 +666,7 @@ treebase(Context* ctx, TbfastOpts opts, int* nlen, char** aseq, int nadd, char* 
             continue;
         }
 
-        makedynamicmtx(dynamicmtx, ctx->n_dis_consweight_multi, dep[l].distfromtip);
+        makedynamicmtx(ctx, dynamicmtx, ctx->n_dis_consweight_multi, dep[l].distfromtip);
 
         len1 = strlen(aseq[m1]);
         len2 = strlen(aseq[m2]);
@@ -1661,7 +1661,7 @@ tbfast_main(int argc, char* argv[]) {
                 }
                 if (kozoarivec[i])
                     ik++;
-                G__align11_noalign(NULL, 0, 0, NULL, NULL);
+                G__align11_noalign(ctx, NULL, 0, 0, NULL, NULL);
             }
         }
 

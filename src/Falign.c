@@ -234,8 +234,8 @@ Falign(Context* ctx, int** whichmtx, double*** scoringmatrices, double** n_dynam
             D__align(ctx, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0);
             A__align_variousdist(ctx, NULL, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0);
             D__align_variousdist(ctx, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0);
-            G__align11(NULL, NULL, NULL, 0, 0, 0);
-            G__align11psg(NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
+            G__align11(ctx, NULL, NULL, NULL, 0, 0, 0);
+            G__align11psg(ctx, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
             blockAlign2(NULL, NULL, NULL, NULL, NULL, NULL);
             if (crossscore)
                 FreeDoubleMtx(crossscore);
@@ -1001,7 +1001,7 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
                 break;
             case ('d'):
                 if (clus1 == 1 && clus2 == 1) {
-                    totalscore += G__align11(n_dynamicmtx, tmpres1, tmpres2, alloclen, headgp, tailgp);
+                    totalscore += G__align11(ctx, n_dynamicmtx, tmpres1, tmpres2, alloclen, headgp, tailgp);
                 } else {
                     if (scoringmatrices)  // called by tditeration.c
                     {
@@ -1013,10 +1013,9 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
             case ('A'):
                 if (clus1 == 1 && clus2 == 1) {
                     if (codonpos || codonscore) {
-                        //						reporterr( "calling G__align11psg\n" );
-                        totalscore += G__align11psg(codonscoremtx, n_dynamicmtx, tmpres1, tmpres2, alloclen, headgp, tailgp, gstart + cut1[i], gend + cut1[i]);
+                        totalscore += G__align11psg(ctx, codonscoremtx, n_dynamicmtx, tmpres1, tmpres2, alloclen, headgp, tailgp, gstart + cut1[i], gend + cut1[i]);
                     } else
-                        totalscore += G__align11(n_dynamicmtx, tmpres1, tmpres2, alloclen, headgp, tailgp);
+                        totalscore += G__align11(ctx, n_dynamicmtx, tmpres1, tmpres2, alloclen, headgp, tailgp);
                 } else {
                     if (codonpos) {
                         reporterr("\n\ncodonpos will be soon supported for a reference MSA. For now, use a single sequence as reference.\n\n\n");
@@ -1194,7 +1193,7 @@ Falign_udpari_long(
             A__align(ctx, NULL, 0, 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
             A__align_variousdist(ctx, NULL, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0);
             D__align_variousdist(ctx, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0);
-            G__align11(NULL, NULL, NULL, 0, 0, 0);
+            G__align11(ctx, NULL, NULL, NULL, 0, 0, 0);
             blockAlign2(NULL, NULL, NULL, NULL, NULL, NULL);
             if (crossscore)
                 FreeDoubleMtx(crossscore);

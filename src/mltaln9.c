@@ -3215,7 +3215,7 @@ score2dist(double pscore, double selfscore1, double selfscore2) {
 static double
 distdp(Context* ctx, double** scoringmtx, char* s1, char* s2, LocalHom* lh, double selfscore1, double selfscore2, int alloclen) {
     (void)ctx;
-    double v = G__align11(scoringmtx, &s1, &s2, alloclen, 1, 1);
+    double v = G__align11(ctx, scoringmtx, &s1, &s2, alloclen, 1, 1);
     putlocalhom2(ctx, s1, s2, lh, 0, 0, 'h');
     return (score2dist(v, selfscore1, selfscore2));
 }
@@ -3223,7 +3223,7 @@ distdp(Context* ctx, double** scoringmtx, char* s1, char* s2, LocalHom* lh, doub
 double
 distdp_noalign(Context* ctx, char* s1, char* s2, double selfscore1, double selfscore2, int alloclen) {
     (void)alloclen;
-    double v = G__align11_noalign(ctx->n_dis_consweight_multi, penalty, penalty_ex, &s1, &s2);
+    double v = G__align11_noalign(ctx, ctx->n_dis_consweight_multi, penalty, penalty_ex, &s1, &s2);
     return (score2dist(v, selfscore1, selfscore2));
 }
 
@@ -3240,7 +3240,7 @@ distdpL(Context* ctx, double** scoringmtx, char* s1, char* s2, LocalHom* lh, dou
 static double
 distdpL_noalign(Context* ctx, char* s1, char* s2, double selfscore1, double selfscore2, int alloclen) {
     (void)alloclen;
-    double v = L__align11_noalign(ctx->n_dis_consweight_multi, &s1, &s2);
+    double v = L__align11_noalign(ctx, ctx->n_dis_consweight_multi, &s1, &s2);
     return (score2dist(v, selfscore1, selfscore2));
 }
 
@@ -3379,8 +3379,8 @@ calcnearestthread(calcnearestthread_arg_t* targ) {
             if (commonJP)
                 FreeIntMtx(commonJP);
             commonJP = NULL;
-            G__align11_noalign(NULL, 0, 0, NULL, NULL);
-            L__align11_noalign(NULL, NULL, NULL);
+            G__align11_noalign(ctx, NULL, 0, 0, NULL, NULL);
+            L__align11_noalign(ctx, NULL, NULL, NULL);
             genL__align11(ctx, NULL, NULL, NULL, 0, NULL, NULL);
             return (NULL);
         }
@@ -3540,12 +3540,12 @@ recalcpairs4thread(recalcpairs4thread_arg_t* targ) {
             if (commonJP)
                 FreeIntMtx(commonJP);
             commonJP = NULL;
-            G__align11(NULL, NULL, NULL, 0, 0, 0);
+            G__align11(ctx, NULL, NULL, NULL, 0, 0, 0);
             L__align11(ctx, NULL, 0.0, NULL, NULL, 0, NULL, NULL);
             genL__align11(ctx, NULL, NULL, NULL, 0, NULL, NULL);
 #if EXACTLYSAMEASPAIRLOCALALIGN
-            L__align11_noalign(NULL, NULL, NULL);
-            G__align11_noalign(NULL, 0, 0, NULL, NULL);
+            L__align11_noalign(ctx, NULL, NULL, NULL);
+            G__align11_noalign(ctx, NULL, 0, 0, NULL, NULL);
 #endif
             free(localhomtable);
             if (dynamicmtx)
@@ -3568,7 +3568,7 @@ recalcpairs4thread(recalcpairs4thread_arg_t* targ) {
 #if EXACTLYSAMEASPAIRLOCALALIGN
 #else
         if (specificityconsideration > 0.0)
-            makedynamicmtx(dynamicmtx, ctx->n_dis_consweight_multi, dep[n].distfromtip);
+            makedynamicmtx(ctx, dynamicmtx, ctx->n_dis_consweight_multi, dep[n].distfromtip);
 #endif
 
         if (step % 100 == 0)
@@ -3650,7 +3650,7 @@ recalcpairs4thread(recalcpairs4thread_arg_t* targ) {
 #if EXACTLYSAMEASPAIRLOCALALIGN
                 if (specificityconsideration > 0.0) {
                     tmpdist = distfunc_noalign(dseq[m0], dseq[m1], selfscore[m0], selfscore[m1], alloclen);
-                    makedynamicmtx(dynamicmtx, n_dis_consweight_multi, 0.5 * tmpdist);  // upgma ni awaseru.
+                    makedynamicmtx(ctx, dynamicmtx, n_dis_consweight_multi, 0.5 * tmpdist);  // upgma ni awaseru.
                     distfunc(dynamicmtx, tmpseq1, tmpseq2, localhomtable, selfscore[m0], selfscore[m1], alloclen);
                 } else {
                     distfunc(n_dis_consweight_multi, tmpseq1, tmpseq2, localhomtable, selfscore[m0], selfscore[m1], alloclen);
@@ -4114,7 +4114,7 @@ compacttreedpdist(Context* ctx, int njob, char** bseq, char** dseq, double* self
 #endif
     //	recalcpairs( njob, topol, dep, bseq, selfscore, alloclen, hat3node, fd0, fd1, uselh );
 
-    G__align11(NULL, NULL, NULL, 0, 0, 0);  // 20130603
+    G__align11(ctx, NULL, NULL, NULL, 0, 0, 0);  // 20130603
     if (commonIP)
         FreeIntMtx(commonIP);
     commonIP = NULL;
@@ -9391,7 +9391,7 @@ dist2offset(double dist) {
 }
 
 void
-makedynamicmtx(double** out, double** in, double offset) {
+makedynamicmtx(Context* ctx, double** out, double** in, double offset) {
     int    i, j, ii, jj;
     double av;
 
@@ -9408,11 +9408,11 @@ makedynamicmtx(double** out, double** in, double offset) {
         return;
 
     for (i = 0; i < nalphabets; i++) {
-        ii = (int)amino[i];
+        ii = (int)ctx->amino[i];
         if (ii == '-')
             continue;  // text no toki arieru
         for (j = 0; j < nalphabets; j++) {
-            jj = (int)amino[j];
+            jj = (int)ctx->amino[j];
             if (jj == '-')
                 continue;  // text no toki arieru
             out[i][j] = in[i][j] + offset * 600;
@@ -9438,13 +9438,13 @@ makedynamicmtx(double** out, double** in, double offset) {
     av /= (double)nalphabets;
 
     for (i = 0; i < nalphabets; i++) {
-        if (amino[i] == '-')
+        if (ctx->amino[i] == '-')
             continue;  // text no toki arieru
         for (j = 0; j < nalphabets; j++) {
-            if (amino[j] == '-')
+            if (ctx->amino[j] == '-')
                 continue;  // text no toki arieru
             out[i][j] = out[i][j] * 600 / av;
-            reporterr("%c-%c: %f\n", amino[i], amino[j], out[i][j]);
+            reporterr("%c-%c: %f\n", ctx->amino[i], ctx->amino[j], out[i][j]);
         }
     }
 }

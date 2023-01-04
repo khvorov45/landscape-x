@@ -236,7 +236,7 @@ Atracking(double* lasthorizontalw, double* lastverticalw, char** seq1, char** se
 }
 
 double
-G__align11psg(double** codonmtx, double** n_dynamicmtx, char** seq1, char** seq2, int alloclen, int headgp, int tailgp, double* gstart, double* gend) {
+G__align11psg(Context* ctx, double** codonmtx, double** n_dynamicmtx, char** seq1, char** seq2, int alloclen, int headgp, int tailgp, double* gstart, double* gend) {
     //	int k;
     register int i, j;
     int          lasti; /* outgap == 0 -> lgth1, outgap == 1 -> lgth1+1 */
@@ -484,7 +484,7 @@ G__align11psg(double** codonmtx, double** n_dynamicmtx, char** seq1, char** seq2
     }
     for (i = 0; i < nalphabets; i++)
         for (j = 0; j < nalphabets; j++)
-            amino_dynamicmtx[(unsigned char)amino[i]][(unsigned char)amino[j]] = (double)n_dynamicmtx[i][j];
+            amino_dynamicmtx[(uint8_t)ctx->amino[i]][(uint8_t)ctx->amino[j]] = (double)n_dynamicmtx[i][j];
 
     mseq1[0] = mseq[0];
     mseq2[0] = mseq[1];
@@ -858,8 +858,9 @@ G__align11psg(double** codonmtx, double** n_dynamicmtx, char** seq1, char** seq2
 #endif
     return (wm);
 }
+
 double
-G__align11(double** n_dynamicmtx, char** seq1, char** seq2, int alloclen, int headgp, int tailgp) {
+G__align11(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int alloclen, int headgp, int tailgp) {
     //	int k;
     register int i, j;
     int          lasti; /* outgap == 0 -> lgth1, outgap == 1 -> lgth1+1 */
@@ -1088,7 +1089,7 @@ G__align11(double** n_dynamicmtx, char** seq1, char** seq2, int alloclen, int he
     }
     for (i = 0; i < nalphabets; i++)
         for (j = 0; j < nalphabets; j++)
-            amino_dynamicmtx[(unsigned char)amino[i]][(unsigned char)amino[j]] = (double)n_dynamicmtx[i][j];
+            amino_dynamicmtx[(uint8_t)ctx->amino[i]][(uint8_t)ctx->amino[j]] = (double)n_dynamicmtx[i][j];
 
     mseq1[0] = mseq[0];
     mseq2[0] = mseq[1];
@@ -1407,7 +1408,7 @@ G__align11(double** n_dynamicmtx, char** seq1, char** seq2, int alloclen, int he
 }
 
 double
-G__align11_noalign(double** n_dynamicmtx, int penal, int penal_ex, char** seq1, char** seq2)
+G__align11_noalign(Context* ctx, double** n_dynamicmtx, int penal, int penal_ex, char** seq1, char** seq2)
 /* warp mitaiou */
 {
     //	int k;
@@ -1517,7 +1518,7 @@ G__align11_noalign(double** n_dynamicmtx, int penal, int penal_ex, char** seq1, 
 
     for (i = 0; i < nalphabets; i++)
         for (j = 0; j < nalphabets; j++)
-            amino_dynamicmtx[(int)amino[i]][(int)amino[j]] = (double)n_dynamicmtx[i][j];
+            amino_dynamicmtx[(int)ctx->amino[i]][(int)ctx->amino[j]] = (double)n_dynamicmtx[i][j];
 
 #if 0
 	for( i=0; i<lgth1; i++ ) 
