@@ -499,7 +499,7 @@ system( "less input_of_Falign < /dev/tty > /dev/tty" );
         if (fftscore && scoremtx != -1) {
             for (i = 0; i < clus1; i++) {
 #if 1
-                seq_vec_5(ctx, seqVector1[0], ctx->polarity, volume, eff1[i], tmpseq1[i]);
+                seq_vec_5(ctx, seqVector1[0], ctx->polarity, ctx->volume, eff1[i], tmpseq1[i]);
 #else
                 seq_vec_2(seqVector1[0], polarity, eff1[i], tmpseq1[i]);
                 seq_vec_2(seqVector1[1], volume, eff1[i], tmpseq1[i]);
@@ -538,7 +538,7 @@ system( "less seqVec < /dev/tty > /dev/tty" );
         if (fftscore && scoremtx != -1) {
             for (i = 0; i < clus2; i++) {
 #if 1
-                seq_vec_5(ctx, seqVector2[0], ctx->polarity, volume, eff2[i], tmpseq2[i]);
+                seq_vec_5(ctx, seqVector2[0], ctx->polarity, ctx->volume, eff2[i], tmpseq2[i]);
 #else
                 seq_vec_2(seqVector2[0], polarity, eff2[i], tmpseq2[i]);
                 seq_vec_2(seqVector2[1], volume, eff2[i], tmpseq2[i]);
@@ -1310,18 +1310,6 @@ Falign_udpari_long(
     for (j = 0; j < clus2; j++)
         strcpy(tmpseq2[j], seq2[j]);
 
-#if 0
-fftfp = fopen( "input_of_Falign", "w" );
-fprintf( fftfp, "nlen = %d\n", nlen );
-fprintf( fftfp, "seq1: ( %d sequences ) \n", clus1 );
-for( i=0; i<clus1; i++ )
-	fprintf( fftfp, "%s\n", seq1[i] );
-fprintf( fftfp, "seq2: ( %d sequences ) \n", clus2 );
-for( i=0; i<clus2; i++ )
-	fprintf( fftfp, "%s\n", seq2[i] );
-fclose( fftfp );
-system( "less input_of_Falign < /dev/tty > /dev/tty" );
-#endif
     if (!kobetsubunkatsu) {
         if (fftkeika)
             fprintf(stderr, " FFT ... ");
@@ -1333,12 +1321,8 @@ system( "less input_of_Falign < /dev/tty > /dev/tty" );
                 seq_vec_4(seqVector1[0], eff1[i], tmpseq1[i]);
         } else if (fftscore) {
             for (i = 0; i < clus1; i++) {
-#if 0
-				seq_vec_2( seqVector1[0], polarity, eff1[i], tmpseq1[i] );
-				seq_vec_2( seqVector1[1], volume,   eff1[i], tmpseq1[i] );
-#else
-                seq_vec_5(ctx, seqVector1[0], ctx->polarity, volume, eff1[i], tmpseq1[i]);
-#endif
+
+                seq_vec_5(ctx, seqVector1[0], ctx->polarity, ctx->volume, eff1[i], tmpseq1[i]);
             }
         } else {
             for (i = 0; i < clus1; i++)
@@ -1370,7 +1354,7 @@ system( "less seqVec < /dev/tty > /dev/tty" );
                 seq_vec_4(seqVector2[0], eff2[i], tmpseq2[i]);
         } else if (fftscore) {
             for (i = 0; i < clus2; i++) {
-                seq_vec_5(ctx, seqVector2[0], ctx->polarity, volume, eff2[i], tmpseq2[i]);
+                seq_vec_5(ctx, seqVector2[0], ctx->polarity, ctx->volume, eff2[i], tmpseq2[i]);
             }
         } else {
             for (i = 0; i < clus2; i++)

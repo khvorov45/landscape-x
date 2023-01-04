@@ -2724,18 +2724,18 @@ constants(Context* ctx, int nseq, char** seq) {
             ctx->polarity[i] /= sd;
 
         for (i = 0; i < 20; i++)
-            volume[i] = volume_[i];
+            ctx->volume[i] = volume_[i];
         for (av = 0.0, i = 0; i < 20; i++)
-            av += volume[i];
+            av += ctx->volume[i];
         av /= 20.0;
         for (sd = 0.0, i = 0; i < 20; i++)
-            sd += (volume[i] - av) * (volume[i] - av);
+            sd += (ctx->volume[i] - av) * (ctx->volume[i] - av);
         sd /= 20.0;
         sd = sqrt(sd);
         for (i = 0; i < 20; i++)
-            volume[i] -= av;
+            ctx->volume[i] -= av;
         for (i = 0; i < 20; i++)
-            volume[i] /= sd;
+            ctx->volume[i] /= sd;
     }
 }
 

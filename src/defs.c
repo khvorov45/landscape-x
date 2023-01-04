@@ -9,7 +9,6 @@ int   nthreadpair = 1;
 int   randomseed = 0;
 int   parallelizationstrategy = BAATARI1;
 
-double        volume[0x100];
 int           ribosumdis[37][37];
 
 int    ppid;
