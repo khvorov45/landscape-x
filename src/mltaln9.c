@@ -603,14 +603,14 @@ score_calc4(char** seq, int s, double** eff) /* method 3 deha nai */
 }
 
 void
-upg2(int nseq, double** eff, int*** topol, double** len) {
+upg2(Context* ctx, int nseq, double** eff, int*** topol, double** len) {
     int    i, j, k;
     double tmplen[M];
 
     static char** pair = NULL;
 
     if (!pair) {
-        pair = AllocateCharMtx(njob, njob);
+        pair = AllocateCharMtx(ctx->njob, ctx->njob);
     }
 
     for (i = 0; i < nseq; i++)
@@ -1296,30 +1296,6 @@ setnearest(Bchain* acpt, double** eff, double* mindisfrompt, int* nearestpt, int
 }
 
 static void
-setnearest_double_fullmtx(Bchain* acpt, double** eff, double* mindisfrompt, int* nearestpt, int pos) {
-    int      j;
-    double   tmpdouble;
-    Bchain*  acptj;
-
-    *mindisfrompt = 999.9;
-    *nearestpt = -1;
-    for (acptj = (acpt + pos)->next; acptj != NULL; acptj = acptj->next) {
-        j = acptj->pos;
-        if ((tmpdouble = eff[pos][j]) < *mindisfrompt) {
-            *mindisfrompt = tmpdouble;
-            *nearestpt = j;
-        }
-    }
-    for (acptj = acpt; (acptj && acptj->pos != pos); acptj = acptj->next) {
-        j = acptj->pos;
-        if ((tmpdouble = eff[j][pos]) < *mindisfrompt) {
-            *mindisfrompt = tmpdouble;
-            *nearestpt = j;
-        }
-    }
-}
-
-static void
 loadtreeoneline(int* ar, double* len, FILE* fp) {
     static char gett[1000];
     int         res;
@@ -1766,10 +1742,7 @@ topolorderz(int* order, int*** topol, Treedep* dep, int pos, int nchild) {
 #if RECURSIVETOP
 #else
 static void
-topolorder_mudaari(int* n1, int* n2, int* order1, int* order2, int*** topol, Treedep* dep, int pos)
-// memhist[][] wo free sezu, recalcpairs4thread() ni wataseba, kono kansuu ha iranai. -> V7.383
-// memhist[][] no memory shiyou ryou ha, saiaku no baai O(N^2)
-{
+topolorder_mudaari(int* n1, int* n2, int* order1, int* order2, int*** topol, Treedep* dep, int pos) {
     int **memhist, **localmem;
     int   i, s1, s2, c1, c2;
     memhist = AllocateIntMtx(pos, 0);
@@ -2692,74 +2665,8 @@ increaseintergroupdistanceshalfmtx(double** eff, int ngroup, int** groups, int n
     free(others);
 }
 
-static void
-increaseintergroupdistancesfullmtx(double** eff, int ngroup, int** groups, int nseq) {
-    int    nwarned = 0;
-    int    i, k, m, s1, s2, sl, ss;
-    int *  others, *tft;
-    double maxdist, *dptr, dtmp;
-    tft = calloc(nseq, sizeof(int*));
-    others = calloc(nseq, sizeof(int*));
-
-    reporterr("\n");  // Hitsuyou desu.
-    for (i = 0; i < ngroup; i++) {
-        if (groups[i][1] == -1)
-            continue;
-
-        for (m = 0; m < nseq; m++)
-            tft[m] = 0;
-        for (m = 0; (s1 = groups[i][m]) > -1; m++)
-            tft[s1] = 1;
-        for (m = 0, k = 0; m < nseq; m++)
-            if (tft[m] == 0)
-                others[k++] = m;
-        others[k] = -1;
-
-        maxdist = 0.0;
-        for (m = 1; (s2 = groups[i][m]) > -1; m++)
-            for (k = 0; (s1 = groups[i][k]) > -1 && k < m; k++) {
-                if (s2 > s1) {
-                    sl = s2;
-                    ss = s1;
-                } else {
-                    sl = s1;
-                    ss = s2;
-                }
-                dtmp = eff[ss][sl];
-                if (dtmp > maxdist)
-                    maxdist = dtmp;
-            }
-
-        //		reporterr( "maxdist = %f\n", maxdist );
-
-        for (m = 0; (s2 = groups[i][m]) > -1; m++)
-            for (k = 0; (s1 = others[k]) > -1; k++) {
-                if (s2 > s1) {
-                    sl = s2;
-                    ss = s1;
-                } else {
-                    sl = s1;
-                    ss = s2;
-                }
-                dptr = eff[ss] + sl;
-                if (*dptr < maxdist) {
-                    if (*dptr < 0.5 && nwarned++ < 100)
-                        reporterr("# Sequences %d and %d seem to be closely related, but are not in the same sub MSA (%d) in your setting.\n", s2 + 1, s1 + 1, i + 1);
-                    *dptr = maxdist;
-                }
-            }
-    }
-    if (nwarned > 100)
-        reporterr("# Sequenc.... (more pairs)\n");
-
-    //	for( m=0; m<nseq-1; m++ ) for( k=m+1; k<nseq; k++ )
-    //		reporterr( "mtx[%d][%d] after modification = %f (maxdist=%f)\n", m, k, eff[m][k], maxdist );
-    free(tft);
-    free(others);
-}
-
 void
-fixed_supg_double_realloc_nobk_halfmtx_treeout_constrained(int nseq, double** eff, int*** topol, double** len, char** name, Treedep* dep, int ngroup, int** groups, int efffree) {
+fixed_supg_double_realloc_nobk_halfmtx_treeout_constrained(Context* ctx, int nseq, double** eff, int*** topol, double** len, char** name, Treedep* dep, int ngroup, int** groups, int efffree) {
     int     i, j, k, miniim, maxiim, minijm, maxijm;
     int *   intpt, *intpt2;
     double  tmpdouble;
@@ -2807,22 +2714,18 @@ fixed_supg_double_realloc_nobk_halfmtx_treeout_constrained(int nseq, double** ef
     }
 
     if (!hist) {
-        hist = AllocateIntVec(njob);
-        tmptmplen = AllocateFloatVec(njob);
-        ac = (Bchain*)malloc(njob * sizeof(Bchain));
-        nmemar = AllocateIntVec(njob);
-        mindisfrom = AllocateFloatVec(njob);
-        nearest = AllocateIntVec(njob);
-        //		treetmp = AllocateCharVec( njob * ( B + 100 ) ); // nagasugi?
+        hist = AllocateIntVec(ctx->njob);
+        tmptmplen = AllocateFloatVec(ctx->njob);
+        ac = (Bchain*)malloc(ctx->njob * sizeof(Bchain));
+        nmemar = AllocateIntVec(ctx->njob);
+        mindisfrom = AllocateFloatVec(ctx->njob);
+        nearest = AllocateIntVec(ctx->njob);
         treetmp = NULL;  // kentou 2013/06/12
         nametmp = AllocateCharVec(1000);  // nagasugi
-        //		tree = AllocateCharMtx( njob, njob*600 );
-        tree = AllocateCharMtx(njob, 0);
-        testtopol = AllocateIntVec(njob + 1);
-        inconsistent = AllocateIntMtx(njob, njob);  // muda
-        //		inconsistentpairlist = AllocateIntMtx( njob*(njob-1)/2+1, 2 ); // muda!
+        tree = AllocateCharMtx(ctx->njob, 0);
+        testtopol = AllocateIntVec(ctx->njob + 1);
+        inconsistent = AllocateIntMtx(ctx->njob, ctx->njob);  // muda
         inconsistentpairlist = AllocateIntMtx(1, 2);
-        //		reporterr( "allocating inconsistentpairlist\n" );
         warned = AllocateIntVec(ngroup);
     }
 
@@ -3865,7 +3768,7 @@ reformat_rec_newick(char** subtree, Treept* pt) {
 }
 
 static void
-reformattree(Treept* root, Treept* ori, int n, int*** topol, double** len, Treedep* dep, char** name, int treeout) {
+reformattree(Context* ctx, Treept* root, Treept* ori, int n, int*** topol, double** len, Treedep* dep, char** name, int treeout) {
     int   i, pos;
     char* newick;
     int*  lastappear;
@@ -3879,7 +3782,7 @@ reformattree(Treept* root, Treept* ori, int n, int*** topol, double** len, Treed
         int   j;
         char  namec, *nametmp, *tmpptr, **tree, *nameptr;
         nametmp = AllocateCharVec(1000);  // nagasugi
-        tree = AllocateCharMtx(njob, 0);
+        tree = AllocateCharMtx(ctx->njob, 0);
 
         for (i = 0; i < n; i++) {
             for (j = 0; j < 999; j++)
@@ -3956,15 +3859,16 @@ score2dist(double pscore, double selfscore1, double selfscore2) {
 }
 
 static double
-distdp(double** scoringmtx, char* s1, char* s2, LocalHom* lh, double selfscore1, double selfscore2, int alloclen) {
-    double v;
-    v = G__align11(scoringmtx, &s1, &s2, alloclen, 1, 1);
+distdp(Context* ctx, double** scoringmtx, char* s1, char* s2, LocalHom* lh, double selfscore1, double selfscore2, int alloclen) {
+    (void)ctx;
+    double v = G__align11(scoringmtx, &s1, &s2, alloclen, 1, 1);
     putlocalhom2(s1, s2, lh, 0, 0, 'h');
     return (score2dist(v, selfscore1, selfscore2));
 }
 
 double
-distdp_noalign(char* s1, char* s2, double selfscore1, double selfscore2, int alloclen) {
+distdp_noalign(Context* ctx, char* s1, char* s2, double selfscore1, double selfscore2, int alloclen) {
+    (void)ctx;
     (void)alloclen;
     double v;
     v = G__align11_noalign(n_dis_consweight_multi, penalty, penalty_ex, &s1, &s2);
@@ -3972,36 +3876,34 @@ distdp_noalign(char* s1, char* s2, double selfscore1, double selfscore2, int all
 }
 
 static double
-distdpL(double** scoringmtx, char* s1, char* s2, LocalHom* lh, double selfscore1, double selfscore2, int alloclen) {
+distdpL(Context* ctx, double** scoringmtx, char* s1, char* s2, LocalHom* lh, double selfscore1, double selfscore2, int alloclen) {
     double v;
     int    off1, off2;
     //	reporterr( "LOCAL align\n" );
-    v = L__align11(scoringmtx, 0.0, &s1, &s2, alloclen, &off1, &off2);
+    v = L__align11(ctx, scoringmtx, 0.0, &s1, &s2, alloclen, &off1, &off2);
     putlocalhom2(s1, s2, lh, off1, off2, 'h');
     return (score2dist(v, selfscore1, selfscore2));
 }
 
 static double
-distdpL_noalign(char* s1, char* s2, double selfscore1, double selfscore2, int alloclen) {
+distdpL_noalign(Context* ctx, char* s1, char* s2, double selfscore1, double selfscore2, int alloclen) {
+    (void)ctx;
     (void)alloclen;
-    double v;
-    //	reporterr( "LOCAL noalign\n" );
-    v = L__align11_noalign(n_dis_consweight_multi, &s1, &s2);
+    double v = L__align11_noalign(n_dis_consweight_multi, &s1, &s2);
     return (score2dist(v, selfscore1, selfscore2));
 }
 
 static double
-distdpN(double** scoringmtx, char* s1, char* s2, LocalHom* lh, double selfscore1, double selfscore2, int alloclen) {
-    double v;
+distdpN(Context* ctx, double** scoringmtx, char* s1, char* s2, LocalHom* lh, double selfscore1, double selfscore2, int alloclen) {
+    (void)ctx;
     int    off1, off2;
-    //	reporterr( "genafLOCAL align\n" );
-    v = genL__align11(scoringmtx, &s1, &s2, alloclen, &off1, &off2);
+    double v = genL__align11(ctx, scoringmtx, &s1, &s2, alloclen, &off1, &off2);
     putlocalhom2(s1, s2, lh, off1, off2, 'h');
     return (score2dist(v, selfscore1, selfscore2));
 }
 
 static double
-distdpN_noalign(char* s1, char* s2, double selfscore1, double selfscore2, int alloclen) {
+distdpN_noalign(Context* ctx, char* s1, char* s2, double selfscore1, double selfscore2, int alloclen) {
     double v;
     int    off1, off2;
     char * t1, *t2;
@@ -4010,7 +3912,7 @@ distdpN_noalign(char* s1, char* s2, double selfscore1, double selfscore2, int al
     //	reporterr( "genafLOCAL noalign\n" );
     strcpy(t1, s1);
     strcpy(t2, s2);
-    v = genL__align11(n_dis_consweight_multi, &t1, &t2, alloclen, &off1, &off2);
+    v = genL__align11(ctx, n_dis_consweight_multi, &t1, &t2, alloclen, &off1, &off2);
 
     if (usenaivescoreinsteadofalignmentscore)
         v = (double)naivepairscore11(t1, t2, 0.0);  // uwagaki
@@ -4069,6 +3971,7 @@ writehat3node_noaddress(int n, int i, int j, int ii, int jj, FILE** fpp, LocalHo
 }
 
 typedef struct _calcnearestthread_arg {
+    Context* ctx;
     char**  bseq;
     int     thread_no;
     int*    posshared;
@@ -4077,14 +3980,11 @@ typedef struct _calcnearestthread_arg {
     double* selfscore;
     double* mindists;
     int*    neighbors;
-#ifdef enablemultithread
-    pthread_mutex_t* mutex;
-#endif
 } calcnearestthread_arg_t;
 
 static void*
-calcnearestthread(void* arg) {
-    calcnearestthread_arg_t* targ = (calcnearestthread_arg_t*)arg;
+calcnearestthread(calcnearestthread_arg_t* targ) {
+    Context* ctx = targ->ctx;
     char**                   bseq = targ->bseq;
     int                      thread_no = targ->thread_no;
     int*                     posshared = targ->posshared;
@@ -4100,7 +4000,7 @@ calcnearestthread(void* arg) {
     double tmpdist, mindist;
     int    progress;
     int    neighbor, i;
-    double (*distfunc)(char*, char*, double, double, int);
+    double (*distfunc)(Context*, char*, char*, double, double, int);
     if (alg == 'A')
         distfunc = distdp_noalign;
     else if (alg == 'L')
@@ -4130,7 +4030,7 @@ calcnearestthread(void* arg) {
             commonJP = NULL;
             G__align11_noalign(NULL, 0, 0, NULL, NULL);
             L__align11_noalign(NULL, NULL, NULL);
-            genL__align11(NULL, NULL, NULL, 0, NULL, NULL);
+            genL__align11(ctx, NULL, NULL, NULL, 0, NULL, NULL);
             return (NULL);
         }
         pos = *posshared;
@@ -4160,7 +4060,7 @@ calcnearestthread(void* arg) {
 #if 0
 			tmpdist = 0.0; // test!
 #else
-            tmpdist = distfunc(bseq[pos], bseq[i], selfscore[pos], selfscore[i], alloclen);
+            tmpdist = distfunc(ctx, bseq[pos], bseq[i], selfscore[pos], selfscore[i], alloclen);
 #endif
             if (mindist > tmpdist) {
                 mindist = tmpdist;
@@ -4181,8 +4081,8 @@ typedef struct _jobplan {
     unsigned long long npairs;
 } Jobplan;
 
-typedef struct _recalcpairs4thread_arg {
-    //	int thread_no;
+typedef struct recalcpairs4thread_arg_t {
+    Context* ctx;
     int      nseq;
     int      numjob;
     Jobplan* jobplan;
@@ -4198,15 +4098,10 @@ typedef struct _recalcpairs4thread_arg {
     int***              topol;
     Treedep*            dep;
     unsigned long long* done;
-#ifdef enablemultithread
-    pthread_mutex_t* mutex;
-#endif
 } recalcpairs4thread_arg_t;
 
 static void*
-recalcpairs4thread(void* arg)  // no TLS
-{
-    recalcpairs4thread_arg_t* targ = (recalcpairs4thread_arg_t*)arg;
+recalcpairs4thread(recalcpairs4thread_arg_t* targ) {
     char**                    bseq = targ->bseq;
     int                       nseq = targ->nseq;
     int                       numjob = targ->numjob;
@@ -4219,11 +4114,8 @@ recalcpairs4thread(void* arg)  // no TLS
     Treedep* dep = targ->dep;
     int      alloclen = targ->alloclen;
     double*  selfscore = targ->selfscore;
-    ;
     unsigned long long* done = targ->done;
-#ifdef enablemultithread
-    pthread_mutex_t* mutex = targ->mutex;
-#endif
+    Context* ctx = targ->ctx;
 
     int                i, j, m0, m1, m00, m11, n, step, istart, iend, n1, n0, subid;
     int                prevn;
@@ -4236,7 +4128,7 @@ recalcpairs4thread(void* arg)  // no TLS
     unsigned long long totalpairs = (unsigned long long)nseq * (nseq - 1) / 2;
     double**           dynamicmtx = NULL;
     double**           mtxptr;
-    double (*distfunc)(double**, char*, char*, LocalHom*, double, double, int);
+    double (*distfunc)(Context*, double**, char*, char*, LocalHom*, double, double, int);
     if (alg == 'A')
         distfunc = distdp;
     else if (alg == 'L')
@@ -4259,8 +4151,8 @@ recalcpairs4thread(void* arg)  // no TLS
         distfunc_noalign = distdpN_noalign;
 #endif
 
-    mem0 = calloc(sizeof(int), njob);
-    mem1 = calloc(sizeof(int), njob);
+    mem0 = calloc(sizeof(int), ctx->njob);
+    mem1 = calloc(sizeof(int), ctx->njob);
     tmpseq1 = calloc(sizeof(char), alloclen);
     tmpseq2 = calloc(sizeof(char), alloclen);
 
@@ -4298,8 +4190,8 @@ recalcpairs4thread(void* arg)  // no TLS
                 FreeIntMtx(commonJP);
             commonJP = NULL;
             G__align11(NULL, NULL, NULL, 0, 0, 0);
-            L__align11(NULL, 0.0, NULL, NULL, 0, NULL, NULL);
-            genL__align11(NULL, NULL, NULL, 0, NULL, NULL);
+            L__align11(ctx, NULL, 0.0, NULL, NULL, 0, NULL, NULL);
+            genL__align11(ctx, NULL, NULL, NULL, 0, NULL, NULL);
 #if EXACTLYSAMEASPAIRLOCALALIGN
             L__align11_noalign(NULL, NULL, NULL);
             G__align11_noalign(NULL, 0, 0, NULL, NULL);
@@ -4398,7 +4290,7 @@ recalcpairs4thread(void* arg)  // no TLS
                 }
 
                 if (nadd) {
-                    if (m1 < njob - nadd)
+                    if (m1 < ctx->njob - nadd)
                         continue;
                 }
                 strcpy(tmpseq1, bseq[m0]);
@@ -4413,7 +4305,7 @@ recalcpairs4thread(void* arg)  // no TLS
                     distfunc(n_dis_consweight_multi, tmpseq1, tmpseq2, localhomtable, selfscore[m0], selfscore[m1], alloclen);
                 }
 #else
-                distfunc(mtxptr, tmpseq1, tmpseq2, localhomtable, selfscore[m0], selfscore[m1], alloclen);
+                distfunc(ctx, mtxptr, tmpseq1, tmpseq2, localhomtable, selfscore[m0], selfscore[m1], alloclen);
 #endif
 //				reporterr( "tmpdist = %f\n", tmpdist );
 #if N0LOOPFIRST
@@ -4430,13 +4322,7 @@ recalcpairs4thread(void* arg)  // no TLS
 }
 
 static void
-calcnearest_para(int njob, double* selfscore, char** bseq, int alloclen, int* neighbors, double* mindists) {
-    int                      i;
-    calcnearestthread_arg_t* targ;
-#ifdef enablemultithread
-    pthread_t*      handle;
-    pthread_mutex_t mutex;
-#endif
+calcnearest_para(Context* ctx, int njob, double* selfscore, char** bseq, int alloclen, int* neighbors, double* mindists) {
     int posshared;
 
 #if REPORTCOSTS
@@ -4450,36 +4336,19 @@ calcnearest_para(int njob, double* selfscore, char** bseq, int alloclen, int* ne
 #else
     posshared = njob - 1;
 #endif
-    targ = calloc(nthread, sizeof(calcnearestthread_arg_t));
-#ifdef enablemultithread
-    handle = calloc(nthread, sizeof(pthread_t));
-    pthread_mutex_init(&mutex, NULL);
-#endif
 
-    for (i = 0; i < nthread; i++) {
-        targ[i].thread_no = i;
-        targ[i].bseq = bseq;
-        targ[i].nlim = njob - 2;  // # of steps
-        targ[i].posshared = &posshared;
-        targ[i].selfscore = selfscore;
-        targ[i].alloclen = alloclen;
-        targ[i].neighbors = neighbors;
-        targ[i].mindists = mindists;
-#ifdef enablemultithread
-        targ[i].mutex = &mutex;
-        pthread_create(handle + i, NULL, calcnearestthread, (void*)(targ + i));
-#else
-        calcnearestthread((void*)(targ + i));
-#endif
-    }
-
-#ifdef enablemultithread
-    for (i = 0; i < nthread; i++)
-        pthread_join(handle[i], NULL);
-    pthread_mutex_destroy(&mutex);
-    free(handle);
-#endif
-    free(targ);
+    calcnearestthread_arg_t targ = {
+        .ctx = ctx,
+        .thread_no = 0,
+        .bseq = bseq,
+        .nlim = njob - 2,
+        .posshared = &posshared,
+        .selfscore = selfscore,
+        .alloclen = alloclen,
+        .neighbors = neighbors,
+        .mindists = mindists,
+    };
+    calcnearestthread(&targ);
 
 #if REPORTCOSTS
     reporterr("\n");
@@ -4493,18 +4362,13 @@ calcnearest_para(int njob, double* selfscore, char** bseq, int alloclen, int* ne
 
 #if EXACTLYSAMEASPAIRLOCALALIGN
 static void
-recalcpairs_para4(int njob, int*** topol, Treedep* dep, char** bseq, char** dseq, double* selfscore, int alloclen, int* uselh, int* nfilesfornode)
+recalcpairs_para4(Context* ctx, int njob, int*** topol, Treedep* dep, char** bseq, char** dseq, double* selfscore, int alloclen, int* uselh, int* nfilesfornode)
 #else
 static void
-recalcpairs_para4(int njob, int*** topol, Treedep* dep, char** bseq, double* selfscore, int alloclen, int* uselh, int* nfilesfornode)
+recalcpairs_para4(Context* ctx, int njob, int*** topol, Treedep* dep, char** bseq, double* selfscore, int alloclen, int* uselh, int* nfilesfornode)
 #endif
 {
     int                       i;
-    recalcpairs4thread_arg_t* targ;
-#ifdef enablemultithread
-    pthread_t*      handle;
-    pthread_mutex_t mutex;
-#endif
     int possharedn, numjob;
 
     int      n, n0, n1, j, k, b, blocksize, blocksize0, i0, i1;
@@ -4721,32 +4585,6 @@ recalcpairs_para4(int njob, int*** topol, Treedep* dep, char** bseq, double* sel
     for (i = 0; i < numjob; i++)
         joborder[i] = i;
 
-#if 0  // MPI deha hitsuyou. pthread niha nakutemo
-	for( i=0; i<numjob; i++ )
-	{
-		if( 0 || jobplan[i].divided )
-		{
-			j = rand()% (numjob/2);
-			k = joborder[i];
-			joborder[i] = joborder[j];
-			joborder[j] = k;
-		}
-	}
-#endif
-
-        //	for( i=0; i<numjob; i++ ) reporterr( "i=%d, joborder[i]=%d, subid=%d\n", i, joborder[i], jobplan[joborder[i]].subid );
-
-#if 0
-	for( i=0; i<numjob; i++ )
-	{
-		reporterr( "numjob=%d\n", i );
-		reporterr( "	node=%d (%lld), reg=%d-%d, mutex=%p\n", jobplan[i].node, jobplan[i].npairs, jobplan[i].start, jobplan[i].end, jobplan[i].mutexpt );
-	}
-exit( 1 );
-#endif
-
-    //free( mem0 );
-    //free( mem1 );
     free(npairs);
 
 #if REPORTCOSTS
@@ -4758,45 +4596,26 @@ exit( 1 );
     possharedn = 0;
     //	possharedn = numjob-1;
     doneull = 0;
-    targ = calloc(nthread, sizeof(recalcpairs4thread_arg_t));
-#ifdef enablemultithread
-    handle = calloc(nthread, sizeof(pthread_t));
-    pthread_mutex_init(&mutex, NULL);
-#endif
-    for (i = 0; i < nthread; i++) {
-        //		targ[i].thread_no = i;
-        targ[i].nseq = njob;
-        targ[i].numjob = numjob;
-        targ[i].bseq = bseq;
+    recalcpairs4thread_arg_t targ = {
+        .ctx = ctx,
+        .nseq = njob,
+        .numjob = numjob,
+        .bseq = bseq,
 #if EXACTLYSAMEASPAIRLOCALALIGN
-        targ[i].dseq = dseq;
+        .dseq = dseq,
 #endif
-        targ[i].joborder = joborder;
-        targ[i].uselh = uselh;
-        targ[i].topol = topol;
-        targ[i].dep = dep;
-        targ[i].posshared = &possharedn;
-        targ[i].selfscore = selfscore;
-        targ[i].alloclen = alloclen;
-        targ[i].jobplan = jobplan;
-        targ[i].done = &doneull;
-#ifdef enablemultithread
-        targ[i].mutex = &mutex;
-        pthread_create(handle + i, NULL, recalcpairs4thread, (void*)(targ + i));
-#else
-        recalcpairs4thread((void*)(targ + i));
-#endif
-    }
+        .joborder = joborder,
+        .uselh = uselh,
+        .topol = topol,
+        .dep = dep,
+        .posshared = &possharedn,
+        .selfscore = selfscore,
+        .alloclen = alloclen,
+        .jobplan = jobplan,
+        .done = &doneull,
+    };
 
-#ifdef enablemultithread
-    for (i = 0; i < nthread; i++)
-        pthread_join(handle[i], NULL);
-    pthread_mutex_destroy(&mutex);
-    //	pthread_mutex_destroy( &mutex0 );
-    //	pthread_mutex_destroy( &mutex1 );
-    free(handle);
-#endif
-    free(targ);
+    recalcpairs4thread(&targ);
 
     free(joborder);
     free(jobplan);
@@ -4813,110 +4632,7 @@ exit( 1 );
 }
 
 void
-compacttreegivendist(int njob, double* mindists, int* neighbors, int*** topol, double** len, char** name, Treedep* dep, int treeout) {
-    int    i, neighbor, n;
-    double tmpdist;
-    double mindist;
-    //	int *commonanc;
-
-    Treept* treept = NULL;
-    Treept *p, *b;
-    Treept* root;
-    treept = (Treept*)calloc(sizeof(Treept), njob * 2);
-
-    //		reporterr( "\n" );
-    //		for( i=0; i<njob; i++ )
-    //			reporterr( "mindists[%d]=%f, neighbors[%d]=%d\n", i, mindists[i], i, neighbors[i] );
-    for (i = 0; i < njob; i++) {
-        treept[i].parent = NULL;
-        treept[i].child0 = NULL;
-        treept[i].child1 = NULL;
-        treept[i].height = 0.0;
-        treept[i].len0 = 0.0;
-        treept[i].len1 = 0.0;
-        treept[i].rep0 = i;
-        treept[i].rep1 = -1;
-    }
-
-    n = njob;
-#if TREE7325
-    tmpdist = mindists[njob - 2];
-    treept[njob - 2].parent = treept + n;
-    treept[njob - 1].parent = treept + n;
-    treept[n].child0 = treept + njob - 2;
-    treept[n].child1 = treept + njob - 1;
-    treept[n].height = tmpdist * 0.5;
-    treept[n].len0 = tmpdist * 0.5;
-    treept[n].len1 = tmpdist * 0.5;
-    treept[n].parent = NULL;
-    treept[n].rep0 = njob - 2;
-    treept[n].rep1 = njob - 1;
-    root = treept + n;
-    for (i = njob - 3; i > -1; i--)
-#else
-    tmpdist = mindists[1];
-    treept[0].parent = treept + n;
-    treept[1].parent = treept + n;
-    treept[n].child0 = treept + 0;
-    treept[n].child1 = treept + 1;
-    treept[n].height = tmpdist * 0.5;
-    treept[n].len0 = tmpdist * 0.5;
-    treept[n].len1 = tmpdist * 0.5;
-    treept[n].parent = NULL;
-    treept[n].rep0 = 0;
-    treept[n].rep1 = 1;
-    root = treept + n;
-    for (i = 2; i < njob; i++)
-#endif
-    {
-        n++;
-        //			if( i % 100 == 0 ) reporterr( "i=%d, n=%d\n", i+1, n );
-
-        neighbor = neighbors[i];
-        mindist = mindists[i];
-
-        for (b = treept + neighbor, p = b->parent; p != NULL; b = p, p = p->parent) {
-            //				reporterr( "checking %p->%p (height=%f)\n", b, p, p->height );
-            if (p->height > mindist * 0.5)
-                break;
-        }
-
-        if (p == NULL) {
-            treept[n].parent = NULL;
-            root = treept + n;
-        } else if (p->child0 == b) {
-            p->child0 = treept + n;
-            p->len0 = p->height - mindist * 0.5;
-            treept[n].parent = p;
-        } else if (p->child1 == b) {
-            p->child1 = treept + n;
-            p->len1 = p->height - mindist * 0.5;
-            treept[n].parent = p;
-        } else {
-            reporterr("okashii\n");
-            exit(1);
-        }
-
-        treept[i].parent = treept + n;
-        b->parent = treept + n;
-
-        treept[n].child0 = b;
-        treept[n].child1 = treept + i;
-        treept[n].height = mindist * 0.5;
-        treept[n].rep0 = b->rep0;
-        treept[n].rep1 = treept[i].rep0;
-        treept[n].len0 = mindist * 0.5 - b->height;
-        treept[n].len1 = mindist * 0.5;
-    }
-    reformattree(root, treept, njob, topol, len, dep, name, treeout);
-
-    free(treept);
-    //		free( neighbors );
-    //		free( mindists );
-}
-
-void
-compacttreedpdist(int njob, char** bseq, char** dseq, double* selfscore, int*** topol, double** len, char** name, Treedep* dep, int treeout, int alloclen, int* uselh, int* nfilesfornode, int treegiven) {
+compacttreedpdist(Context* ctx, int njob, char** bseq, char** dseq, double* selfscore, int*** topol, double** len, char** name, Treedep* dep, int treeout, int alloclen, int* uselh, int* nfilesfornode, int treegiven) {
     int    i, neighbor, n;
     double tmpdist;
     double mindist;
@@ -4930,7 +4646,7 @@ compacttreedpdist(int njob, char** bseq, char** dseq, double* selfscore, int*** 
         double* mindists;
         neighbors = calloc(sizeof(int), njob);
         mindists = calloc(sizeof(double), njob);
-        calcnearest_para(njob, selfscore, dseq, alloclen, neighbors, mindists);
+        calcnearest_para(ctx, njob, selfscore, dseq, alloclen, neighbors, mindists);
         treept = (Treept*)calloc(sizeof(Treept), njob * 2);
 
         //		for( i=0; i<njob; i++ )
@@ -5026,7 +4742,7 @@ compacttreedpdist(int njob, char** bseq, char** dseq, double* selfscore, int*** 
             treept[n].len0 = mindist * 0.5 - b->height;
             treept[n].len1 = mindist * 0.5;
         }
-        reformattree(root, treept, njob, topol, len, dep, name, treeout);
+        reformattree(ctx, root, treept, njob, topol, len, dep, name, treeout);
 
         free(treept);
         free(neighbors);
@@ -5036,9 +4752,9 @@ compacttreedpdist(int njob, char** bseq, char** dseq, double* selfscore, int*** 
     }
 
 #if EXACTLYSAMEASPAIRLOCALALIGN
-    recalcpairs_para4(njob, topol, dep, bseq, dseq, selfscore, alloclen, uselh, nfilesfornode);
+    recalcpairs_para4(ctx, njob, topol, dep, bseq, dseq, selfscore, alloclen, uselh, nfilesfornode);
 #else
-    recalcpairs_para4(njob, topol, dep, bseq, selfscore, alloclen, uselh, nfilesfornode);
+    recalcpairs_para4(ctx, njob, topol, dep, bseq, selfscore, alloclen, uselh, nfilesfornode);
 #endif
 #if HAT3SORTED
 //	recalcpairs_para2( njob, topol, dep, bseq, selfscore, alloclen, hat3node, fd0, fd1, uselh );
@@ -5062,7 +4778,7 @@ compacttreedpdist(int njob, char** bseq, char** dseq, double* selfscore, int*** 
 }
 
 void
-compacttree_memsaveselectable(int nseq, double** partmtx, int* nearest, double* mindist, int** pointt, int* tselfscore, char** seq, int** skiptable, int*** topol, double** len, char** name, int* nlen, Treedep* dep, int treeout, int howcompact, int memsave) {
+compacttree_memsaveselectable(Context* ctx, int nseq, double** partmtx, int* nearest, double* mindist, int** pointt, int* tselfscore, char** seq, int** skiptable, int*** topol, double** len, char** name, int* nlen, Treedep* dep, int treeout, int howcompact, int memsave) {
     int i, j, k;
     //	int miniim, maxiim, minijm, maxijm;
     int *intpt, *intpt2;
@@ -5126,21 +4842,21 @@ compacttree_memsaveselectable(int nseq, double** partmtx, int* nearest, double* 
     }
     distarrarg = calloc(MAX(nthreadpair, 1), sizeof(compactdistarrthread_arg_t));
     resetarg = calloc(MAX(nthreadpair, 1), sizeof(resetnearestthread_arg_t));
-    joblist = calloc(njob, sizeof(int));
+    joblist = calloc(ctx->njob, sizeof(int));
     if (howcompact != 2)
-        result = calloc(njob, sizeof(double));
+        result = calloc(ctx->njob, sizeof(double));
     else
         result = NULL;
 
     if (!hist) {
-        hist = AllocateIntVec(njob);
-        tmptmplen = AllocateFloatVec(njob);
-        ac = (Bchain*)malloc(njob * sizeof(Bchain));
-        nmemar = AllocateIntVec(njob);
+        hist = AllocateIntVec(ctx->njob);
+        tmptmplen = AllocateFloatVec(ctx->njob);
+        ac = (Bchain*)malloc(ctx->njob * sizeof(Bchain));
+        nmemar = AllocateIntVec(ctx->njob);
         if (treeout) {
             treetmp = NULL;  // kentou 2013/06/12
             nametmp = AllocateCharVec(1000);  // nagasugi
-            tree = AllocateCharMtx(njob, 0);
+            tree = AllocateCharMtx(ctx->njob, 0);
         }
     }
 
@@ -5670,7 +5386,7 @@ compacttree_memsaveselectable(int nseq, double** partmtx, int* nearest, double* 
 }
 
 void
-fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(int nseq, double** eff, int*** topol, double** len, char** name, Treedep* dep, int efffree, int treeout) {
+fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(Context* ctx, int nseq, double** eff, int*** topol, double** len, char** name, Treedep* dep, int efffree, int treeout) {
     int     i, j, k, miniim, maxiim, minijm, maxijm;
     int*    intpt;
     double  tmpdouble;
@@ -5710,19 +5426,17 @@ fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(int nseq, double** 
     }
 
     if (!hist) {
-        hist = AllocateIntVec(njob);
-        tmptmplen = AllocateFloatVec(njob);
-        ac = (Bchain*)malloc(njob * sizeof(Bchain));
-        nmemar = AllocateIntVec(njob);
-        mindisfrom = AllocateFloatVec(njob);
-        nearest = AllocateIntVec(njob);
-        //		treetmp = AllocateCharVec( njob * ( B + 100 ) ); // nagasugi?
+        hist = AllocateIntVec(ctx->njob);
+        tmptmplen = AllocateFloatVec(ctx->njob);
+        ac = (Bchain*)malloc(ctx->njob * sizeof(Bchain));
+        nmemar = AllocateIntVec(ctx->njob);
+        mindisfrom = AllocateFloatVec(ctx->njob);
+        nearest = AllocateIntVec(ctx->njob);
         treetmp = NULL;  // kentou 2013/06/12
         nametmp = AllocateCharVec(1000);  // nagasugi
-        //		tree = AllocateCharMtx( njob, njob*600 );
-        tree = AllocateCharMtx(njob, 0);
+        tree = AllocateCharMtx(ctx->njob, 0);
         if (treeout == 2)
-            density = AllocateDoubleVec(njob);
+            density = AllocateDoubleVec(ctx->njob);
     }
 
     for (i = 0; i < nseq; i++) {
@@ -6045,7 +5759,7 @@ fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(int nseq, double** 
 }
 
 void
-fixed_musclesupg_double_realloc_nobk_halfmtx_treeout(int nseq, double** eff, int*** topol, double** len, char** name, Treedep* dep, int efffree) {
+fixed_musclesupg_double_realloc_nobk_halfmtx_treeout(Context* ctx, int nseq, double** eff, int*** topol, double** len, char** name, Treedep* dep, int efffree) {
     int     i, j, k, miniim, maxiim, minijm, maxijm;
     int *   intpt, *intpt2;
     double  tmpdouble;
@@ -6084,17 +5798,15 @@ fixed_musclesupg_double_realloc_nobk_halfmtx_treeout(int nseq, double** eff, int
     }
 
     if (!hist) {
-        hist = AllocateIntVec(njob);
-        tmptmplen = AllocateFloatVec(njob);
-        ac = (Bchain*)malloc(njob * sizeof(Bchain));
-        nmemar = AllocateIntVec(njob);
-        mindisfrom = AllocateFloatVec(njob);
-        nearest = AllocateIntVec(njob);
-        //		treetmp = AllocateCharVec( njob * ( B + 100 ) ); // nagasugi?
+        hist = AllocateIntVec(ctx->njob);
+        tmptmplen = AllocateFloatVec(ctx->njob);
+        ac = (Bchain*)malloc(ctx->njob * sizeof(Bchain));
+        nmemar = AllocateIntVec(ctx->njob);
+        mindisfrom = AllocateFloatVec(ctx->njob);
+        nearest = AllocateIntVec(ctx->njob);
         treetmp = NULL;  // kentou 2013/06/12
         nametmp = AllocateCharVec(1000);  // nagasugi
-        //		tree = AllocateCharMtx( njob, njob*600 );
-        tree = AllocateCharMtx(njob, 0);
+        tree = AllocateCharMtx(ctx->njob, 0);
     }
 
     for (i = 0; i < nseq; i++) {
@@ -6353,827 +6065,7 @@ fixed_musclesupg_double_realloc_nobk_halfmtx_treeout(int nseq, double** eff, int
 }
 
 void
-fixed_musclesupg_double_treeout(int nseq, double** eff, int*** topol, double** len, char** name) {
-    int            i, j, k, miniim, maxiim, minijm, maxijm;
-    int *          intpt, *intpt2;
-    double         tmpdouble;
-    double         eff1, eff0;
-    static double* tmptmplen = NULL;
-    static int*    hist = NULL;
-    static Bchain* ac = NULL;
-    int            im = -1, jm = -1;
-    Bchain *       acjmnext, *acjmprev;
-    int            prevnode;
-    Bchain*        acpti;
-    int *          pt1, *pt2, *pt11, *pt22;
-    static int*    nmemar;
-    int            nmemim, nmemjm;
-    double         minscore;
-    int*           nearest = NULL;  // by D.Mathog, a guess
-    double*        mindisfrom = NULL;  // by D.Mathog, a guess
-    static char**  tree;
-    static char*   treetmp;
-    static char *  nametmp, *nameptr, *tmpptr;
-    FILE*          fp;
-    double (*clusterfuncpt[1])(double, double);
-    char namec;
-
-    sueff1 = 1.0 - sueff_global;
-    sueff05 = sueff_global * 0.5;
-    if (treemethod == 'X')
-        clusterfuncpt[0] = cluster_mix_double;
-    else if (treemethod == 'E')
-        clusterfuncpt[0] = cluster_average_double;
-    else if (treemethod == 'q')
-        clusterfuncpt[0] = cluster_minimum_double;
-    else {
-        reporterr("Unknown treemethod, %c\n", treemethod);
-        exit(1);
-    }
-
-#if 0
-	if( !hist )
-	{
-		hist = AllocateIntVec( njob );
-		tmptmplen = AllocateDoubleVec( njob );
-		ac = (Bchain *)malloc( njob * sizeof( Bchain ) );
-		nmemar = AllocateIntVec( njob );
-		mindisfrom = AllocateDoubleVec( njob );
-		nearest = AllocateIntVec( njob );
-		treetmp = AllocateCharVec( njob*150 );
-		nametmp = AllocateCharVec( 91 );
-		tree = AllocateCharMtx( njob, njob*150 );
-	}
-    for( i=0; i<nseq; i++ )
-	{
-		for( j=0; j<90; j++ ) nametmp[j] = 0;
-		for( j=0; j<90; j++ ) 
-		{
-			if( name[i][j] == 0 )
-				break;
-			else if( isalnum( name[i][j] ) )
-				nametmp[j] = name[i][j];
-			else
-				nametmp[j] = '_';
-		}
-		nametmp[90] = 0;
-//		sprintf( tree[i], "%d_%.60s", i+1, nametmp+1 );
-		if( outnumber )
-			nameptr = strstr( nametmp, "_numo_e" ) + 8;
-		else
-			nameptr = nametmp + 1;
-
-		if( (tmpptr=strstr( nameptr, "_oe_" )) ) nameptr = tmpptr + 4; // = -> _ no tame
-
-		sprintf( tree[i], "\n%d_%.60s\n", i+1, nameptr );
-	}
-
-#else
-
-    if (!hist) {
-        hist = AllocateIntVec(njob);
-        tmptmplen = AllocateDoubleVec(njob);
-        ac = (Bchain*)malloc(njob * sizeof(Bchain));
-        nmemar = AllocateIntVec(njob);
-        mindisfrom = AllocateDoubleVec(njob);
-        nearest = AllocateIntVec(njob);
-        //		treetmp = AllocateCharVec( njob * ( B + 100 ) ); // nagasugi?
-        treetmp = NULL;  // kentou 2013/06/12
-        nametmp = AllocateCharVec(1000);  // nagasugi
-        //		tree = AllocateCharMtx( njob, njob*600 );
-        tree = AllocateCharMtx(njob, 0);
-    }
-
-    for (i = 0; i < nseq; i++) {
-        for (j = 0; j < 999; j++)
-            nametmp[j] = 0;
-        for (j = 0; j < 999; j++) {
-            namec = name[i][j];
-            if (namec == 0)
-                break;
-            else if (isalnum(namec) || namec == '/' || namec == '=' || namec == '-' || namec == '{' || namec == '}')
-                nametmp[j] = namec;
-            else
-                nametmp[j] = '_';
-        }
-        nametmp[j] = 0;
-        //		sprintf( tree[i], "%d_l=%d_%.20s", i+1, nlen[i], nametmp+1 );
-        if (outnumber)
-            nameptr = strstr(nametmp, "_numo_e") + 8;
-        else
-            nameptr = nametmp + 1;
-
-        if ((tmpptr = strstr(nameptr, "_oe_")))
-            nameptr = tmpptr + 4;  // = -> _ no tame
-
-        tree[i] = calloc(strlen(nametmp) + 100, sizeof(char));  // suuji no bun de +100
-        if (tree[i] == NULL) {
-            reporterr("Cannot allocate tree!\n");
-            exit(1);
-        }
-        sprintf(tree[i], "\n%d_%.900s\n", i + 1, nameptr);
-    }
-
-#endif
-
-    for (i = 0; i < nseq; i++) {
-        ac[i].next = ac + i + 1;
-        ac[i].prev = ac + i - 1;
-        ac[i].pos = i;
-    }
-    ac[nseq - 1].next = NULL;
-
-    for (i = 0; i < nseq; i++)
-        setnearest_double_fullmtx(ac, eff, mindisfrom + i, nearest + i, i);  // muscle
-
-    for (i = 0; i < nseq; i++)
-        tmptmplen[i] = 0.0;
-    for (i = 0; i < nseq; i++) {
-        hist[i] = -1;
-        nmemar[i] = 1;
-    }
-
-    reporterr("\n");
-    for (k = 0; k < nseq - 1; k++) {
-        if (k % 10 == 0)
-            reporterr("\r% 5d / %d", k, nseq);
-
-        minscore = 999.9;
-        for (acpti = ac; acpti->next != NULL; acpti = acpti->next) {
-            i = acpti->pos;
-            //			reporterr(       "k=%d i=%d\n", k, i );
-            if (mindisfrom[i] < minscore)  // muscle
-            {
-                im = i;
-                minscore = mindisfrom[i];
-            }
-        }
-        jm = nearest[im];
-        if (jm < im) {
-            j = jm;
-            jm = im;
-            im = j;
-        }
-
-        prevnode = hist[im];
-        nmemim = nmemar[im];
-        //		intpt = topol[k][0] = (int *)realloc( topol[k][0], ( nmemim + 1 ) * sizeof( int ) );
-        intpt = topol[k][0];
-        if (prevnode == -1) {
-            *intpt++ = im;
-            *intpt = -1;
-        } else {
-            pt1 = topol[prevnode][0];
-            pt2 = topol[prevnode][1];
-            if (*pt1 > *pt2) {
-                pt11 = pt2;
-                pt22 = pt1;
-            } else {
-                pt11 = pt1;
-                pt22 = pt2;
-            }
-            for (intpt2 = pt11; *intpt2 != -1;)
-                *intpt++ = *intpt2++;
-            for (intpt2 = pt22; *intpt2 != -1;)
-                *intpt++ = *intpt2++;
-            *intpt = -1;
-        }
-
-        prevnode = hist[jm];
-        nmemjm = nmemar[jm];
-        //		intpt = topol[k][1] = (int *)realloc( topol[k][1], ( nmemjm + 1 ) * sizeof( int ) );
-        intpt = topol[k][1];
-        if (prevnode == -1) {
-            *intpt++ = jm;
-            *intpt = -1;
-        } else {
-            pt1 = topol[prevnode][0];
-            pt2 = topol[prevnode][1];
-            if (*pt1 > *pt2) {
-                pt11 = pt2;
-                pt22 = pt1;
-            } else {
-                pt11 = pt1;
-                pt22 = pt2;
-            }
-            for (intpt2 = pt11; *intpt2 != -1;)
-                *intpt++ = *intpt2++;
-            for (intpt2 = pt22; *intpt2 != -1;)
-                *intpt++ = *intpt2++;
-            *intpt = -1;
-        }
-
-        minscore *= 0.5;
-
-        len[k][0] = (minscore - tmptmplen[im]);
-        len[k][1] = (minscore - tmptmplen[jm]);
-
-        tmptmplen[im] = minscore;
-
-        hist[im] = k;
-        nmemar[im] = nmemim + nmemjm;
-
-        mindisfrom[im] = 999.9;
-        for (acpti = ac; acpti != NULL; acpti = acpti->next) {
-            i = acpti->pos;
-            if (i != im && i != jm) {
-                if (i < im) {
-                    miniim = i;
-                    maxiim = im;
-                    minijm = i;
-                    maxijm = jm;
-                } else if (i < jm) {
-                    miniim = im;
-                    maxiim = i;
-                    minijm = i;
-                    maxijm = jm;
-                } else {
-                    miniim = im;
-                    maxiim = i;
-                    minijm = jm;
-                    maxijm = i;
-                }
-                eff0 = eff[miniim][maxiim];
-                eff1 = eff[minijm][maxijm];
-#if 0
-                		tmpdouble = eff[miniim][maxiim] =
-				MIN( eff0, eff1 ) * sueff1 + ( eff0 + eff1 ) * sueff05;
-#else
-                tmpdouble = eff[miniim][maxiim] =
-                    (clusterfuncpt[0])(eff0, eff1);
-#endif
-                if (tmpdouble < mindisfrom[i]) {
-                    mindisfrom[i] = tmpdouble;
-                    nearest[i] = im;
-                }
-                if (tmpdouble < mindisfrom[im]) {
-                    mindisfrom[im] = tmpdouble;
-                    nearest[im] = i;
-                }
-                if (nearest[i] == jm) {
-                    nearest[i] = im;
-                }
-            }
-        }
-#if 0
-		sprintf( treetmp, "(%s:%7.5f,%s:%7.5f)", tree[im], len[k][0], tree[jm], len[k][1] );
-		strcpy( tree[im], treetmp );
-#else
-        treetmp = realloc(treetmp, strlen(tree[im]) + strlen(tree[jm]) + 100);  // 22 de juubunn (:%7,:%7) %7 ha minus kamo
-        if (!treetmp) {
-            reporterr("Cannot allocate treetmp\n");
-            exit(1);
-        }
-        sprintf(treetmp, "(%s:%7.5f,%s:%7.5f)", tree[im], len[k][0], tree[jm], len[k][1]);
-        free(tree[im]);
-        free(tree[jm]);
-        tree[im] = calloc(strlen(treetmp) + 1, sizeof(char));
-        tree[jm] = NULL;
-        if (tree[im] == NULL) {
-            reporterr("Cannot reallocate tree!\n");
-            exit(1);
-        }
-        strcpy(tree[im], treetmp);
-#endif
-
-        acjmprev = ac[jm].prev;
-        acjmnext = ac[jm].next;
-        acjmprev->next = acjmnext;
-        if (acjmnext != NULL)
-            acjmnext->prev = acjmprev;
-            //		free( (void *)eff[jm] ); eff[jm] = NULL;
-
-#if 1  // muscle seems to miss this.
-        for (acpti = ac; acpti != NULL; acpti = acpti->next) {
-            i = acpti->pos;
-            if (nearest[i] == im) {
-                if (i < im) {
-                    miniim = i;
-                    maxiim = im;
-                } else {
-                    miniim = im;
-                    maxiim = i;
-                }
-                if (eff[miniim][maxiim] > mindisfrom[i])
-                    setnearest_double_fullmtx(ac, eff, mindisfrom + i, nearest + i, i);
-            }
-        }
-#endif
-
-#if 0
-        fprintf( stdout, "\nvSTEP-%03d:\n", k+1 );
-		fprintf( stdout, "len0 = %f\n", len[k][0] );
-        for( i=0; topol[k][0][i]>-1; i++ ) fprintf( stdout, " %03d", topol[k][0][i]+1 );
-        fprintf( stdout, "\n" );
-		fprintf( stdout, "len1 = %f\n", len[k][1] );
-        for( i=0; topol[k][1][i]>-1; i++ ) fprintf( stdout, " %03d", topol[k][1][i]+1 );
-        fprintf( stdout, "\n" );
-#endif
-    }
-    fp = fopen("infile.tree", "w");
-    fprintf(fp, "%s;\n", treetmp);
-    fclose(fp);
-#if 0
-	FreeCharMtx( tree );
-#else
-    free(tree[0]);
-    free(tree);
-#endif
-    free(treetmp);
-    free(nametmp);
-    free((void*)tmptmplen);
-    tmptmplen = NULL;
-    free(hist);
-    hist = NULL;
-    free((char*)ac);
-    ac = NULL;
-    free((void*)nmemar);
-    nmemar = NULL;
-    free(mindisfrom);
-    free(nearest);
-}
-
-void
-fixed_supg_double_treeout_constrained(int nseq, double** eff, int*** topol, double** len, char** name, int ngroup, int** groups) {
-    int            i, j, k, miniim, maxiim, minijm, maxijm;
-    int *          intpt, *intpt2;
-    double         tmpdouble;
-    double         eff1, eff0;
-    static double* tmptmplen = NULL;
-    static int*    hist = NULL;
-    static Bchain* ac = NULL;
-    int            im = -1, jm = -1;
-    Bchain *       acjmnext, *acjmprev;
-    int            prevnode;
-    Bchain *       acpti, *acptj;
-    int *          pt1, *pt2, *pt11, *pt22;
-    static int*    nmemar;
-    int            nmemim, nmemjm;
-    double         minscore;
-    int*           nearest = NULL;  // by D.Mathog, a guess
-    double*        mindisfrom = NULL;  // by D.Mathog, a guess
-    static char**  tree;
-    static char*   treetmp;
-    static char *  nametmp, *nameptr, *tmpptr;
-    FILE*          fp;
-    double (*clusterfuncpt[1])(double, double);
-    char  namec;
-    int * testtopol, **inconsistent;
-    int** inconsistentpairlist;
-    int   ninconsistentpairs;
-    int   maxinconsistentpairs;
-    int*  warned;
-    int   allinconsistent;
-    int   firsttime;
-
-    increaseintergroupdistancesfullmtx(eff, ngroup, groups, nseq);
-
-    sueff1 = 1 - sueff_global;
-    sueff05 = sueff_global * 0.5;
-    if (treemethod == 'X')
-        clusterfuncpt[0] = cluster_mix_double;
-    else if (treemethod == 'E')
-        clusterfuncpt[0] = cluster_average_double;
-    else if (treemethod == 'q')
-        clusterfuncpt[0] = cluster_minimum_double;
-    else {
-        reporterr("Unknown treemethod, %c\n", treemethod);
-        exit(1);
-    }
-
-#if 0
-	if( !hist )
-	{
-		hist = AllocateIntVec( njob );
-		tmptmplen = AllocateDoubleVec( njob );
-		ac = (Bchain *)malloc( njob * sizeof( Bchain ) );
-		nmemar = AllocateIntVec( njob );
-		mindisfrom = AllocateDoubleVec( njob );
-		nearest = AllocateIntVec( njob );
-		treetmp = AllocateCharVec( njob*150 );
-		nametmp = AllocateCharVec( 91 );
-		tree = AllocateCharMtx( njob, njob*150 );
-	}
-	for( i=0; i<nseq; i++ )
-	{
-		for( j=0; j<90; j++ ) nametmp[j] = 0;
-		for( j=0; j<90; j++ ) 
-		{
-			if( name[i][j] == 0 )
-				break;
-			else if( isalnum( name[i][j] ) )
-				nametmp[j] = name[i][j];
-			else
-				nametmp[j] = '_';
-		}
-		nametmp[90] = 0;
-//		sprintf( tree[i], "%d_%.60s", i+1, nametmp+1 );
-		if( outnumber )
-			nameptr = strstr( nametmp, "_numo_e" ) + 8;
-		else
-			nameptr = nametmp + 1;
-
-		if( (tmpptr=strstr( nameptr, "_oe_" )) ) nameptr = tmpptr + 4; // = -> _ no tame
-
-		sprintf( tree[i], "\n%d_%.60s\n", i+1, nameptr );
-	}
-
-#else
-
-    if (!hist) {
-        hist = AllocateIntVec(njob);
-        tmptmplen = AllocateDoubleVec(njob);
-        ac = (Bchain*)malloc(njob * sizeof(Bchain));
-        nmemar = AllocateIntVec(njob);
-        mindisfrom = AllocateDoubleVec(njob);
-        nearest = AllocateIntVec(njob);
-        //		treetmp = AllocateCharVec( njob * ( B + 100 ) ); // nagasugi?
-        treetmp = NULL;  // kentou 2013/06/12
-        nametmp = AllocateCharVec(1000);  // nagasugi
-        //		tree = AllocateCharMtx( njob, njob*600 );
-        tree = AllocateCharMtx(njob, 0);
-        testtopol = AllocateIntVec(njob + 1);
-        inconsistent = AllocateIntMtx(njob, njob);  // muda
-        //		inconsistentpairlist = AllocateIntMtx( njob*(njob-1)/2+1, 2 ); // muda
-        inconsistentpairlist = AllocateIntMtx(1, 2);
-        warned = AllocateIntVec(ngroup);
-    }
-
-    for (i = 0; i < nseq; i++) {
-        for (j = 0; j < 999; j++)
-            nametmp[j] = 0;
-        for (j = 0; j < 999; j++) {
-            namec = name[i][j];
-            if (namec == 0)
-                break;
-            else if (isalnum(namec) || namec == '/' || namec == '=' || namec == '-' || namec == '{' || namec == '}')
-                nametmp[j] = namec;
-            else
-                nametmp[j] = '_';
-        }
-        nametmp[j] = 0;
-        //		sprintf( tree[i], "%d_l=%d_%.20s", i+1, nlen[i], nametmp+1 );
-        if (outnumber)
-            nameptr = strstr(nametmp, "_numo_e") + 8;
-        else
-            nameptr = nametmp + 1;
-
-        if ((tmpptr = strstr(nameptr, "_oe_")))
-            nameptr = tmpptr + 4;  // = -> _ no tame
-
-        tree[i] = calloc(strlen(nametmp) + 100, sizeof(char));  // suuji no bun de +100
-        if (tree[i] == NULL) {
-            reporterr("Cannot allocate tree!\n");
-            exit(1);
-        }
-        sprintf(tree[i], "\n%d_%.900s\n", i + 1, nameptr);
-    }
-
-#endif
-
-    for (i = 0; i < nseq; i++) {
-        ac[i].next = ac + i + 1;
-        ac[i].prev = ac + i - 1;
-        ac[i].pos = i;
-    }
-    ac[nseq - 1].next = NULL;
-
-    for (i = 0; i < nseq; i++)
-        setnearest_double_fullmtx(ac, eff, mindisfrom + i, nearest + i, i);  // muscle
-
-    for (i = 0; i < nseq; i++)
-        tmptmplen[i] = 0.0;
-    for (i = 0; i < nseq; i++) {
-        hist[i] = -1;
-        nmemar[i] = 1;
-    }
-
-    reporterr("\n");
-    ninconsistentpairs = 0;
-    maxinconsistentpairs = 1;  // inconsistentpairlist[0] dake allocate sareteirunode
-    for (k = 0; k < nseq - 1; k++) {
-        if (k % 10 == 0)
-            reporterr("\r% 5d / %d", k, nseq);
-
-        //		for( acpti=ac; acpti->next!=NULL; acpti=acpti->next ) for( acptj=acpti->next; acptj!=NULL; acptj=acptj->next ) inconsistent[acpti->pos][acptj->pos] = 0;
-        for (i = 0; i < ninconsistentpairs; i++)
-            inconsistent[inconsistentpairlist[i][0]][inconsistentpairlist[i][1]] = 0;
-        ninconsistentpairs = 0;
-        firsttime = 1;
-        while (1) {
-            if (firsttime) {
-                firsttime = 0;
-                minscore = 999.9;
-                for (acpti = ac; acpti->next != NULL; acpti = acpti->next) {
-                    i = acpti->pos;
-                    //					reporterr(       "k=%d i=%d\n", k, i );
-                    if (mindisfrom[i] < minscore)  // muscle
-                    {
-                        im = i;
-                        minscore = mindisfrom[i];
-                    }
-                }
-                jm = nearest[im];
-                if (jm < im) {
-                    j = jm;
-                    jm = im;
-                    im = j;
-                }
-            } else {
-                minscore = 999.9;
-                for (acpti = ac; acpti->next != NULL; acpti = acpti->next) {
-                    i = acpti->pos;
-                    //					reporterr(       "k=%d i=%d\n", k, i );
-                    for (acptj = acpti->next; acptj != NULL; acptj = acptj->next) {
-                        j = acptj->pos;
-                        if (!inconsistent[i][j] && (tmpdouble = eff[i][j]) < minscore) {
-                            minscore = tmpdouble;
-                            im = i;
-                            jm = j;
-                        }
-                    }
-                    for (acptj = ac; (acptj && acptj->pos != i); acptj = acptj->next) {
-                        j = acptj->pos;
-                        if (!inconsistent[j][i] && (tmpdouble = eff[j][i]) < minscore) {
-                            minscore = tmpdouble;
-                            im = j;
-                            jm = i;
-                        }
-                    }
-                }
-            }
-
-            allinconsistent = 1;
-            for (acpti = ac; acpti->next != NULL; acpti = acpti->next) {
-                for (acptj = acpti->next; acptj != NULL; acptj = acptj->next) {
-                    if (inconsistent[acpti->pos][acptj->pos] == 0) {
-                        allinconsistent = 0;
-                        goto exitloop_d;
-                    }
-                }
-            }
-        exitloop_d:
-
-            if (allinconsistent) {
-                reporterr("\n\n\nPlease check whether the grouping is possible.\n\n\n");
-                exit(1);
-            }
-#if 1
-            intpt = testtopol;
-            prevnode = hist[im];
-            if (prevnode == -1) {
-                *intpt++ = im;
-            } else {
-                for (intpt2 = topol[prevnode][0]; *intpt2 != -1;)
-                    *intpt++ = *intpt2++;
-                for (intpt2 = topol[prevnode][1]; *intpt2 != -1;)
-                    *intpt++ = *intpt2++;
-            }
-
-            prevnode = hist[jm];
-            if (prevnode == -1) {
-                *intpt++ = jm;
-            } else {
-                for (intpt2 = topol[prevnode][0]; *intpt2 != -1;)
-                    *intpt++ = *intpt2++;
-                for (intpt2 = topol[prevnode][1]; *intpt2 != -1;)
-                    *intpt++ = *intpt2++;
-            }
-            *intpt = -1;
-//			reporterr(       "testtopol = \n" );
-//       	for( i=0; testtopol[i]>-1; i++ ) reporterr(       " %03d", testtopol[i]+1 );
-//			reporterr(       "\n" );
-#endif
-            for (i = 0; i < ngroup; i++) {
-                //				reporterr(       "groups[%d] = \n", i );
-                //  		     	for( j=0; groups[i][j]>-1; j++ ) reporterr(       " %03d", groups[i][j]+1 );
-                //				reporterr(       "\n" );
-                if (overlapmember(testtopol, groups[i])) {
-                    if (!includemember(testtopol, groups[i]) && !includemember(groups[i], testtopol)) {
-                        if (!warned[i]) {
-                            warned[i] = 1;
-                            reporterr("\n###################################################################\n");
-                            reporterr("# WARNING: Group %d is forced to be a monophyletic cluster.\n", i + 1);
-                            reporterr("###################################################################\n");
-                        }
-                        inconsistent[im][jm] = 1;
-
-                        if (maxinconsistentpairs < ninconsistentpairs + 1) {
-                            inconsistentpairlist = realloc(inconsistentpairlist, (ninconsistentpairs + 1) * sizeof(int*));
-                            for (j = maxinconsistentpairs; j < ninconsistentpairs + 1; j++)
-                                inconsistentpairlist[j] = malloc(sizeof(int) * 2);
-                            maxinconsistentpairs = ninconsistentpairs + 1;
-                            reporterr("Reallocated inconsistentpairlist, size=%d\n", maxinconsistentpairs);
-                        }
-                        inconsistentpairlist[ninconsistentpairs][0] = im;
-                        inconsistentpairlist[ninconsistentpairs][1] = jm;
-                        ninconsistentpairs++;
-                        break;
-                    }
-                }
-            }
-            if (i == ngroup) {
-                //				reporterr(       "OK\n" );
-                break;
-            }
-        }
-
-        prevnode = hist[im];
-        nmemim = nmemar[im];
-        //		intpt = topol[k][0] = (int *)realloc( topol[k][0], ( nmemim + 1 ) * sizeof( int ) );
-        intpt = topol[k][0];
-        if (prevnode == -1) {
-            *intpt++ = im;
-            *intpt = -1;
-        } else {
-            pt1 = topol[prevnode][0];
-            pt2 = topol[prevnode][1];
-            if (*pt1 > *pt2) {
-                pt11 = pt2;
-                pt22 = pt1;
-            } else {
-                pt11 = pt1;
-                pt22 = pt2;
-            }
-            for (intpt2 = pt11; *intpt2 != -1;)
-                *intpt++ = *intpt2++;
-            for (intpt2 = pt22; *intpt2 != -1;)
-                *intpt++ = *intpt2++;
-            *intpt = -1;
-        }
-
-        prevnode = hist[jm];
-        nmemjm = nmemar[jm];
-        //		intpt = topol[k][1] = (int *)realloc( topol[k][1], ( nmemjm + 1 ) * sizeof( int ) );
-        intpt = topol[k][1];
-        if (prevnode == -1) {
-            *intpt++ = jm;
-            *intpt = -1;
-        } else {
-            pt1 = topol[prevnode][0];
-            pt2 = topol[prevnode][1];
-            if (*pt1 > *pt2) {
-                pt11 = pt2;
-                pt22 = pt1;
-            } else {
-                pt11 = pt1;
-                pt22 = pt2;
-            }
-            for (intpt2 = pt11; *intpt2 != -1;)
-                *intpt++ = *intpt2++;
-            for (intpt2 = pt22; *intpt2 != -1;)
-                *intpt++ = *intpt2++;
-            *intpt = -1;
-        }
-
-        minscore *= 0.5;
-
-        len[k][0] = (minscore - tmptmplen[im]);
-        len[k][1] = (minscore - tmptmplen[jm]);
-        if (len[k][0] < 0.0)
-            len[k][0] = 0.0;
-        if (len[k][1] < 0.0)
-            len[k][1] = 0.0;
-
-        tmptmplen[im] = minscore;
-
-        hist[im] = k;
-        nmemar[im] = nmemim + nmemjm;
-
-        mindisfrom[im] = 999.9;
-        eff[im][jm] = 999.9;
-        //		eff[im][jm-im] = 999.9; // bug??
-
-        for (acpti = ac; acpti != NULL; acpti = acpti->next) {
-            i = acpti->pos;
-            if (i != im && i != jm) {
-                if (i < im) {
-                    miniim = i;
-                    maxiim = im;
-                    minijm = i;
-                    maxijm = jm;
-                } else if (i < jm) {
-                    miniim = im;
-                    maxiim = i;
-                    minijm = i;
-                    maxijm = jm;
-                } else {
-                    miniim = im;
-                    maxiim = i;
-                    minijm = jm;
-                    maxijm = i;
-                }
-                eff0 = eff[miniim][maxiim];
-                eff1 = eff[minijm][maxijm];
-#if 0
-                		tmpdouble = eff[miniim][maxiim] =
-				MIN( eff0, eff1 ) * sueff1 + ( eff0 + eff1 ) * sueff05;
-#else
-                tmpdouble = eff[miniim][maxiim] =
-                    (clusterfuncpt[0])(eff0, eff1);
-#endif
-
-#if 1
-                if (tmpdouble < mindisfrom[i]) {
-                    mindisfrom[i] = tmpdouble;
-                    nearest[i] = im;
-                }
-                if (tmpdouble < mindisfrom[im]) {
-                    mindisfrom[im] = tmpdouble;
-                    nearest[im] = i;
-                }
-                if (nearest[i] == jm) {
-                    nearest[i] = im;
-                }
-#endif
-            }
-        }
-#if 0
-		sprintf( treetmp, "(%s:%7.5f,%s:%7.5f)", tree[im], len[k][0], tree[jm], len[k][1] );
-		strcpy( tree[im], treetmp );
-#else
-        treetmp = realloc(treetmp, strlen(tree[im]) + strlen(tree[jm]) + 100);  // 22 de juubunn (:%7,:%7) %7 ha minus kamo
-        if (!treetmp) {
-            reporterr("Cannot allocate treetmp\n");
-            exit(1);
-        }
-        sprintf(treetmp, "(%s:%7.5f,%s:%7.5f)", tree[im], len[k][0], tree[jm], len[k][1]);
-        free(tree[im]);
-        free(tree[jm]);
-        tree[im] = calloc(strlen(treetmp) + 1, sizeof(char));
-        tree[jm] = NULL;
-        if (tree[im] == NULL) {
-            reporterr("Cannot reallocate tree!\n");
-            exit(1);
-        }
-        strcpy(tree[im], treetmp);
-#endif
-
-        acjmprev = ac[jm].prev;
-        acjmnext = ac[jm].next;
-        acjmprev->next = acjmnext;
-        if (acjmnext != NULL)
-            acjmnext->prev = acjmprev;
-            //		free( (void *)eff[jm] ); eff[jm] = NULL;
-
-#if 1  // muscle seems to miss this.
-        for (acpti = ac; acpti != NULL; acpti = acpti->next) {
-            i = acpti->pos;
-            if (nearest[i] == im) {
-                if (i < im) {
-                    miniim = i;
-                    maxiim = im;
-                } else {
-                    miniim = im;
-                    maxiim = i;
-                }
-                if (eff[miniim][maxiim] > mindisfrom[i])
-                    setnearest_double_fullmtx(ac, eff, mindisfrom + i, nearest + i, i);
-            }
-        }
-#endif
-
-#if 0
-        fprintf( stdout, "\ncSTEP-%03d:\n", k+1 );
-		fprintf( stdout, "len0 = %f\n", len[k][0] );
-        for( i=0; topol[k][0][i]>-1; i++ ) fprintf( stdout, " %03d", topol[k][0][i]+1 );
-        fprintf( stdout, "\n" );
-		fprintf( stdout, "len1 = %f\n", len[k][1] );
-        for( i=0; topol[k][1][i]>-1; i++ ) fprintf( stdout, " %03d", topol[k][1][i]+1 );
-        fprintf( stdout, "\n" );
-#endif
-    }
-    fp = fopen("infile.tree", "w");
-    fprintf(fp, "%s;\n", treetmp);
-    fclose(fp);
-#if 0
-	FreeCharMtx( tree );
-#else
-    free(tree[0]);
-    free(tree);
-#endif
-    free(treetmp);
-    free(nametmp);
-    free((void*)tmptmplen);
-    tmptmplen = NULL;
-    free(hist);
-    hist = NULL;
-    free((char*)ac);
-    ac = NULL;
-    free((void*)nmemar);
-    nmemar = NULL;
-    free(mindisfrom);
-    free(nearest);
-    free(testtopol);
-    FreeIntMtx(inconsistent);
-    for (i = 0; i < maxinconsistentpairs; i++)
-        free(inconsistentpairlist[i]);
-    free(inconsistentpairlist);
-    free(warned);
-}
-
-void
-fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(int nseq, double** eff, int*** topol, double** len, Treedep* dep, int progressout, int efffree) {
+fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(Context* ctx, int nseq, double** eff, int*** topol, double** len, Treedep* dep, int progressout, int efffree) {
     int     i, j, k, miniim, maxiim, minijm, maxijm;
     int*    intpt;
     double  tmpdouble;
@@ -7207,12 +6099,12 @@ fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(int nseq, double** eff, int
     }
 
     if (!hist) {
-        hist = AllocateIntVec(njob);
-        tmptmplen = AllocateFloatVec(njob);
-        ac = (Bchain*)malloc(njob * sizeof(Bchain));
-        nmemar = AllocateIntVec(njob);
-        mindisfrom = AllocateFloatVec(njob);
-        nearest = AllocateIntVec(njob);
+        hist = AllocateIntVec(ctx->njob);
+        tmptmplen = AllocateFloatVec(ctx->njob);
+        ac = (Bchain*)malloc(ctx->njob * sizeof(Bchain));
+        nmemar = AllocateIntVec(ctx->njob);
+        mindisfrom = AllocateFloatVec(ctx->njob);
+        nearest = AllocateIntVec(ctx->njob);
     }
 
     for (i = 0; i < nseq; i++) {
@@ -7425,8 +6317,9 @@ fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(int nseq, double** eff, int
     free(mindisfrom);
     free(nearest);
 }
+
 void
-fixed_musclesupg_double_realloc_nobk_halfmtx(int nseq, double** eff, int*** topol, double** len, Treedep* dep, int progressout, int efffree) {
+fixed_musclesupg_double_realloc_nobk_halfmtx(Context* ctx, int nseq, double** eff, int*** topol, double** len, Treedep* dep, int progressout, int efffree) {
     int     i, j, k, miniim, maxiim, minijm, maxijm;
     int *   intpt, *intpt2;
     double  tmpdouble;
@@ -7460,12 +6353,12 @@ fixed_musclesupg_double_realloc_nobk_halfmtx(int nseq, double** eff, int*** topo
     }
 
     if (!hist) {
-        hist = AllocateIntVec(njob);
-        tmptmplen = AllocateFloatVec(njob);
-        ac = (Bchain*)malloc(njob * sizeof(Bchain));
-        nmemar = AllocateIntVec(njob);
-        mindisfrom = AllocateFloatVec(njob);
-        nearest = AllocateIntVec(njob);
+        hist = AllocateIntVec(ctx->njob);
+        tmptmplen = AllocateFloatVec(ctx->njob);
+        ac = (Bchain*)malloc(ctx->njob * sizeof(Bchain));
+        nmemar = AllocateIntVec(ctx->njob);
+        mindisfrom = AllocateFloatVec(ctx->njob);
+        nearest = AllocateIntVec(ctx->njob);
     }
 
     for (i = 0; i < nseq; i++) {
@@ -7645,15 +6538,6 @@ fixed_musclesupg_double_realloc_nobk_halfmtx(int nseq, double** eff, int*** topo
         }
 #endif
 
-#if 0
-        fprintf( stdout, "vSTEP-%03d:\n", k+1 );
-		fprintf( stdout, "len0 = %f\n", len[k][0] );
-        for( i=0; topol[k][0][i]>-1; i++ ) fprintf( stdout, " %03d", topol[k][0][i]+1 );
-        fprintf( stdout, "\n" );
-		fprintf( stdout, "len1 = %f\n", len[k][1] );
-        for( i=0; topol[k][1][i]>-1; i++ ) fprintf( stdout, " %03d", topol[k][1][i]+1 );
-        fprintf( stdout, "\n" );
-#endif
     }
     free((void*)tmptmplen);
     tmptmplen = NULL;
@@ -7665,1178 +6549,6 @@ fixed_musclesupg_double_realloc_nobk_halfmtx(int nseq, double** eff, int*** topo
     nmemar = NULL;
     free(mindisfrom);
     free(nearest);
-}
-
-void
-veryfastsupg_double_loadtree(int nseq, double** eff, int*** topol, double** len, char** name) {
-    int     i, j, k, miniim, maxiim, minijm, maxijm;
-    int *   intpt, *intpt2;
-    double  eff1, eff0;
-    int*    hist = NULL;
-    Achain* ac = NULL;
-    char**  tree;
-    char*   treetmp;
-    int     im = -1, jm = -1;
-    int     prevnode, acjmnext, acjmprev;
-    int *   pt1, *pt2, *pt11, *pt22;
-    FILE*   fp;
-    int     node[2];
-    double  lenfl[2];
-    char *  nametmp, *nameptr, *tmpptr;  //static?
-    char    namec;
-
-    fp = fopen("_guidetree", "r");
-    if (!fp) {
-        reporterr("cannot open _guidetree\n");
-        exit(1);
-    }
-
-    if (!hist) {
-        //		treetmp = AllocateCharVec( njob*50 );
-        treetmp = NULL;
-        //		tree = AllocateCharMtx( njob, njob*50 );
-        tree = AllocateCharMtx(njob, 0);
-        nametmp = AllocateCharVec(1000);  // nagasugi
-        hist = AllocateIntVec(njob);
-        ac = (Achain*)malloc(njob * sizeof(Achain));
-    }
-
-    for (i = 0; i < nseq; i++) {
-        for (j = 0; j < 999; j++)
-            nametmp[j] = 0;
-        for (j = 0; j < 999; j++) {
-            namec = name[i][j];
-            if (namec == 0)
-                break;
-            else if (isalnum(namec) || namec == '/' || namec == '=' || namec == '-' || namec == '{' || namec == '}')
-                nametmp[j] = namec;
-            else
-                nametmp[j] = '_';
-        }
-        nametmp[j] = 0;
-        //		sprintf( tree[i], "%d_l=%d_%.20s", i+1, nlen[i], nametmp+1 );
-        if (outnumber)
-            nameptr = strstr(nametmp, "_numo_e") + 8;
-        else
-            nameptr = nametmp + 1;
-
-        if ((tmpptr = strstr(nameptr, "_oe_")))
-            nameptr = tmpptr + 4;  // = -> _ no tame
-
-        tree[i] = calloc(strlen(nametmp) + 100, sizeof(char));  // suuji no bun de +100
-        if (tree[i] == NULL) {
-            reporterr("Cannot allocate tree!\n");
-            exit(1);
-        }
-        sprintf(tree[i], "\n%d_%.900s\n", i + 1, nameptr);
-    }
-
-    for (i = 0; i < nseq; i++) {
-        ac[i].next = i + 1;
-        ac[i].prev = i - 1;
-        //		ac[i].curr = i;
-    }
-    ac[nseq - 1].next = -1;
-
-    for (i = 0; i < nseq; i++)
-        hist[i] = -1;
-
-    reporterr("\n");
-    for (k = 0; k < nseq - 1; k++) {
-        if (k % 10 == 0)
-            reporterr("%d / %d\r", k, nseq);
-
-#if 0
-		minscore = 99999.9;
-		for( i=0; ac[i].next!=-1; i=ac[i].next ) 
-		{
-			for( j=ac[i].next; j!=-1; j=ac[j].next )
-	        {
-				tmpdouble = eff[i][j];
-				if( tmpdouble < minscore )
-				{
-					minscore = tmpdouble;
-					im = i; jm = j;
-				}
-			}
-		}
-#else
-        lenfl[0] = lenfl[1] = -1.0;
-        loadtreeoneline(node, lenfl, fp);
-        im = node[0];
-        jm = node[1];
-
-        if (im > nseq - 1 || jm > nseq - 1 || tree[im] == NULL || tree[jm] == NULL) {
-            reporterr("\n\nCheck the guide tree.\n");
-            reporterr("im=%d, jm=%d\n", im + 1, jm + 1);
-            reporterr("Please use newick2mafft.rb to generate a tree file from a newick tree.\n\n");
-            exit(1);
-        }
-
-        //		reporterr(       "im=%d, jm=%d, minscore = %f\n", im, jm, minscore );
-
-        if (lenfl[0] == -1.0 || lenfl[1] == -1.0) {
-            reporterr("\n\nWARNING: Branch length is not given.\n");
-            exit(1);
-        }
-
-        if (lenfl[0] < 0.0)
-            lenfl[0] = 0.0;
-        if (lenfl[1] < 0.0)
-            lenfl[1] = 0.0;
-#endif
-
-        //		reporterr(       "im=%d, jm=%d\n", im, jm );
-
-        intpt = topol[k][0];
-        prevnode = hist[im];
-        if (prevnode == -1) {
-            *intpt++ = im;
-            *intpt = -1;
-        } else {
-            pt1 = topol[prevnode][0];
-            pt2 = topol[prevnode][1];
-            if (*pt1 > *pt2) {
-                pt11 = pt2;
-                pt22 = pt1;
-            } else {
-                pt11 = pt1;
-                pt22 = pt2;
-            }
-            for (intpt2 = pt11; *intpt2 != -1;)
-                *intpt++ = *intpt2++;
-            for (intpt2 = pt22; *intpt2 != -1;)
-                *intpt++ = *intpt2++;
-            *intpt = -1;
-        }
-
-        intpt = topol[k][1];
-        prevnode = hist[jm];
-        if (prevnode == -1) {
-            *intpt++ = jm;
-            *intpt = -1;
-        } else {
-            pt1 = topol[prevnode][0];
-            pt2 = topol[prevnode][1];
-            if (*pt1 > *pt2) {
-                pt11 = pt2;
-                pt22 = pt1;
-            } else {
-                pt11 = pt1;
-                pt22 = pt2;
-            }
-            for (intpt2 = pt11; *intpt2 != -1;)
-                *intpt++ = *intpt2++;
-            for (intpt2 = pt22; *intpt2 != -1;)
-                *intpt++ = *intpt2++;
-            *intpt = -1;
-        }
-
-#if 0
-		len[k][0] = minscore - tmptmplen[im];
-		len[k][1] = minscore - tmptmplen[jm];
-#else
-        len[k][0] = lenfl[0];
-        len[k][1] = lenfl[1];
-#endif
-
-        hist[im] = k;
-
-        for (i = 0; i != -1; i = ac[i].next) {
-            if (i != im && i != jm) {
-                if (i < im) {
-                    miniim = i;
-                    maxiim = im;
-                    minijm = i;
-                    maxijm = jm;
-                } else if (i < jm) {
-                    miniim = im;
-                    maxiim = i;
-                    minijm = i;
-                    maxijm = jm;
-                } else {
-                    miniim = im;
-                    maxiim = i;
-                    minijm = jm;
-                    maxijm = i;
-                }
-                eff0 = eff[miniim][maxiim];
-                eff1 = eff[minijm][maxijm];
-                eff[miniim][maxiim] =
-                    MIN(eff0, eff1) * (1.0 - sueff_global) + (eff0 + eff1) * 0.5 * sueff_global;
-            }
-        }
-        acjmprev = ac[jm].prev;
-        acjmnext = ac[jm].next;
-        ac[acjmprev].next = acjmnext;
-        if (acjmnext != -1)
-            ac[acjmnext].prev = acjmprev;
-
-        treetmp = realloc(treetmp, strlen(tree[im]) + strlen(tree[jm]) + 100);  // 22 de juubunn (:%7,:%7) %7 ha minus kamo
-        if (!treetmp) {
-            reporterr("Cannot allocate treetmp\n");
-            exit(1);
-        }
-        sprintf(treetmp, "(%s:%7.5f,%s:%7.5f)", tree[im], len[k][0], tree[jm], len[k][1]);
-        free(tree[im]);
-        free(tree[jm]);
-        tree[im] = calloc(strlen(treetmp) + 1, sizeof(char));
-        tree[jm] = NULL;
-        if (tree[im] == NULL) {
-            reporterr("Cannot reallocate tree!\n");
-            exit(1);
-        }
-        strcpy(tree[im], treetmp);
-
-        //		sprintf( treetmp, "(%s:%7.5f,%s:%7.5f)", tree[im], len[k][0], tree[jm], len[k][1] );
-        //		strcpy( tree[im], treetmp );
-
-#if 0
-        fprintf( stdout, "STEP-%03d:\n", k+1 );
-		fprintf( stdout, "len0 = %f\n", len[k][0] );
-        for( i=0; topol[k][0][i]>-1; i++ ) fprintf( stdout, " %03d", topol[k][0][i] );
-        fprintf( stdout, "\n" );
-		fprintf( stdout, "len1 = %f\n", len[k][1] );
-        for( i=0; topol[k][1][i]>-1; i++ ) fprintf( stdout, " %03d", topol[k][1][i] );
-        fprintf( stdout, "\n" );
-#endif
-    }
-    fclose(fp);
-
-    fp = fopen("infile.tree", "w");
-    fprintf(fp, "%s;\n", treetmp);
-    //	fprintf( fp, "by veryfastsupg_double_loadtree\n" );
-    fclose(fp);
-
-#if 1
-    reporterr("\n");
-    free(hist);
-    free((char*)ac);
-    FreeCharMtx(tree);
-    free(treetmp);
-    free(nametmp);
-#endif
-
-#if 0
-//	reporterr(       "reconstructing eff[][]\n" ); // Tsune ni hat2 ha aru node koreha iranai.
-    for( k=0; k<nseq; k++ ) for( i=0; i<nseq; i++ ) eff[i][k] = 0.0;
-    for( k=0; k<nseq-1; k++ )
-	{
-		reporterr(       "len[k][0], len[k][1] = %f, %f\n", len[k][0], len[k][1] );
-        for( i=0; (im=topol[k][0][i])>-1; i++ )
-		{
-			reporterr(       " %03d", im );
-		}
-		fprintf( stdout, "\n" );
-        for( i=0; (jm=topol[k][1][i])>-1; i++ ) 
-		{
-			reporterr(       " %03d", jm );
-		}
-        for( i=0; (im=topol[k][0][i])>-1; i++ ) for( j=0; (jm=topol[k][1][j])>-1; j++ ) 
-		{
-			eff[im][jm] += len[k][0] + len[k][1];
-			eff[jm][im] += len[k][0] + len[k][1];
-		}
-	}
-#endif
-}
-
-#if 0
-void veryfastsupg_double( int nseq, double **eff, int ***topol, double **len )
-{
-    int i, j, k, miniim, maxiim, minijm, maxijm;
-	int *intpt, *intpt2;
-	double tmpdouble;
-	double eff1, eff0;
-	static double *tmptmplen = NULL;
-    static int *hist = NULL;
-	static Achain *ac = NULL;
-	double minscore;
-	int im = -1, jm = -1;
-	int prevnode, acjmnext, acjmprev;
-	int *pt1, *pt2, *pt11, *pt22;
-	if( !hist )
-	{
-		hist = AllocateIntVec( njob );
-		tmptmplen = (double *)malloc( njob * sizeof( double ) );
-		ac = (Achain *)malloc( njob * sizeof( Achain ) );
-	}
-	
-	for( i=0; i<nseq; i++ )
-	{
-		ac[i].next = i+1;
-		ac[i].prev = i-1;
-//		ac[i].curr = i;
-	}
-	ac[nseq-1].next = -1;
-
-	for( i=0; i<nseq; i++ ) tmptmplen[i] = 0.0;
-    for( i=0; i<nseq; i++ ) hist[i] = -1;
-
-	reporterr(       "\n" );
-    for( k=0; k<nseq-1; k++ )
-    {
-		if( k % 10 == 0 ) reporterr(       "%d / %d\r", k, nseq );
-
-		minscore = 99999.9;
-		for( i=0; ac[i].next!=-1; i=ac[i].next ) 
-		{
-			for( j=ac[i].next; j!=-1; j=ac[j].next )
-	        {
-				tmpdouble = eff[i][j];
-				if( tmpdouble < minscore )
-				{
-					minscore = tmpdouble;
-					im = i; jm = j;
-				}
-			}
-		}
-
-//		reporterr(       "im=%d, jm=%d\n", im, jm );
-
-		intpt = topol[k][0];
-		prevnode = hist[im];
-		if( prevnode == -1 )
-		{
-			*intpt++ = im;
-			*intpt = -1;
-		}
-		else
-		{
-			pt1 = topol[prevnode][0];
-			pt2 = topol[prevnode][1];
-			if( *pt1 > *pt2 )
-			{
-				pt11 = pt2;
-				pt22 = pt1;
-			}
-			else
-			{
-				pt11 = pt1;
-				pt22 = pt2;
-			}
-			for( intpt2=pt11; *intpt2!=-1; )
-				*intpt++ = *intpt2++;
-			for( intpt2=pt22; *intpt2!=-1; )
-				*intpt++ = *intpt2++;
-			*intpt = -1;
-		}
-
-		intpt = topol[k][1];
-		prevnode = hist[jm];
-		if( prevnode == -1 )
-		{
-			*intpt++ = jm;
-			*intpt = -1;
-		}
-		else
-		{
-			pt1 = topol[prevnode][0];
-			pt2 = topol[prevnode][1];
-			if( *pt1 > *pt2 )
-			{
-				pt11 = pt2;
-				pt22 = pt1;
-			}
-			else
-			{
-				pt11 = pt1;
-				pt22 = pt2;
-			}
-			for( intpt2=pt11; *intpt2!=-1; )
-				*intpt++ = *intpt2++;
-			for( intpt2=pt22; *intpt2!=-1; )
-				*intpt++ = *intpt2++;
-			*intpt = -1;
-		}
-
-		minscore *= 0.5;
-
-		len[k][0] = minscore - tmptmplen[im];
-		len[k][1] = minscore - tmptmplen[jm];
-
-		tmptmplen[im] = minscore;
-
-		hist[im] = k;
-
-		for( i=0; i!=-1; i=ac[i].next )
-        {
-            if( i != im && i != jm )
-            {
-				if( i < im )
-				{
-					 miniim = i;
-					 maxiim = im;
-					 minijm = i;
-					 maxijm = jm;
-				}
-				else if( i < jm )
-				{
-					 miniim = im;
-					 maxiim = i;
-					 minijm = i;
-					 maxijm = jm;
-				}
-				else
-				{
-					 miniim = im;
-					 maxiim = i;
-					 minijm = jm;
-					 maxijm = i;
-				}
-				eff0 = eff[miniim][maxiim];
-				eff1 = eff[minijm][maxijm];
-                eff[miniim][maxiim] =
-                MIN( eff0, eff1 ) * ( 1.0 - sueff_global ) +
-				( eff0 + eff1 ) * 0.5 * sueff_global;
-            }
-        }
-		acjmprev = ac[jm].prev; 
-		acjmnext = ac[jm].next; 
-		ac[acjmprev].next = acjmnext;
-		if( acjmnext != -1 )
-			ac[acjmnext].prev = acjmprev;
-#if 0
-        fprintf( stdout, "STEP-%03d:\n", k+1 );
-		fprintf( stdout, "len0 = %f\n", len[k][0] );
-        for( i=0; topol[k][0][i]>-1; i++ ) fprintf( stdout, " %03d", topol[k][0][i] );
-        fprintf( stdout, "\n" );
-		fprintf( stdout, "len1 = %f\n", len[k][1] );
-        for( i=0; topol[k][1][i]>-1; i++ ) fprintf( stdout, " %03d", topol[k][1][i] );
-        fprintf( stdout, "\n" );
-#endif
-    }
-#if 1
-	reporterr(       "\n" );
-	free( (void *)tmptmplen ); tmptmplen = NULL;
-	free( hist ); hist = NULL;
-	free( (char *)ac ); ac = NULL;
-#endif
-}
-#endif
-
-void
-veryfastsupg_double_outtree(int nseq, double** eff, int*** topol, double** len, char** name)  // not used
-{
-    int            i, j, k, miniim, maxiim, minijm, maxijm;
-    int *          intpt, *intpt2;
-    double         tmpdouble;
-    double         eff1, eff0;
-    static double* tmptmplen = NULL;
-    static int*    hist = NULL;
-    static Achain* ac = NULL;
-    double         minscore;
-    static char**  tree;
-    static char*   treetmp;
-    static char*   nametmp;
-    FILE*          fpout;
-    int            im = -1, jm = -1;
-    int            prevnode, acjmnext, acjmprev;
-    int *          pt1, *pt2, *pt11, *pt22;
-    double (*clusterfuncpt[1])(double, double);
-
-    sueff1 = 1 - sueff_global;
-    sueff05 = sueff_global * 0.5;
-    if (treemethod == 'X')
-        clusterfuncpt[0] = cluster_mix_double;
-    else if (treemethod == 'E')
-        clusterfuncpt[0] = cluster_average_double;
-    else if (treemethod == 'q')
-        clusterfuncpt[0] = cluster_minimum_double;
-    else {
-        reporterr("Unknown treemethod, %c\n", treemethod);
-        exit(1);
-    }
-
-    if (!hist) {
-        treetmp = AllocateCharVec(njob * 50);
-        tree = AllocateCharMtx(njob, njob * 50);
-        hist = AllocateIntVec(njob);
-        tmptmplen = (double*)malloc(njob * sizeof(double));
-        ac = (Achain*)malloc(njob * sizeof(Achain));
-        nametmp = AllocateCharVec(31);
-    }
-
-    //	for( i=0; i<nseq; i++ ) sprintf( tree[i], "%d", i+1 );
-    for (i = 0; i < nseq; i++) {
-        for (j = 0; j < 30; j++)
-            nametmp[j] = 0;
-        for (j = 0; j < 30; j++) {
-            if (isalnum(name[i][j]))
-                nametmp[j] = name[i][j];
-            else
-                nametmp[j] = '_';
-        }
-        nametmp[30] = 0;
-        sprintf(tree[i], "%d_%.20s", i + 1, nametmp + 1);
-    }
-
-    for (i = 0; i < nseq; i++) {
-        ac[i].next = i + 1;
-        ac[i].prev = i - 1;
-        //		ac[i].curr = i;
-    }
-    ac[nseq - 1].next = -1;
-
-    for (i = 0; i < nseq; i++)
-        tmptmplen[i] = 0.0;
-    for (i = 0; i < nseq; i++)
-        hist[i] = -1;
-
-    reporterr("\n");
-    for (k = 0; k < nseq - 1; k++) {
-        if (k % 10 == 0)
-            reporterr("%d / %d\r", k, nseq);
-
-        minscore = 99999.9;
-        for (i = 0; ac[i].next != -1; i = ac[i].next) {
-            for (j = ac[i].next; j != -1; j = ac[j].next) {
-                tmpdouble = eff[i][j];
-                if (tmpdouble < minscore) {
-                    minscore = tmpdouble;
-                    im = i;
-                    jm = j;
-                }
-            }
-        }
-
-        //		reporterr(       "im=%d, jm=%d\n", im, jm );
-
-        intpt = topol[k][0];
-        prevnode = hist[im];
-        if (prevnode == -1) {
-            *intpt++ = im;
-            *intpt = -1;
-        } else {
-            pt1 = topol[prevnode][0];
-            pt2 = topol[prevnode][1];
-            if (*pt1 > *pt2) {
-                pt11 = pt2;
-                pt22 = pt1;
-            } else {
-                pt11 = pt1;
-                pt22 = pt2;
-            }
-            for (intpt2 = pt11; *intpt2 != -1;)
-                *intpt++ = *intpt2++;
-            for (intpt2 = pt22; *intpt2 != -1;)
-                *intpt++ = *intpt2++;
-            *intpt = -1;
-        }
-
-        intpt = topol[k][1];
-        prevnode = hist[jm];
-        if (prevnode == -1) {
-            *intpt++ = jm;
-            *intpt = -1;
-        } else {
-            pt1 = topol[prevnode][0];
-            pt2 = topol[prevnode][1];
-            if (*pt1 > *pt2) {
-                pt11 = pt2;
-                pt22 = pt1;
-            } else {
-                pt11 = pt1;
-                pt22 = pt2;
-            }
-            for (intpt2 = pt11; *intpt2 != -1;)
-                *intpt++ = *intpt2++;
-            for (intpt2 = pt22; *intpt2 != -1;)
-                *intpt++ = *intpt2++;
-            *intpt = -1;
-        }
-
-        minscore *= 0.5;
-
-        len[k][0] = minscore - tmptmplen[im];
-        len[k][1] = minscore - tmptmplen[jm];
-
-        tmptmplen[im] = minscore;
-
-        hist[im] = k;
-
-        for (i = 0; i != -1; i = ac[i].next) {
-            if (i != im && i != jm) {
-                if (i < im) {
-                    miniim = i;
-                    maxiim = im;
-                    minijm = i;
-                    maxijm = jm;
-                } else if (i < jm) {
-                    miniim = im;
-                    maxiim = i;
-                    minijm = i;
-                    maxijm = jm;
-                } else {
-                    miniim = im;
-                    maxiim = i;
-                    minijm = jm;
-                    maxijm = i;
-                }
-                eff0 = eff[miniim][maxiim];
-                eff1 = eff[minijm][maxijm];
-                eff[miniim][maxiim] =
-                    (clusterfuncpt[0])(eff0, eff1);
-            }
-        }
-        acjmprev = ac[jm].prev;
-        acjmnext = ac[jm].next;
-        ac[acjmprev].next = acjmnext;
-        if (acjmnext != -1)
-            ac[acjmnext].prev = acjmprev;
-
-        sprintf(treetmp, "(%s:%7.5f,%s:%7.5f)", tree[im], len[k][0], tree[jm], len[k][1]);
-        strcpy(tree[im], treetmp);
-#if 0
-        fprintf( stdout, "STEP-%03d:\n", k+1 );
-		fprintf( stdout, "len0 = %f\n", len[k][0] );
-        for( i=0; topol[k][0][i]>-1; i++ ) fprintf( stdout, " %03d", topol[k][0][i] );
-        fprintf( stdout, "\n" );
-		fprintf( stdout, "len1 = %f\n", len[k][1] );
-        for( i=0; topol[k][1][i]>-1; i++ ) fprintf( stdout, " %03d", topol[k][1][i] );
-        fprintf( stdout, "\n" );
-#endif
-    }
-    fpout = fopen("infile.tree", "w");
-    fprintf(fpout, "%s;\n", treetmp);
-    //	fprintf( fpout, "by veryfastsupg_double_outtree\n" );
-    fclose(fpout);
-#if 1
-    reporterr("\n");
-    free((void*)tmptmplen);
-    tmptmplen = NULL;
-    free(hist);
-    hist = NULL;
-    free((char*)ac);
-    ac = NULL;
-    FreeCharMtx(tree);
-    free(treetmp);
-    free(nametmp);
-#endif
-}
-
-void
-veryfastsupg(int nseq, double** oeff, int*** topol, double** len) {
-    int            i, j, k, miniim, maxiim, minijm, maxijm;
-    int *          intpt, *intpt2;
-    int            tmpint;
-    int            eff1, eff0;
-    static double* tmptmplen = NULL;
-    static int**   eff = NULL;
-    static int*    hist = NULL;
-    static Achain* ac = NULL;
-    int            minscore;
-    double         minscoref;
-    int            im = -1, jm = -1;
-    int            prevnode, acjmnext, acjmprev;
-    int *          pt1, *pt2, *pt11, *pt22;
-    if (!eff) {
-        eff = AllocateIntMtx(njob, njob);
-        hist = AllocateIntVec(njob);
-        tmptmplen = (double*)malloc(njob * sizeof(double));
-        ac = (Achain*)malloc(njob * sizeof(Achain));
-    }
-
-    for (i = 0; i < nseq; i++) {
-        for (j = 0; j < nseq; j++) {
-            eff[i][j] = (int)(oeff[i][j] * INTMTXSCALE + 0.5);
-        }
-    }
-
-    for (i = 0; i < nseq; i++) {
-        ac[i].next = i + 1;
-        ac[i].prev = i - 1;
-        //		ac[i].curr = i;
-    }
-    ac[nseq - 1].next = -1;
-
-    for (i = 0; i < nseq; i++)
-        tmptmplen[i] = 0.0;
-    for (i = 0; i < nseq; i++)
-        hist[i] = -1;
-
-    reporterr("\n");
-    for (k = 0; k < nseq - 1; k++) {
-        if (k % 10 == 0)
-            reporterr("%d / %d\r", k, nseq);
-
-        minscore = INTMTXSCALE * 4;
-        for (i = 0; ac[i].next != -1; i = ac[i].next) {
-            for (j = ac[i].next; j != -1; j = ac[j].next) {
-                tmpint = eff[i][j];
-                if (tmpint < minscore) {
-                    minscore = tmpint;
-                    im = i;
-                    jm = j;
-                }
-            }
-        }
-        minscoref = (double)minscore * 0.5 / (INTMTXSCALE);
-
-        //		reporterr(       "im=%d, jm=%d\n", im, jm );
-
-#if 1
-        intpt = topol[k][0];
-        prevnode = hist[im];
-        if (prevnode == -1) {
-            *intpt++ = im;
-            *intpt = -1;
-        } else {
-            pt1 = topol[prevnode][0];
-            pt2 = topol[prevnode][1];
-            if (*pt1 > *pt2) {
-                pt11 = pt2;
-                pt22 = pt1;
-            } else {
-                pt11 = pt1;
-                pt22 = pt2;
-            }
-            for (intpt2 = pt11; *intpt2 != -1;)
-                *intpt++ = *intpt2++;
-            for (intpt2 = pt22; *intpt2 != -1;)
-                *intpt++ = *intpt2++;
-            *intpt = -1;
-        }
-
-        intpt = topol[k][1];
-        prevnode = hist[jm];
-        if (prevnode == -1) {
-            *intpt++ = jm;
-            *intpt = -1;
-        } else {
-            pt1 = topol[prevnode][0];
-            pt2 = topol[prevnode][1];
-            if (*pt1 > *pt2) {
-                pt11 = pt2;
-                pt22 = pt1;
-            } else {
-                pt11 = pt1;
-                pt22 = pt2;
-            }
-            for (intpt2 = pt11; *intpt2 != -1;)
-                *intpt++ = *intpt2++;
-            for (intpt2 = pt22; *intpt2 != -1;)
-                *intpt++ = *intpt2++;
-            *intpt = -1;
-        }
-#else
-        intpt = topol[k][0];
-        for (i = 0; i < nseq; i++)
-            if (pair[im][i] > -2)
-                *intpt++ = i;
-        *intpt = -1;
-
-        intpt = topol[k][1];
-        for (i = 0; i < nseq; i++)
-            if (pair[jm][i] > -2)
-                *intpt++ = i;
-        *intpt = -1;
-#endif
-
-        len[k][0] = minscoref - tmptmplen[im];
-        len[k][1] = minscoref - tmptmplen[jm];
-
-        tmptmplen[im] = minscoref;
-
-        hist[im] = k;
-
-        for (i = 0; i != -1; i = ac[i].next) {
-            if (i != im && i != jm) {
-                if (i < im) {
-                    miniim = i;
-                    maxiim = im;
-                    minijm = i;
-                    maxijm = jm;
-                } else if (i < jm) {
-                    miniim = im;
-                    maxiim = i;
-                    minijm = i;
-                    maxijm = jm;
-                } else {
-                    miniim = im;
-                    maxiim = i;
-                    minijm = jm;
-                    maxijm = i;
-                }
-                eff0 = eff[miniim][maxiim];
-                eff1 = eff[minijm][maxijm];
-                eff[miniim][maxiim] =
-                    MIN(eff0, eff1) * (1.0 - sueff_global) +  // int??
-                    (eff0 + eff1) * 0.5 * sueff_global;  // int??
-            }
-        }
-        acjmprev = ac[jm].prev;
-        acjmnext = ac[jm].next;
-        ac[acjmprev].next = acjmnext;
-        if (acjmnext != -1)
-            ac[acjmnext].prev = acjmprev;
-#if 0
-        fprintf( stdout, "STEP-%03d:\n", k+1 );
-		fprintf( stdout, "len0 = %f\n", len[k][0] );
-        for( i=0; topol[k][0][i]>-1; i++ ) fprintf( stdout, " %03d", topol[k][0][i] );
-        fprintf( stdout, "\n" );
-		fprintf( stdout, "len1 = %f\n", len[k][1] );
-        for( i=0; topol[k][1][i]>-1; i++ ) fprintf( stdout, " %03d", topol[k][1][i] );
-        fprintf( stdout, "\n" );
-#endif
-    }
-#if 1
-    FreeIntMtx(eff);
-    eff = NULL;
-    free((void*)tmptmplen);
-    tmptmplen = NULL;
-    free(hist);
-    hist = NULL;
-    free((char*)ac);
-    ac = NULL;
-#endif
-}
-
-void
-fastsupg(int nseq, double** oeff, int*** topol, double** len) {
-    int i, j, k, miniim, maxiim, minijm, maxijm;
-#if 0
-	double eff[nseq][nseq];
-    char pair[njob][njob];
-#else
-    static double*  tmplen;
-    int*            intpt;
-    double          tmpdouble;
-    double          eff1, eff0;
-    static double** eff = NULL;
-    static char**   pair = NULL;
-    static Achain*  ac;
-    double          minscore;
-    int             im = -1, jm = -1;
-    if (!eff) {
-        eff = AllocateFloatMtx(njob, njob);
-        pair = AllocateCharMtx(njob, njob);
-        tmplen = AllocateFloatVec(njob);
-        ac = (Achain*)calloc(njob, sizeof(Achain));
-    }
-#endif
-
-    for (i = 0; i < nseq; i++) {
-        for (j = 0; j < nseq; j++) {
-            eff[i][j] = (double)oeff[i][j];
-        }
-    }
-
-    for (i = 0; i < nseq; i++) {
-        ac[i].next = i + 1;
-        ac[i].prev = i - 1;
-        //		ac[i].curr = i;
-    }
-    ac[nseq - 1].next = -1;
-
-    for (i = 0; i < nseq; i++)
-        tmplen[i] = 0.0;
-    for (i = 0; i < nseq; i++)
-        for (j = 0; j < nseq; j++)
-            pair[i][j] = 0;
-    for (i = 0; i < nseq; i++)
-        pair[i][i] = 1;
-
-    reporterr("\n");
-    for (k = 0; k < nseq - 1; k++) {
-        if (k % 10 == 0)
-            reporterr("%d / %d\r", k, nseq);
-
-        minscore = 9999.0;
-        for (i = 0; ac[i].next != -1; i = ac[i].next)
-        //		for( i=0; i<nseq-1; i++ )
-        {
-            for (j = ac[i].next; j != -1; j = ac[j].next)
-            //			for( j=i+1; j<nseq; j++ )
-            {
-                tmpdouble = eff[i][j];
-                if (tmpdouble < minscore) {
-                    minscore = tmpdouble;
-                    im = i;
-                    jm = j;
-                }
-            }
-        }
-
-        //		reporterr(       "im=%d, jm=%d\n", im, jm );
-
-        intpt = topol[k][0];
-        for (i = 0; i < nseq; i++)
-            if (pair[im][i] > 0)
-                *intpt++ = i;
-        *intpt = -1;
-
-        intpt = topol[k][1];
-        for (i = 0; i < nseq; i++)
-            if (pair[jm][i] > 0)
-                *intpt++ = i;
-        *intpt = -1;
-
-        minscore /= 2.0;
-
-        len[k][0] = (double)minscore - tmplen[im];
-        len[k][1] = (double)minscore - tmplen[jm];
-
-        tmplen[im] = (double)minscore;
-
-        for (i = 0; i < nseq; i++)
-            pair[im][i] += (pair[jm][i] > 0);
-        for (i = 0; i < nseq; i++)
-            pair[jm][i] = 0;
-
-        //		for( i=0; i<nseq; i++ )
-        for (i = 0; i != -1; i = ac[i].next) {
-            if (i != im && i != jm) {
-                if (i < im) {
-                    miniim = i;
-                    maxiim = im;
-                    minijm = i;
-                    maxijm = jm;
-                } else if (i < jm) {
-                    miniim = im;
-                    maxiim = i;
-                    minijm = i;
-                    maxijm = jm;
-                } else {
-                    miniim = im;
-                    maxiim = i;
-                    minijm = jm;
-                    maxijm = i;
-                }
-                eff0 = eff[miniim][maxiim];
-                eff1 = eff[minijm][maxijm];
-                eff[miniim][maxiim] =
-                    MIN(eff0, eff1) * (1.0 - sueff_global) + (eff0 + eff1) * 0.5 * sueff_global;
-                //        		eff[minijm][maxijm] = 9999.0;
-            }
-        }
-        ac[ac[jm].prev].next = ac[jm].next;
-        ac[ac[jm].next].prev = ac[jm].prev;
-//		eff[im][jm] = 9999.0;
-#if 0
-        reporterr(       "STEP-%03d:\n", k+1 );
-		reporterr(       "len0 = %f\n", len[k][0] );
-        for( i=0; topol[k][0][i]>-1; i++ ) reporterr(       " %03d", topol[k][0][i] );
-        reporterr(       "\n" );
-		reporterr(       "len1 = %f\n", len[k][1] );
-        for( i=0; topol[k][1][i]>-1; i++ ) reporterr(       " %03d", topol[k][1][i] );
-        reporterr(       "\n" );
-#endif
-    }
-    reporterr("\n");
-
-    //	FreeFloatMtx( eff );
-    //	FreeCharMtx( pair );
-    //	FreeFloatVec( tmplen );
-    //	free( ac );
-}
-void
-supg(int nseq, double** oeff, int*** topol, double** len) {
-    int i, j, k, miniim, maxiim, minijm, maxijm;
-#if 0
-	double eff[nseq][nseq];
-    char pair[njob][njob];
-#else
-    static double*  tmplen;
-    int*            intpt;
-    double**        doubleptpt;
-    double*         doublept;
-    double          tmpdouble;
-    double          eff1, eff0;
-    static double** eff = NULL;
-    static char**   pair = NULL;
-    if (!eff) {
-        eff = AllocateFloatMtx(njob, njob);
-        pair = AllocateCharMtx(njob, njob);
-        tmplen = AllocateFloatVec(njob);
-    }
-#endif
-
-    for (i = 0; i < nseq; i++) {
-        for (j = 0; j < nseq; j++) {
-            eff[i][j] = (double)oeff[i][j];
-        }
-    }
-    for (i = 0; i < nseq; i++)
-        tmplen[i] = 0.0;
-    for (i = 0; i < nseq; i++)
-        for (j = 0; j < nseq; j++)
-            pair[i][j] = 0;
-    for (i = 0; i < nseq; i++)
-        pair[i][i] = 1;
-
-    for (k = 0; k < nseq - 1; k++) {
-        double minscore = 9999.0;
-        int    im = -1, jm = -1;
-
-        doubleptpt = eff;
-        for (i = 0; i < nseq - 1; i++) {
-            doublept = *doubleptpt++ + i + 1;
-            for (j = i + 1; j < nseq; j++) {
-                tmpdouble = *doublept++;
-                if (tmpdouble < minscore) {
-                    minscore = tmpdouble;
-                    im = i;
-                    jm = j;
-                }
-            }
-        }
-        intpt = topol[k][0];
-        for (i = 0; i < nseq; i++)
-            if (pair[im][i] > 0)
-                *intpt++ = i;
-        *intpt = -1;
-
-        intpt = topol[k][1];
-        for (i = 0; i < nseq; i++)
-            if (pair[jm][i] > 0)
-                *intpt++ = i;
-        *intpt = -1;
-
-        len[k][0] = (double)minscore / 2.0 - tmplen[im];
-        len[k][1] = (double)minscore / 2.0 - tmplen[jm];
-
-        tmplen[im] = (double)minscore / 2.0;
-
-        for (i = 0; i < nseq; i++)
-            pair[im][i] += (pair[jm][i] > 0);
-        for (i = 0; i < nseq; i++)
-            pair[jm][i] = 0;
-
-        for (i = 0; i < nseq; i++) {
-            if (i != im && i != jm) {
-#if 1
-                if (i < im) {
-                    miniim = i;
-                    maxiim = im;
-                    minijm = i;
-                    maxijm = jm;
-                } else if (i < jm) {
-                    miniim = im;
-                    maxiim = i;
-                    minijm = i;
-                    maxijm = jm;
-                } else {
-                    miniim = im;
-                    maxiim = i;
-                    minijm = jm;
-                    maxijm = i;
-                }
-#else
-                miniim = MIN(i, im);
-                maxiim = MAX(i, im);
-                minijm = MIN(i, jm);
-                maxijm = MAX(i, jm);
-#endif
-#if 1
-                eff0 = eff[miniim][maxiim];
-                eff1 = eff[minijm][maxijm];
-                eff[miniim][maxiim] =
-                    MIN(eff0, eff1) * (1.0 - sueff_global) + (eff0 + eff1) * 0.5 * sueff_global;
-#else
-                MIN(eff[miniim][maxiim], eff[minijm][maxijm]) * (1.0 - sueff_global) + (eff[miniim][maxiim] + eff[minijm][maxijm]) * 0.5 * sueff_global;
-#endif
-                eff[minijm][maxijm] = 9999.0;
-                eff[im][jm] = 9999.0;
-            }
-        }
-#if DEBUG
-        printf("STEP-%03d:\n", k + 1);
-        printf("len0 = %f\n", len[k][0]);
-        for (i = 0; topol[k][0][i] > -1; i++)
-            printf(" %03d", topol[k][0][i]);
-        printf("\n");
-        printf("len1 = %f\n", len[k][1]);
-        for (i = 0; topol[k][1][i] > -1; i++)
-            printf(" %03d", topol[k][1][i]);
-        printf("\n");
-#endif
-    }
-}
-
-void
-spg(int nseq, double** oeff, int*** topol, double** len) {
-    int    i, j, k;
-    double tmplen[M];
-#if 0
-	double eff[nseq][nseq];
-    char pair[njob][njob];
-#else
-    double** eff = NULL;
-    char**   pair = NULL;
-    if (!eff) {
-        eff = AllocateDoubleMtx(njob, njob);
-        pair = AllocateCharMtx(njob, njob);
-    }
-#endif
-
-    for (i = 0; i < nseq; i++)
-        for (j = 0; j < nseq; j++)
-            eff[i][j] = oeff[i][j];
-    for (i = 0; i < nseq; i++)
-        tmplen[i] = 0.0;
-    for (i = 0; i < nseq; i++)
-        for (j = 0; j < nseq; j++)
-            pair[i][j] = 0;
-    for (i = 0; i < nseq; i++)
-        pair[i][i] = 1;
-
-    for (k = 0; k < nseq - 1; k++) {
-        double minscore = 9999.0;
-        int    im = -1, jm = -1;
-        int    count;
-
-        for (i = 0; i < nseq - 1; i++)
-            for (j = i + 1; j < nseq; j++) {
-                if (eff[i][j] < minscore) {
-                    minscore = eff[i][j];
-                    im = i;
-                    jm = j;
-                }
-            }
-        for (i = 0, count = 0; i < nseq; i++)
-            if (pair[im][i] > 0) {
-                topol[k][0][count] = i;
-                count++;
-            }
-        topol[k][0][count] = -1;
-        for (i = 0, count = 0; i < nseq; i++)
-            if (pair[jm][i] > 0) {
-                topol[k][1][count] = i;
-                count++;
-            }
-        topol[k][1][count] = -1;
-
-        len[k][0] = minscore / 2.0 - tmplen[im];
-        len[k][1] = minscore / 2.0 - tmplen[jm];
-
-        tmplen[im] = minscore / 2.0;
-
-        for (i = 0; i < nseq; i++)
-            pair[im][i] += (pair[jm][i] > 0);
-        for (i = 0; i < nseq; i++)
-            pair[jm][i] = 0;
-
-        for (i = 0; i < nseq; i++) {
-            if (i != im && i != jm) {
-                eff[MIN(i, im)][MAX(i, im)] =
-                    MIN(eff[MIN(i, im)][MAX(i, im)], eff[MIN(i, jm)][MAX(i, jm)]);
-                eff[MIN(i, jm)][MAX(i, jm)] = 9999.0;
-            }
-            eff[im][jm] = 9999.0;
-        }
-#if DEBUG
-        printf("STEP-%03d:\n", k + 1);
-        printf("len0 = %f\n", len[k][0]);
-        for (i = 0; topol[k][0][i] > -1; i++)
-            printf(" %03d", topol[k][0][i]);
-        printf("\n");
-        printf("len1 = %f\n", len[k][1]);
-        for (i = 0; topol[k][1][i] > -1; i++)
-            printf(" %03d", topol[k][1][i]);
-        printf("\n");
-#endif
-    }
 }
 
 double
@@ -9582,58 +7294,6 @@ substitution(char* seq1, char* seq2) /* method 1 */
     return (score);
 }
 
-void
-treeconstruction(char** seq, int nseq, int*** topol, double** len, double** eff) {
-    int i, j;
-
-    if (weight > 1) {
-        if (utree == 0) {
-            for (i = 0; i < nseq - 1; i++)
-                for (j = i + 1; j < nseq; j++) {
-                    /*
-		       	 eff[i][j] = (double)score_calc1( seq[i], seq[j] );
-*/
-                    eff[i][j] = (double)substitution_hosei(seq[i], seq[j]);
-                    /*
-				 reporterr(       "%f\n", eff[i][j] );
- */
-                }
-            /*
-			reporterr(       "distance matrix\n" );
-			for( i=0; i<nseq; i++ )
-			{
-				for( j=0; j<nseq; j++ ) 
-				{
-					reporterr(       "%f ", eff[i][j] );
-				}
-				reporterr(       "\n" );
-			}
-*/
-            /*
-   			upg( nseq, eff, topol, len );
-   			upg2( nseq, eff, topol, len );
-*/
-            spg(nseq, eff, topol, len);
-            counteff(nseq, topol, len, eff);
-        }
-    } else {
-        for (i = 0; i < nseq; i++)
-            for (j = 0; j < nseq; j++)
-                eff[i][j] = 1.0;
-    }
-    /*
-reporterr(       "weight matrix\n" );
-for( i=0; i<nseq; i++ )
-{
-	for( j=0; j<nseq; j++ ) 
-	{
-		reporterr(       "%f ", eff[i][j] );
-	}
-	reporterr(       "\n" );
-}
-*/
-}
-
 double
 bscore_calc(char** seq, int s, double** eff) /* algorithm B */
 {
@@ -9683,12 +7343,6 @@ bscore_calc(char** seq, int s, double** eff) /* algorithm B */
             }
         }
     return ((double)score / nglen + 400.0 * !scoremtx);
-}
-
-void
-AllocateTmpSeqs(char*** mseq2pt, char** mseq1pt, int locnlenmax) {
-    *mseq2pt = AllocateCharMtx(njob, locnlenmax + 1);
-    *mseq1pt = AllocateCharVec(locnlenmax + 1);
 }
 
 void
@@ -14956,7 +12610,7 @@ readloopthread(void* arg) {
 }
 
 void
-fillimp_file(double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, int* orinum1, int* orinum2, int* uselh, int* seedinlh1, int* seedinlh2, int nodeid, int nfiles) {
+fillimp_file(Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, int* orinum1, int* orinum2, int* uselh, int* seedinlh1, int* seedinlh2, int nodeid, int nfiles) {
     int                i, j, k1, k2, start1, start2, end1, end2, m0, m1, m2;
     double             effijx, effij_kozo;
     char *             pt1, *pt2;
@@ -15002,7 +12656,7 @@ fillimp_file(double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char**
                     m1 = m2;
                     m2 = m0;
                 }
-                if (m2 >= njob - nadd && (uselh == NULL || uselh[m1] || uselh[m2]))  // saikentou
+                if (m2 >= ctx->njob - nadd && (uselh == NULL || uselh[m1] || uselh[m2]))  // saikentou
                 {
                     //				reporterr( "%d x %d\n", m1, m2 );
                     npairs++;

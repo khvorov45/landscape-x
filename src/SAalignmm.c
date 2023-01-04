@@ -135,9 +135,7 @@ Atracking(double* lasthorizontalw, double* lastverticalw, char** seq1, char** se
 }
 
 double
-Aalign(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen)
-/* score no keisan no sai motokaraaru gap no atukai ni mondai ga aru */
-{
+Aalign(Context* ctx, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen) {
     register int        i, j;
     int                 lasti; /* outgap == 0 -> lgth1, outgap == 1 -> lgth1+1 */
     int                 lgth1, lgth2;
@@ -168,8 +166,8 @@ Aalign(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc,
         fprintf(stderr, "eff1[%d] = %f\n", i, eff1[i]);
 #endif
     if (orlgth1 == 0) {
-        mseq1 = AllocateCharMtx(njob, 1);
-        mseq2 = AllocateCharMtx(njob, 1); /* by J. Thompson */
+        mseq1 = AllocateCharMtx(ctx->njob, 1);
+        mseq2 = AllocateCharMtx(ctx->njob, 1); /* by J. Thompson */
     }
 
     lgth1 = strlen(seq1[0]);
@@ -212,7 +210,7 @@ Aalign(char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc,
         m = AllocateFloatVec(ll2 + 2);
         mp = AllocateIntVec(ll2 + 2);
 
-        mseq = AllocateCharMtx(njob, ll1 + ll2);
+        mseq = AllocateCharMtx(ctx->njob, ll1 + ll2);
 
         cpmx1 = AllocateFloatMtx(nalphabets, ll1 + 2);
         cpmx2 = AllocateFloatMtx(nalphabets, ll2 + 2);

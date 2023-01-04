@@ -251,9 +251,7 @@ backdp(double** WMMTX, double wmmax, double* maxinw, double* maxinh, int lgth1, 
 }
 
 double
-MSalign11(char** seq1, char** seq2, int alloclen)
-/* score no keisan no sai motokaraaru gap no atukai ni mondai ga aru */
-{
+MSalign11(Context* ctx, char** seq1, char** seq2, int alloclen) {
     //	int k;
     register int i, j;
     int          lasti, lastj;
@@ -294,8 +292,8 @@ MSalign11(char** seq1, char** seq2, int alloclen)
     static int      orlgth1 = 0, orlgth2 = 0;
 
     if (orlgth1 == 0) {
-        mseq1 = AllocateCharMtx(njob, 0);
-        mseq2 = AllocateCharMtx(njob, 0);
+        mseq1 = AllocateCharMtx(ctx->njob, 0);
+        mseq2 = AllocateCharMtx(ctx->njob, 0);
     }
 
     lgth1 = strlen(seq1[0]);
@@ -344,7 +342,7 @@ MSalign11(char** seq1, char** seq2, int alloclen)
         mp = AllocateIntVec(ll2 + 2);
         maxinh = AllocateFloatVec(ll2 + 2);
 
-        mseq = AllocateCharMtx(njob, ll1 + ll2);
+        mseq = AllocateCharMtx(ctx->njob, ll1 + ll2);
 
         cpmx1 = AllocateFloatMtx(nalphabets, ll1 + 2);
         cpmx2 = AllocateFloatMtx(nalphabets, ll2 + 2);

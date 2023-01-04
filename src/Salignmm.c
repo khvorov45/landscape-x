@@ -72,12 +72,12 @@ imp_match_out_vead_tate(double* imp, int j1, int lgth1) {
 }
 
 void
-imp_rna(int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* eff2, RNApair*** grouprna1, RNApair*** grouprna2) {
-    foldrna(nseq1, nseq2, seq1, seq2, eff1, eff2, grouprna1, grouprna2, impmtx);
+imp_rna(Context* ctx, int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* eff2, RNApair*** grouprna1, RNApair*** grouprna2) {
+    foldrna(ctx, nseq1, nseq2, seq1, seq2, eff1, eff2, grouprna1, grouprna2, impmtx);
 }
 
 void
-imp_match_init_strict(int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2, int* uselh, int* seedinlh1, int* seedinlh2, int nodeid, int nfiles) {
+imp_match_init_strict(Context* ctx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2, int* uselh, int* seedinlh1, int* seedinlh2, int nodeid, int nfiles) {
     //	int i, j, k1, k2, tmpint, start1, start2, end1, end2;
     //	double effij;
     //	double effij_kozo;
@@ -113,7 +113,7 @@ imp_match_init_strict(int clus1, int clus2, int lgth1, int lgth2, char** seq1, c
     if (nodeid == -1)
         fillimp(impmtx, clus1, clus2, lgth1, lgth2, seq1, seq2, eff1, eff2, eff1_kozo, eff2_kozo, localhom, swaplist, orinum1, orinum2);  // uselh -> target -> localhomtable. seedinlh12 -> localhom ni haitteiru.
     else
-        fillimp_file(impmtx, clus1, clus2, lgth1, lgth2, seq1, seq2, eff1, eff2, eff1_kozo, eff2_kozo, localhom, orinum1, orinum2, uselh, seedinlh1, seedinlh2, nodeid, nfiles);
+        fillimp_file(ctx, impmtx, clus1, clus2, lgth1, lgth2, seq1, seq2, eff1, eff2, eff1_kozo, eff2_kozo, localhom, orinum1, orinum2, uselh, seedinlh1, seedinlh2, nodeid, nfiles);
 }
 
 static void
@@ -976,7 +976,7 @@ Atracking(double* lasthorizontalw, double* lastverticalw, double fpenalty, doubl
 }
 
 double
-A__align(double** n_dynamicmtx, int penalty_l, int penalty_ex_l, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, char* sgap1, char* sgap2, char* egap1, char* egap2, int headgp, int tailgp, int firstmem, int calledbyfulltreebase, double*** cpmxchild0, double*** cpmxchild1, double*** cpmxresult, double orieff1, double orieff2) {
+A__align(Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_l, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, char* sgap1, char* sgap2, char* egap1, char* egap2, int headgp, int tailgp, int firstmem, int calledbyfulltreebase, double*** cpmxchild0, double*** cpmxchild1, double*** cpmxresult, double orieff1, double orieff2) {
     int            reuseprofiles;
     static int previousfirstlen;  // 2016/Feb/1 // MEMBER NO CHECK GA HITSUYOU!!!!
     static int previousicyc;  // 2016/Feb/1 // MEMBER NO CHECK GA HITSUYOU!!!!
@@ -1065,7 +1065,7 @@ A__align(double** n_dynamicmtx, int penalty_l, int penalty_ex_l, char** seq1, ch
             orlgth1 = 0;
             orlgth2 = 0;
 
-            imp_match_init_strict(0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
+            imp_match_init_strict(ctx, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
 
             FreeFloatVec(w1);
             FreeFloatVec(w2);
@@ -2039,7 +2039,7 @@ A__align_gapmap(void) {
 }
 
 double
-A__align_variousdist(int** which, double*** matrices, int penalty_l, int penalty_ex_l, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, char* sgap1, char* sgap2, char* egap1, char* egap2, int headgp, int tailgp) {
+A__align_variousdist(Context* ctx, int** which, double*** matrices, int penalty_l, int penalty_ex_l, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, char* sgap1, char* sgap2, char* egap1, char* egap2, int headgp, int tailgp) {
     //	int k;
     register int i, j, c;
     int          ngap1, ngap2;
@@ -2115,7 +2115,7 @@ A__align_variousdist(int** which, double*** matrices, int penalty_l, int penalty
             orlgth1 = 0;
             orlgth2 = 0;
 
-            imp_match_init_strict(0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
+            imp_match_init_strict(ctx, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
 
             free(mseq1);
             free(mseq2);
@@ -2253,8 +2253,8 @@ A__align_variousdist(int** which, double*** matrices, int penalty_l, int penalty
 	for( i=0; i<jcyc; i++ ) fprintf( stderr, "eff2[%d] = %f\n", i, eff2[i] );
 #endif
     if (orlgth1 == 0) {
-        mseq1 = AllocateCharMtx(njob, 0);
-        mseq2 = AllocateCharMtx(njob, 0);
+        mseq1 = AllocateCharMtx(ctx->njob, 0);
+        mseq2 = AllocateCharMtx(ctx->njob, 0);
     }
 
     if (lgth1 > orlgth1 || lgth2 > orlgth2) {
@@ -2304,7 +2304,7 @@ A__align_variousdist(int** which, double*** matrices, int penalty_l, int penalty
         m = AllocateFloatVec(ll2 + 2);
         mp = AllocateIntVec(ll2 + 2);
 
-        mseq = AllocateCharMtx(njob, ll1 + ll2);
+        mseq = AllocateCharMtx(ctx->njob, ll1 + ll2);
 
         ogcp1 = AllocateFloatVec(ll1 + 2);
         ogcp2 = AllocateFloatVec(ll2 + 2);

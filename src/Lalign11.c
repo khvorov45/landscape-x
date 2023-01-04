@@ -193,9 +193,7 @@ Ltracking(char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int* 
 }
 
 double
-L__align11(double** n_dynamicmtx, double scoreoffset, char** seq1, char** seq2, int alloclen, int* off1pt, int* off2pt)
-/* score no keisan no sai motokaraaru gap no atukai ni mondai ga aru */
-{
+L__align11(Context* ctx, double** n_dynamicmtx, double scoreoffset, char** seq1, char** seq2, int alloclen, int* off1pt, int* off2pt) {
     //	int k;
     int     i, j;
     int     lasti, lastj; /* outgap == 0 -> lgth1, outgap == 1 -> lgth1+1 */
@@ -274,8 +272,8 @@ L__align11(double** n_dynamicmtx, double scoreoffset, char** seq1, char** seq2, 
     }
 
     if (orlgth1 == 0) {
-        mseq1 = AllocateCharMtx(njob, 0);
-        mseq2 = AllocateCharMtx(njob, 0);
+        mseq1 = AllocateCharMtx(ctx->njob, 0);
+        mseq2 = AllocateCharMtx(ctx->njob, 0);
     }
 
     lgth1 = strlen(seq1[0]);
@@ -345,10 +343,7 @@ L__align11(double** n_dynamicmtx, double scoreoffset, char** seq1, char** seq2, 
         m = AllocateFloatVec(ll2 + 2);
         mp = AllocateIntVec(ll2 + 2);
 
-        mseq = AllocateCharMtx(njob, ll1 + ll2);
-
-        //		doublework = AllocateFloatMtx( nalphabets, MAX( ll1, ll2 )+2 );
-        //		intwork = AllocateIntMtx( nalphabets, MAX( ll1, ll2 )+2 );
+        mseq = AllocateCharMtx(ctx->njob, ll1 + ll2);
 
 #if DEBUG
         fprintf(stderr, "succeeded\n");

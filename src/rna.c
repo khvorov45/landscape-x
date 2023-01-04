@@ -172,7 +172,7 @@ mccaskillextract(char** seq, char** nogap, int nseq, RNApair** pairprob, RNApair
 }
 
 void
-rnaalifoldcall(char** seq, int nseq, RNApair** pairprob) {
+rnaalifoldcall(Context* ctx, char** seq, int nseq, RNApair** pairprob) {
     int               lgth;
     int               i;
     static int*   order = NULL;
@@ -190,9 +190,9 @@ rnaalifoldcall(char** seq, int nseq, RNApair** pairprob) {
     if (order == NULL) {
         pid = (int)getpid();
         sprintf(fnamein, "/tmp/_rnaalifoldin.%d", pid);
-        order = AllocateIntVec(njob);
-        name = AllocateCharMtx(njob, 10);
-        for (i = 0; i < njob; i++) {
+        order = AllocateIntVec(ctx->njob);
+        name = AllocateCharMtx(ctx->njob, 10);
+        for (i = 0; i < ctx->njob; i++) {
             order[i] = i;
             sprintf(name[i], "seq%d", i);
         }
@@ -318,7 +318,7 @@ utot(int n, int l, char** s) {
 }
 
 void
-foldrna(int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* eff2, RNApair*** grouprna1, RNApair*** grouprna2, double** impmtx) {
+foldrna(Context* ctx, int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* eff2, RNApair*** grouprna1, RNApair*** grouprna2, double** impmtx) {
     int i, j;
     //	int ui, uj;
     //	int uiup, ujup;
@@ -388,7 +388,7 @@ foldrna(int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* ef
 
     /* base-pairing probability of group 1 */
     if (rnaprediction == 'r')
-        rnaalifoldcall(oseq1, nseq1, pairprob1);
+        rnaalifoldcall(ctx, oseq1, nseq1, pairprob1);
     else
         mccaskillextract(oseq1, useq1, nseq1, pairprob1, grouprna1, sgapmap1, eff1);
 
@@ -397,7 +397,7 @@ foldrna(int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* ef
 
     /* base-pairing probability of group 2 */
     if (rnaprediction == 'r')
-        rnaalifoldcall(oseq2, nseq2, pairprob2);
+        rnaalifoldcall(ctx, oseq2, nseq2, pairprob2);
     else
         mccaskillextract(oseq2, useq2, nseq2, pairprob2, grouprna2, sgapmap2, eff2);
 

@@ -109,9 +109,7 @@ gentracking(char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijpi, in
 }
 
 double
-genL__align11(double** n_dynamicmtx, char** seq1, char** seq2, int alloclen, int* off1pt, int* off2pt)
-/* score no keisan no sai motokaraaru gap no atukai ni mondai ga aru */
-{
+genL__align11(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int alloclen, int* off1pt, int* off2pt) {
     //	int k;
     register int i, j;
     int          lasti, lastj;
@@ -194,8 +192,8 @@ genL__align11(double** n_dynamicmtx, char** seq1, char** seq2, int alloclen, int
     //	fprintf( stderr, "@@@@@@@@@@@@@ penalty_OP = %f, penalty_EX = %f, pelanty = %f\n", fpenalty_OP, fpenalty_EX, fpenalty );
 
     if (orlgth1 == 0) {
-        mseq1 = AllocateCharMtx(njob, 0);
-        mseq2 = AllocateCharMtx(njob, 0);
+        mseq1 = AllocateCharMtx(ctx->njob, 0);
+        mseq2 = AllocateCharMtx(ctx->njob, 0);
     }
 
     lgth1 = strlen(seq1[0]);
@@ -247,7 +245,7 @@ genL__align11(double** n_dynamicmtx, char** seq1, char** seq2, int alloclen, int
         largeM = AllocateFloatVec(ll2 + 2);
         Mp = AllocateIntVec(ll2 + 2);
 
-        mseq = AllocateCharMtx(njob, ll1 + ll2);
+        mseq = AllocateCharMtx(ctx->njob, ll1 + ll2);
 
         cpmx1 = AllocateFloatMtx(nalphabets, ll1 + 2);
         cpmx2 = AllocateFloatMtx(nalphabets, ll2 + 2);

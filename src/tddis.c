@@ -3,54 +3,8 @@
 #define DEBUG 0
 #define USEDISTONTREE 1
 
-#if 0
-void mdfymtx( char pair[njob][njob], int s1, double **partialmtx, double **mtx )
-#else
-void
-mdfymtx(char** pair, int s1, double** partialmtx, double** mtx)
-#endif
-{
-    int i, j;
-    int icount, jcount;
-#if DEBUG
-    FILE*       fp;
-    static char name[M][B];
-
-    for (i = 0; i < M; i++)
-        name[i][0] = 0;
-    fprintf(stdout, "s1 = %d\n", s1);
-    for (i = 0; i < njob; i++) {
-        for (j = 0; j < njob; j++) {
-            printf("%#2d", pair[i][j]);
-        }
-        printf("\n");
-    }
-#endif
-
-    for (i = 0, icount = 0; i < njob - 1; i++) {
-        if (!pair[s1][i])
-            continue;
-        for (j = i + 1, jcount = icount + 1; j < njob; j++) {
-            if (!pair[s1][j])
-                continue;
-            partialmtx[icount][jcount] = mtx[i][j];
-            jcount++;
-        }
-        icount++;
-    }
-#if DEBUG
-    fp = fopen("hat2.org", "w");
-    WriteHat2(fp, njob, name, mtx);
-    fclose(fp);
-    fp = fopen("hat2.mdf", "w");
-    WriteHat2(fp, icount, name, partialmtx);
-    fclose(fp);
-#endif
-}
-
 double
-score_calc(char** seq, int s) /* method 3  */
-{
+score_calc(char** seq, int s) {
     int    i, j, k, c;
     int    len = strlen(seq[0]);
     double score;
@@ -578,76 +532,10 @@ fastconjuction(int* memlist, char** seq, char** aseq, double* peff, double* eff,
     return (k);
 }
 
-int
-conjuctionfortbfast_old(char** pair, int s, char** seq, char** aseq, double* peff, double* eff, char* d) {
-    int    m, k;
-    char*  b;
-    double total;
-
-    b = calloc(B, sizeof(char));
-#if DEBUG
-    fprintf(stderr, "s = %d\n", s);
-#endif
-
-    total = 0.0;
-    d[0] = 0;
-    for (m = s, k = 0; m < njob; m++) {
-        if (pair[s][m] != 0) {
-            sprintf(b, " %d", m + 1);
-#if 1
-            if (strlen(d) < 100)
-                strcat(d, b);
-#else
-            strcat(d, b);
-#endif
-            aseq[k] = seq[m];
-            peff[k] = eff[m];
-            total += peff[k];
-#if 0
-			strcpy( aname[k], name[m] );
-#endif
-            k++;
-        }
-    }
-#if 1
-    for (m = 0; m < k; m++)
-        peff[m] /= total;
-#endif
-    free(b);
-    return (k);
-}
-
-int
-conjuction(char** pair, int s, char** seq, char** aseq, double* peff, double* eff, char* d) {
-    int    m, k;
-    char   b[B];
-
-#if DEBUG
-    fprintf(stderr, "s = %d\n", s);
-#endif
-
-    d[0] = 0;
-    for (m = s, k = 0; m < njob; m++) {
-        if (pair[s][m] != 0) {
-            sprintf(b, " %d", m + 1);
-            if (strlen(d) < 100) {
-                strcat(d, b);
-            }
-            aseq[k] = seq[m];
-            peff[k] = eff[m];
-            k++;
-        }
-    }
-
-    return (k);
-}
-
 void
 doubledelete(double** cpmx, int d, int len) {
-    int i, j;
-
-    for (i = d; i < len - 1; i++) {
-        for (j = 0; j < nalphabets; j++) {
+    for (int i = d; i < len - 1; i++) {
+        for (int j = 0; j < nalphabets; j++) {
             cpmx[j][i] = cpmx[j][i + 1];
         }
     }
@@ -836,26 +724,6 @@ node_eff(int nseq, double* eff, int* node) {
 #endif
 }
 
-int
-shrinklocalhom(char** pair, int s1, int s2, LocalHom** localhom, LocalHom*** localhomshrink) {
-    int m1, k1, m2, k2;
-
-    for (m1 = s1, k1 = 0; m1 < njob; m1++) {
-        if (pair[s1][m1] != 0) {
-            for (m2 = s2, k2 = 0; m2 < njob; m2++) {
-                if (pair[s2][m2] != 0) {
-                    if (localhom[m1][m2].opt == -1)
-                        localhomshrink[k1][k2] = NULL;
-                    else
-                        localhomshrink[k1][k2] = localhom[m1] + m2;
-                    k2++;
-                }
-            }
-            k1++;
-        }
-    }
-    return (0);
-}
 int
 msshrinklocalhom_fast_target(int* memlist1, int* memlist2, LocalHom** localhom, LocalHom*** localhomshrink, char* swaplist, int* targetmap) {
     int m1, k1, m2, k2, t1, i2;
