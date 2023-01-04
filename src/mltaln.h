@@ -1,13 +1,13 @@
+#include <stddef.h>
+#include <stdarg.h>
+
 #include <stdio.h>
 #include <stdlib.h>
-#include <stddef.h>
 #include <sys/types.h>
 #include <string.h>
 #include <math.h>
 #include <ctype.h>
-#include "mtxutl.h"
 #include <limits.h>
-#include <stdarg.h>
 
 #ifndef _MSC_VER
 #include <unistd.h>
@@ -19,7 +19,18 @@
 #include <sys/mman.h>  // shm_open
 #endif
 
+#include "mtxutl.h"
+
 #define VERSION "7.510"
+
+#define PI 3.14159265358979323846
+#define END_OF_VEC -1
+
+#define NKOUHO 20
+#define NKOUHO_LONG 500
+
+#define MAX(X, Y) (((X) > (Y)) ? (X) : (Y))
+#define MIN(X, Y) (((X) < (Y)) ? (X) : (Y))
 
 #define FFT_THRESHOLD 80
 #define FFT_WINSIZE_P 20
@@ -300,8 +311,6 @@ typedef struct _gappos {
     int pos;
     int len;
 } GapPos;
-
-#include "fft.h"
 
 extern int  intlen(int* num);
 extern char seqcheck(char** seq);
