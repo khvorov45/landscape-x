@@ -187,11 +187,11 @@ typedef struct GapPos {
 } GapPos;
 
 typedef struct Context {
-    char modelname[500];
-    int  njob;
-    int  nlenmax;
-    int  amino_n[0x100];
-    char amino_grp[0x100];
+    char  modelname[500];
+    int   njob;
+    int   nlenmax;
+    int   amino_n[0x100];
+    char  amino_grp[0x100];
     int** amino_dis;
 } Context;
 

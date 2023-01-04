@@ -1193,7 +1193,7 @@ extendedmtx(double** matrix, double* freq, unsigned char* amino, char* amino_grp
         amino[i] = (unsigned char)i;
     }
     for (i = 0; i < nalphabets; i++)
-       amino_grp[(int)amino[i]] = i % 6;
+        amino_grp[(int)amino[i]] = i % 6;
     for (i = 0; i < nalphabets; i++)
         freq[i] = 1.0 / nalphabets;
 
@@ -1763,7 +1763,7 @@ constants(Context* ctx, int nseq, char** seq) {
         for (i = 0; i < 26; i++)
             amino[i] = locaminon[i];
         for (i = 0; i < 26; i++)
-           ctx->amino_grp[(int)amino[i]] = locgrpn[i];
+            ctx->amino_grp[(int)amino[i]] = locgrpn[i];
         for (i = 0; i < 26; i++)
             for (j = 0; j < 26; j++)
                 n_dis[i][j] = 0;
@@ -1956,7 +1956,7 @@ constants(Context* ctx, int nseq, char** seq) {
         penaltyLN = (int)(600.0 / 1000.0 * -2000 + 0.5);
         penalty_exLN = (int)(600.0 / 1000.0 * -100 + 0.5);
 
-        userdefined = extendedmtx(n_distmp, freq, amino,ctx->amino_grp);
+        userdefined = extendedmtx(n_distmp, freq, amino, ctx->amino_grp);
 
         if (trywarp)
             sprintf(shiftmodel, "%4.2f", -(double)penalty_shift / 600);
@@ -2182,7 +2182,7 @@ constants(Context* ctx, int nseq, char** seq) {
         penaltyLN = (int)(600.0 / 1000.0 * -2000 + 0.5);
         penalty_exLN = (int)(600.0 / 1000.0 * -100 + 0.5);
 
-        BLOSUMmtx(nblosum, n_distmp, freq, amino,ctx->amino_grp, &rescale);
+        BLOSUMmtx(nblosum, n_distmp, freq, amino, ctx->amino_grp, &rescale);
 
         reporterr("rescale = %d\n", rescale);
 

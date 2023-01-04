@@ -359,18 +359,18 @@ upg2(Context* ctx, int nseq, double** eff, int*** topol, double** len) {
 
 typedef struct generaldistarrthread_arg_t {
     Context* ctx;
-    int para;
-    int njob;
-    int     m;
-    int*    nlen;
-    char**  seq;
-    int**   skiptable;
-    int**   pointt;
-    int*    ttable;
-    int*    tselfscore;
-    int*    posshared;
-    int*    joblist;
-    double* result;
+    int      para;
+    int      njob;
+    int      m;
+    int*     nlen;
+    char**   seq;
+    int**    skiptable;
+    int**    pointt;
+    int*     ttable;
+    int*     tselfscore;
+    int*     posshared;
+    int*     joblist;
+    double*  result;
 } generaldistarrthread_arg_t;
 
 static void*
@@ -413,15 +413,15 @@ generalkmerdistarrthread(void* arg)  // enablemultithread == 0 demo tsukau
 static void*
 generalmsadistarrthread(generaldistarrthread_arg_t* targ) {
     Context* ctx = targ->ctx;
-    int                         njob = targ->njob;
-    int                         m = targ->m;
-    int*                        tselfscore = targ->tselfscore;
-    char**                      seq = targ->seq;
-    int**                       skiptable = targ->skiptable;
-    int*                        joblist = targ->joblist;
-    int*                        posshared = targ->posshared;
-    double*                     result = targ->result;
-    int i, posinjoblist, n;
+    int      njob = targ->njob;
+    int      m = targ->m;
+    int*     tselfscore = targ->tselfscore;
+    char**   seq = targ->seq;
+    int**    skiptable = targ->skiptable;
+    int*     joblist = targ->joblist;
+    int*     posshared = targ->posshared;
+    double*  result = targ->result;
+    int      i, posinjoblist, n;
 
     while (1) {
 #ifdef enablemultithread
@@ -519,7 +519,7 @@ kmerresetnearest(Context* ctx, Bchain* acpt, double** distfrompt, double* mindis
     }
 
     if (j) {
-        int posshared = 0;
+        int                        posshared = 0;
         generaldistarrthread_arg_t targ = {
             .ctx = ctx,
             .para = 0,
@@ -619,7 +619,7 @@ msaresetnearest(Context* ctx, Bchain* acpt, double** distfrompt, double* mindisf
     }
 
     if (j) {
-        int                         posshared = 0;
+        int                        posshared = 0;
         generaldistarrthread_arg_t targ = {
             .ctx = ctx,
             .para = 0,
@@ -2565,7 +2565,7 @@ makecompositiontable_global(int* table, int* pointt) {
 
 typedef struct resetnearestthread_arg_t {
     Context* ctx;
-    int para;
+    int      para;
     int      im;
     int      nseq;
     double** partmtx;
@@ -2585,18 +2585,18 @@ typedef struct resetnearestthread_arg_t {
 static void*
 msaresetnearestthread(void* arg) {
     resetnearestthread_arg_t* targ = (resetnearestthread_arg_t*)arg;
-    Context* ctx = targ->ctx;
-    int      im = targ->im;
-    double** partmtx = targ->partmtx;
-    double*  mindist = targ->mindist;
-    int*     nearest = targ->nearest;
-    char**   seq = targ->seq;
-    int**    skiptable = targ->skiptable;
-    int*     tselfscore = targ->tselfscore;
-    double*  result = targ->result;
-    int*     joblist = targ->joblist;
-    Bchain** acpt = targ->acpt;
-    Bchain*  ac = targ->ac;
+    Context*                  ctx = targ->ctx;
+    int                       im = targ->im;
+    double**                  partmtx = targ->partmtx;
+    double*                   mindist = targ->mindist;
+    int*                      nearest = targ->nearest;
+    char**                    seq = targ->seq;
+    int**                     skiptable = targ->skiptable;
+    int*                      tselfscore = targ->tselfscore;
+    double*                   result = targ->result;
+    int*                      joblist = targ->joblist;
+    Bchain**                  acpt = targ->acpt;
+    Bchain*                   ac = targ->ac;
 
     Bchain* acptbk;
 
@@ -2630,18 +2630,18 @@ msaresetnearestthread(void* arg) {
 static void*
 kmerresetnearestthread(void* arg) {
     resetnearestthread_arg_t* targ = (resetnearestthread_arg_t*)arg;
-    Context* ctx = targ->ctx;
-    int      im = targ->im;
-    double** partmtx = targ->partmtx;
-    double*  mindist = targ->mindist;
-    int*     nearest = targ->nearest;
-    int*     tselfscore = targ->tselfscore;
-    int**    pointt = targ->pointt;
-    int*     nlen = targ->nlen;
-    double*  result = targ->result;
-    int*     joblist = targ->joblist;
-    Bchain** acpt = targ->acpt;
-    Bchain*  ac = targ->ac;
+    Context*                  ctx = targ->ctx;
+    int                       im = targ->im;
+    double**                  partmtx = targ->partmtx;
+    double*                   mindist = targ->mindist;
+    int*                      nearest = targ->nearest;
+    int*                      tselfscore = targ->tselfscore;
+    int**                     pointt = targ->pointt;
+    int*                      nlen = targ->nlen;
+    double*                   result = targ->result;
+    int*                      joblist = targ->joblist;
+    Bchain**                  acpt = targ->acpt;
+    Bchain*                   ac = targ->ac;
 
     int* singlettable1;
 
@@ -2690,8 +2690,8 @@ kmerresetnearestthread(void* arg) {
 
 typedef struct compactdistarrthread_arg_t {
     Context* ctx;
-    int para;
-    int njob;
+    int      para;
+    int      njob;
     //	int thread_no;
     int      im;
     int      jm;
@@ -2902,7 +2902,7 @@ static void*
 verycompactmsadistarrthreadjoblist(void* arg)  // enablemultithread == 0 demo tsukau
 {
     compactdistarrthread_arg_t* targ = (compactdistarrthread_arg_t*)arg;
-    Context* ctx = targ->ctx;
+    Context*                    ctx = targ->ctx;
     int                         njob = targ->njob;
     int                         im = targ->im;
     int                         jm = targ->jm;
@@ -2983,7 +2983,7 @@ static void*
 msadistarrthreadjoblist(void* arg)  // enablemultithread == 0 demo tsukau
 {
     compactdistarrthread_arg_t* targ = (compactdistarrthread_arg_t*)arg;
-    Context* ctx = targ->ctx;
+    Context*                    ctx = targ->ctx;
     int                         njob = targ->njob;
     int                         im = targ->im;
     int                         jm = targ->jm;
@@ -4612,9 +4612,8 @@ compacttree_memsaveselectable(Context* ctx, int nseq, double** partmtx, int* nea
         if (howcompact == 2)
             continue;
 
-
         {
-            Bchain* acshared = ac;
+            Bchain*                   acshared = ac;
             resetnearestthread_arg_t* targ = resetarg;
             {
                 targ[0].ctx = ctx;
