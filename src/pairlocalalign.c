@@ -2340,8 +2340,8 @@ pairlocalalign(Context* ctx, int ngui, char** namegui, char** seqgui, double** d
     }
 
     constants(ctx, ctx->njob, seq);
-    initSignalSM();
-    initFiles();
+    initSignalSM(ctx);
+    initFiles(ctx);
 
     c = seqcheck(ctx, seq);
     if (c) {

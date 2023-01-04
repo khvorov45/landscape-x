@@ -9,7 +9,6 @@ int   nthreadpair = 1;
 int   randomseed = 0;
 int   parallelizationstrategy = BAATARI1;
 
-int    ppid;
 double thrinter;
 double fastathreshold;
 int    pslocal, ppslocal;

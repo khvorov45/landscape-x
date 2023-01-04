@@ -2200,14 +2200,14 @@ readOtherOptions(int* ppidptr, int* fftThresholdptr, int* fftWinSizeptr) {
 }
 
 void
-initSignalSM(void) {
+initSignalSM(Context* ctx) {
     //	int signalsmid;
 
 #if IODEBUG
     if (ppid)
         fprintf(stderr, "PID of xced = %d\n", ppid);
 #endif
-    if (!ppid) {
+    if (!ctx->ppid) {
         signalSM = NULL;
         return;
     }
@@ -2223,10 +2223,10 @@ initSignalSM(void) {
 }
 
 void
-initFiles(void) {
+initFiles(Context* ctx) {
     char pname[100];
-    if (ppid)
-        sprintf(pname, "/tmp/pre.%d", ppid);
+    if (ctx->ppid)
+        sprintf(pname, "/tmp/pre.%d", ctx->ppid);
     else
         sprintf(pname, "pre");
     prep_g = fopen(pname, "w");

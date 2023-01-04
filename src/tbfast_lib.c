@@ -1456,8 +1456,8 @@ tbfast_main(int argc, char* argv[]) {
         opts.nthreadtb = nthread;
     }
 
-    initSignalSM();
-    initFiles();
+    initSignalSM(ctx);
+    initFiles(ctx);
     WriteOptions(trap_g);
 
     if (opts.distout && !opts.treeout && opts.noalign) {

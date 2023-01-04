@@ -2694,7 +2694,7 @@ constants(Context* ctx, int nseq, char** seq) {
                 ctx->n_disFFT[i][j] = ctx->n_dis[i][j] + offset - offsetFFT;
     }
 
-    ppid = 0;
+    ctx->ppid = 0;
 
     if (fftThreshold == NOTSPECIFIED) {
         fftThreshold = FFT_THRESHOLD;

@@ -203,9 +203,9 @@ typedef struct Context {
     double   polarity[0x100];
     double   volume[0x100];
     int      ribosumdis[37][37];
+    int      ppid;
 } Context;
 
-extern int    ppid;
 extern double thrinter;
 extern double fastathreshold;
 extern int    pslocal, ppslocal;
@@ -555,8 +555,8 @@ extern int          ReadOpt(FILE* fp, int opt[M], int nseq);
 extern int          ReadOpt2(FILE* fp, int opt[M], int nseq);
 extern int          writePre(int nseq, char** name, char** aseq, int force);
 extern void         readOtherOptions(int* ppidptr, int* fftThresholdptr, int* fftWinSizeptr);
-extern void         initSignalSM(void);
-extern void         initFiles(void);
+extern void         initSignalSM(Context* ctx);
+extern void         initFiles(Context* ctx);
 extern void         WriteForFasta(FILE* fp, int locnjob, char** name, char** aseq);
 extern void         readlocalhomtable(FILE* fp, int njob, LocalHom** localhomtable, char* kozoarivec);
 extern void         readlocalhomtable_half(FILE* fp, int njob, LocalHom** localhomtable, char* kozoarivec);
