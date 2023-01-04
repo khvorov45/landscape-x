@@ -56,13 +56,13 @@ intlen(int* num) {
 }
 
 char
-seqcheck(char** seq) {
+seqcheck(Context* ctx, char** seq) {
     int    i, len;
     char** seqbk = seq;
     while (*seq) {
         len = strlen(*seq);
         for (i = 0; i < len; i++) {
-            if (amino_n[(int)(*seq)[i]] == -1) {
+            if (ctx->amino_n[(int)(*seq)[i]] == -1) {
                 reporterr("========================================================================= \n");
                 reporterr("========================================================================= \n");
                 reporterr("=== \n");
@@ -127,35 +127,6 @@ lastmem(int* s) {
     while (*s++ != -1)
         ;
     return (*(s - 2));
-}
-
-void
-scmx_calc(int icyc, char** aseq, double* effarr, double** scmx) {
-    int i, j, lgth;
-
-    lgth = strlen(aseq[0]);
-    for (j = 0; j < lgth; j++) {
-        for (i = 0; i < nalphabets; i++) {
-            scmx[i][j] = 0;
-        }
-    }
-    for (i = 0; i < icyc + 1; i++) {
-        int id;
-        id = amino_n[(unsigned char)aseq[i][0]];
-        scmx[id][0] += (double)effarr[i];
-    }
-    for (j = 1; j < lgth - 1; j++) {
-        for (i = 0; i < icyc + 1; i++) {
-            int id;
-            id = amino_n[(unsigned char)aseq[i][j]];
-            scmx[id][j] += (double)effarr[i];
-        }
-    }
-    for (i = 0; i < icyc + 1; i++) {
-        int id;
-        id = amino_n[(unsigned char)aseq[i][lgth - 1]];
-        scmx[id][lgth - 1] += (double)effarr[i];
-    }
 }
 
 void
@@ -306,117 +277,8 @@ intergroup_score_gapnomi(char** seq1, char** seq2, double* eff1, double* eff2, i
     //	return( score );
 }
 
-void
-intergroup_score_multimtx(int** whichmtx, double*** scoringmatrices, char** seq1, char** seq2, double* eff1, double* eff2, int clus1, int clus2, int len, double* value) {
-    int    i, j, k, c;
-    int    len2 = len - 2;
-    int    mn1, mn2;
-    double tmpscore;
-    char * mseq1, *mseq2;
-    double efficient;
-    int    gapnum = amino_n['-'];
-
-    *value = 0.0;
-    for (i = 0; i < clus1; i++) {
-        for (j = 0; j < clus2; j++) {
-            efficient = eff1[i] * eff2[j];
-            c = whichmtx[i][j];
-            mseq1 = seq1[i];
-            mseq2 = seq2[j];
-            tmpscore = 0.0;
-            for (k = 0; k < len; k++) {
-                mn1 = amino_n[(unsigned char)(mseq1[k])];
-                mn2 = amino_n[(unsigned char)(mseq2[k])];
-                if (mn1 == gapnum && mn2 == gapnum)
-                    continue;
-                tmpscore += (double)scoringmatrices[c][mn1][mn2];
-
-                if (mn1 == gapnum) {
-                    tmpscore += (double)penalty;
-                    tmpscore += (double)scoringmatrices[c][mn1][mn2];
-                    while ((mn1 = amino_n[(unsigned char)mseq1[++k]]) == gapnum)
-                        tmpscore += (double)scoringmatrices[c][mn1][mn2];
-                    k--;
-                    if (k > len2)
-                        break;
-                    continue;
-                }
-                if (mn2 == gapnum) {
-                    tmpscore += (double)penalty;
-                    tmpscore += (double)scoringmatrices[c][mn1][mn2];
-                    while ((mn2 = amino_n[(unsigned char)mseq2[++k]]) == gapnum)
-                        tmpscore += (double)scoringmatrices[c][mn1][mn2];
-                    k--;
-                    if (k > len2)
-                        break;
-                    continue;
-                }
-            }
-            *value += (double)tmpscore * (double)efficient;
-        }
-    }
-
-#if DEBUG
-    reporterr("score in intergroup_score = %f\n", score);
-#endif
-}
-
-void
-intergroup_score(char** seq1, char** seq2, double* eff1, double* eff2, int clus1, int clus2, int len, double* value) {
-    int           i, j, k;
-    int           len2 = len - 2;
-    unsigned char ms1, ms2;
-    double        tmpscore;
-    char *        mseq1, *mseq2;
-    double        efficient;
-
-    *value = 0.0;
-    for (i = 0; i < clus1; i++) {
-        for (j = 0; j < clus2; j++) {
-            efficient = eff1[i] * eff2[j];
-            mseq1 = seq1[i];
-            mseq2 = seq2[j];
-            tmpscore = 0.0;
-            for (k = 0; k < len; k++) {
-                ms1 = (unsigned char)mseq1[k];
-                ms2 = (unsigned char)mseq2[k];
-                if (ms1 == '-' && ms2 == '-')
-                    continue;
-                tmpscore += (double)amino_dis_consweight_multi[ms1][ms2];
-
-                if (ms1 == '-') {
-                    tmpscore += (double)penalty;
-                    tmpscore += (double)amino_dis_consweight_multi[ms1][ms2];
-                    while ((ms1 = (unsigned char)mseq1[++k]) == '-')
-                        tmpscore += (double)amino_dis_consweight_multi[ms1][ms2];
-                    k--;
-                    if (k > len2)
-                        break;
-                    continue;
-                }
-                if (ms2 == '-') {
-                    tmpscore += (double)penalty;
-                    tmpscore += (double)amino_dis_consweight_multi[ms1][ms2];
-                    while ((ms2 = (unsigned char)mseq2[++k]) == '-')
-                        tmpscore += (double)amino_dis_consweight_multi[ms1][ms2];
-                    k--;
-                    if (k > len2)
-                        break;
-                    continue;
-                }
-            }
-            *value += (double)tmpscore * (double)efficient;
-        }
-    }
-
-#if DEBUG
-    reporterr("score in intergroup_score = %f\n", score);
-#endif
-}
-
 double
-score_calc5(char** seq, int s, double** eff, int ex) /* method 3 deha nai */
-{
+score_calc5(char** seq, int s, double** eff, int ex) {
     int    i, j, k;
     int    len = strlen(seq[0]);
     double score;
@@ -3862,7 +3724,7 @@ static double
 distdp(Context* ctx, double** scoringmtx, char* s1, char* s2, LocalHom* lh, double selfscore1, double selfscore2, int alloclen) {
     (void)ctx;
     double v = G__align11(scoringmtx, &s1, &s2, alloclen, 1, 1);
-    putlocalhom2(s1, s2, lh, 0, 0, 'h');
+    putlocalhom2(ctx, s1, s2, lh, 0, 0, 'h');
     return (score2dist(v, selfscore1, selfscore2));
 }
 
@@ -3881,7 +3743,7 @@ distdpL(Context* ctx, double** scoringmtx, char* s1, char* s2, LocalHom* lh, dou
     int    off1, off2;
     //	reporterr( "LOCAL align\n" );
     v = L__align11(ctx, scoringmtx, 0.0, &s1, &s2, alloclen, &off1, &off2);
-    putlocalhom2(s1, s2, lh, off1, off2, 'h');
+    putlocalhom2(ctx, s1, s2, lh, off1, off2, 'h');
     return (score2dist(v, selfscore1, selfscore2));
 }
 
@@ -3898,7 +3760,7 @@ distdpN(Context* ctx, double** scoringmtx, char* s1, char* s2, LocalHom* lh, dou
     (void)ctx;
     int    off1, off2;
     double v = genL__align11(ctx, scoringmtx, &s1, &s2, alloclen, &off1, &off2);
-    putlocalhom2(s1, s2, lh, off1, off2, 'h');
+    putlocalhom2(ctx, s1, s2, lh, off1, off2, 'h');
     return (score2dist(v, selfscore1, selfscore2));
 }
 
@@ -8071,98 +7933,6 @@ DSPscore(int s, char** seq) /* method 3 deha nai */
 
 #define SEGMENTSIZE 150
 
-int
-searchAnchors(int nseq, char** seq, Segment* seg) {
-    int     i, j, k, kcyc;
-    int     status;
-    double  score;
-    int     value = 0;
-    int     len;
-    int     length;
-    double* stra = NULL;
-    double  threshold;
-    double  cumscore;
-
-    len = strlen(seq[0]);
-    threshold = (int)divThreshold / 100.0 * 600.0 * divWinSize;
-    stra = AllocateDoubleVec(len);
-
-    for (i = 0; i < len; i++) {
-        stra[i] = 0.0;
-        kcyc = nseq - 1;
-        for (k = 0; k < kcyc; k++)
-            for (j = k + 1; j < nseq; j++)
-                stra[i] += n_dis[(int)amino_n[(unsigned char)seq[k][i]]][(int)amino_n[(unsigned char)seq[j][i]]];
-        stra[i] /= (double)nseq * (nseq - 1) / 2;
-    }
-
-    (seg + 0)->skipForeward = 0;
-    (seg + 1)->skipBackward = 0;
-    status = 0;
-    cumscore = 0.0;
-    score = 0.0;
-    length = 0; /* modified at 01/09/11 */
-    for (j = 0; j < divWinSize; j++)
-        score += stra[j];
-    for (i = 1; i < len - divWinSize; i++) {
-        score = score - stra[i - 1] + stra[i + divWinSize - 1];
-#if DEBUG
-        reporterr("%d %f   ? %f", i, score, threshold);
-        if (score > threshold)
-            reporterr("YES\n");
-        else
-            reporterr("NO\n");
-#endif
-
-        if (score > threshold) {
-            if (!status) {
-                status = 1;
-                seg->start = i;
-                length = 0;
-                cumscore = 0.0;
-            }
-            length++;
-            cumscore += score;
-        }
-        if (score <= threshold || length > SEGMENTSIZE) {
-            if (status) {
-                seg->end = i;
-                seg->center = (seg->start + seg->end + divWinSize) / 2;
-                seg->score = cumscore;
-#if DEBUG
-                reporterr("%d-%d length = %d\n", seg->start, seg->end, length);
-#endif
-                if (length > SEGMENTSIZE) {
-                    (seg + 0)->skipForeward = 1;
-                    (seg + 1)->skipBackward = 1;
-                } else {
-                    (seg + 0)->skipForeward = 0;
-                    (seg + 1)->skipBackward = 0;
-                }
-                length = 0;
-                cumscore = 0.0;
-                status = 0;
-                value++;
-                seg++;
-                if (value > MAXSEG - 3)
-                    ErrorExit("TOO MANY SEGMENTS!");
-            }
-        }
-    }
-    if (status) {
-        seg->end = i;
-        seg->center = (seg->start + seg->end + divWinSize) / 2;
-        seg->score = cumscore;
-#if DEBUG
-        reporterr("%d-%d length = %d\n", seg->start, seg->end, length);
-#endif
-        value++;
-    }
-
-    FreeDoubleVec(stra);
-    return (value);
-}
-
 void
 dontcalcimportance_target(int nseq, char** seq, LocalHom** localhom, int ntarget) {
     int       i, j;
@@ -10091,7 +9861,7 @@ naivepairscorefast(char* seq1, char* seq2, int* skip1, int* skip2, int penal) {
 }
 
 double
-naivepairscore11_dynmtx(double** mtx, char* seq1, char* seq2, int penal) {
+naivepairscore11_dynmtx(Context* ctx, double** mtx, char* seq1, char* seq2, int penal) {
     double vali;
     int    len = strlen(seq1);
     char * s1, *s2, *p1, *p2;
@@ -10131,9 +9901,8 @@ naivepairscore11_dynmtx(double** mtx, char* seq1, char* seq2, int penal) {
                 }
                 continue;
             }
-            //			reporterr(       "adding %c-%c, %d\n", *p1, *p2, amino_dis[*p1][*p2] );
-            c1 = amino_n[(unsigned char)*p1++];
-            c2 = amino_n[(unsigned char)*p2++];
+            c1 = ctx->amino_n[(unsigned char)*p1++];
+            c2 = ctx->amino_n[(unsigned char)*p2++];
             vali += (double)mtx[c1][c2];
         }
     }

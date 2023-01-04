@@ -117,7 +117,7 @@ imp_match_init_strict(Context* ctx, int clus1, int clus2, int lgth1, int lgth2, 
 }
 
 static void
-match_calc_del(double*** matrices, double* match, char** seq1, double* eff1, char** seq2, double* eff2, int i1, int lgth2, int mid, int nmask, int* mask1, int* mask2) {
+match_calc_del(Context* ctx, double*** matrices, double* match, char** seq1, double* eff1, char** seq2, double* eff2, int i1, int lgth2, int mid, int nmask, int* mask1, int* mask2) {
     // osoi!
     int i, j, k, m;
     int c1, c2;
@@ -135,8 +135,8 @@ match_calc_del(double*** matrices, double* match, char** seq1, double* eff1, cha
             j = mask2[m];
             //			reporterr( "Deleting %d-%d (c=%d)\n", i, j, mid );
             //			if( k==0 ) fprintf( stderr, "pairoffset[%d][%d] = %f\n", i, j, po );
-            c1 = amino_n[(unsigned int)seq1[i][i1]];
-            c2 = amino_n[(unsigned int)seq2[j][k]];
+            c1 = ctx->amino_n[(unsigned int)seq1[i][i1]];
+            c2 = ctx->amino_n[(unsigned int)seq2[j][k]];
             //			reporterr( "k=%d, c1=%d, c2=%d, seq1[i][i1]=%c, seq2[%d][%d]=%c\n", k, c1, c2, seq1[i][i1], j, k, seq2[j][k] );
             if (seq1[i][i1] == '-' || seq2[j][k] == '-')
                 continue;
@@ -1329,7 +1329,7 @@ A__align(Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_l, c
 	if( reuseprofiles ) exit(1 );
 #endif
 
-    if (n_dis[0][amino_n['-']] != 0) {
+    if (n_dis[0][ctx->amino_n['-']] != 0) {
         reporterr("Bug probably in versions >7.36.  Please report this issue to katoh@ifrec.osaka-u.ac.jp\n");
         exit(1);
     }
@@ -1342,15 +1342,13 @@ A__align(Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_l, c
         }
 
         if (cpmxchild0 && *cpmxchild0) {
-            //			reporterr( "\nUse cpmxhist for child 0!\n" );
             cpmx1pt = (cpmxchild0);
             gapfreq1pt = (*cpmxchild0)[nalphabets];
             ogcp1opt = (*cpmxchild0)[nalphabets + 1];
             fgcp1opt = (*cpmxchild0)[nalphabets + 2];
         } else {
-            //			reporterr( "\nDo not use cpmxhist for child 0!\n" );
             cpmx1pt = &cpmx1;
-            cpmx_calc_new(seq1, *cpmx1pt, eff1, lgth1, icyc);
+            cpmx_calc_new(ctx, seq1, *cpmx1pt, eff1, lgth1, icyc);
 
             gapfreq1pt = gapfreq1;
             gapcountf(gapfreq1pt, seq1, icyc, eff1, lgth1);
@@ -1370,9 +1368,8 @@ A__align(Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_l, c
             ogcp2opt = (*cpmxchild1)[nalphabets + 1];
             fgcp2opt = (*cpmxchild1)[nalphabets + 2];
         } else {
-            //			reporterr( "\nDo not use cpmxhist for child 1!\n" );
             cpmx2pt = &cpmx2;
-            cpmx_calc_new(seq2, *cpmx2pt, eff2, lgth2, jcyc);
+            cpmx_calc_new(ctx, seq2, *cpmx2pt, eff2, lgth2, jcyc);
 
             gapfreq2pt = gapfreq2;
             gapcountf(gapfreq2pt, seq2, jcyc, eff2, lgth2);
@@ -1402,13 +1399,11 @@ A__align(Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_l, c
         fgcp2opt = fgcp2o;
 
         if (reuseprofiles) {
-            //			reporterr( "reuse" );
-            cpmx_calc_add(seq1, *cpmx1pt, eff1, lgth1, icyc);
+            cpmx_calc_add(ctx, seq1, *cpmx1pt, eff1, lgth1, icyc);
         } else {
-            //			reporterr( "new profile" );
-            cpmx_calc_new(seq1, *cpmx1pt, eff1, lgth1, icyc);
+            cpmx_calc_new(ctx, seq1, *cpmx1pt, eff1, lgth1, icyc);
         }
-        cpmx_calc_new(seq2, *cpmx2pt, eff2, lgth2, jcyc);
+        cpmx_calc_new(ctx, seq2, *cpmx2pt, eff2, lgth2, jcyc);
 
         if (sgap1) {
             new_OpeningGapCount(ogcp1opt, icyc, seq1, eff1, lgth1, sgap1);
@@ -2373,11 +2368,9 @@ A__align_variousdist(Context* ctx, int** which, double*** matrices, int penalty_
 
 #if SLOW
 #else
-    //	cpmx_calc_new( seq1, cpmx1, eff1, lgth1, icyc );
-    //	cpmx_calc_new( seq2, cpmx2, eff2, lgth2, jcyc );
     for (c = 0; c < maxdistclass; c++) {
-        cpmx_calc_new(seq1, cpmx1s[c], eff1s[c], lgth1, icyc);
-        cpmx_calc_new(seq2, cpmx2s[c], eff2s[c], lgth2, jcyc);
+        cpmx_calc_new(ctx, seq1, cpmx1s[c], eff1s[c], lgth1, icyc);
+        cpmx_calc_new(ctx, seq2, cpmx2s[c], eff2s[c], lgth2, jcyc);
     }
 #endif
 
@@ -2460,7 +2453,7 @@ A__align_variousdist(Context* ctx, int** which, double*** matrices, int penalty_
         match_calc_add(matrices[c], initverticalw, cpmx2s[c], cpmx1s[c], 0, lgth1, doublework[c], intwork[c], 1);
         //		for( i=0; i<lgth1; i++ ) fprintf( stderr, "c=%d, %d - %f\n", c, i, initverticalw[i] );
         if (nmask[c])
-            match_calc_del(matrices, initverticalw, seq2, eff2, seq1, eff1, 0, lgth1, c, nmask[c], masklist2[c], masklist1[c]);
+            match_calc_del(ctx, matrices, initverticalw, seq2, eff2, seq1, eff1, 0, lgth1, c, nmask[c], masklist2[c], masklist1[c]);
     }
 //	for( i=0; i<lgth1; i++ ) fprintf( stderr, "%d - %f\n", i, initverticalw[i] );
 #endif
@@ -2479,7 +2472,7 @@ A__align_variousdist(Context* ctx, int** which, double*** matrices, int penalty_
     for (c = 0; c < maxdistclass; c++) {
         match_calc_add(matrices[c], currentw, cpmx1s[c], cpmx2s[c], 0, lgth2, doublework[c], intwork[c], 1);
         if (nmask[c])
-            match_calc_del(matrices, currentw, seq1, eff1, seq2, eff2, 0, lgth2, c, nmask[c], masklist1[c], masklist2[c]);
+            match_calc_del(ctx, matrices, currentw, seq1, eff1, seq2, eff2, 0, lgth2, c, nmask[c], masklist1[c], masklist2[c]);
     }
 //	for( i=0; i<lgth2; i++ ) fprintf( stderr, "%d - %f\n", i, currentw[i] );
 //	exit( 1 );
@@ -2613,7 +2606,7 @@ A__align_variousdist(Context* ctx, int** which, double*** matrices, int penalty_
         for (c = 0; c < maxdistclass; c++) {
             match_calc_add(matrices[c], currentw, cpmx1s[c], cpmx2s[c], i, lgth2, doublework[c], intwork[c], 0);
             if (nmask[c])
-                match_calc_del(matrices, currentw, seq1, eff1, seq2, eff2, i, lgth2, c, nmask[c], masklist1[c], masklist2[c]);
+                match_calc_del(ctx, matrices, currentw, seq1, eff1, seq2, eff2, i, lgth2, c, nmask[c], masklist1[c], masklist2[c]);
         }
 #endif
 #if 0

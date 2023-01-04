@@ -401,21 +401,8 @@ foldrna(Context* ctx, int nseq1, int nseq2, char** seq1, char** seq2, double* ef
     else
         mccaskillextract(oseq2, useq2, nseq2, pairprob2, grouprna2, sgapmap2, eff2);
 
-#if 0
-	makerseq( oseq1, oseq1r, odir1, pairprob1, nseq1, lgth1 );
-	makerseq( oseq2, oseq2r, odir2, pairprob2, nseq2, lgth2 );
-
-	fprintf( stderr, "%s\n", odir2 );
-
-	for( i=0; i<nseq1; i++ )
-	{
-		fprintf( stdout, ">ori\n%s\n", oseq1[0] );
-		fprintf( stdout, ">rev\n%s\n", oseq1r[0] );
-	}
-#endif
-
     /* similarity score */
-    Lalignmm_hmout(oseq1, oseq2, eff1, eff2, nseq1, nseq2, NULL, NULL, NULL, map);
+    Lalignmm_hmout(ctx, oseq1, oseq2, eff1, eff2, nseq1, nseq2, NULL, NULL, NULL, map);
 
     if (1) {
         if (RNAscoremtx == 'n') {

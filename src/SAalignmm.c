@@ -250,8 +250,8 @@ Aalign(Context* ctx, char** seq1, char** seq2, double* eff1, double* eff2, int i
     }
     ijp = commonIP;
 
-    cpmx_calc(seq1, cpmx1, eff1, strlen(seq1[0]), icyc);
-    cpmx_calc(seq2, cpmx2, eff2, strlen(seq2[0]), jcyc);
+    cpmx_calc(ctx, seq1, cpmx1, eff1, strlen(seq1[0]), icyc);
+    cpmx_calc(ctx, seq2, cpmx2, eff2, strlen(seq2[0]), jcyc);
 
     match_calc(initverticalw, cpmx2, cpmx1, 0, lgth1, doublework, intwork, 1);
     match_calc(currentw, cpmx1, cpmx2, 0, lgth2, doublework, intwork, 1);

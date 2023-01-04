@@ -1319,17 +1319,18 @@ ambiguousscore(int* amino_n, int** n_dis) {
 }
 
 static void
-calcfreq_nuc(int nseq, char** seq, double* datafreq) {
+calcfreq_nuc(Context* ctx, int nseq, char** seq, double* datafreq) {
     int    i, j, l;
     int    aan;
     double total;
     for (i = 0; i < 4; i++)
         datafreq[i] = 0.0;
     total = 0.0;
+
     for (i = 0; i < nseq; i++) {
         l = strlen(seq[i]);
         for (j = 0; j < l; j++) {
-            aan = amino_n[(int)seq[i][j]];
+            aan = ctx->amino_n[(int)seq[i][j]];
             if (aan == 4)
                 aan = 3;
             if (aan >= 0 && aan < 4) {
@@ -1338,6 +1339,7 @@ calcfreq_nuc(int nseq, char** seq, double* datafreq) {
             }
         }
     }
+
     total = 0.0;
     for (i = 0; i < 4; i++)
         total += datafreq[i];
@@ -1364,7 +1366,7 @@ calcfreq_nuc(int nseq, char** seq, double* datafreq) {
 }
 
 static void
-calcfreq(int nseq, char** seq, double* datafreq) {
+calcfreq(Context* ctx, int nseq, char** seq, double* datafreq) {
     int    i, j, l;
     int    aan;
     double total;
@@ -1374,7 +1376,7 @@ calcfreq(int nseq, char** seq, double* datafreq) {
     for (i = 0; i < nseq; i++) {
         l = strlen(seq[i]);
         for (j = 0; j < l; j++) {
-            aan = amino_n[(int)seq[i][j]];
+            aan = ctx->amino_n[(int)seq[i][j]];
             if (aan >= 0 && aan < nscoredalphabets && seq[i][j] != '-') {
                 datafreq[aan] += 1.0;
                 total += 1.0;
@@ -1425,13 +1427,13 @@ calcfreq_from_scoremtx(double** n_distmp, double* datafreq) {
 }
 
 static int
-checkscoremtx(double** n_distmp, int nseq, char** seq) {
+checkscoremtx(Context* ctx, double** n_distmp, int nseq, char** seq) {
     int i, j, l, k;
     int aan;
     for (i = 0; i < nseq; i++) {
         l = strlen(seq[i]);
         for (j = 0; j < l; j++) {
-            aan = amino_n[(unsigned char)seq[i][j]];
+            aan = ctx->amino_n[(unsigned char)seq[i][j]];
             for (k = 0; k < nalphabets; k++) {
                 //				if( n_distmp[k][aan] != -1.0 && k != aan ) break;
                 if (n_distmp[k][aan] != -1.0)
@@ -1445,7 +1447,7 @@ checkscoremtx(double** n_distmp, int nseq, char** seq) {
 }
 
 static void
-calcfreq_extended(int nseq, char** seq, double* datafreq) {
+calcfreq_extended(Context* ctx, int nseq, char** seq, double* datafreq) {
     int    i, j, l;
     int    aan;
     double total;
@@ -1455,7 +1457,7 @@ calcfreq_extended(int nseq, char** seq, double* datafreq) {
     for (i = 0; i < nseq; i++) {
         l = strlen(seq[i]);
         for (j = 0; j < l; j++) {
-            aan = amino_n[(unsigned char)seq[i][j]];
+            aan = ctx->amino_n[(unsigned char)seq[i][j]];
             if (aan >= 0 && aan < nscoredalphabets && seq[i][j] != '-') {
                 datafreq[aan] += 1.0;
                 total += 1.0;
@@ -1605,11 +1607,11 @@ constants(Context* ctx, int nseq, char** seq) {
         for (i = 0; i < 26; i++)
             amino[i] = locaminon[i];
         for (i = 0; i < 0x80; i++)
-            amino_n[i] = -1;
+            ctx->amino_n[i] = -1;
         for (i = 0; i < 26; i++)
-            amino_n[(int)amino[i]] = i;
+            ctx->amino_n[(int)amino[i]] = i;
         if (fmodel == 1) {
-            calcfreq_nuc(nseq, seq, freq);
+            calcfreq_nuc(ctx, nseq, seq, freq);
             reporterr("a, freq[0] = %f\n", freq[0]);
             reporterr("g, freq[1] = %f\n", freq[1]);
             reporterr("c, freq[2] = %f\n", freq[2]);
@@ -1790,9 +1792,9 @@ constants(Context* ctx, int nseq, char** seq) {
             for (j = 0; j < 10; j++)
                 n_dis[i][j] = shishagonyuu(pamx[i][j]);
 
-        ambiguousscore(amino_n, n_dis);
+        ambiguousscore(ctx->amino_n, n_dis);
         if (nwildcard)
-            nscore(amino_n, n_dis);
+            nscore(ctx->amino_n, n_dis);
 
         if (disp) {
             reporterr(" score matrix  \n");
@@ -1983,20 +1985,15 @@ constants(Context* ctx, int nseq, char** seq) {
             sprintf(shiftmodel, "noshift");
 
         sprintf(ctx->modelname, "Extended, %4.2f, %+4.2f, %+4.2f, %s", -(double)ppenalty / 1000, -(double)poffset / 1000, -(double)ppenalty_ex / 1000, shiftmodel);
-#if 0
-		for( i=0; i<26; i++ ) amino[i] = locaminod[i];
-		for( i=0; i<26; i++ ) amino_grp[(int)amino[i]] = locgrpd[i];
-		for( i=0; i<0x80; i++ ) amino_n[i] = 0;
-		for( i=0; i<26; i++ ) amino_n[(int)amino[i]] = i;
-#endif
+
         for (i = 0; i < 0x100; i++)
-            amino_n[i] = -1;
+            ctx->amino_n[i] = -1;
         for (i = 0; i < nalphabets; i++) {
-            amino_n[(unsigned char)amino[i]] = i;
-            //			reporterr(       "i=%d, amino = %c, amino_n = %d\n", i, amino[i], amino_n[amino[i]] );
+            ctx->amino_n[(unsigned char)amino[i]] = i;
         }
+
         if (fmodel == 1) {
-            calcfreq_extended(nseq, seq, datafreq);
+            calcfreq_extended(ctx, nseq, seq, datafreq);
             freq1 = datafreq;
         } else {
             calcfreq_from_scoremtx(n_distmp, datafreq);
@@ -2004,7 +2001,7 @@ constants(Context* ctx, int nseq, char** seq) {
         }
 #if 1
         if (userdefined)
-            if ((i = checkscoremtx(n_distmp, nseq, seq))) {
+            if ((i = checkscoremtx(ctx, n_distmp, nseq, seq))) {
                 reporterr("\n\nAlphabet %c (0x%x) is used in the sequence file but no score involving this alphabet is given in the matrix file.\n", i, i);
                 reporterr("Check if the data is as intended.\n\n\n");
                 exit(1);
@@ -2143,16 +2140,12 @@ constants(Context* ctx, int nseq, char** seq) {
                 n_dis[i][j] = (int)n_distmp[i][j];
         for (i = 0; i < nalphabets; i++)
             for (j = 0; j < nalphabets; j++)
-                n_dis[i][amino_n['-']] = n_dis[amino_n['-']][i] = 0;
+                n_dis[i][ctx->amino_n['-']] = n_dis[ctx->amino_n['-']][i] = 0;
 
         FreeDoubleMtx(n_distmp);
         FreeDoubleVec(datafreq);
         FreeDoubleVec(freq);
-
-        //		reporterr(       "done.\n" );
-
-    } else if (dorp == 'p' && scoremtx == 1) /* Blosum, user-defined */
-    {
+    } else if (dorp == 'p' && scoremtx == 1) {
         double* freq;
         double* freq1;
         double* datafreq;
@@ -2230,11 +2223,11 @@ constants(Context* ctx, int nseq, char** seq) {
 		for( i=0; i<26; i++ ) amino_n[(int)amino[i]] = i;
 #endif
         for (i = 0; i < 0x80; i++)
-            amino_n[i] = -1;
+            ctx->amino_n[i] = -1;
         for (i = 0; i < 26; i++)
-            amino_n[(int)amino[i]] = i;
+            ctx->amino_n[(int)amino[i]] = i;
         if (fmodel == 1) {
-            calcfreq(nseq, seq, datafreq);
+            calcfreq(ctx, nseq, seq, datafreq);
             freq1 = datafreq;
         } else
             freq1 = freq;
@@ -2450,11 +2443,11 @@ constants(Context* ctx, int nseq, char** seq) {
         JTTmtx(rsr, freq, amino, amino_grp, (int)(TMorJTT == TM));
 
         for (i = 0; i < 0x80; i++)
-            amino_n[i] = -1;
+            ctx->amino_n[i] = -1;
         for (i = 0; i < 26; i++)
-            amino_n[(int)amino[i]] = i;
+            ctx->amino_n[(int)amino[i]] = i;
         if (fmodel == 1) {
-            calcfreq(nseq, seq, datafreq);
+            calcfreq(ctx, nseq, seq, datafreq);
             freq1 = datafreq;
         } else
             freq1 = freq;
@@ -2694,12 +2687,10 @@ constants(Context* ctx, int nseq, char** seq) {
     amino_dis = AllocateIntMtx(charsize, charsize);
     amino_dis_consweight_multi = AllocateDoubleMtx(charsize, charsize);
 
-    //	reporterr( "charsize=%d\n", charsize );
-
     for (i = 0; i < charsize; i++)
-        amino_n[i] = -1;
+        ctx->amino_n[i] = -1;
     for (i = 0; i < nalphabets; i++)
-        amino_n[(int)amino[i]] = i;
+        ctx->amino_n[(int)amino[i]] = i;
     for (i = 0; i < charsize; i++)
         for (j = 0; j < charsize; j++)
             amino_dis[i][j] = 0;

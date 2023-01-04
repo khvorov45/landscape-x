@@ -124,7 +124,7 @@ removex(char* d, char* m) {
 }
 
 static void
-putlocalhom_last(char* s1, char* s2, LocalHom* localhompt, Lastresx* lastresx) {
+putlocalhom_last(Context* ctx, char* s1, char* s2, LocalHom* localhompt, Lastresx* lastresx) {
     char *    pt1, *pt2;
     int       naln, nreg;
     int       iscore;
@@ -137,9 +137,6 @@ putlocalhom_last(char* s1, char* s2, LocalHom* localhompt, Lastresx* lastresx) {
     Aln*      apt;
     int       nlocalhom = 0;
     int       len;
-
-    //	fprintf( stderr, "s1=%s\n", s1 );
-    //	fprintf( stderr, "s2=%s\n", s2 );
 
     naln = lastresx->naln;
     apt = lastresx->aln;
@@ -154,9 +151,7 @@ putlocalhom_last(char* s1, char* s2, LocalHom* localhompt, Lastresx* lastresx) {
         sumoverlap = 0;
         while (nreg--) {
             if (nlocalhom++ > 0) {
-                //				fprintf( stderr, "reallocating ...\n" );
                 tmppt->next = (LocalHom*)calloc(1, sizeof(LocalHom));
-                //				fprintf( stderr, "done\n" );
                 tmppt = tmppt->next;
                 tmppt->next = NULL;
             }
@@ -168,23 +163,13 @@ putlocalhom_last(char* s1, char* s2, LocalHom* localhompt, Lastresx* lastresx) {
             if (rpt1 == apt->reg1)
                 localhompt0 = tmppt;  // ?
 
-            //			fprintf( stderr, "in putlocalhom, reg1: %d-%d (nreg=%d)\n", rpt1->start, rpt1->end, lastresx->nreg );
-            //			fprintf( stderr, "in putlocalhom, reg2: %d-%d (nreg=%d)\n", rpt2->start, rpt2->end, lastresx->nreg );
-
             len = tmppt->end1 - tmppt->start1 + 1;
-
-            //			fprintf( stderr, "tmppt->start1=%d\n", tmppt->start1 );
-            //			fprintf( stderr, "tmppt->start2=%d\n", tmppt->start2 );
-
-            //			fprintf( stderr, "s1+tmppt->start1=%*.*s\n", len, len, s1+tmppt->start1 );
-            //			fprintf( stderr, "s2+tmppt->start2=%*.*s\n", len, len, s2+tmppt->start2 );
 
             pt1 = s1 + tmppt->start1;
             pt2 = s2 + tmppt->start2;
             iscore = 0;
             while (len--) {
-                iscore += n_dis[(int)amino_n[(unsigned char)*pt1++]][(int)amino_n[(unsigned char)*pt2++]];  // - offset はいらないかも
-                //				fprintf( stderr, "len=%d, %c-%c, iscore(0) = %d\n", len, *(pt1-1), *(pt2-1), iscore );
+                iscore += n_dis[(int)ctx->amino_n[(unsigned char)*pt1++]][(int)ctx->amino_n[(unsigned char)*pt2++]];  // - offset はいらないかも
             }
 
             if (divpairscore) {
@@ -2114,23 +2099,23 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
                         else if (specifictarget && targetmap[i] == -1 && targetmap[j] == -1)
                             ;
                         else if (alg == 'R')
-                            putlocalhom_last(mseq1[0], mseq2[0], localhomtable[i] + j, lastresx[i] + j);
+                            putlocalhom_last(ctx, mseq1[0], mseq2[0], localhomtable[i] + j, lastresx[i] + j);
                         else if (alg == 'r')
-                            putlocalhom_last(mseq1[0], mseq2[0], localhomtable[i] + j - (ctx->njob - nadd), lastresx[i] + j - (ctx->njob - nadd));
+                            putlocalhom_last(ctx, mseq1[0], mseq2[0], localhomtable[i] + j - (ctx->njob - nadd), lastresx[i] + j - (ctx->njob - nadd));
                         else if (alg == 'H')
-                            putlocalhom_ext(mseq1[0], mseq2[0], localhomtable[i] + j, off1, off2, 'h');
+                            putlocalhom_ext(ctx, mseq1[0], mseq2[0], localhomtable[i] + j, off1, off2, 'h');
                         else if (alg == 'Y')
-                            putlocalhom2(mseq1[0], mseq2[0], localhomtable[i] + j - (ctx->njob - nadd), off1, off2, 'h');
+                            putlocalhom2(ctx, mseq1[0], mseq2[0], localhomtable[i] + j - (ctx->njob - nadd), off1, off2, 'h');
                         else if (!specifictarget && alg != 'S' && alg != 'V')
-                            putlocalhom2(mseq1[0], mseq2[0], localhomtable[i] + j - i, off1, off2, 'h');
+                            putlocalhom2(ctx, mseq1[0], mseq2[0], localhomtable[i] + j - i, off1, off2, 'h');
                         else {
                             if (targetmap[i] != -1 && targetmap[j] != -1) {
-                                putlocalhom2(mseq1[0], mseq2[0], localhomtable[targetmap[i]] + j, off1, off2, 'h');
-                                putlocalhom2(mseq2[0], mseq1[0], localhomtable[targetmap[j]] + i, off2, off1, 'h');  // sukoshi muda.
+                                putlocalhom2(ctx, mseq1[0], mseq2[0], localhomtable[targetmap[i]] + j, off1, off2, 'h');
+                                putlocalhom2(ctx, mseq2[0], mseq1[0], localhomtable[targetmap[j]] + i, off2, off1, 'h');  // sukoshi muda.
                             } else if (targetmap[j] != -1)
-                                putlocalhom2(mseq2[0], mseq1[0], localhomtable[targetmap[j]] + i, off2, off1, 'h');
+                                putlocalhom2(ctx, mseq2[0], mseq1[0], localhomtable[targetmap[j]] + i, off2, off1, 'h');
                             else if (targetmap[i] != -1)
-                                putlocalhom2(mseq1[0], mseq2[0], localhomtable[targetmap[i]] + j, off1, off2, 'h');
+                                putlocalhom2(ctx, mseq1[0], mseq2[0], localhomtable[targetmap[i]] + j, off1, off2, 'h');
                             else {
                                 reporterr("okashii\n");
                                 exit(1);
@@ -2371,18 +2356,10 @@ pairlocalalign(Context* ctx, int ngui, char** namegui, char** seqgui, double** d
     }
 
     constants(ctx, ctx->njob, seq);
-
-#if 0
-	fprintf( stderr, "params = %d, %d, %d\n", penalty, penalty_ex, offset );
-#endif
-
     initSignalSM();
-
     initFiles();
 
-    //	WriteOptions( trap_g );
-
-    c = seqcheck(seq);
+    c = seqcheck(ctx, seq);
     if (c) {
         fprintf(stderr, "Illegal character %c\n", c);
         exit(1);

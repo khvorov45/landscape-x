@@ -797,7 +797,7 @@ treebase(Context* ctx, TbfastOpts opts, int* nlen, char** aseq, int nadd, char* 
                     break;
                 case ('M'):
                     fprintf(stderr, "m");
-                    pscore = MSalignmm(dynamicmtx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, NULL, NULL, NULL, NULL, outgap, outgap, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
+                    pscore = MSalignmm(ctx, dynamicmtx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, NULL, NULL, NULL, NULL, outgap, outgap, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
                     break;
                 case ('A'):
                     pscore = A__align(ctx, dynamicmtx, penalty, penalty_ex, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, 0, &dumdb, NULL, NULL, NULL, NULL, outgap, outgap, localmem[0][0], 1, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
@@ -1464,7 +1464,7 @@ tbfast_main(int argc, char* argv[]) {
         goto chudan;
     }
 
-    c = seqcheck(seq);
+    c = seqcheck(ctx, seq);
     if (c) {
         fprintf(stderr, "Illegal character %c\n", c);
         exit(1);

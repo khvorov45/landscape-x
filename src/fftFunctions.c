@@ -162,7 +162,7 @@ zurasu(int lag, int clus1, int clus2, char** seq1, char** seq2, char** aseq1, ch
 }
 
 int
-alignableReagion(int clus1, int clus2, char** seq1, char** seq2, double* eff1, double* eff2, Segment* seg) {
+alignableReagion(Context* ctx, int clus1, int clus2, char** seq1, char** seq2, double* eff1, double* eff2, Segment* seg) {
     int            i, j, k;
     int            status, starttmp = 0;  // by D.Mathog, a gess
     double         score;
@@ -238,24 +238,16 @@ alignableReagion(int clus1, int clus2, char** seq1, char** seq2, double* eff1, d
         for (j = 0; j < clus2; j++)
             totaleff += eff1[i] * eff2[j];
     for (i = 0; i < len; i++) {
-        /* make prfs */
         for (j = 0; j < nalphabets; j++) {
             prf1[j] = 0.0;
             prf2[j] = 0.0;
         }
-#if 0
-		seq1pt = seq1;
-		eff1pt = eff1;
-		j = clus1;
-		while( j-- ) prf1[amino_n[(*seq1pt++)[i]]] += *eff1pt++;
-#else
-        for (j = 0; j < clus1; j++)
-            prf1[amino_n[(unsigned char)seq1[j][i]]] += eff1[j];
-#endif
-        for (j = 0; j < clus2; j++)
-            prf2[amino_n[(unsigned char)seq2[j][i]]] += eff2[j];
 
-        /* make hats */
+        for (j = 0; j < clus1; j++)
+            prf1[ctx->amino_n[(unsigned char)seq1[j][i]]] += eff1[j];
+        for (j = 0; j < clus2; j++)
+            prf2[ctx->amino_n[(unsigned char)seq2[j][i]]] += eff2[j];
+
         pre1 = pre2 = nalphabets;
         for (j = 25; j >= 0; j--) {
             if (prf1[j]) {

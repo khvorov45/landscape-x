@@ -81,7 +81,7 @@ score_calc(char** seq, int s) {
 }
 
 void
-cpmx_calc(char** seq, double** cpmx, double* eff, int lgth, int clus) {
+cpmx_calc(Context* ctx, char** seq, double** cpmx, double* eff, int lgth, int clus) {
     int    i, j, k;
     double totaleff = 0.0;
 
@@ -92,54 +92,26 @@ cpmx_calc(char** seq, double** cpmx, double* eff, int lgth, int clus) {
             cpmx[i][j] = 0.0;
     for (j = 0; j < lgth; j++)
         for (k = 0; k < clus; k++)
-            cpmx[(int)amino_n[(unsigned char)seq[k][j]]][j] += (double)eff[k] / totaleff;
+            cpmx[(int)ctx->amino_n[(unsigned char)seq[k][j]]][j] += (double)eff[k] / totaleff;
 }
 
 void
-cpmx_calc_new_bk(char** seq, double** cpmx, double* eff, int lgth, int clus)  // summ eff must be 1.0
-{
-    int    i, j, k;
-    double feff;
-
-    for (i = 0; i < nalphabets; i++)
-        for (j = 0; j < lgth; j++)
-            cpmx[i][j] = 0.0;
-    for (k = 0; k < clus; k++) {
-        feff = (double)eff[k];
-        for (j = 0; j < lgth; j++) {
-            cpmx[(int)amino_n[(int)seq[k][j]]][j] += feff;
-        }
-    }
-}
-
-void
-cpmx_calc_add(char** seq, double** cpmx, double* eff, int lgth, int clus)  // lastmem = newmem; summ eff must be 1.0
-{
+cpmx_calc_add(Context* ctx, char** seq, double** cpmx, double* eff, int lgth, int clus) {
     double neweff, orieff;
     int    newmem, i, j;
 
     newmem = clus - 1;
     neweff = eff[clus - 1];
     orieff = 1.0 - neweff;
-#if 1  // TESTING Feb/1/18:00
     for (j = 0; j < lgth; j++) {
         for (i = 0; i < nalphabets; i++)
             cpmx[i][j] *= orieff;
-        cpmx[(unsigned char)amino_n[(unsigned char)seq[newmem][j]]][j] += neweff;
+        cpmx[(unsigned char)ctx->amino_n[(unsigned char)seq[newmem][j]]][j] += neweff;
     }
-#else  // possibly faster?
-    for (i = 0; i < nalphabets; i++) {
-        for (j = 0; j < lgth; j++)
-            cpmx[i][j] *= orieff;
-    }
-    for (j = 0; j < lgth; j++)
-        cpmx[(unsigned char)amino_n[(unsigned char)seq[newmem][j]]][j] += neweff;
-#endif
 }
 
 void
-cpmx_calc_new(char** seq, double** cpmx, double* eff, int lgth, int clus)  // summ eff must be 1.0
-{
+cpmx_calc_new(Context* ctx, char** seq, double** cpmx, double* eff, int lgth, int clus) {
     int     i, j, k;
     double  feff;
     double *cpmxpt, **cpmxptpt;
@@ -158,13 +130,13 @@ cpmx_calc_new(char** seq, double** cpmx, double* eff, int lgth, int clus)  // su
         seqpt = seq[k];
         //		fprintf( stderr, "seqpt = %s, lgth=%d\n", seqpt, lgth );
         for (j = 0; j < lgth; j++) {
-            cpmx[(unsigned char)amino_n[(unsigned char)*seqpt++]][j] += feff;
+            cpmx[(unsigned char)ctx->amino_n[(unsigned char)*seqpt++]][j] += feff;
         }
     }
 }
+
 void
-MScpmx_calc_new(char** seq, double** cpmx, double* eff, int lgth, int clus)  // summ eff must be 1.0
-{
+MScpmx_calc_new(Context* ctx, char** seq, double** cpmx, double* eff, int lgth, int clus) {
     int      i, j, k;
     double   feff;
     double **cpmxptpt, *cpmxpt;
@@ -184,22 +156,12 @@ MScpmx_calc_new(char** seq, double** cpmx, double* eff, int lgth, int clus)  // 
         cpmxptpt = cpmx;
         j = lgth;
         while (j--)
-            (*cpmxptpt++)[(int)amino_n[(unsigned char)*seqpt++]] += feff;
+            (*cpmxptpt++)[(int)ctx->amino_n[(unsigned char)*seqpt++]] += feff;
     }
-#if 0
-	for( j=0; j<lgth; j++ ) for( i=0; i<nalphabets; i++ ) cpmx[j][i] = 0.0;
-	for( k=0; k<clus; k++ )
-	{
-		feff = (double)eff[k];
-		for( j=0; j<lgth; j++ ) 
-			cpmx[j][(int)amino_n[(int)seq[k][j]]] += feff;
-	}
-#endif
 }
 
 void
-cpmx_ribosum(char** seq, char** seqr, char* dir, double** cpmx, double* eff, int lgth, int clus)  // summ eff must be 1.0
-{
+cpmx_ribosum(Context* ctx, char** seq, char** seqr, char* dir, double** cpmx, double* eff, int lgth, int clus) {
     int      i, j, k;
     double   feff;
     double **cpmxptpt, *cpmxpt;
@@ -228,8 +190,8 @@ cpmx_ribosum(char** seq, char** seqr, char* dir, double** cpmx, double* eff, int
 			else
 				code = code1;
 #else
-            code1 = amino_n[(unsigned char)*seqpt];
-            code2 = amino_n[(unsigned char)*seqrpt];
+            code1 = ctx->amino_n[(unsigned char)*seqpt];
+            code2 = ctx->amino_n[(unsigned char)*seqrpt];
             if (code1 > 3) {
                 code = 36;
             } else if (code2 > 3) {

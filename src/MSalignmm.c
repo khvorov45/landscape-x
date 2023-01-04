@@ -2001,7 +2001,7 @@ freearrays(
 }
 
 double
-MSalignmm(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, char* sgap1, char* sgap2, char* egap1, char* egap2, int headgp, int tailgp, double*** cpmxchild0, double*** cpmxchild1, double*** cpmxresult, double orieff1, double orieff2) {
+MSalignmm(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, char* sgap1, char* sgap2, char* egap1, char* egap2, int headgp, int tailgp, double*** cpmxchild0, double*** cpmxchild1, double*** cpmxresult, double orieff1, double orieff2) {
     //	int k;
     int      i, j;
     int      ll1, ll2;
@@ -2024,11 +2024,6 @@ MSalignmm(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double*
     int      nglen1, nglen2;
     double   headgapfreq1;
     double   headgapfreq2;
-
-#if 0
-	fprintf( stderr, "eff in SA+++align\n" );
-	for( i=0; i<icyc; i++ ) fprintf( stderr, "eff1[%d] = %f\n", i, eff1[i] );
-#endif
 
     nglen1 = seqlen(seq1[0]);
     nglen2 = seqlen(seq2[0]);
@@ -2098,9 +2093,8 @@ MSalignmm(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double*
             fgcp1opt = (*cpmxchild0)[nalphabets + 2];
 #endif
         } else {
-            //			reporterr( "\nDo not use cpmxhist for child 0!\n" );
             cpmx1pt = cpmx1;
-            cpmx_calc_new(seq1, cpmx1pt, eff1, lgth1, icyc);
+            cpmx_calc_new(ctx, seq1, cpmx1pt, eff1, lgth1, icyc);
 #if ATO
             gapfreq1pt = gapfreq1f;
             gapcountf(gapfreq1pt, seq1, icyc, eff1, lgth1);
@@ -2123,9 +2117,8 @@ MSalignmm(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double*
             fgcp2opt = (*cpmxchild1)[nalphabets + 2];
 #endif
         } else {
-            //			reporterr( "\nDo not use cpmxhist for child 1!\n" );
             cpmx2pt = cpmx2;
-            cpmx_calc_new(seq2, cpmx2pt, eff2, lgth2, jcyc);
+            cpmx_calc_new(ctx, seq2, cpmx2pt, eff2, lgth2, jcyc);
 #if ATO
             gapfreq2pt = gapfreq2f;
             gapcountf(gapfreq2pt, seq2, jcyc, eff2, lgth2);
@@ -2158,8 +2151,8 @@ MSalignmm(double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double*
         fgcp2opt = fgcp2o;
 #endif
 
-        cpmx_calc_new(seq1, cpmx1pt, eff1, lgth1, icyc);
-        cpmx_calc_new(seq2, cpmx2pt, eff2, lgth2, jcyc);
+        cpmx_calc_new(ctx, seq1, cpmx1pt, eff1, lgth1, icyc);
+        cpmx_calc_new(ctx, seq2, cpmx2pt, eff2, lgth2, jcyc);
 
 #if ATO
         if (sgap1) {
@@ -3783,7 +3776,7 @@ freearrays_variousdist(
 }
 
 double
-MSalignmm_variousdist(double*** matrices, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, char* sgap1, char* sgap2, char* egap1, char* egap2, int headgp, int tailgp) {
+MSalignmm_variousdist(Context* ctx, double*** matrices, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, char* sgap1, char* sgap2, char* egap1, char* egap2, int headgp, int tailgp) {
     int       i, j, c;
     int       ll1, ll2;
     size_t    lgth1, lgth2;
@@ -3856,8 +3849,8 @@ MSalignmm_variousdist(double*** matrices, char** seq1, char** seq2, double* eff1
     }
 
     for (c = 0; c < maxdistclass; c++) {
-        MScpmx_calc_new(seq1, cpmx1s[c], eff1s[c], lgth1, icyc);
-        MScpmx_calc_new(seq2, cpmx2s[c], eff2s[c], lgth2, jcyc);
+        MScpmx_calc_new(ctx, seq1, cpmx1s[c], eff1s[c], lgth1, icyc);
+        MScpmx_calc_new(ctx, seq2, cpmx2s[c], eff2s[c], lgth2, jcyc);
     }
 
 #if 1

@@ -39,21 +39,21 @@ static void vec_init2( Fukusosuu **result, char *seq, double eff, int st, int ed
 #endif
 
 static void
-seq_vec_3(Fukusosuu** result, double incr, char* seq) {
+seq_vec_3(Context* ctx, Fukusosuu** result, double incr, char* seq) {
     int i;
     int n;
     for (i = 0; *seq; i++) {
-        n = amino_n[(int)*seq++];
+        n = ctx->amino_n[(int)*seq++];
         if (n < n20or4or2 && n >= 0)
             result[n][i].R += incr;
     }
 }
 
 static void
-seq_vec_5(Fukusosuu* result, double* score1, double* score2, double incr, char* seq) {
+seq_vec_5(Context* ctx, Fukusosuu* result, double* score1, double* score2, double incr, char* seq) {
     int n;
     for (; *seq; result++) {
-        n = amino_n[(int)*seq++];
+        n = ctx->amino_n[(int)*seq++];
         if (n > 20)
             continue;
         result->R += incr * score1[n];
@@ -228,7 +228,7 @@ Falign(Context* ctx, int** whichmtx, double*** scoringmatrices, double** n_dynam
             localalloclen = 0;
             crossscoresize = 0;
             mymergesort(0, 0, NULL);
-            alignableReagion(0, 0, NULL, NULL, NULL, NULL, NULL);
+            alignableReagion(ctx, 0, 0, NULL, NULL, NULL, NULL, NULL);
             fft(0, NULL, 1);
             A__align(ctx, NULL, 0, 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
             D__align(ctx, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0);
@@ -499,7 +499,7 @@ system( "less input_of_Falign < /dev/tty > /dev/tty" );
         if (fftscore && scoremtx != -1) {
             for (i = 0; i < clus1; i++) {
 #if 1
-                seq_vec_5(seqVector1[0], polarity, volume, eff1[i], tmpseq1[i]);
+                seq_vec_5(ctx, seqVector1[0], polarity, volume, eff1[i], tmpseq1[i]);
 #else
                 seq_vec_2(seqVector1[0], polarity, eff1[i], tmpseq1[i]);
                 seq_vec_2(seqVector1[1], volume, eff1[i], tmpseq1[i]);
@@ -511,7 +511,7 @@ system( "less input_of_Falign < /dev/tty > /dev/tty" );
 				seq_vec( seqVector1[j], amino[j], eff1[i], tmpseq1[i] );
 #else
             for (i = 0; i < clus1; i++)
-                seq_vec_3(seqVector1, eff1[i], tmpseq1[i]);
+                seq_vec_3(ctx, seqVector1, eff1[i], tmpseq1[i]);
 #endif
         }
 #if RND
@@ -538,7 +538,7 @@ system( "less seqVec < /dev/tty > /dev/tty" );
         if (fftscore && scoremtx != -1) {
             for (i = 0; i < clus2; i++) {
 #if 1
-                seq_vec_5(seqVector2[0], polarity, volume, eff2[i], tmpseq2[i]);
+                seq_vec_5(ctx, seqVector2[0], polarity, volume, eff2[i], tmpseq2[i]);
 #else
                 seq_vec_2(seqVector2[0], polarity, eff2[i], tmpseq2[i]);
                 seq_vec_2(seqVector2[1], volume, eff2[i], tmpseq2[i]);
@@ -550,7 +550,7 @@ system( "less seqVec < /dev/tty > /dev/tty" );
 				seq_vec( seqVector2[j], amino[j], eff2[i], tmpseq2[i] );
 #else
             for (i = 0; i < clus2; i++)
-                seq_vec_3(seqVector2, eff2[i], tmpseq2[i]);
+                seq_vec_3(ctx, seqVector2, eff2[i], tmpseq2[i]);
 #endif
         }
 #if RND
@@ -684,7 +684,7 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
 #endif
 
         //		fprintf( stderr, "lag = %d\n", lag );
-        tmpint = alignableReagion(clus1, clus2, tmpptr1, tmpptr2, eff1, eff2, segment + count);
+        tmpint = alignableReagion(ctx, clus1, clus2, tmpptr1, tmpptr2, eff1, eff2, segment + count);
 
         //		if( lag == -50 ) exit( 1 );
 
@@ -995,9 +995,9 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
                 break;
             case ('M'):
                 if (scoringmatrices)
-                    totalscore += MSalignmm_variousdist(scoringmatrices, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, headgp, tailgp);
+                    totalscore += MSalignmm_variousdist(ctx, scoringmatrices, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, headgp, tailgp);
                 else
-                    totalscore += MSalignmm(n_dynamicmtx, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, headgp, tailgp, NULL, NULL, NULL, 0.0, 0.0);
+                    totalscore += MSalignmm(ctx, n_dynamicmtx, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, headgp, tailgp, NULL, NULL, NULL, 0.0, 0.0);
                 break;
             case ('d'):
                 if (clus1 == 1 && clus2 == 1) {
@@ -1189,7 +1189,7 @@ Falign_udpari_long(
             localalloclen = 0;
             crossscoresize = 0;
             mymergesort(0, 0, NULL);
-            alignableReagion(0, 0, NULL, NULL, NULL, NULL, NULL);
+            alignableReagion(ctx, 0, 0, NULL, NULL, NULL, NULL, NULL);
             fft(0, NULL, 1);
             A__align(ctx, NULL, 0, 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
             A__align_variousdist(ctx, NULL, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0);
@@ -1338,12 +1338,12 @@ system( "less input_of_Falign < /dev/tty > /dev/tty" );
 				seq_vec_2( seqVector1[0], polarity, eff1[i], tmpseq1[i] );
 				seq_vec_2( seqVector1[1], volume,   eff1[i], tmpseq1[i] );
 #else
-                seq_vec_5(seqVector1[0], polarity, volume, eff1[i], tmpseq1[i]);
+                seq_vec_5(ctx, seqVector1[0], polarity, volume, eff1[i], tmpseq1[i]);
 #endif
             }
         } else {
             for (i = 0; i < clus1; i++)
-                seq_vec_3(seqVector1, eff1[i], tmpseq1[i]);
+                seq_vec_3(ctx, seqVector1, eff1[i], tmpseq1[i]);
         }
 #if RND
         for (i = 0; i < clus1; i++) {
@@ -1375,12 +1375,12 @@ system( "less seqVec < /dev/tty > /dev/tty" );
 				seq_vec_2( seqVector2[0], polarity, eff2[i], tmpseq2[i] );
 				seq_vec_2( seqVector2[1], volume,   eff2[i], tmpseq2[i] );
 #else
-                seq_vec_5(seqVector2[0], polarity, volume, eff2[i], tmpseq2[i]);
+                seq_vec_5(ctx, seqVector2[0], polarity, volume, eff2[i], tmpseq2[i]);
 #endif
             }
         } else {
             for (i = 0; i < clus2; i++)
-                seq_vec_3(seqVector2, eff2[i], tmpseq2[i]);
+                seq_vec_3(ctx, seqVector2, eff2[i], tmpseq2[i]);
         }
 #if RND
         for (i = 0; i < clus2; i++) {
@@ -1514,7 +1514,7 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
 #endif
 
         //		fprintf( stderr, "lag = %d\n", lag );
-        tmpint = alignableReagion(clus1, clus2, tmpptr1, tmpptr2, eff1, eff2, segment + count);
+        tmpint = alignableReagion(ctx, clus1, clus2, tmpptr1, tmpptr2, eff1, eff2, segment + count);
         //		fprintf( stderr, "lag = %d, %d found\n", lag, tmpint );
 
         //		if( lag == -50 ) exit( 1 );
@@ -1868,9 +1868,9 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
         switch (alg) {
             case ('M'):
                 if (scoringmatrices)  // called by tditeration.c
-                    totalscore += MSalignmm_variousdist(scoringmatrices, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, headgp, tailgp);
+                    totalscore += MSalignmm_variousdist(ctx, scoringmatrices, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, headgp, tailgp);
                 else
-                    totalscore += MSalignmm(n_dynamicmtx, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, headgp, tailgp, NULL, NULL, NULL, 0.0, 0.0);
+                    totalscore += MSalignmm(ctx, n_dynamicmtx, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, headgp, tailgp, NULL, NULL, NULL, 0.0, 0.0);
                 break;
             default:
                 fprintf(stderr, "alg = %c\n", alg);

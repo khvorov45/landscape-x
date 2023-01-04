@@ -151,38 +151,22 @@ imp_match_init_strictD(Context* ctx, int clus1, int clus2, int lgth1, int lgth2,
 }
 
 static void
-match_calc_del(double*** matrices, double* match, char** seq1, double* eff1, char** seq2, double* eff2, int i1, int lgth2, int mid, int nmask, int* mask1, int* mask2) {
-    // osoi!
+match_calc_del(Context* ctx, double*** matrices, double* match, char** seq1, double* eff1, char** seq2, double* eff2, int i1, int lgth2, int mid, int nmask, int* mask1, int* mask2) {
     int i, j, k, m;
     int c1, c2;
-    //	fprintf( stderr, "\nmatch_calc_dynamicmtx... %d", i1 );
-    //	fprintf( stderr, "\nseq1[0]=%s\n", seq1[0] );
-    //	fprintf( stderr, "\nseq2[0]=%s\n", seq2[0] );
-    //	for( i=0; i<n1; i++ ) for( j=0; j<n2; j++ )
-    //	{
-    //		if( flip ) reporterr( "in match_calc_slow, which[%d][%d] = %d\n", j, i, which[j][i] );
-    //		else       reporterr( "in match_calc_slow, which[%d][%d] = %d\n", i, j, which[i][j] );
-    //	}
     for (k = 0; k < lgth2; k++) {
         for (m = 0; m < nmask; m++) {
             i = mask1[m];
             j = mask2[m];
-            //			reporterr( "Deleting %d-%d (c=%d)\n", i, j, mid );
-            //			if( k==0 ) fprintf( stderr, "pairoffset[%d][%d] = %f\n", i, j, po );
-            c1 = amino_n[(unsigned char)seq1[i][i1]];
-            c2 = amino_n[(unsigned char)seq2[j][k]];
-            //			reporterr( "k=%d, c1=%d, c2=%d, seq1[i][i1]=%c, seq2[%d][%d]=%c\n", k, c1, c2, seq1[i][i1], j, k, seq2[j][k] );
+            c1 = ctx->amino_n[(unsigned char)seq1[i][i1]];
+            c2 = ctx->amino_n[(unsigned char)seq2[j][k]];
             if (seq1[i][i1] == '-' || seq2[j][k] == '-')
                 continue;
             if (c1 < 0 || c2 < 0)
                 continue;
-            //			fprintf( stderr, "c1=%d, c2=%d\n", c1, c2 );
-            //			fprintf( stderr, "match[k] = %f -> ", match[k], mid );
             match[k] -= matrices[mid][c1][c2] * eff1[i] * eff2[j];
-            //			fprintf( stderr, "match[k] = %f (mid=%d)\n", match[k], mid );
         }
     }
-    //	fprintf( stderr, "done\n" );
     return;
 }
 
@@ -2874,8 +2858,8 @@ D__align(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* 
 	}
 #endif
 
-    cpmx_calc_new(seq1, cpmx1, eff1, lgth1, icyc);
-    cpmx_calc_new(seq2, cpmx2, eff2, lgth2, jcyc);
+    cpmx_calc_new(ctx, seq1, cpmx1, eff1, lgth1, icyc);
+    cpmx_calc_new(ctx, seq2, cpmx2, eff2, lgth2, jcyc);
 
     //	reporterr( "Counting gaplen\n" );
     gaplencount(icyc, lgth1, gaplen1, seq1, eff1);
@@ -3823,8 +3807,8 @@ D__align(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* 
             strcpy(pseq[0], seq1[i]);
             strcpy(pseq[1], seq2[j]);
             commongappick(2, pseq);
-            pairscore += eff1[i] * eff2[j] * naivepairscore11_dynmtx(n_dynamicmtx, pseq[0], pseq[1], penalty);
-            nogappairscore += eff1[i] * eff2[j] * naivepairscore11_dynmtx(n_dynamicmtx, pseq[0], pseq[1], 0);
+            pairscore += eff1[i] * eff2[j] * naivepairscore11_dynmtx(ctx, n_dynamicmtx, pseq[0], pseq[1], penalty);
+            nogappairscore += eff1[i] * eff2[j] * naivepairscore11_dynmtx(ctx, n_dynamicmtx, pseq[0], pseq[1], 0);
         }
 
     FreeCharMtx(pseq);
@@ -4458,11 +4442,9 @@ D__align_variousdist(Context* ctx, int** which, double*** matrices, char** seq1,
 
 #if SLOW
 #else
-    //	cpmx_calc_new( seq1, cpmx1, eff1, lgth1, icyc );
-    //	cpmx_calc_new( seq2, cpmx2, eff2, lgth2, jcyc );
     for (c = 0; c < maxdistclass; c++) {
-        cpmx_calc_new(seq1, cpmx1s[c], eff1s[c], lgth1, icyc);
-        cpmx_calc_new(seq2, cpmx2s[c], eff2s[c], lgth2, jcyc);
+        cpmx_calc_new(ctx, seq1, cpmx1s[c], eff1s[c], lgth1, icyc);
+        cpmx_calc_new(ctx, seq2, cpmx2s[c], eff2s[c], lgth2, jcyc);
     }
 #endif
 
@@ -4609,7 +4591,7 @@ D__align_variousdist(Context* ctx, int** which, double*** matrices, char** seq1,
         //		for( i=0; i<lgth1; i++ ) fprintf( stderr, "c=%d, %d - %f\n", c, i, initverticalw[i] );
 
         if (nmask[c])
-            match_calc_del(matrices, initverticalw, seq2, eff2, seq1, eff1, 0, lgth1, c, nmask[c], masklist2[c], masklist1[c]);
+            match_calc_del(ctx, matrices, initverticalw, seq2, eff2, seq1, eff1, 0, lgth1, c, nmask[c], masklist2[c], masklist1[c]);
     }
 #endif
     //	reporterr( "initverticalw = \n" );
@@ -4628,7 +4610,7 @@ D__align_variousdist(Context* ctx, int** which, double*** matrices, char** seq1,
     for (c = 0; c < maxdistclass; c++) {
         match_calc_add(matrices[c], currentw, cpmx1s[c], cpmx2s[c], 0, lgth2, doublework[c], intwork[c], 1);
         if (nmask[c])
-            match_calc_del(matrices, currentw, seq1, eff1, seq2, eff2, 0, lgth2, c, nmask[c], masklist1[c], masklist2[c]);
+            match_calc_del(ctx, matrices, currentw, seq1, eff1, seq2, eff2, 0, lgth2, c, nmask[c], masklist1[c], masklist2[c]);
     }
 #endif
     //	reporterr( "currentw = \n" );
@@ -4752,7 +4734,7 @@ D__align_variousdist(Context* ctx, int** which, double*** matrices, char** seq1,
         for (c = 0; c < maxdistclass; c++) {
             match_calc_add(matrices[c], currentw, cpmx1s[c], cpmx2s[c], i, lgth2, doublework[c], intwork[c], 0);
             if (nmask[c])
-                match_calc_del(matrices, currentw, seq1, eff1, seq2, eff2, i, lgth2, c, nmask[c], masklist1[c], masklist2[c]);
+                match_calc_del(ctx, matrices, currentw, seq1, eff1, seq2, eff2, i, lgth2, c, nmask[c], masklist1[c], masklist2[c]);
         }
 #endif
 
@@ -5510,28 +5492,16 @@ D__align_variousdist(Context* ctx, int** which, double*** matrices, char** seq1,
     char** pseq;
     pseq = AllocateCharMtx(2, strlen(seq1[0]) + 1);
     pairscore = nogappairscore = 0.0;
-#if 1
+
     for (i = 0; i < icyc; i++)
         for (j = 0; j < jcyc; j++) {
             strcpy(pseq[0], seq1[i]);
             strcpy(pseq[1], seq2[j]);
             commongappick(2, pseq);
             c = which[i][j];
-            pairscore += eff1[i] * eff2[j] * naivepairscore11_dynmtx(matrices[c], pseq[0], pseq[1], penalty);
-            nogappairscore += eff1[i] * eff2[j] * naivepairscore11_dynmtx(matrices[c], pseq[0], pseq[1], 0);
+            pairscore += eff1[i] * eff2[j] * naivepairscore11_dynmtx(ctx, matrices[c], pseq[0], pseq[1], penalty);
+            nogappairscore += eff1[i] * eff2[j] * naivepairscore11_dynmtx(ctx, matrices[c], pseq[0], pseq[1], 0);
         }
-#else
-    for (c = 0; c < maxdistclass; c++) {
-        for (i = 0; i < icyc; i++)
-            for (j = 0; j < jcyc; j++) {
-                strcpy(pseq[0], seq1[i]);
-                strcpy(pseq[1], seq2[j]);
-                commongappick(2, pseq);
-                pairscore += eff1s[c][i] * eff2s[c][j] * naivepairscore11_dynmtx(matrices[c], pseq[0], pseq[1], penalty);
-                nogappairscore += eff1s[c][i] * eff2s[c][j] * naivepairscore11_dynmtx(matrices[c], pseq[0], pseq[1], 0);
-            }
-    }
-#endif
 
     FreeCharMtx(pseq);
     diff = (pairscore - wm + *impmatch) / (double)strlen(seq1[0]);
