@@ -981,10 +981,9 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
             tmpres2[j][cut2[i + 1] - cut2[i]] = 0;
         }
         if (kobetsubunkatsu && fftkeika)
-            commongappick(clus2, tmpres2);  //dvtditr に呼ばれたとき fftkeika=1
-        //		if( kobetsubunkatsu ) commongappick( clus2, tmpres2 );
+            commongappick(clus2, tmpres2);
 
-        if (constraint) {
+        if (ctx->constraint) {
             fprintf(stderr, "Not supported\n");
             exit(1);
         }
@@ -1785,7 +1784,7 @@ system( "less seqVec < /dev/tty > /dev/tty" );
             commongappick(clus2, tmpres2);  //dvtditr に呼ばれたとき fftkeika=1
         //		if( kobetsubunkatsu ) commongappick( clus2, tmpres2 );
 
-        if (constraint) {
+        if (ctx->constraint) {
             fprintf(stderr, "Not supported\n");
             exit(1);
         }

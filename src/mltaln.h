@@ -206,9 +206,9 @@ typedef struct Context {
     int      ppid;
     double   fastathreshold;
     int      pslocal;
+    int      constraint;
 } Context;
 
-extern int    constraint;
 extern int    divpairscore;
 extern int    fmodel;  // 1-> fmodel 0->default -1->raw
 extern int    nblosum;  // 45, 50, 62, 80

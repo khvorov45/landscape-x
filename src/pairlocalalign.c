@@ -1334,7 +1334,7 @@ arguments(Context* ctx, int argc, char* argv[]) {
     inputfile = NULL;
     fftkeika = 0;
     ctx->pslocal = -1000.0;
-    constraint = 0;
+    ctx->constraint = 0;
     nblosum = 62;
     fmodel = 0;
     calledByXced = 0;
