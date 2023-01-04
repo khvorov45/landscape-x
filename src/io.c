@@ -281,7 +281,7 @@ putlocalhom_ext(Context* ctx, char* al1, char* al2, LocalHom* localhompt, int of
             tmppt->end2 = end2;
             tmppt->korh = korh;
 
-            if (divpairscore) {
+            if (ctx->divpairscore) {
                 tmppt->overlapaa = end2 - start2 + 1;
                 if (tmppt->overlapaa > 0)
                     tmppt->opt = (double)iscore / tmppt->overlapaa * 5.8 / 600;
@@ -320,7 +320,7 @@ putlocalhom_ext(Context* ctx, char* al1, char* al2, LocalHom* localhompt, int of
         tmppt->end2 = end2;
         tmppt->korh = korh;
 
-        if (divpairscore) {
+        if (ctx->divpairscore) {
             tmppt->overlapaa = end2 - start2 + 1;
             if (tmppt->overlapaa > 0)
                 tmppt->opt = (double)iscore / tmppt->overlapaa * 5.8 / 600;
@@ -331,7 +331,7 @@ putlocalhom_ext(Context* ctx, char* al1, char* al2, LocalHom* localhompt, int of
         }
     }
 
-    if (!divpairscore) {
+    if (!ctx->divpairscore) {
         for (tmppt = localhompt; tmppt; tmppt = tmppt->next) {
             tmppt->overlapaa = sumoverlap;
             tmppt->opt = (double)600 * 5.8 / 600;
@@ -429,7 +429,7 @@ putlocalhom2(Context* ctx, char* al1, char* al2, LocalHom* localhompt, int off1,
             localhompt->last = tmppt;
 
 #if 1
-            if (divpairscore) {
+            if (ctx->divpairscore) {
                 tmppt->overlapaa = end2 - start2 + 1;
                 if (tmppt->overlapaa > 0)
                     tmppt->opt = (double)iscore / tmppt->overlapaa * 5.8 / 600;
@@ -483,7 +483,7 @@ putlocalhom2(Context* ctx, char* al1, char* al2, LocalHom* localhompt, int off1,
         localhompt->last = tmppt;
 
 #if 1
-        if (divpairscore) {
+        if (ctx->divpairscore) {
             tmppt->overlapaa = end2 - start2 + 1;
             if (tmppt->overlapaa > 0)
                 tmppt->opt = (double)iscore / tmppt->overlapaa * 5.8 / 600;
@@ -505,7 +505,7 @@ putlocalhom2(Context* ctx, char* al1, char* al2, LocalHom* localhompt, int off1,
 #endif
     }
 
-    if (!divpairscore) {
+    if (!ctx->divpairscore) {
         for (tmppt = localhompt; tmppt; tmppt = tmppt->next) {
             tmppt->overlapaa = sumoverlap;
             if (tmppt->overlapaa > 0)

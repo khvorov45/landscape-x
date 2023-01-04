@@ -172,7 +172,7 @@ putlocalhom_last(Context* ctx, char* s1, char* s2, LocalHom* localhompt, Lastres
                 iscore += ctx->n_dis[(int)ctx->amino_n[(unsigned char)*pt1++]][(int)ctx->amino_n[(unsigned char)*pt2++]];  // - offset はいらないかも
             }
 
-            if (divpairscore) {
+            if (ctx->divpairscore) {
                 tmppt->overlapaa = tmppt->end2 - tmppt->start2 + 1;
                 tmppt->opt = (double)iscore / tmppt->overlapaa * 5.8 / 600;
             } else {
@@ -182,13 +182,8 @@ putlocalhom_last(Context* ctx, char* s1, char* s2, LocalHom* localhompt, Lastres
             rpt1++;
             rpt2++;
         }
-#if 0
-		fprintf( stderr, "iscore (1)= %d\n", iscore );
-		fprintf( stderr, "al1: %d - %d\n", start1, end1 );
-		fprintf( stderr, "al2: %d - %d\n", start2, end2 );
-#endif
 
-        if (!divpairscore) {
+        if (!ctx->divpairscore) {
             for (tmppt2 = localhompt0; tmppt2; tmppt2 = tmppt2->next) {
                 tmppt2->overlapaa = sumoverlap;
                 tmppt2->opt = (double)isumscore * 5.8 / (600 * sumoverlap);
@@ -1362,7 +1357,7 @@ arguments(Context* ctx, int argc, char* argv[]) {
     contin = 0;
     scoremtx = 1;
     kobetsubunkatsu = 0;
-    divpairscore = 0;
+    ctx->divpairscore = 0;
     stdout_align = 0;
     stdout_dist = 0;
     store_dist = 1;
@@ -1609,7 +1604,7 @@ arguments(Context* ctx, int argc, char* argv[]) {
                     tbrweight = 3;
                     break;
                 case 'y':
-                    divpairscore = 1;
+                    ctx->divpairscore = 1;
                     break;
                 case '=':
                     specifictarget = 1;
