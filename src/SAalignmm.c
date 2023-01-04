@@ -136,13 +136,13 @@ Atracking(double* lasthorizontalw, double* lastverticalw, char** seq1, char** se
 
 double
 Aalign(Context* ctx, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen) {
-    register int        i, j;
-    int                 lasti; /* outgap == 0 -> lgth1, outgap == 1 -> lgth1+1 */
-    int                 lgth1, lgth2;
-    int                 resultlen;
-    double              wm = 0.0; /* int ?????? */
-    double              g;
-    double              x;
+    register int    i, j;
+    int             lasti; /* outgap == 0 -> lgth1, outgap == 1 -> lgth1+1 */
+    int             lgth1, lgth2;
+    int             resultlen;
+    double          wm = 0.0; /* int ?????? */
+    double          g;
+    double          x;
     static double   mi, *m;
     static int**    ijp;
     static int      mpi, *mp;

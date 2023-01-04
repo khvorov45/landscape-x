@@ -800,7 +800,6 @@ insertnewgaps_bothorders(Context* ctx, int njob, int* alreadyaligned, char** seq
                     mlen1 += gapshifta;
                     mlen2 += gapshifta;
                     posin12 += gapshifta;
-
                 }
 
                 for (i = 1, jinc = 0; i <= gapshifta; i++)

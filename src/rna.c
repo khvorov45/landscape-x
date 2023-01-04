@@ -94,13 +94,13 @@ static double pairedribosumscore35( int n1, int n2, char **s1, char **s2, double
 
 static void
 mccaskillextract(char** seq, char** nogap, int nseq, RNApair** pairprob, RNApair*** single, int** sgapmap, double* eff) {
-    int             lgth;
-    int             nogaplgth;
-    int             i, j;
-    int             left, right, adpos;
-    double          prob;
+    int         lgth;
+    int         nogaplgth;
+    int         i, j;
+    int         left, right, adpos;
+    double      prob;
     static int* pairnum;
-    RNApair *       pt, *pt2;
+    RNApair *   pt, *pt2;
 
     lgth = strlen(seq[0]);
     pairnum = calloc(lgth, sizeof(int));
@@ -173,14 +173,14 @@ mccaskillextract(char** seq, char** nogap, int nseq, RNApair** pairprob, RNApair
 
 void
 rnaalifoldcall(Context* ctx, char** seq, int nseq, RNApair** pairprob) {
-    int               lgth;
-    int               i;
+    int           lgth;
+    int           i;
     static int*   order = NULL;
     static char** name = NULL;
-    char              gett[1000];
-    FILE*             fp;
-    int               left, right, dumm;
-    double            prob;
+    char          gett[1000];
+    FILE*         fp;
+    int           left, right, dumm;
+    double        prob;
     static int    pid;
     static char   fnamein[100];
     static char   cmd[1000];
@@ -322,13 +322,13 @@ foldrna(Context* ctx, int nseq1, int nseq2, char** seq1, char** seq2, double* ef
     int i, j;
     //	int ui, uj;
     //	int uiup, ujup;
-    int                  uido, ujdo;
+    int              uido, ujdo;
     static char **   useq1, **useq2;
     static char **   oseq1, **oseq2, **oseq1r, **oseq2r, *odir1, *odir2;
     static RNApair **pairprob1, **pairprob2;
     static RNApair * pairpt1, *pairpt2;
-    int                  lgth1 = strlen(seq1[0]);
-    int                  lgth2 = strlen(seq2[0]);
+    int              lgth1 = strlen(seq1[0]);
+    int              lgth2 = strlen(seq2[0]);
     static double**  impmtx2;
     static double**  map;
     //	double lenfac;

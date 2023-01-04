@@ -135,7 +135,7 @@ static int segcmp( void *ptr1, void *ptr2 )
 
 static void
 mymergesort(int first, int last, Segment** seg) {
-    int                  middle;
+    int              middle;
     static int       i, j, k, p;
     static int       allo = 0;
     static Segment** work = NULL;
@@ -178,17 +178,17 @@ mymergesort(int first, int last, Segment** seg) {
 
 double
 Falign(Context* ctx, int** whichmtx, double*** scoringmatrices, double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int clus1, int clus2, int alloclen, int* fftlog) {
-    int            i, j, k, l, m, maxk;
-    int            nlen, nlen2;
+    int        i, j, k, l, m, maxk;
+    int        nlen, nlen2;
     static int crossscoresize = 0;
-    char**         tmpseq1 = NULL;
-    char**         tmpseq2 = NULL;
-    char**         tmpptr1 = NULL;
-    char**         tmpptr2 = NULL;
-    char**         tmpres1 = NULL;
-    char**         tmpres2 = NULL;
-    char**         result1 = NULL;
-    char**         result2 = NULL;
+    char**     tmpseq1 = NULL;
+    char**     tmpseq2 = NULL;
+    char**     tmpptr1 = NULL;
+    char**     tmpptr2 = NULL;
+    char**     tmpres1 = NULL;
+    char**     tmpres2 = NULL;
+    char**     result1 = NULL;
+    char**     result2 = NULL;
 #if RND
     char** rndseq1 = NULL;
     char** rndseq2 = NULL;
@@ -199,7 +199,7 @@ Falign(Context* ctx, int** whichmtx, double*** scoringmatrices, double** n_dynam
     static Fukusosuu*  naisekiNoWa = NULL;
     static double*     soukan = NULL;
     static double**    crossscore = NULL;
-    int                    nlentmp;
+    int                nlentmp;
     static int*        kouho = NULL;
     static Segment*    segment = NULL;
     static Segment*    segment1 = NULL;
@@ -208,16 +208,16 @@ Falign(Context* ctx, int** whichmtx, double*** scoringmatrices, double** n_dynam
     static Segment**   sortedseg2 = NULL;
     static int*        cut1 = NULL;
     static int*        cut2 = NULL;
-    char *                 sgap1, *egap1, *sgap2, *egap2;
+    char *             sgap1, *egap1, *sgap2, *egap2;
     static int         localalloclen = 0;
-    int                    lag;
-    int                    tmpint;
-    int                    count, count0;
-    int                    len1, len2;
-    int                    totallen;
-    double                 totalscore;
-    double                 dumdb = 0.0;
-    int                    headgp, tailgp;
+    int                lag;
+    int                tmpint;
+    int                count, count0;
+    int                len1, len2;
+    int                totallen;
+    double             totalscore;
+    double             dumdb = 0.0;
+    int                headgp, tailgp;
     static double*     gstart = NULL;
     static double*     gend = NULL;
     static double**    codonscoremtx;
@@ -1127,7 +1127,7 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
 
 double
 Falign_udpari_long(
-    Context* ctx,
+    Context*  ctx,
     double*** scoringmatrices,
     double**  n_dynamicmtx,
     char**    seq1,
@@ -1141,17 +1141,17 @@ Falign_udpari_long(
     int       alloclen,
     int*      fftlog
 ) {
-    int            i, j, k, l, m, maxk;
-    int            nlen, nlen2;
+    int        i, j, k, l, m, maxk;
+    int        nlen, nlen2;
     static int crossscoresize = 0;
-    char**         tmpseq1 = NULL;
-    char**         tmpseq2 = NULL;
-    char**         tmpptr1 = NULL;
-    char**         tmpptr2 = NULL;
-    char**         tmpres1 = NULL;
-    char**         tmpres2 = NULL;
-    char**         result1 = NULL;
-    char**         result2 = NULL;
+    char**     tmpseq1 = NULL;
+    char**     tmpseq2 = NULL;
+    char**     tmpptr1 = NULL;
+    char**     tmpptr2 = NULL;
+    char**     tmpres1 = NULL;
+    char**     tmpres2 = NULL;
+    char**     result1 = NULL;
+    char**     result2 = NULL;
 #if RND
     char** rndseq1 = NULL;
     char** rndseq2 = NULL;
@@ -1162,7 +1162,7 @@ Falign_udpari_long(
     static Fukusosuu*  naisekiNoWa = NULL;
     static double*     soukan = NULL;
     static double**    crossscore = NULL;
-    int                    nlentmp;
+    int                nlentmp;
     static int*        kouho = NULL;
     static Segment*    segment = NULL;
     static Segment*    segment1 = NULL;
@@ -1171,16 +1171,16 @@ Falign_udpari_long(
     static Segment**   sortedseg2 = NULL;
     static int*        cut1 = NULL;
     static int*        cut2 = NULL;
-    char *                 sgap1, *egap1, *sgap2, *egap2;
+    char *             sgap1, *egap1, *sgap2, *egap2;
     static int         localalloclen = 0;
-    int                    lag;
-    int                    tmpint;
-    int                    count, count0;
-    int                    len1, len2;
-    int                    totallen;
-    double                 totalscore;
-    int                    nkouho = 0;
-    int                    headgp, tailgp;
+    int                lag;
+    int                tmpint;
+    int                count, count0;
+    int                len1, len2;
+    int                totallen;
+    double             totalscore;
+    int                nkouho = 0;
+    int                headgp, tailgp;
     //	double dumfl = 0.0;
 
     if (seq1 == NULL) {

@@ -144,10 +144,10 @@ genL__align11(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int
     static double** doublework;
     static int      orlgth1 = 0, orlgth2 = 0;
     static double** amino_dynamicmtx = NULL;  // ??
-    double              maxwm;
-    double              tbk;
-    int                 tbki, tbkj;
-    int                 endali, endalj;
+    double          maxwm;
+    double          tbk;
+    int             tbki, tbkj;
+    int             endali, endalj;
     //	double localthr = 0.0;
     //	double localthr2 = 0.0;
     double fpenalty = (double)penalty;

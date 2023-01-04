@@ -714,7 +714,7 @@ generalkmerdistarrthread(void* arg)  // enablemultithread == 0 demo tsukau
     int*                        joblist = targ->joblist;
     int*                        posshared = targ->posshared;
     double*                     result = targ->result;
-    int i, posinjoblist, n;
+    int                         i, posinjoblist, n;
 
     while (1) {
         if (*posshared >= njob) {
@@ -3972,27 +3972,27 @@ writehat3node_noaddress(int n, int i, int j, int ii, int jj, FILE** fpp, LocalHo
 
 typedef struct _calcnearestthread_arg {
     Context* ctx;
-    char**  bseq;
-    int     thread_no;
-    int*    posshared;
-    int     alloclen;
-    int     nlim;
-    double* selfscore;
-    double* mindists;
-    int*    neighbors;
+    char**   bseq;
+    int      thread_no;
+    int*     posshared;
+    int      alloclen;
+    int      nlim;
+    double*  selfscore;
+    double*  mindists;
+    int*     neighbors;
 } calcnearestthread_arg_t;
 
 static void*
 calcnearestthread(calcnearestthread_arg_t* targ) {
     Context* ctx = targ->ctx;
-    char**                   bseq = targ->bseq;
-    int                      thread_no = targ->thread_no;
-    int*                     posshared = targ->posshared;
-    int                      alloclen = targ->alloclen;
-    int                      nlim = targ->nlim;
-    double*                  selfscore = targ->selfscore;
-    double*                  mindists = targ->mindists;
-    int*                     neighbors = targ->neighbors;
+    char**   bseq = targ->bseq;
+    int      thread_no = targ->thread_no;
+    int*     posshared = targ->posshared;
+    int      alloclen = targ->alloclen;
+    int      nlim = targ->nlim;
+    double*  selfscore = targ->selfscore;
+    double*  mindists = targ->mindists;
+    int*     neighbors = targ->neighbors;
 #ifdef enablemultithread
     pthread_mutex_t* mutex = targ->mutex;
 #endif
@@ -4102,20 +4102,20 @@ typedef struct recalcpairs4thread_arg_t {
 
 static void*
 recalcpairs4thread(recalcpairs4thread_arg_t* targ) {
-    char**                    bseq = targ->bseq;
-    int                       nseq = targ->nseq;
-    int                       numjob = targ->numjob;
-    int*                      posshared = targ->posshared;
-    int*                      joborder = targ->joborder;
-    int*                      uselh = targ->uselh;
+    char** bseq = targ->bseq;
+    int    nseq = targ->nseq;
+    int    numjob = targ->numjob;
+    int*   posshared = targ->posshared;
+    int*   joborder = targ->joborder;
+    int*   uselh = targ->uselh;
     //	int thread_no = targ->thread_no;
-    int***   topol = targ->topol;
-    Jobplan* jobplan = targ->jobplan;
-    Treedep* dep = targ->dep;
-    int      alloclen = targ->alloclen;
-    double*  selfscore = targ->selfscore;
+    int***              topol = targ->topol;
+    Jobplan*            jobplan = targ->jobplan;
+    Treedep*            dep = targ->dep;
+    int                 alloclen = targ->alloclen;
+    double*             selfscore = targ->selfscore;
     unsigned long long* done = targ->done;
-    Context* ctx = targ->ctx;
+    Context*            ctx = targ->ctx;
 
     int                i, j, m0, m1, m00, m11, n, step, istart, iend, n1, n0, subid;
     int                prevn;
@@ -4368,13 +4368,13 @@ static void
 recalcpairs_para4(Context* ctx, int njob, int*** topol, Treedep* dep, char** bseq, double* selfscore, int alloclen, int* uselh, int* nfilesfornode)
 #endif
 {
-    int                       i;
+    int i;
     int possharedn, numjob;
 
-    int      n, n0, n1, j, k, b, blocksize, blocksize0, i0, i1;
-    int **   memhist, *mem0, *mem1, *addmem;
-    char*    mergeoralign;
-    Jobplan* jobplan;
+    int                n, n0, n1, j, k, b, blocksize, blocksize0, i0, i1;
+    int **             memhist, *mem0, *mem1, *addmem;
+    char*              mergeoralign;
+    Jobplan*           jobplan;
     unsigned long long doneull;
     int                nallocated;
     int                nnodesdivided;
@@ -6537,7 +6537,6 @@ fixed_musclesupg_double_realloc_nobk_halfmtx(Context* ctx, int nseq, double** ef
             }
         }
 #endif
-
     }
     free((void*)tmptmplen);
     tmptmplen = NULL;
@@ -7620,7 +7619,7 @@ strins(char* str1, char* str2) {
 
 int
 isaligned(int nseq, char** seq) {
-    int i;
+    int    i;
     size_t len = strlen(seq[0]);
     for (i = 1; i < nseq; i++) {
         if (strlen(seq[i]) != len)
@@ -10786,7 +10785,7 @@ addonetip2top(int njobc, int*** topolc, double** lenc, double** iscorec, int*** 
 		}
 #endif
         nearestnode = leaf2node[nearest];
-        
+
         if (repnorg == -1 && dep[i].distfromtip * 2 >= minscore)  // Keitouteki ichi dake ga hitsuyouna baaiha kore wo tsukau.
         {
             //			reporterr(       "INSERT HERE, %d-%d\n", nearest, norg );
@@ -12005,9 +12004,9 @@ sumofpairsscore(int nseq, char** seq) {
 
 int
 commonsextet_p(int* table, int* pointt) {
-    int             value = 0;
-    int             tmp;
-    int             point;
+    int         value = 0;
+    int         tmp;
+    int         point;
     static int* memo = NULL;
     static int* ct = NULL;
     static int* cp;

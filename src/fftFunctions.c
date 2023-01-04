@@ -163,22 +163,22 @@ zurasu(int lag, int clus1, int clus2, char** seq1, char** seq2, char** aseq1, ch
 
 int
 alignableReagion(int clus1, int clus2, char** seq1, char** seq2, double* eff1, double* eff2, Segment* seg) {
-    int                i, j, k;
-    int                status, starttmp = 0;  // by D.Mathog, a gess
-    double             score;
-    int                value = 0;
-    int                len, maxlen;
-    int                length = 0;  // by D.Mathog, a gess
+    int            i, j, k;
+    int            status, starttmp = 0;  // by D.Mathog, a gess
+    double         score;
+    int            value = 0;
+    int            len, maxlen;
+    int            length = 0;  // by D.Mathog, a gess
     static double* stra = NULL;
     static int     alloclen = 0;
-    double             totaleff;
-    double             cumscore;
+    double         totaleff;
+    double         cumscore;
     static double  threshold;
     static double* prf1 = NULL;
     static double* prf2 = NULL;
     static int*    hat1 = NULL;
     static int*    hat2 = NULL;
-    int                pre1, pre2;
+    int            pre1, pre2;
 #if 0
 	char **seq1pt;
 	char **seq2pt;
@@ -371,13 +371,13 @@ permit(Segment* seg1, Segment* seg2) {
 
 void
 blockAlign2(int* cut1, int* cut2, Segment** seg1, Segment** seg2, double** ocrossscore, int* ncut) {
-    int                 i, j, k, shift, cur1, cur2, count, klim;
+    int             i, j, k, shift, cur1, cur2, count, klim;
     static int      crossscoresize = 0;
     static int*     result1 = NULL;
     static int*     result2 = NULL;
     static int*     ocut1 = NULL;
     static int*     ocut2 = NULL;
-    double              maximum;
+    double          maximum;
     static double** crossscore = NULL;
     static int**    track = NULL;
     static double   maxj, maxi;
@@ -557,7 +557,7 @@ void
 blockAlign3(int* cut1, int* cut2, Segment** seg1, Segment** seg2, double** ocrossscore, int* ncut)
 // memory complexity = O(n^3), time complexity = O(n^2)
 {
-    int                 i, j, shift, cur1, cur2, count;
+    int             i, j, shift, cur1, cur2, count;
     static int      crossscoresize = 0;
     static int      jumpposi, *jumppos;
     static double   jumpscorei, *jumpscore;
@@ -565,7 +565,7 @@ blockAlign3(int* cut1, int* cut2, Segment** seg1, Segment** seg2, double** ocros
     static int*     result2 = NULL;
     static int*     ocut1 = NULL;
     static int*     ocut2 = NULL;
-    double              maximum;
+    double          maximum;
     static double** crossscore = NULL;
     static int**    track = NULL;
 

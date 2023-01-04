@@ -977,12 +977,12 @@ Atracking(double* lasthorizontalw, double* lastverticalw, double fpenalty, doubl
 
 double
 A__align(Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_l, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, char* sgap1, char* sgap2, char* egap1, char* egap2, int headgp, int tailgp, int firstmem, int calledbyfulltreebase, double*** cpmxchild0, double*** cpmxchild1, double*** cpmxresult, double orieff1, double orieff2) {
-    int            reuseprofiles;
+    int        reuseprofiles;
     static int previousfirstlen;  // 2016/Feb/1 // MEMBER NO CHECK GA HITSUYOU!!!!
     static int previousicyc;  // 2016/Feb/1 // MEMBER NO CHECK GA HITSUYOU!!!!
     static int previousfirstmem;
     static int previouscall;
-    int            ngap1, ngap2;
+    int        ngap1, ngap2;
     //	int k;
     register int i, j;
     int          lasti, lastj; /* outgap == 0 -> lgth1, outgap == 1 -> lgth1+1 */
@@ -1009,37 +1009,37 @@ A__align(Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_l, c
     static double*  match;
     static double*  initverticalw; /* kufuu sureba iranai */
     static double*  lastverticalw; /* kufuu sureba iranai */
-    char**              mseq1;
-    char**              mseq2;
-    char**              mseq;
+    char**          mseq1;
+    char**          mseq2;
+    char**          mseq;
     static double * ogcp1, *ogcp1o;
     static double * ogcp2, *ogcp2o;
     static double * fgcp1, *fgcp1o;
     static double * fgcp2, *fgcp2o;
-    double *            ogcp1opt, *ogcp2opt, *fgcp1opt, *fgcp2opt;
+    double *        ogcp1opt, *ogcp2opt, *fgcp1opt, *fgcp2opt;
     static double** cpmx1;
-    double***           cpmx1pt = NULL;
+    double***       cpmx1pt = NULL;
     static double** cpmx2;
-    double***           cpmx2pt = NULL;
+    double***       cpmx2pt = NULL;
     static int**    intwork;
     static double** doublework;
     static int      orlgth1 = 0, orlgth2 = 0;
     static double*  gapfreq1;
-    double*             gapfreq1pt;
+    double*         gapfreq1pt;
     static double*  gapfreq2;
-    double*             gapfreq2pt;
-    double              fpenalty = (double)penalty_l;
-    double              fpenalty_shift = (double)penalty_shift;
-    double*             fgcp2pt;
-    double*             ogcp2pt;
-    double              fgcp1va;
-    double              ogcp1va;
-    double*             gf2pt;
-    double*             gf2ptpre;
-    double              gf1va;
-    double              gf1vapre;
-    double              headgapfreq1;
-    double              headgapfreq2;
+    double*         gapfreq2pt;
+    double          fpenalty = (double)penalty_l;
+    double          fpenalty_shift = (double)penalty_shift;
+    double*         fgcp2pt;
+    double*         ogcp2pt;
+    double          fgcp1va;
+    double          ogcp1va;
+    double*         gf2pt;
+    double*         gf2ptpre;
+    double          gf1va;
+    double          gf1vapre;
+    double          headgapfreq1;
+    double          headgapfreq2;
 
     int*    warpis = NULL;
     int*    warpjs = NULL;
@@ -2081,18 +2081,18 @@ A__align_variousdist(Context* ctx, int** which, double*** matrices, int penalty_
     static int       orlgth1 = 0, orlgth2 = 0;
     static double*   gapfreq1;
     static double*   gapfreq2;
-    double               fpenalty = (double)penalty_l;
-    double               fpenalty_shift = (double)penalty_shift;
-    double*              fgcp2pt;
-    double*              ogcp2pt;
-    double               fgcp1va;
-    double               ogcp1va;
-    double*              gf2pt;
-    double*              gf2ptpre;
-    double               gf1va;
-    double               gf1vapre;
-    double               headgapfreq1;
-    double               headgapfreq2;
+    double           fpenalty = (double)penalty_l;
+    double           fpenalty_shift = (double)penalty_shift;
+    double*          fgcp2pt;
+    double*          ogcp2pt;
+    double           fgcp1va;
+    double           ogcp1va;
+    double*          gf2pt;
+    double*          gf2ptpre;
+    double           gf1va;
+    double           gf1vapre;
+    double           headgapfreq1;
+    double           headgapfreq2;
 
     int*    warpis = NULL;
     int*    warpjs = NULL;

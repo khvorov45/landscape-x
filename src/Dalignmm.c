@@ -1094,8 +1094,8 @@ calcpfac_gap_noidatend(Gaplen** gaplen1, Gaplen** gaplen2, int newgaplen, int i,
 
 #else
 
-    double pfac, pfac1, pfac10, pfac2;
-    int k, l, pos1, pos2, id1, id2;
+    double  pfac, pfac1, pfac10, pfac2;
+    int     k, l, pos1, pos2, id1, id2;
     Gaplen *gaplen1i, *gaplen2j;
 
 #if 0  // .len no shouryaku ni taiou shiteinai
@@ -2348,8 +2348,8 @@ D__align(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* 
     static Gaplen***  gaplen2ibestkamo = NULL;
     static Gaplen***  gaplen1jbest = NULL;
     static Gaplen***  gaplen2jbest = NULL;
-    double                fpenalty = (double)penalty;
-    double                fpenalty_shift = (double)penalty_shift;
+    double            fpenalty = (double)penalty;
+    double            fpenalty_shift = (double)penalty_shift;
     static Gaplen**** gaplens = NULL;
 
     Gaplen*** gaplentmp = NULL;
@@ -3911,8 +3911,8 @@ D__align_variousdist(Context* ctx, int** which, double*** matrices, char** seq1,
     static Gaplen***  gaplen2ibestkamo = NULL;
     static Gaplen***  gaplen1jbest = NULL;
     static Gaplen***  gaplen2jbest = NULL;
-    double                fpenalty = (double)penalty;
-    double                fpenalty_shift = (double)penalty_shift;
+    double            fpenalty = (double)penalty;
+    double            fpenalty_shift = (double)penalty_shift;
     static Gaplen**** gaplens = NULL;
 
     Gaplen*** gaplentmp = NULL;

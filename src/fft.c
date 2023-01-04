@@ -60,8 +60,8 @@ fft(int n, Fukusosuu* x, int freeflag) {
     static int     last_n = 0; /*  {\tt n} */
     static int*    bitrev = NULL; /*  */
     static double* sintbl = NULL; /*  */
-    int                i, j, k, ik, h, d, k2, n4, inverse;
-    double             t, s, c, dR, dI;
+    int            i, j, k, ik, h, d, k2, n4, inverse;
+    double         t, s, c, dR, dI;
 
     if (freeflag) {
         if (bitrev)

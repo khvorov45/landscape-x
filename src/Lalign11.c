@@ -222,8 +222,8 @@ L__align11(Context* ctx, double** n_dynamicmtx, double scoreoffset, char** seq1,
     //	static double **doublework;
     static int      orlgth1 = 0, orlgth2 = 0;
     static double** amino_dynamicmtx = NULL;  // ??
-    double              maxwm;
-    int                 endali = 0, endalj = 0;  // by D.Mathog, a guess
+    double          maxwm;
+    int             endali = 0, endalj = 0;  // by D.Mathog, a guess
     //	int endali, endalj;
     double localthr = -offset + scoreoffset * 600;  // 2013/12/13
     double localthr2 = -offset + scoreoffset * 600;  // 2013/12/13
@@ -720,7 +720,7 @@ L__align11_noalign(double** n_dynamicmtx, char** seq1, char** seq2)
     //	static double **doublework;
     static int      orlgth1 = 0, orlgth2 = 0;
     static double** amino_dynamicmtx = NULL;  // ??
-    double              maxwm;
+    double          maxwm;
     //	int endali = 0, endalj = 0; // by D.Mathog, a guess
     //	int endali, endalj;
     double localthr = -offset;

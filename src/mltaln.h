@@ -188,7 +188,7 @@ typedef struct GapPos {
 
 typedef struct Context {
     char modelname[500];
-    int njob;
+    int  njob;
 } Context;
 
 extern int           nlenmax;

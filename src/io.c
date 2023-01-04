@@ -4828,7 +4828,7 @@ commongappick(int nseq, char** seq) {
     -- -- -- -- -- -- -- -- -- -- -- -- --
 
                                         int* mapfromoldtonew;
-    int pos;
+    int                                      pos;
 
     mapfromoldtonew = calloc(len + 1, sizeof(int));
     for (i = 0; i <= len; i++)

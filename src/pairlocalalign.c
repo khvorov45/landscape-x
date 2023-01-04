@@ -280,7 +280,7 @@ recallpairfoldalign(Context* ctx, char** mseq1, char** mseq2, int m1, int m2, in
 
 static void
 block2reg(char* block, Reg* reg1, Reg* reg2, int start1, int start2) {
-    Reg * rpt1;
+    Reg*  rpt1;
     char *tpt, *npt;
     int   pos1, pos2;
     int   len, glen1, glen2;
@@ -669,9 +669,9 @@ readlastresx(FILE* fp, Lastresx** lastresx) {
 static void*
 lastcallthread(lastcallthread_arg_t* targ) {
     Context* ctx = targ->ctx;
-    int                   k, i;
-    int                   nq = targ->nq;
-    int                   nd = targ->nd;
+    int      k, i;
+    int      nq = targ->nq;
+    int      nd = targ->nd;
 #ifdef enablemultithread
     int  thread_no = targ->thread_no;
     int* kshare = targ->kshare;
@@ -2364,7 +2364,6 @@ pairlocalalign(Context* ctx, int ngui, char** namegui, char** seqgui, double** d
         lastresx[ctx->njob - nadd] = NULL;
     } else
         lastresx = NULL;
-
 
     if (!ngui) {
         readData_pointer(ctx, infp, name, nlen, seq);
