@@ -9455,7 +9455,7 @@ distcompact_msa(Context* ctx, char* seq1, char* seq2, int* skiptable1, int* skip
     if (bunbo == 0)
         return (2.0);
     else {
-        value = (1.0 - (double)naivepairscorefast(ctx, seq1, seq2, skiptable1, skiptable2, penalty_dist) / bunbo) * 2.0;  // 2014/Aug/15 fast
+        value = (1.0 - (double)naivepairscorefast(ctx, seq1, seq2, skiptable1, skiptable2, ctx->penalty_dist) / bunbo) * 2.0;  // 2014/Aug/15 fast
         if (value > 10)
             value = 10.0;  // 2015/Mar/17
         return (value);

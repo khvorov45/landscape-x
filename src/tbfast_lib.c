@@ -81,7 +81,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
     sueff_global = 0.1;
     scoremtx = 1;
     ctx->kobetsubunkatsu = 0;
-    ppenalty_dist = NOTSPECIFIED;
+    ctx->ppenalty_dist = NOTSPECIFIED;
     ctx->ppenalty = NOTSPECIFIED;
     penalty_shift_factor = 1000.0;
     ppenalty_ex = NOTSPECIFIED;
@@ -157,7 +157,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
                     --argc;
                     goto nextoption;
                 case 'V':
-                    ppenalty_dist = (int)(atof(*++argv) * 1000 - 0.5);
+                    ctx->ppenalty_dist = (int)(atof(*++argv) * 1000 - 0.5);
                     --argc;
                     goto nextoption;
                 case 'f':
@@ -1492,7 +1492,7 @@ tbfast_main(int argc, char* argv[]) {
             partmtx = preparepartmtx(ctx->njob);
 
             for (i = 0; i < ctx->njob; i++) {
-                selfscore[i] = (int)naivepairscorefast(ctx, seq[i], seq[i], skiptable[i], skiptable[i], penalty_dist);
+                selfscore[i] = (int)naivepairscorefast(ctx, seq[i], seq[i], skiptable[i], skiptable[i], ctx->penalty_dist);
             }
 
             {
@@ -1539,7 +1539,7 @@ tbfast_main(int argc, char* argv[]) {
             makeskiptable(ctx->njob, skiptable, seq);
             ien = ctx->njob - 1;
             for (i = 0; i < ctx->njob; i++) {
-                selfscore[i] = (int)naivepairscorefast(ctx, seq[i], seq[i], skiptable[i], skiptable[i], penalty_dist);
+                selfscore[i] = (int)naivepairscorefast(ctx, seq[i], seq[i], skiptable[i], skiptable[i], ctx->penalty_dist);
             }
 
             {
@@ -1554,7 +1554,7 @@ tbfast_main(int argc, char* argv[]) {
                         if (bunbo == 0.0)
                             iscore[i][j - i] = 2.0;
                         else
-                            iscore[i][j - i] = (1.0 - naivepairscorefast(ctx, seq[i], seq[j], skiptable[i], skiptable[j], penalty_dist) / bunbo) * 2.0;  // 2014/Aug/15 fast
+                            iscore[i][j - i] = (1.0 - naivepairscorefast(ctx, seq[i], seq[j], skiptable[i], skiptable[j], ctx->penalty_dist) / bunbo) * 2.0;  // 2014/Aug/15 fast
                         if (iscore[i][j - i] > 10)
                             iscore[i][j - i] = 10.0;
                     }

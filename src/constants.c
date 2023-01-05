@@ -1540,8 +1540,8 @@ constants(Context* ctx, int nseq, char** seq) {
             RNAppenalty_ex = DEFAULTRNAGEP_N;
         if (ctx->ppenalty == NOTSPECIFIED)
             ctx->ppenalty = DEFAULTGOP_N;
-        if (ppenalty_dist == NOTSPECIFIED)
-            ppenalty_dist = ctx->ppenalty;
+        if (ctx->ppenalty_dist == NOTSPECIFIED)
+            ctx->ppenalty_dist = ctx->ppenalty;
         if (ppenalty_OP == NOTSPECIFIED)
             ppenalty_OP = DEFAULTGOP_N;
         if (ppenalty_ex == NOTSPECIFIED)
@@ -1565,7 +1565,7 @@ constants(Context* ctx, int nseq, char** seq) {
 
         RNAthr = (int)(3 * 600.0 / 1000.0 * RNApthr + 0.5);
         ctx->penalty = (int)(3 * 600.0 / 1000.0 * ctx->ppenalty + 0.5);
-        penalty_dist = (int)(3 * 600.0 / 1000.0 * ppenalty_dist + 0.5);
+        ctx->penalty_dist = (int)(3 * 600.0 / 1000.0 * ctx->ppenalty_dist + 0.5);
         penalty_shift = (int)(penalty_shift_factor * ctx->penalty);
         penalty_OP = (int)(3 * 600.0 / 1000.0 * ppenalty_OP + 0.5);
         penalty_ex = (int)(3 * 600.0 / 1000.0 * ppenalty_ex + 0.5);
@@ -1930,8 +1930,8 @@ constants(Context* ctx, int nseq, char** seq) {
 
         if (ctx->ppenalty == NOTSPECIFIED)
             ctx->ppenalty = DEFAULTGOP_B;
-        if (ppenalty_dist == NOTSPECIFIED)
-            ppenalty_dist = ctx->ppenalty;
+        if (ctx->ppenalty_dist == NOTSPECIFIED)
+            ctx->ppenalty_dist = ctx->ppenalty;
         if (ppenalty_OP == NOTSPECIFIED)
             ppenalty_OP = DEFAULTGOP_B;
         if (ppenalty_ex == NOTSPECIFIED)
@@ -1945,7 +1945,7 @@ constants(Context* ctx, int nseq, char** seq) {
         if (kimuraR == NOTSPECIFIED)
             kimuraR = 1;
         ctx->penalty = (int)(600.0 / 1000.0 * ctx->ppenalty + 0.5);
-        penalty_dist = (int)(600.0 / 1000.0 * ppenalty_dist + 0.5);
+        ctx->penalty_dist = (int)(600.0 / 1000.0 * ctx->ppenalty_dist + 0.5);
         penalty_shift = (int)(penalty_shift_factor * ctx->penalty);
         penalty_OP = (int)(600.0 / 1000.0 * ppenalty_OP + 0.5);
         penalty_ex = (int)(600.0 / 1000.0 * ppenalty_ex + 0.5);
@@ -2150,8 +2150,8 @@ constants(Context* ctx, int nseq, char** seq) {
 
         if (ctx->ppenalty == NOTSPECIFIED)
             ctx->ppenalty = DEFAULTGOP_B;
-        if (ppenalty_dist == NOTSPECIFIED)
-            ppenalty_dist = ctx->ppenalty;
+        if (ctx->ppenalty_dist == NOTSPECIFIED)
+            ctx->ppenalty_dist = ctx->ppenalty;
         if (ppenalty_OP == NOTSPECIFIED)
             ppenalty_OP = DEFAULTGOP_B;
         if (ppenalty_ex == NOTSPECIFIED)
@@ -2165,7 +2165,7 @@ constants(Context* ctx, int nseq, char** seq) {
         if (kimuraR == NOTSPECIFIED)
             kimuraR = 1;
         ctx->penalty = (int)(600.0 / 1000.0 * ctx->ppenalty + 0.5);
-        penalty_dist = (int)(600.0 / 1000.0 * ppenalty_dist + 0.5);
+        ctx->penalty_dist = (int)(600.0 / 1000.0 * ctx->ppenalty_dist + 0.5);
         penalty_shift = (int)(penalty_shift_factor * ctx->penalty);
         penalty_OP = (int)(600.0 / 1000.0 * ppenalty_OP + 0.5);
         penalty_ex = (int)(600.0 / 1000.0 * ppenalty_ex + 0.5);
@@ -2363,8 +2363,8 @@ constants(Context* ctx, int nseq, char** seq) {
 
         if (ctx->ppenalty == NOTSPECIFIED)
             ctx->ppenalty = DEFAULTGOP_J;
-        if (ppenalty_dist == NOTSPECIFIED)
-            ppenalty_dist = ctx->ppenalty;
+        if (ctx->ppenalty_dist == NOTSPECIFIED)
+            ctx->ppenalty_dist = ctx->ppenalty;
         if (ppenalty_OP == NOTSPECIFIED)
             ppenalty_OP = DEFAULTGOP_J;
         if (ppenalty_ex == NOTSPECIFIED)
@@ -2390,7 +2390,7 @@ constants(Context* ctx, int nseq, char** seq) {
         }
 
         ctx->penalty = (int)(600.0 / 1000.0 * ctx->ppenalty + 0.5);
-        penalty_dist = (int)(600.0 / 1000.0 * ppenalty_dist + 0.5);
+        ctx->penalty_dist = (int)(600.0 / 1000.0 * ctx->ppenalty_dist + 0.5);
         penalty_shift = (int)(penalty_shift_factor * ctx->penalty);
         penalty_OP = (int)(600.0 / 1000.0 * ppenalty_OP + 0.5);
         penalty_ex = (int)(600.0 / 1000.0 * ppenalty_ex + 0.5);

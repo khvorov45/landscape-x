@@ -219,9 +219,10 @@ typedef struct Context {
     int      penalty;
     int      ppenalty;
     int      penaltyLN;
+    int      penalty_dist;
+    int      ppenalty_dist;
 } Context;
 
-extern int    penalty_dist, ppenalty_dist;
 extern int    RNApenalty, RNAppenalty;
 extern int    RNApenalty_ex, RNAppenalty_ex;
 extern int    penalty_ex, ppenalty_ex, penalty_exLN;
