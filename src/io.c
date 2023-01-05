@@ -1141,7 +1141,7 @@ getnumlen(Context* ctx, FILE* fp) {
 }
 
 void
-writeData_pointer(FILE* fp, int locnjob, char** name, char** aseq) {
+writeData_pointer(Context* ctx, FILE* fp, int locnjob, char** name, char** aseq) {
     int i, j;
     int nalen;
 
@@ -1151,13 +1151,13 @@ writeData_pointer(FILE* fp, int locnjob, char** name, char** aseq) {
 #endif
         fprintf(fp, ">%s\n", name[i] + 1);
 #if 1
-        if (LineLengthInFASTA < 0)
+        if (ctx->LineLengthInFASTA < 0)
             fprintf(fp, "%s\n", aseq[i]);
         else  // V7.510 deha tsukawanai
         {
             nalen = strlen(aseq[i]);
-            for (j = 0; j < nalen; j = j + LineLengthInFASTA)
-                fprintf(fp, "%.*s\n", LineLengthInFASTA, aseq[i] + j);
+            for (j = 0; j < nalen; j = j + ctx->LineLengthInFASTA)
+                fprintf(fp, "%.*s\n", ctx->LineLengthInFASTA, aseq[i] + j);
         }
 #else
         fprintf(fp, "%s\n", aseq[i]);
@@ -3192,31 +3192,6 @@ clustalout_pointer(FILE* fp, int nseq, int maxlen, char** seq, char** name, char
             fprintf(fp, "%.60s\n", mark + pos);  // Ĺ�����㤦�Ȥ��ᡣ
         }
         pos += 60;
-    }
-}
-
-void
-writeData_reorder_pointer(FILE* fp, int locnjob, char** name, char** aseq, int* order) {
-    int i, j, k;
-    int nalen;
-
-    for (i = 0; i < locnjob; i++) {
-        k = order[i];
-#if DEBUG
-        fprintf(stderr, "i = %d in writeData\n", i);
-#endif
-        fprintf(fp, ">%s\n", name[k] + 1);
-#if 1
-        if (LineLengthInFASTA < 0)
-            fprintf(fp, "%s\n", aseq[k]);
-        else {
-            nalen = strlen(aseq[k]);
-            for (j = 0; j < nalen; j = j + LineLengthInFASTA)
-                fprintf(fp, "%.*s\n", LineLengthInFASTA, aseq[k] + j);
-        }
-#else
-        fprintf(fp, "%s\n", aseq[k]);
-#endif
     }
 }
 

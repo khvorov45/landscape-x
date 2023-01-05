@@ -312,15 +312,13 @@ typedef struct Context {
     int      tsize;
     char     codonpos;
     char     codonscore;
+    int      compacttree;
+    int      lhlimit;
+    int      specifictarget;
+    int      nadd;
+    int      usenaivescoreinsteadofalignmentscore;
+    int      LineLengthInFASTA;
 } Context;
-
-/* for --large  */
-extern int compacttree;
-extern int lhlimit;
-extern int specifictarget;
-extern int nadd;
-extern int usenaivescoreinsteadofalignmentscore;
-extern int LineLengthInFASTA;
 
 void      MtxuntDouble(double**, int);
 void      MtxmltDouble(double**, double**, int);
@@ -514,7 +512,7 @@ extern void         readData_pointer(Context* ctx, FILE* fp, char** name, int* n
 extern int          countATGC(char* s, int* total);
 extern void         getnumlen(Context* ctx, FILE* fp);
 extern void         writeDataforgaln(FILE* fp, int locnjob, char** name, char** aseq);
-extern void         writeData_pointer(FILE* fp, int locnjob, char** name, char** aseq);
+extern void         writeData_pointer(Context* ctx, FILE* fp, int locnjob, char** name, char** aseq);
 extern void         readhat2_doublehalf_pointer(FILE* fp, int nseq, double** mtx);
 extern void         readhat2_double(FILE* fp, int nseq, double** mtx);
 extern void         readhat2_int(FILE* fp, int nseq, int** mtx);
@@ -563,7 +561,6 @@ extern void         initlocalhom1(LocalHom* lh);
 extern void         clustalout_pointer(FILE* fp, int nseq, int maxlen, char** seq, char** name, char* mark, char* comment, int* order, int namelen);
 extern void         phylipout_pointer(FILE* fp, int nseq, int maxlen, char** seq, char** name, int* order, int namelen);
 extern void         writeData_reorder(FILE* fp, int locnjob, char name[][B], char** aseq, int* order);
-extern void         writeData_reorder_pointer(FILE* fp, int locnjob, char** name, char** aseq, int* order);
 
 extern int                load1SeqWithoutName_new(Context* ctx, FILE* fpp, char* cbuf);
 extern char*              load1SeqWithoutName_realloc(Context* ctx, FILE* fpp);

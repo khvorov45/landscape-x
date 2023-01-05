@@ -2481,7 +2481,7 @@ distdpN_noalign(Context* ctx, char* s1, char* s2, double selfscore1, double self
     strcpy(t2, s2);
     v = genL__align11(ctx, ctx->n_dis_consweight_multi, &t1, &t2, alloclen, &off1, &off2);
 
-    if (usenaivescoreinsteadofalignmentscore)
+    if (ctx->usenaivescoreinsteadofalignmentscore)
         v = (double)naivepairscore11(ctx, t1, t2, 0.0);  // uwagaki
     free(t1);  // maikai free surunoha muda
     free(t2);  // maikai free surunoha muda
@@ -2856,8 +2856,8 @@ recalcpairs4thread(recalcpairs4thread_arg_t* targ) {
                     m1 = m11;
                 }
 
-                if (nadd) {
-                    if (m1 < ctx->njob - nadd)
+                if (ctx->nadd) {
+                    if (m1 < ctx->njob - ctx->nadd)
                         continue;
                 }
                 strcpy(tmpseq1, bseq[m0]);
@@ -2972,11 +2972,11 @@ recalcpairs_para4(Context* ctx, int njob, int*** topol, Treedep* dep, char** bse
     npairs = calloc(sizeof(Pairnum), njob);
     sizeav = 0.0;
 
-    if (nadd) {
-        addmem = AllocateIntVec(nadd + 1);
-        for (i = 0; i < nadd; i++)
-            addmem[i] = njob - nadd + i;
-        addmem[nadd] = -1;
+    if (ctx->nadd) {
+        addmem = AllocateIntVec(ctx->nadd + 1);
+        for (i = 0; i < ctx->nadd; i++)
+            addmem[i] = njob - ctx->nadd + i;
+        addmem[ctx->nadd] = -1;
         for (i = 0; i < njob - 1; i++)
             mergeoralign[i] = 'n';
         if (ctx->addprofile) {
@@ -3034,7 +3034,7 @@ recalcpairs_para4(Context* ctx, int njob, int*** topol, Treedep* dep, char** bse
         npairs[n].n0 = n0;
         npairs[n].n1 = n1;
 
-        if (nadd) {
+        if (ctx->nadd) {
             i0 = includemember(mem0, addmem);
             i1 = includemember(mem1, addmem);
             if (i0 && i1)
@@ -3071,7 +3071,7 @@ recalcpairs_para4(Context* ctx, int njob, int*** topol, Treedep* dep, char** bse
 
     //	qsort( npairs, njob-1, sizeof( Pairnum ), compfuncpair );
 
-    if (nadd)
+    if (ctx->nadd)
         free(addmem);
 
     //	for( i=0; i<njob-1; i++ ) reporterr( "mergeoralign[%d] = %c\n", i, mergeoralign[i] );
@@ -8227,7 +8227,7 @@ fillimp_file(Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int
             impmtx[i][j] = 0.0;
     effijx = 1.0 * ctx->fastathreshold;
 
-    if (nadd) {
+    if (ctx->nadd) {
         npairs = 0;
         for (i = 0; i < clus1; i++)
             for (j = 0; j < clus2; j++) {
@@ -8238,7 +8238,7 @@ fillimp_file(Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int
                     m1 = m2;
                     m2 = m0;
                 }
-                if (m2 >= ctx->njob - nadd && (uselh == NULL || uselh[m1] || uselh[m2]))  // saikentou
+                if (m2 >= ctx->njob - ctx->nadd && (uselh == NULL || uselh[m1] || uselh[m2]))  // saikentou
                 {
                     //				reporterr( "%d x %d\n", m1, m2 );
                     npairs++;

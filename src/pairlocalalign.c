@@ -679,7 +679,7 @@ lastcallthread(lastcallthread_arg_t* targ) {
         }
 
         if (ctx->alg == 'R') {
-            klim = MIN(k, ctx->njob - nadd);
+            klim = MIN(k, ctx->njob - ctx->nadd);
             if (klim == k) {
                 sprintf(command, "_db%dd", k);
                 lfp = fopen(command, "w");
@@ -790,7 +790,7 @@ calllast_fast(Context* ctx, int nd, char** dseq, int nq, char** qseq, Lastresx**
             exit(1);
         }
         if (ctx->alg == 'R')
-            j = ctx->njob - nadd;
+            j = ctx->njob - ctx->nadd;
         else
             j = nd;
         for (i = 0; i < j; i++)
@@ -1319,7 +1319,7 @@ arguments(Context* ctx, int argc, char* argv[]) {
     ctx->nthread = 1;
     laste = 5000;
     lastm = 3;
-    nadd = 0;
+    ctx->nadd = 0;
     lastsubopt = 0;
     lastonce = 0;
     foldalignopt[0] = 0;
@@ -1367,8 +1367,8 @@ arguments(Context* ctx, int argc, char* argv[]) {
     ctx->RNAppenalty = NOTSPECIFIED;
     ctx->RNApthr = NOTSPECIFIED;
     ctx->specificityconsideration = 0.0;
-    usenaivescoreinsteadofalignmentscore = 0;
-    specifictarget = 0;
+    ctx->usenaivescoreinsteadofalignmentscore = 0;
+    ctx->specifictarget = 0;
     ctx->nwildcard = 0;
 
     //	reporterr( "argc=%d\n", argc );
@@ -1463,7 +1463,7 @@ arguments(Context* ctx, int argc, char* argv[]) {
                     ctx->nthread = 0;
                     goto nextoption;
                 case 'I':
-                    nadd = myatoi(*++argv);
+                    ctx->nadd = myatoi(*++argv);
                     //					fprintf( stderr, "nadd = %d\n", nadd );
                     --argc;
                     goto nextoption;
@@ -1549,7 +1549,7 @@ arguments(Context* ctx, int argc, char* argv[]) {
                     ctx->alg = 'Y';  // nadd>0 no toki nomi. moto no hairetsu to atarashii hairetsuno alignmnt -> L;
                     break;
                 case 'Z':
-                    usenaivescoreinsteadofalignmentscore = 1;
+                    ctx->usenaivescoreinsteadofalignmentscore = 1;
                     break;
                 case 's':
                     ctx->alg = 's';
@@ -1594,7 +1594,7 @@ arguments(Context* ctx, int argc, char* argv[]) {
                     ctx->divpairscore = 1;
                     break;
                 case '=':
-                    specifictarget = 1;
+                    ctx->specifictarget = 1;
                     break;
                 case ':':
                     ctx->nwildcard = 1;
@@ -1693,7 +1693,7 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
     int       ntarget;
     int *     targetmap, *targetmapr;
 
-    if (specifictarget) {
+    if (ctx->specifictarget) {
         targetmap = calloc(ctx->njob, sizeof(int));
         ntarget = 0;
         for (i = 0; i < ctx->njob; i++) {
@@ -1722,8 +1722,8 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
 
     if (store_localhom && localhomtable == NULL) {
         if (ctx->alg == 'Y' || ctx->alg == 'r') {
-            ilim = ctx->njob - nadd;
-            jst = nadd;
+            ilim = ctx->njob - ctx->nadd;
+            jst = ctx->nadd;
         } else {
             ilim = ntarget;
             jst = ctx->njob;
@@ -1743,7 +1743,7 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
                 localhomtable[i][j].last = localhomtable[i] + j;
                 localhomtable[i][j].korh = 'h';
             }
-            if (!specifictarget && ctx->alg != 'Y' && ctx->alg != 'r')
+            if (!ctx->specifictarget && ctx->alg != 'Y' && ctx->alg != 'r')
                 jst--;
         }
     }
@@ -1751,7 +1751,7 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
     if (store_dist) {
         if (ngui == 0) {
             if (ctx->alg == 'Y' || ctx->alg == 'r')
-                distancemtx = AllocateDoubleMtx(ctx->njob - nadd, nadd);  // 2020/Oct/23
+                distancemtx = AllocateDoubleMtx(ctx->njob - ctx->nadd, ctx->nadd);  // 2020/Oct/23
             else
                 distancemtx = AllocateDoubleHalfMtx(ctx->njob);
         }
@@ -1781,13 +1781,13 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
 
     if (ctx->alg == 'r') {
         fprintf(stderr, "Calling last (http://last.cbrc.jp/)\n");
-        fprintf(stderr, "nadd=%d\n", nadd);
+        fprintf(stderr, "nadd=%d\n", ctx->nadd);
         if (lastonce)
-            calllast_once(ctx, ctx->njob - nadd, seq, nadd, seq + ctx->njob - nadd, lastresx);
+            calllast_once(ctx, ctx->njob - ctx->nadd, seq, ctx->nadd, seq + ctx->njob - ctx->nadd, lastresx);
         else
-            calllast_fast(ctx, ctx->njob - nadd, seq, nadd, seq + ctx->njob - nadd, lastresx);
+            calllast_fast(ctx, ctx->njob - ctx->nadd, seq, ctx->nadd, seq + ctx->njob - ctx->nadd, lastresx);
 
-        fprintf(stderr, "nadd=%d\n", nadd);
+        fprintf(stderr, "nadd=%d\n", ctx->nadd);
         fprintf(stderr, "done.\n");
     }
 
@@ -1836,24 +1836,24 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
             dynamicmtx = AllocateDoubleMtx(ctx->nalphabets, ctx->nalphabets);
 
         if (ctx->alg == 'Y' || ctx->alg == 'r')
-            ilim = ctx->njob - nadd;
+            ilim = ctx->njob - ctx->nadd;
         else
             ilim = ctx->njob - 1;
         for (i = 0; i < ilim; i++) {
             if (stdout_dist)
                 fprintf(stdout, "%d %d d=%.3f\n", i + 1, i + 1, 0.0);
-            fprintf(stderr, "% 5d / %d\r", i, ctx->njob - nadd);
+            fprintf(stderr, "% 5d / %d\r", i, ctx->njob - ctx->nadd);
             fflush(stderr);
 
             if (ctx->alg == 'Y' || ctx->alg == 'r')
-                jst = ctx->njob - nadd;
+                jst = ctx->njob - ctx->nadd;
             else
                 jst = i + 1;
             for (j = jst; j < ctx->njob; j++) {
                 if (strlen(seq[i]) == 0 || strlen(seq[j]) == 0) {
                     if (store_dist) {
                         if (ctx->alg == 'Y' || ctx->alg == 'r')
-                            distancemtx[i][j - (ctx->njob - nadd)] = 3.0;
+                            distancemtx[i][j - (ctx->njob - ctx->nadd)] = 3.0;
                         else
                             distancemtx[i][j - i] = 3.0;
                     }
@@ -1901,7 +1901,7 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
                             off1 = off2 = 0;
                             break;
                         case ('A'):
-                            if (usenaivescoreinsteadofalignmentscore) {
+                            if (ctx->usenaivescoreinsteadofalignmentscore) {
                                 G__align11(ctx, ctx->n_dis_consweight_multi, mseq1, mseq2, alloclen, ctx->outgap, ctx->outgap);
                                 pscore = (double)naivepairscore11(ctx, mseq1[0], mseq2[0], 0.0);  // uwagaki
                             } else {
@@ -1930,7 +1930,7 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
                             off1 = off2 = 0;
                             break;
                         case ('N'):
-                            if (usenaivescoreinsteadofalignmentscore) {
+                            if (ctx->usenaivescoreinsteadofalignmentscore) {
                                 genL__align11(ctx, ctx->n_dis_consweight_multi, mseq1, mseq2, alloclen, &off1, &off2);
                                 pscore = (double)naivepairscore11(ctx, mseq1[0], mseq2[0], 0.0);  // uwagaki
                             } else {
@@ -1958,22 +1958,22 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
                             }
                             break;
                         case ('R'):
-                            if (nadd && ctx->njob - nadd <= j && ctx->njob - nadd <= i)  // new sequence doushi ha mushi
+                            if (ctx->nadd && ctx->njob - ctx->nadd <= j && ctx->njob - ctx->nadd <= i)  // new sequence doushi ha mushi
                                 pscore = 0.0;
                             else
                                 pscore = (double)lastresx[i][j].score;  // all pair
                             break;
                         case ('r'):
-                            if (nadd == 0 || (i < ctx->njob - nadd && ctx->njob - nadd <= j))
-                                pscore = (double)lastresx[i][j - (ctx->njob - nadd)].score;
+                            if (ctx->nadd == 0 || (i < ctx->njob - ctx->nadd && ctx->njob - ctx->nadd <= j))
+                                pscore = (double)lastresx[i][j - (ctx->njob - ctx->nadd)].score;
                             else
                                 pscore = 0.0;
                             break;
                         case ('L'):
-                            if (nadd && ctx->njob - nadd <= j && ctx->njob - nadd <= i)  // new sequence doushi ha mushi
+                            if (ctx->nadd && ctx->njob - ctx->nadd <= j && ctx->njob - ctx->nadd <= i)  // new sequence doushi ha mushi
                                 pscore = 0.0;
                             else {
-                                if (usenaivescoreinsteadofalignmentscore) {
+                                if (ctx->usenaivescoreinsteadofalignmentscore) {
                                     L__align11(ctx, ctx->n_dis_consweight_multi, 0.0, mseq1, mseq2, alloclen, &off1, &off2);
                                     pscore = (double)naivepairscore11(ctx, mseq1[0], mseq2[0], 0.0);  // uwagaki
                                 } else {
@@ -2002,9 +2002,9 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
                             }
                             break;
                         case ('Y'):
-                            if (nadd == 0 || (i < ctx->njob - nadd && ctx->njob - nadd <= j))  // new sequence vs exiting sequence nomi keisan
+                            if (ctx->nadd == 0 || (i < ctx->njob - ctx->nadd && ctx->njob - ctx->nadd <= j))  // new sequence vs exiting sequence nomi keisan
                             {
-                                if (usenaivescoreinsteadofalignmentscore) {
+                                if (ctx->usenaivescoreinsteadofalignmentscore) {
                                     L__align11(ctx, ctx->n_dis_consweight_multi, 0.0, mseq1, mseq2, alloclen, &off1, &off2);
                                     pscore = (double)naivepairscore11(ctx, mseq1[0], mseq2[0], 0.0);  // uwagaki
                                 } else {
@@ -2057,21 +2057,20 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
 #if SCOREOUT
                     fprintf(stderr, "score = %10.2f (%d,%d)\n", pscore, i, j);
 #endif
-                    //					if( pscore > 0.0 && ( nadd == 0 || ( alg != 'Y' && alg != 'r' ) || ( i < njob-nadd && njob-nadd <= j ) ) ) // x-ins-i de seido teika
-                    if ((nadd == 0 || (ctx->alg != 'Y' && ctx->alg != 'r') || (i < ctx->njob - nadd && ctx->njob - nadd <= j))) {
+                    if ((ctx->nadd == 0 || (ctx->alg != 'Y' && ctx->alg != 'r') || (i < ctx->njob - ctx->nadd && ctx->njob - ctx->nadd <= j))) {
                         if (!store_localhom)
                             ;
-                        else if (specifictarget && targetmap[i] == -1 && targetmap[j] == -1)
+                        else if (ctx->specifictarget && targetmap[i] == -1 && targetmap[j] == -1)
                             ;
                         else if (ctx->alg == 'R')
                             putlocalhom_last(ctx, mseq1[0], mseq2[0], localhomtable[i] + j, lastresx[i] + j);
                         else if (ctx->alg == 'r')
-                            putlocalhom_last(ctx, mseq1[0], mseq2[0], localhomtable[i] + j - (ctx->njob - nadd), lastresx[i] + j - (ctx->njob - nadd));
+                            putlocalhom_last(ctx, mseq1[0], mseq2[0], localhomtable[i] + j - (ctx->njob - ctx->nadd), lastresx[i] + j - (ctx->njob - ctx->nadd));
                         else if (ctx->alg == 'H')
                             putlocalhom_ext(ctx, mseq1[0], mseq2[0], localhomtable[i] + j, off1, off2, 'h');
                         else if (ctx->alg == 'Y')
-                            putlocalhom2(ctx, mseq1[0], mseq2[0], localhomtable[i] + j - (ctx->njob - nadd), off1, off2, 'h');
-                        else if (!specifictarget && ctx->alg != 'S' && ctx->alg != 'V')
+                            putlocalhom2(ctx, mseq1[0], mseq2[0], localhomtable[i] + j - (ctx->njob - ctx->nadd), off1, off2, 'h');
+                        else if (!ctx->specifictarget && ctx->alg != 'S' && ctx->alg != 'V')
                             putlocalhom2(ctx, mseq1[0], mseq2[0], localhomtable[i] + j - i, off1, off2, 'h');
                         else {
                             if (targetmap[i] != -1 && targetmap[j] != -1) {
@@ -2107,7 +2106,7 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
                     fprintf(stdout, "%d %d d=%.3f\n", i + 1, j + 1, pscore);
                 if (store_dist) {
                     if (ctx->alg == 'Y' || ctx->alg == 'r')
-                        distancemtx[i][j - (ctx->njob - nadd)] = pscore;
+                        distancemtx[i][j - (ctx->njob - ctx->nadd)] = pscore;
                     else
                         distancemtx[i][j - i] = pscore;
                 }
@@ -2122,7 +2121,7 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
         if (!hat2p)
             ErrorExit("Cannot open hat2.");
         if (ctx->alg == 'Y' || ctx->alg == 'r')
-            WriteHat2_part_pointer(hat2p, ctx->njob, nadd, name, distancemtx);
+            WriteHat2_part_pointer(hat2p, ctx->njob, ctx->nadd, name, distancemtx);
         else
             WriteFloatHat2_pointer_halfmtx(ctx, hat2p, ctx->njob, name, distancemtx);  // jissiha double
         fclose(hat2p);
@@ -2134,16 +2133,16 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
     if (store_localhom && ngui == 0) {
         fprintf(stderr, "\n\n##### writing hat3\n");
         if (ctx->alg == 'Y' || ctx->alg == 'r')
-            ilim = ctx->njob - nadd;
-        else if (specifictarget)
+            ilim = ctx->njob - ctx->nadd;
+        else if (ctx->specifictarget)
             ilim = ntarget;
         else
             ilim = ctx->njob - 1;
         for (i = 0; i < ilim; i++) {
             if (ctx->alg == 'Y' || ctx->alg == 'r') {
-                jst = ctx->njob - nadd;
+                jst = ctx->njob - ctx->nadd;
                 jj = 0;
-            } else if (specifictarget) {
+            } else if (ctx->specifictarget) {
                 jst = 0;
                 jj = 0;
             } else {
@@ -2171,8 +2170,8 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
         fprintf(stderr, "calling FreeLocalHomTable\n");
 #endif
         if (ctx->alg == 'Y' || ctx->alg == 'r')
-            FreeLocalHomTable_part(localhomtable, (ctx->njob - nadd), nadd);
-        else if (specifictarget)
+            FreeLocalHomTable_part(localhomtable, (ctx->njob - ctx->nadd), ctx->nadd);
+        else if (ctx->specifictarget)
             FreeLocalHomTable_part(localhomtable, ntarget, ctx->njob);
         else
             FreeLocalHomTable_half(localhomtable, ctx->njob);
@@ -2297,19 +2296,19 @@ pairlocalalign(Context* ctx, int ngui, char** namegui, char** seqgui, double** d
         lastresx[ctx->njob] = NULL;
     } else if (ctx->alg == 'r') {
         //		fprintf( stderr, "Allocating lastresx (%d), ctx->njob=%d, nadd=%d\n", ctx->njob-nadd+1, ctx->njob, nadd );
-        lastresx = calloc(ctx->njob - nadd + 1, sizeof(Lastresx*));
-        for (i = 0; i < ctx->njob - nadd; i++) {
+        lastresx = calloc(ctx->njob - ctx->nadd + 1, sizeof(Lastresx*));
+        for (i = 0; i < ctx->njob - ctx->nadd; i++) {
             //			fprintf( stderr, "Allocating lastresx[%d]\n", i );
-            lastresx[i] = calloc(nadd + 1, sizeof(Lastresx));
-            for (j = 0; j < nadd; j++) {
+            lastresx[i] = calloc(ctx->nadd + 1, sizeof(Lastresx));
+            for (j = 0; j < ctx->nadd; j++) {
                 //				fprintf( stderr, "Initializing lastresx[%d][%d]\n", i, j );
                 lastresx[i][j].score = 0;
                 lastresx[i][j].naln = 0;
                 lastresx[i][j].aln = NULL;
             }
-            lastresx[i][nadd].naln = -1;
+            lastresx[i][ctx->nadd].naln = -1;
         }
-        lastresx[ctx->njob - nadd] = NULL;
+        lastresx[ctx->njob - ctx->nadd] = NULL;
     } else
         lastresx = NULL;
 
