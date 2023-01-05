@@ -211,10 +211,9 @@ typedef struct Context {
     int      fmodel;
     int      nblosum;
     int      kobetsubunkatsu;
+    int      dorp;
 } Context;
 
-extern int    bunkatsu;
-extern int    dorp;
 extern int    niter;
 extern int    contin;
 extern int    calledByXced;
@@ -504,7 +503,7 @@ extern double       genG__align11(char** seq1, char** seq2, int alloclen);
 extern double       VAalign11(char** seq1, char** seq2, int alloclen, int* off1pt, int* off2pt, LocalHom* lhmpt);
 extern int          fft(int n, Fukusosuu* x, int dum);
 extern void         JTTmtx(double** rsr, double* freq, unsigned char locamino[0x80], char locgrp[0x80], int isTM);
-extern void         BLOSUMmtx(int n, double** matrix, double* freq, unsigned char* amino, char* amino_grp, int* rescale);
+extern void         BLOSUMmtx(Context* ctx, int n, double** matrix, double* freq, unsigned char* amino, char* amino_grp, int* rescale);
 extern int          extendedmtx(double** matrix, double* freq, unsigned char* amino, char* amino_grp);
 extern void         putlocalhom2(Context* ctx, char* al1, char* al2, LocalHom* localhompt, int off1, int off2, char korh);
 extern void         putlocalhom_str(char* al1, char* al2, double* equiv, double scale, LocalHom* localhompt, int off1, int off2, char korh);
@@ -512,7 +511,6 @@ extern void         putlocalhom_ext(Context* ctx, char* al1, char* al2, LocalHom
 extern void         putlocalhom(char* al1, char* al2, LocalHom* localhompt, int off1, int off2, int opt, int overlapaa, char korh);
 extern char*        cutal(char* al, int al_display_start, int start, int end);
 extern void         ErrorExit(char* message);
-extern void         strncpy_caseC(char* str1, char* str2, int len);
 extern void         seqUpper(int nseq, char** seq);
 extern void         seqLower(int nseq, char** seq);
 extern int          getaline_fp_eof(char* s, int l, FILE* fp);
@@ -550,7 +548,6 @@ extern int          ReadFasta(FILE* fp, double* dis, int nseq);
 extern int          ReadOpt(FILE* fp, int opt[M], int nseq);
 extern int          ReadOpt2(FILE* fp, int opt[M], int nseq);
 extern int          writePre(int nseq, char** name, char** aseq, int force);
-extern void         readOtherOptions(int* ppidptr, int* fftThresholdptr, int* fftWinSizeptr);
 extern void         initSignalSM(Context* ctx);
 extern void         initFiles(Context* ctx);
 extern void         WriteForFasta(FILE* fp, int locnjob, char** name, char** aseq);
@@ -578,7 +575,7 @@ extern void         phylipout_pointer(FILE* fp, int nseq, int maxlen, char** seq
 extern void         writeData_reorder(FILE* fp, int locnjob, char name[][B], char** aseq, int* order);
 extern void         writeData_reorder_pointer(FILE* fp, int locnjob, char** name, char** aseq, int* order);
 
-extern int                load1SeqWithoutName_new(FILE* fpp, char* cbuf);
+extern int                load1SeqWithoutName_new(Context* ctx, FILE* fpp, char* cbuf);
 extern char*              load1SeqWithoutName_realloc(Context* ctx, FILE* fpp);
 extern char*              load1SeqWithoutName_realloc_casepreserve(FILE* fpp);
 extern void               searchKUorWA(FILE* fp);
@@ -604,7 +601,7 @@ extern void               getdiaminofreq_st(double* freq, int clus, char** seq, 
 extern void               getdigapfreq_st(double* freq, int clus, char** seq, double* eff, int len);
 extern void               st_getGapPattern(Gappat** gpat, int clus, char** seq, double* eff, int len);
 extern void               getkyokaigap(char* g, char** s, int pos, int n);
-extern double*            loadaamtx(int* rescalept);
+extern double*            loadaamtx(Context* ctx, int* rescalept);
 extern double             naivepairscore11(Context* ctx, char* seq1, char* seq2, int penal);
 extern double             naivepairscore11_dynmtx(Context* ctx, double**, char* seq1, char* seq2, int penal);
 extern double             naivepairscorefast(Context* ctx, char* seq1, char* seq2, int* skip1, int* skip2, int penal);

@@ -881,7 +881,7 @@ int locn_disn[26][26] = {
 //clang-format on
 
 void
-BLOSUMmtx(int n, double** matrix, double* freq, unsigned char* amino, char* amino_grp, int* rescalept) {
+BLOSUMmtx(Context* ctx, int n, double** matrix, double* freq, unsigned char* amino, char* amino_grp, int* rescalept) {
     char   locaminod[] = "ARNDCQEGHILKMFPSTWYVBZX.-J";
     char   locgrpd[] = {0, 3, 2, 2, 5, 2, 2, 0, 3, 1, 1, 3, 1, 4, 0, 0, 0, 4, 4, 1, 2, 2, 6, 6, 6, 1};
     double freqd[20] = {0.077, 0.051, 0.043, 0.052, 0.020, 0.041, 0.062, 0.074, 0.023, 0.052, 0.091, 0.059, 0.024, 0.040, 0.051, 0.069, 0.059, 0.014, 0.032, 0.066};
@@ -1088,7 +1088,7 @@ BLOSUMmtx(int n, double** matrix, double* freq, unsigned char* amino, char* amin
     else if (n == 0)
         tmpmtx = tmpmtx0;
     else if (n == -1)
-        tmpmtx = loadaamtx(rescalept);
+        tmpmtx = loadaamtx(ctx, rescalept);
     else {
         fprintf(stderr, "blosum %d ?\n", n);
         exit(1);
@@ -1511,14 +1511,14 @@ constants(Context* ctx, int nseq, char** seq) {
     int  charsize;
 
     if (ctx->nblosum < 0)
-        dorp = 'p';
+        ctx->dorp = 'p';
 
     if (penalty_shift_factor >= 10)
         trywarp = 0;
     else
         trywarp = 1;
 
-    if (dorp == 'd') /* DNA */
+    if (ctx->dorp == 'd') /* DNA */
     {
         int      k, m;
         double   average;
@@ -1906,7 +1906,7 @@ constants(Context* ctx, int nseq, char** seq) {
         FreeDoubleMtx(pamx);
         free(freq);
 
-    } else if (dorp == 'p' && scoremtx == 1 && ctx->nblosum == -2) /* extended */
+    } else if (ctx->dorp == 'p' && scoremtx == 1 && ctx->nblosum == -2) /* extended */
     {
         double* freq;
         double* freq1;
@@ -2124,7 +2124,7 @@ constants(Context* ctx, int nseq, char** seq) {
         FreeDoubleMtx(n_distmp);
         FreeDoubleVec(datafreq);
         FreeDoubleVec(freq);
-    } else if (dorp == 'p' && scoremtx == 1) {
+    } else if (ctx->dorp == 'p' && scoremtx == 1) {
         double* freq;
         double* freq1;
         double* datafreq;
@@ -2176,7 +2176,7 @@ constants(Context* ctx, int nseq, char** seq) {
         penaltyLN = (int)(600.0 / 1000.0 * -2000 + 0.5);
         penalty_exLN = (int)(600.0 / 1000.0 * -100 + 0.5);
 
-        BLOSUMmtx(ctx->nblosum, n_distmp, freq, ctx->amino, ctx->amino_grp, &rescale);
+        BLOSUMmtx(ctx, ctx->nblosum, n_distmp, freq, ctx->amino, ctx->amino_grp, &rescale);
 
         reporterr("rescale = %d\n", rescale);
 
@@ -2329,7 +2329,7 @@ constants(Context* ctx, int nseq, char** seq) {
 
         //		reporterr(       "done.\n" );
 
-    } else if (dorp == 'p' && scoremtx == 2) /* Miyata-Yasunaga */
+    } else if (ctx->dorp == 'p' && scoremtx == 2) /* Miyata-Yasunaga */
     {
         reporterr("Not supported\n");
         exit(1);
@@ -2678,7 +2678,7 @@ constants(Context* ctx, int nseq, char** seq) {
             ctx->amino_dis_consweight_multi[(int)ctx->amino[i]][(int)ctx->amino[j]] = (double)ctx->n_dis[i][j] * consweight_multi;
         }
 
-    if (dorp == 'd') {
+    if (ctx->dorp == 'd') {
         for (i = 0; i < 10; i++)
             for (j = 0; j < 10; j++)
                 ctx->n_disLN[i][j] = (double)ctx->n_dis[i][j] + offset - offsetLN;
@@ -2700,7 +2700,7 @@ constants(Context* ctx, int nseq, char** seq) {
         fftThreshold = FFT_THRESHOLD;
     }
     if (fftWinSize == NOTSPECIFIED) {
-        if (dorp == 'd')
+        if (ctx->dorp == 'd')
             fftWinSize = FFT_WINSIZE_D;
         else
             fftWinSize = FFT_WINSIZE_P;

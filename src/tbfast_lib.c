@@ -257,10 +257,10 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
                     opts->noalign = 1;
                     break;
                 case 'D':
-                    dorp = 'd';
+                    ctx->dorp = 'd';
                     break;
                 case 'P':
-                    dorp = 'p';
+                    ctx->dorp = 'p';
                     break;
                 case 'L':
                     legacygapcost = 1;
@@ -924,7 +924,7 @@ treebase(Context* ctx, TbfastOpts* opts, int* nlen, char** aseq, int nadd, char*
 
 static void
 WriteOptions(Context* ctx, FILE* fp) {
-    if (dorp == 'd')
+    if (ctx->dorp == 'd')
         fprintf(fp, "DNA\n");
     else {
         if (scoremtx == 0)
@@ -976,7 +976,7 @@ WriteOptions(Context* ctx, FILE* fp) {
 
     if (use_fft) {
         fprintf(fp, "FFT on\n");
-        if (dorp == 'd')
+        if (ctx->dorp == 'd')
             fprintf(fp, "Basis : 4 nucleotides\n");
         else {
             if (fftscore)
@@ -1000,6 +1000,8 @@ preparepartmtx(int nseq) {
 int
 tbfast_main(int argc, char* argv[]) {
     Context* ctx = calloc(sizeof(Context), 1);
+    ctx->dorp = NOTSPECIFIED;
+
     TbfastOpts opts_ = {};
     TbfastOpts* opts = &opts_;
 

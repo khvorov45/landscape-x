@@ -694,7 +694,7 @@ lastcallthread(lastcallthread_arg_t* targ) {
                 //				sprintf( command, "md5sum _db%dd > /dev/tty", k );
                 //				system( command );
 
-                if (dorp == 'd')
+                if (ctx->dorp == 'd')
                     sprintf(command, "%s/lastdb _db%dd _db%dd", whereispairalign, k, k);
                 else
                     sprintf(command, "%s/lastdb -p _db%dd _db%dd", whereispairalign, k, k);
@@ -758,7 +758,7 @@ calllast_fast(Context* ctx, int nd, char** dseq, int nq, char** qseq, Lastresx**
         fprintf(stderr, "Cannot open _scoringmatrixforlast");
         exit(1);
     }
-    if (dorp == 'd') {
+    if (ctx->dorp == 'd') {
         fprintf(lfp, "      ");
         for (j = 0; j < 4; j++)
             fprintf(lfp, " %c ", ctx->amino[j]);
@@ -799,7 +799,7 @@ calllast_fast(Context* ctx, int nd, char** dseq, int nq, char** qseq, Lastresx**
             fprintf(lfp, ">%d\n%s\n", i, dseq[i]);
 
         fclose(lfp);
-        if (dorp == 'd')
+        if (ctx->dorp == 'd')
             sprintf(command, "%s/lastdb _dbd _dbd", whereispairalign);
         else
             sprintf(command, "%s/lastdb -p _dbd _dbd", whereispairalign);
@@ -838,7 +838,7 @@ calllast_once(Context* ctx, int nd, char** dseq, int nq, char** qseq, Lastresx**
         fprintf(lfp, ">%d\n%s\n", i, dseq[i]);
     fclose(lfp);
 
-    if (dorp == 'd') {
+    if (ctx->dorp == 'd') {
         sprintf(command, "%s/lastdb _db _db", whereispairalign);
         system(command);
         lfp = fopen("_scoringmatrixforlast", "w");
@@ -1122,9 +1122,9 @@ calldafs_giving_bpp(Context* ctx, char** mseq1, char** mseq2, char** bpp1, char*
     fgets(com, 999, fp);
     myfgets(com, 999, fp);  // nagai kanousei ga arunode
     fgets(com, 999, fp);
-    load1SeqWithoutName_new(fp, *mseq1);
+    load1SeqWithoutName_new(ctx, fp, *mseq1);
     fgets(com, 999, fp);
-    load1SeqWithoutName_new(fp, *mseq2);
+    load1SeqWithoutName_new(ctx, fp, *mseq2);
 
     fclose(fp);
 
@@ -1234,9 +1234,9 @@ callmxscarna_giving_bpp(Context* ctx, char** mseq1, char** mseq2, char** bpp1, c
     }
 
     fgets(com, 999, fp);
-    load1SeqWithoutName_new(fp, *mseq1);
+    load1SeqWithoutName_new(ctx, fp, *mseq1);
     fgets(com, 999, fp);
-    load1SeqWithoutName_new(fp, *mseq2);
+    load1SeqWithoutName_new(ctx, fp, *mseq2);
 
     fclose(fp);
 
@@ -1518,10 +1518,10 @@ arguments(Context* ctx, int argc, char* argv[]) {
 					break;
 #endif
                 case 'D':
-                    dorp = 'd';
+                    ctx->dorp = 'd';
                     break;
                 case 'P':
-                    dorp = 'p';
+                    ctx->dorp = 'p';
                     break;
 #if 0
 				case 'e':
@@ -2275,7 +2275,7 @@ pairlocalalign(Context* ctx, int ngui, char** namegui, char** seqgui, double** d
         }
     }
 
-    if ((alg == 'r' || alg == 'R') && dorp == 'p') {
+    if ((alg == 'r' || alg == 'R') && ctx->dorp == 'p') {
         fprintf(stderr, "Not yet supported\n");
         exit(1);
     }
@@ -2344,7 +2344,7 @@ pairlocalalign(Context* ctx, int ngui, char** namegui, char** seqgui, double** d
 
     //reporterr( "expdist=%p\n", expdist );
 
-    if (dorp == 'p' && scoremtx == 1 && ctx->nblosum > 0)  // protein, not text.  hitsuyou?
+    if (ctx->dorp == 'p' && scoremtx == 1 && ctx->nblosum > 0)  // protein, not text.  hitsuyou?
     {
         for (i = 0; i < ctx->njob; i++) {
             gappick0(bseq[i], seq[i]);

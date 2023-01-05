@@ -331,7 +331,7 @@ Falign(Context* ctx, int** whichmtx, double*** scoringmatrices, double** n_dynam
             FILE* cfp;
             char* buf = calloc(sizeof(char), 1000);
 
-            if (dorp != 'd') {
+            if (ctx->dorp != 'd') {
                 reporterr("\n\nThe --codonpos and --codonscore options are only for DNA data.\n\n");
                 exit(1);
             }

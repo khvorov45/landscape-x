@@ -675,15 +675,6 @@ ErrorExit(char* message) {
 }
 
 void
-strncpy_caseC(char* str1, char* str2, int len) {
-    if (dorp == 'd' && upperCase > 0) {
-        while (len--)
-            *str1++ = toupper(*str2++);
-    } else
-        strncpy(str1, str2, len);
-}
-
-void
 seqUpper(int nseq, char** seq) {
     int i, j, len;
     for (i = 0; i < nseq; i++) {
@@ -953,7 +944,7 @@ load1SeqWithoutName_realloc(Context* ctx, FILE* fpp) {
     if (ctx->nblosum == -2) {
         charfilter((unsigned char*)val);
     } else {
-        if (dorp == 'd')
+        if (ctx->dorp == 'd')
             onlyAlpha_lower(val);
         else
             onlyAlpha_upper(val);
@@ -963,7 +954,7 @@ load1SeqWithoutName_realloc(Context* ctx, FILE* fpp) {
 }
 
 int
-load1SeqWithoutName_new(FILE* fpp, char* cbuf) {
+load1SeqWithoutName_new(Context* ctx, FILE* fpp, char* cbuf) {
     int   c, b;
     char* bk = cbuf;
 
@@ -975,7 +966,7 @@ load1SeqWithoutName_new(FILE* fpp, char* cbuf) {
     }
     ungetc(c, fpp);
     *cbuf = 0;
-    if (dorp == 'd')
+    if (ctx->dorp == 'd')
         onlyAlpha_lower(bk);
     else
         onlyAlpha_upper(bk);
@@ -1001,7 +992,7 @@ readData_pointer(Context* ctx, FILE* fp, char** name, int* nlen, char** seq) {
         nlen[i] = strlen(seq[i]);
     }
 
-    if (dorp == 'd' && upperCase != -1)
+    if (ctx->dorp == 'd' && upperCase != -1)
         seqLower(ctx->njob, seq);
 
     if (outnumber) {
@@ -1137,12 +1128,12 @@ getnumlen(Context* ctx, FILE* fp) {
     }
 
     double atgcfreq = (double)atgcnum / (double)total;
-    if (dorp == NOTSPECIFIED) {
+    if (ctx->dorp == NOTSPECIFIED) {
         if (atgcfreq > 0.75) {
-            dorp = 'd';
+            ctx->dorp = 'd';
             upperCase = -1;
         } else {
-            dorp = 'p';
+            ctx->dorp = 'p';
             upperCase = 0;
         }
     }
@@ -2167,36 +2158,6 @@ writePre(int nseq, char** name, char** aseq, int force) {
         writeData_pointer(prep_g, nseq, name, aseq);
     }
     return 0;
-}
-
-void
-readOtherOptions(int* ppidptr, int* fftThresholdptr, int* fftWinSizeptr) {
-    if (calledByXced) {
-        FILE* fp = fopen("pre", "r");
-        char  b[B];
-        if (!fp)
-            ErrorExit("Cannot open pre.\n");
-        fgets(b, B - 1, fp);
-        sscanf(b, "%d %d %d", ppidptr, fftThresholdptr, fftWinSizeptr);
-        fclose(fp);
-#if IODEBUG
-        fprintf(stderr, "b = %s\n", b);
-        fprintf(stderr, "ppid = %d\n", ppid);
-        fprintf(stderr, "fftThreshold = %d\n", fftThreshold);
-        fprintf(stderr, "fftWinSize = %d\n", fftWinSize);
-#endif
-    } else {
-        *ppidptr = 0;
-        *fftThresholdptr = FFT_THRESHOLD;
-        if (dorp == 'd')
-            *fftWinSizeptr = FFT_WINSIZE_D;
-        else
-            *fftWinSizeptr = FFT_WINSIZE_P;
-    }
-#if 0
-	fprintf( stderr, "fftThresholdptr=%d\n", *fftThresholdptr );
-	fprintf( stderr, "fftWinSizeptr=%d\n", *fftWinSizeptr );
-#endif
 }
 
 void
@@ -3308,7 +3269,7 @@ showaamtxexample() {
 }
 
 double*
-loadaamtx(int* rescalept) {
+loadaamtx(Context* ctx, int* rescalept) {
     int      i, j, k, ii, jj;
     double*  val;
     double** raw;
@@ -3326,7 +3287,7 @@ loadaamtx(int* rescalept) {
     val = AllocateDoubleVec(420);
     map = AllocateIntVec(20);
 
-    if (dorp != 'p') {
+    if (ctx->dorp != 'p') {
         fprintf(stderr, "User-defined matrix is not supported for DNA\n");
         exit(1);
     }
