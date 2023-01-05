@@ -9,7 +9,6 @@ int   nthreadpair = 1;
 int   randomseed = 0;
 int   parallelizationstrategy = BAATARI1;
 
-int    RNAthr, RNApthr;
 int    scoremtx;
 int    TMorJTT;
 char   use_fft;

@@ -225,12 +225,12 @@ typedef struct Context {
     int      RNAppenalty;
     int      RNApenalty_ex;
     int      RNAppenalty_ex;
-    int      penalty_ex; 
-    int      ppenalty_ex; 
+    int      penalty_ex;
+    int      ppenalty_ex;
     int      penalty_exLN;
     int      penalty_EX;
     int      ppenalty_EX;
-    int      penalty_OP; 
+    int      penalty_OP;
     int      ppenalty_OP;
     int      penalty_shift;
     double   penalty_shift_factor;
@@ -238,9 +238,10 @@ typedef struct Context {
     int      poffset;
     int      offsetLN;
     int      offsetFFT;
+    int      RNAthr;
+    int      RNApthr;
 } Context;
 
-extern int    RNAthr, RNApthr;
 extern int    scoremtx;
 extern int    TMorJTT;
 extern char   use_fft;

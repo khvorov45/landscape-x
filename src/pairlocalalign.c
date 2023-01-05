@@ -1365,7 +1365,7 @@ arguments(Context* ctx, int argc, char* argv[]) {
     fftWinSize = NOTSPECIFIED;
     fftThreshold = NOTSPECIFIED;
     ctx->RNAppenalty = NOTSPECIFIED;
-    RNApthr = NOTSPECIFIED;
+    ctx->RNApthr = NOTSPECIFIED;
     specificityconsideration = 0.0;
     usenaivescoreinsteadofalignmentscore = 0;
     specifictarget = 0;

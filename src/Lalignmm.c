@@ -45,7 +45,7 @@ match_calc(Context* ctx, double* match, double** cpmx1, double** cpmx2, int i1, 
     for (l = 0; l < nalphabets; l++) {
         scarr[l] = 0.0;
         for (k = 0; k < nalphabets; k++) {
-            scarr[l] += (ctx->n_dis[k][l] - RNAthr) * cpmx1[i1][k];
+            scarr[l] += (ctx->n_dis[k][l] - ctx->RNAthr) * cpmx1[i1][k];
         }
     }
 

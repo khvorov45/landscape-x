@@ -93,7 +93,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
     fftThreshold = NOTSPECIFIED;
     ctx->RNAppenalty = NOTSPECIFIED;
     ctx->RNAppenalty_ex = NOTSPECIFIED;
-    RNApthr = NOTSPECIFIED;
+    ctx->RNApthr = NOTSPECIFIED;
     TMorJTT = JTT;
     consweight_multi = 1.0;
     consweight_rna = 0.0;
@@ -149,7 +149,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
                     --argc;
                     goto nextoption;
                 case 'e':
-                    RNApthr = (int)(atof(*++argv) * 1000 - 0.5);
+                    ctx->RNApthr = (int)(atof(*++argv) * 1000 - 0.5);
                     --argc;
                     goto nextoption;
                 case 'o':

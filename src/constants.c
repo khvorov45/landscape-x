@@ -1550,8 +1550,8 @@ constants(Context* ctx, int nseq, char** seq) {
             ctx->ppenalty_EX = DEFAULTGEP_N;
         if (ctx->poffset == NOTSPECIFIED)
             ctx->poffset = DEFAULTOFS_N;
-        if (RNApthr == NOTSPECIFIED)
-            RNApthr = DEFAULTRNATHR_N;
+        if (ctx->RNApthr == NOTSPECIFIED)
+            ctx->RNApthr = DEFAULTRNATHR_N;
         if (pamN == NOTSPECIFIED)
             pamN = DEFAULTPAMN;
         if (kimuraR == NOTSPECIFIED)
@@ -1563,7 +1563,7 @@ constants(Context* ctx, int nseq, char** seq) {
         //		reporterr(       "RNAppenalty = %d\n", RNAppenalty );
         //		reporterr(       "RNApenalty = %d\n", RNApenalty );
 
-        RNAthr = (int)(3 * 600.0 / 1000.0 * RNApthr + 0.5);
+        ctx->RNAthr = (int)(3 * 600.0 / 1000.0 * ctx->RNApthr + 0.5);
         ctx->penalty = (int)(3 * 600.0 / 1000.0 * ctx->ppenalty + 0.5);
         ctx->penalty_dist = (int)(3 * 600.0 / 1000.0 * ctx->ppenalty_dist + 0.5);
         ctx->penalty_shift = (int)(ctx->penalty_shift_factor * ctx->penalty);
