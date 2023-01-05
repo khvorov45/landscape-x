@@ -87,12 +87,12 @@ static void match_calc_bk( double *match, double **cpmx1, double **cpmx2, int i1
 #endif
 
 static double
-Ltracking(char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int* off1pt, int* off2pt, int endi, int endj, int* warpis, int* warpjs, int warpbase) {
+Ltracking(Context* ctx, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int* off1pt, int* off2pt, int endi, int endj, int* warpis, int* warpjs, int warpbase) {
     int i, j, l, iin, jin, lgth1, lgth2, k, limk;
     int ifi = 0, jfi = 0;  // by D.Mathog, a guess
     //	char gap[] = "-";
     char* gap;
-    gap = newgapstr;
+    gap = ctx->newgapstr;
     lgth1 = strlen(seq1[0]);
     lgth2 = strlen(seq2[0]);
 
@@ -353,8 +353,8 @@ L__align11(Context* ctx, double** n_dynamicmtx, double scoreoffset, char** seq1,
         orlgth2 = ll2 - 100;
     }
 
-    for (i = 0; i < nalphabets; i++)
-        for (j = 0; j < nalphabets; j++)
+    for (i = 0; i < ctx->nalphabets; i++)
+        for (j = 0; j < ctx->nalphabets; j++)
             amino_dynamicmtx[(int)ctx->amino[i]][(int)ctx->amino[j]] = (double)n_dynamicmtx[i][j];
 
     mseq1[0] = mseq[0];
@@ -659,7 +659,7 @@ fprintf( stderr, "\n" );
         return (0.0);
     }
 
-    Ltracking(seq1, seq2, mseq1, mseq2, ijp, off1pt, off2pt, endali, endalj, warpis, warpjs, warpbase);
+    Ltracking(ctx, seq1, seq2, mseq1, mseq2, ijp, off1pt, off2pt, endali, endalj, warpis, warpjs, warpbase);
     if (warpis)
         free(warpis);
     if (warpjs)
@@ -815,8 +815,8 @@ L__align11_noalign(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2
         orlgth2 = ll2 - 100;
     }
 
-    for (i = 0; i < nalphabets; i++)
-        for (j = 0; j < nalphabets; j++)
+    for (i = 0; i < ctx->nalphabets; i++)
+        for (j = 0; j < ctx->nalphabets; j++)
             amino_dynamicmtx[(int)ctx->amino[i]][(int)ctx->amino[j]] = (double)n_dynamicmtx[i][j];
 
 #if DEBUG
@@ -1029,27 +1029,6 @@ fprintf( stderr, "\n" );
         fprintf(stderr, "maxwm <- 0.0 \n");
         return (0.0);
     }
-#endif
-
-    //	Ltracking( currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, off1pt, off2pt, endali, endalj );
-
-    //	resultlen = strlen( mseq1[0] );
-    //	if( alloclen < resultlen || resultlen > N )
-    //	{
-    //		fprintf( stderr, "alloclen=%d, resultlen=%d, N=%d\n", alloclen, resultlen, N );
-    //		ErrorExit( "LENGTH OVER!\n" );
-    //	}
-
-    //	strcpy( seq1[0], mseq1[0] );
-    //	strcpy( seq2[0], mseq2[0] );
-
-#if 0
-	fprintf( stderr, "wm=%f\n", wm );
-	fprintf( stderr, ">\n%s\n", mseq1[0] );
-	fprintf( stderr, ">\n%s\n", mseq2[0] );
-
-	fprintf( stderr, "maxwm = %f\n", maxwm );
-	fprintf( stderr, "   wm = %f\n",    wm );
 #endif
 
     return (maxwm);

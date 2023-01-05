@@ -118,7 +118,7 @@ profilealignment(Context* ctx, int n0, int n1, int n2, char** aln0, char** aln1,
         effarr2[i] = eff;
 #endif
 
-    newgapstr = "-";
+    ctx->newgapstr = "-";
     if (alg == 'M')
         MSalignmm(ctx, ctx->n_dis_consweight_multi, aln0, aln2, effarr0, effarr2, n0, n2, alloclen, NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, NULL, 0.0, 0.0);  //outgap=1, 2014/Dec/1
     else
@@ -1796,7 +1796,7 @@ restoreoriginalgaps(int n, char** seq, char* originalgaps) {
 }
 
 void
-reconstructdeletemap(int nadd, char** addbk, GapPos** deletelist, char** realn, FILE* fp, char** name) {
+reconstructdeletemap(Context* ctx, int nadd, char** addbk, GapPos** deletelist, char** realn, FILE* fp, char** name) {
     int   i, j, p, len, gaplen;
     char *gapped, *nameptr, *tmpptr;
 
@@ -1807,7 +1807,7 @@ reconstructdeletemap(int nadd, char** addbk, GapPos** deletelist, char** realn, 
         //		gapped[len] = 0; // iranai
 
         nameptr = name[i] + 1;
-        if (outnumber)
+        if (ctx->outnumber)
             nameptr = strstr(nameptr, "_numo_e") + 8;
 
         if ((tmpptr = strstr(nameptr, "_oe_")))
@@ -1854,7 +1854,7 @@ reconstructdeletemap(int nadd, char** addbk, GapPos** deletelist, char** realn, 
 #define MODIFYNAME 1  // MODIFYNAME mo --anysymbol to ryouritsu, 7.502-
 
 void
-reconstructdeletemap_compact(int nadd, char** addbk, GapPos** deletelist, char** realn, FILE* fp, char** name) {
+reconstructdeletemap_compact(Context* ctx, int nadd, char** addbk, GapPos** deletelist, char** realn, FILE* fp, char** name) {
     int   i, j, p, len, nins, gaplen;
     char *gapped, *nameptr, *tmpptr;
     int   status = 0;
@@ -1873,7 +1873,7 @@ reconstructdeletemap_compact(int nadd, char** addbk, GapPos** deletelist, char**
         //		gapped[len] = 0; // iranai
 
         nameptr = name[i] + 1;
-        if (outnumber)
+        if (ctx->outnumber)
             nameptr = strstr(nameptr, "_numo_e") + 8;
 
         if ((tmpptr = strstr(nameptr, "_oe_")))

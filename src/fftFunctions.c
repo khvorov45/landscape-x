@@ -201,10 +201,10 @@ alignableReagion(Context* ctx, int clus1, int clus2, char** seq1, char** seq2, d
     }
 
     if (prf1 == NULL) {
-        prf1 = AllocateDoubleVec(nalphabets);
-        prf2 = AllocateDoubleVec(nalphabets);
-        hat1 = AllocateIntVec(nalphabets + 1);
-        hat2 = AllocateIntVec(nalphabets + 1);
+        prf1 = AllocateDoubleVec(ctx->nalphabets);
+        prf2 = AllocateDoubleVec(ctx->nalphabets);
+        hat1 = AllocateIntVec(ctx->nalphabets + 1);
+        hat2 = AllocateIntVec(ctx->nalphabets + 1);
     }
 
     len = MIN(strlen(seq1[0]), strlen(seq2[0]));
@@ -224,7 +224,7 @@ alignableReagion(Context* ctx, int clus1, int clus2, char** seq1, char** seq2, d
         for (j = 0; j < clus2; j++)
             totaleff += eff1[i] * eff2[j];
     for (i = 0; i < len; i++) {
-        for (j = 0; j < nalphabets; j++) {
+        for (j = 0; j < ctx->nalphabets; j++) {
             prf1[j] = 0.0;
             prf2[j] = 0.0;
         }
@@ -234,7 +234,7 @@ alignableReagion(Context* ctx, int clus1, int clus2, char** seq1, char** seq2, d
         for (j = 0; j < clus2; j++)
             prf2[ctx->amino_n[(unsigned char)seq2[j][i]]] += eff2[j];
 
-        pre1 = pre2 = nalphabets;
+        pre1 = pre2 = ctx->nalphabets;
         for (j = 25; j >= 0; j--) {
             if (prf1[j]) {
                 hat1[pre1] = j;
@@ -250,8 +250,8 @@ alignableReagion(Context* ctx, int clus1, int clus2, char** seq1, char** seq2, d
 
         /* make site score */
         stra[i] = 0.0;
-        for (k = hat1[nalphabets]; k != -1; k = hat1[k])
-            for (j = hat2[nalphabets]; j != -1; j = hat2[j])
+        for (k = hat1[ctx->nalphabets]; k != -1; k = hat1[k])
+            for (j = hat2[ctx->nalphabets]; j != -1; j = hat2[j])
                 //				stra[i] += n_dis[k][j] * prf1[k] * prf2[j];
                 stra[i] += ctx->n_disFFT[k][j] * prf1[k] * prf2[j];
         stra[i] /= totaleff;

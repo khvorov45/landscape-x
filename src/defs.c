@@ -1,21 +1,5 @@
 #include "mltaln.h"
 
-int    scoreout = 0;
-int    spscoreout = 0;
-int    outnumber = 0;
-int    legacygapcost = 0;
-double minimumweight = 0.0005;
-int    nwildcard = 0;
-
-char* newgapstr = "-";
-
-int nalphabets = 26;
-int nscoredalphabets = 20;
-
-double specificityconsideration = 0.0;
-int    ndistclass = 10;
-int    maxdistclass = -1;
-
 int gmsg = 0;
 
 double sueff_global = SUEFF;

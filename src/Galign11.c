@@ -96,7 +96,7 @@ Atracking(Context* ctx, double* lasthorizontalw, double* lastverticalw, char** s
     int i, j, l, iin, jin, ifi, jfi, lgth1, lgth2, k, limk;
     //	char gap[] = "-";
     char* gap;
-    gap = newgapstr;
+    gap = ctx->newgapstr;
     lgth1 = strlen(seq1[0]);
     lgth2 = strlen(seq2[0]);
     double wm, g;
@@ -401,7 +401,7 @@ G__align11psg(Context* ctx, double** codonmtx, double** n_dynamicmtx, char** seq
     if (lgth1 == 0) {
         seq1[0][lgth2] = 0;
         while (lgth2)
-            seq1[0][--lgth2] = *newgapstr;
+            seq1[0][--lgth2] = *ctx->newgapstr;
         //		fprintf( stderr, "seq1[0] = %s\n", seq1[0] );
         return (0.0);
     }
@@ -409,7 +409,7 @@ G__align11psg(Context* ctx, double** codonmtx, double** n_dynamicmtx, char** seq
     if (lgth2 == 0) {
         seq2[0][lgth1] = 0;
         while (lgth1)
-            seq2[0][--lgth1] = *newgapstr;
+            seq2[0][--lgth1] = *ctx->newgapstr;
         //		fprintf( stderr, "seq2[0] = %s\n", seq2[0] );
         return (0.0);
     }
@@ -466,8 +466,8 @@ G__align11psg(Context* ctx, double** codonmtx, double** n_dynamicmtx, char** seq
 
         mseq = AllocateCharMtx(2, ll1 + ll2);  // 2020/Apr
 
-        doublework = AllocateFloatMtx(nalphabets, MAX(ll1, ll2) + 2);
-        intwork = AllocateIntMtx(nalphabets, MAX(ll1, ll2) + 2);
+        doublework = AllocateFloatMtx(ctx->nalphabets, MAX(ll1, ll2) + 2);
+        intwork = AllocateIntMtx(ctx->nalphabets, MAX(ll1, ll2) + 2);
         amino_dynamicmtx = AllocateDoubleMtx(0x100, 0x100);
 
         if (codonscore) {
@@ -482,8 +482,8 @@ G__align11psg(Context* ctx, double** codonmtx, double** n_dynamicmtx, char** seq
         orlgth1 = ll1 - 100;
         orlgth2 = ll2 - 100;
     }
-    for (i = 0; i < nalphabets; i++)
-        for (j = 0; j < nalphabets; j++)
+    for (i = 0; i < ctx->nalphabets; i++)
+        for (j = 0; j < ctx->nalphabets; j++)
             amino_dynamicmtx[(uint8_t)ctx->amino[i]][(uint8_t)ctx->amino[j]] = (double)n_dynamicmtx[i][j];
 
     mseq1[0] = mseq[0];
@@ -1016,7 +1016,7 @@ G__align11(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int al
     if (lgth1 == 0) {
         seq1[0][lgth2] = 0;
         while (lgth2)
-            seq1[0][--lgth2] = *newgapstr;
+            seq1[0][--lgth2] = *ctx->newgapstr;
         //		fprintf( stderr, "seq1[0] = %s\n", seq1[0] );
         return (0.0);
     }
@@ -1024,7 +1024,7 @@ G__align11(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int al
     if (lgth2 == 0) {
         seq2[0][lgth1] = 0;
         while (lgth1)
-            seq2[0][--lgth1] = *newgapstr;
+            seq2[0][--lgth1] = *ctx->newgapstr;
         //		fprintf( stderr, "seq2[0] = %s\n", seq2[0] );
         return (0.0);
     }
@@ -1076,8 +1076,8 @@ G__align11(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int al
 
         mseq = AllocateCharMtx(2, ll1 + ll2);  // 2020/Apr
 
-        doublework = AllocateFloatMtx(nalphabets, MAX(ll1, ll2) + 2);
-        intwork = AllocateIntMtx(nalphabets, MAX(ll1, ll2) + 2);
+        doublework = AllocateFloatMtx(ctx->nalphabets, MAX(ll1, ll2) + 2);
+        intwork = AllocateIntMtx(ctx->nalphabets, MAX(ll1, ll2) + 2);
         amino_dynamicmtx = AllocateDoubleMtx(0x100, 0x100);
 
 #if DEBUG
@@ -1087,8 +1087,8 @@ G__align11(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int al
         orlgth1 = ll1 - 100;
         orlgth2 = ll2 - 100;
     }
-    for (i = 0; i < nalphabets; i++)
-        for (j = 0; j < nalphabets; j++)
+    for (i = 0; i < ctx->nalphabets; i++)
+        for (j = 0; j < ctx->nalphabets; j++)
             amino_dynamicmtx[(uint8_t)ctx->amino[i]][(uint8_t)ctx->amino[j]] = (double)n_dynamicmtx[i][j];
 
     mseq1[0] = mseq[0];
@@ -1503,8 +1503,8 @@ G__align11_noalign(Context* ctx, double** n_dynamicmtx, int penal, int penal_ex,
 
         m = AllocateFloatVec(ll2 + 2);
 
-        doublework = AllocateFloatMtx(nalphabets, MAX(ll1, ll2) + 2);
-        intwork = AllocateIntMtx(nalphabets, MAX(ll1, ll2) + 2);
+        doublework = AllocateFloatMtx(ctx->nalphabets, MAX(ll1, ll2) + 2);
+        intwork = AllocateIntMtx(ctx->nalphabets, MAX(ll1, ll2) + 2);
 
         //		amino_dynamicmtx = AllocateDoubleMtx( 0x80, 0x80 );
         amino_dynamicmtx = AllocateDoubleMtx(0x100, 0x100);  // 2017/Nov.  constants.c no 'charsize' wo global hensuu nishita houga yoi?
@@ -1516,8 +1516,8 @@ G__align11_noalign(Context* ctx, double** n_dynamicmtx, int penal, int penal_ex,
         orlgth2 = ll2 - 100;
     }
 
-    for (i = 0; i < nalphabets; i++)
-        for (j = 0; j < nalphabets; j++)
+    for (i = 0; i < ctx->nalphabets; i++)
+        for (j = 0; j < ctx->nalphabets; j++)
             amino_dynamicmtx[(int)ctx->amino[i]][(int)ctx->amino[j]] = (double)n_dynamicmtx[i][j];
 
 #if 0

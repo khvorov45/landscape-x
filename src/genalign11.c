@@ -27,12 +27,12 @@ match_calc(double* match, char** s1, char** s2, int i1, int lgth2) {
 #endif
 
 static double
-gentracking(char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijpi, int** ijpj, int* off1pt, int* off2pt, int endi, int endj) {
+gentracking(Context* ctx, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijpi, int** ijpj, int* off1pt, int* off2pt, int endi, int endj) {
     int i, j, l, iin, jin, lgth1, lgth2, k, limk;
     int ifi = 0, jfi = 0;  // by D.Mathog
     //	char gap[] = "-";
     char* gap;
-    gap = newgapstr;
+    gap = ctx->newgapstr;
     lgth1 = strlen(seq1[0]);
     lgth2 = strlen(seq2[0]);
 
@@ -247,11 +247,11 @@ genL__align11(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int
 
         mseq = AllocateCharMtx(ctx->njob, ll1 + ll2);
 
-        cpmx1 = AllocateFloatMtx(nalphabets, ll1 + 2);
-        cpmx2 = AllocateFloatMtx(nalphabets, ll2 + 2);
+        cpmx1 = AllocateFloatMtx(ctx->nalphabets, ll1 + 2);
+        cpmx2 = AllocateFloatMtx(ctx->nalphabets, ll2 + 2);
 
-        doublework = AllocateFloatMtx(nalphabets, MAX(ll1, ll2) + 2);
-        intwork = AllocateIntMtx(nalphabets, MAX(ll1, ll2) + 2);
+        doublework = AllocateFloatMtx(ctx->nalphabets, MAX(ll1, ll2) + 2);
+        intwork = AllocateIntMtx(ctx->nalphabets, MAX(ll1, ll2) + 2);
 
         amino_dynamicmtx = AllocateDoubleMtx(0x100, 0x100);
 
@@ -263,8 +263,8 @@ genL__align11(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int
         orlgth2 = ll2 - 100;
     }
 
-    for (i = 0; i < nalphabets; i++)
-        for (j = 0; j < nalphabets; j++)
+    for (i = 0; i < ctx->nalphabets; i++)
+        for (j = 0; j < ctx->nalphabets; j++)
             amino_dynamicmtx[(unsigned char)ctx->amino[i]][(unsigned char)ctx->amino[j]] = (double)n_dynamicmtx[i][j];
 
     mseq1[0] = mseq[0];
@@ -550,9 +550,7 @@ fprintf( stderr, "\n" );
         return (0.0);
     }
 
-    gentracking(seq1, seq2, mseq1, mseq2, ijpi, ijpj, off1pt, off2pt, endali, endalj);
-
-    //	fprintf( stderr, "### impmatch = %f\n", *impmatch );
+    gentracking(ctx, seq1, seq2, mseq1, mseq2, ijpi, ijpj, off1pt, off2pt, endali, endalj);
 
     resultlen = strlen(mseq1[0]);
     if (alloclen < resultlen || resultlen > N) {

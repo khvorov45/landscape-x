@@ -49,9 +49,9 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
     ctx->nthread = 1;
     opts->nthreadtb = 1;
     ctx->nthreadpair = 1;
-    outnumber = 0;
-    scoreout = 0;
-    spscoreout = 0;
+    ctx->outnumber = 0;
+    ctx->scoreout = 0;
+    ctx->spscoreout = 0;
     ctx->rnaprediction = 'm';
     ctx->rnakozo = 0;
     ctx->nevermemsave = 0;
@@ -97,10 +97,10 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
     ctx->TMorJTT = JTT;
     ctx->consweight_multi = 1.0;
     ctx->consweight_rna = 0.0;
-    legacygapcost = 0;
-    specificityconsideration = 0.0;
+    ctx->legacygapcost = 0;
+    ctx->specificityconsideration = 0.0;
     specifictarget = 0;
-    nwildcard = 0;
+    ctx->nwildcard = 0;
     nadd = 0;
 
     if (pac) {
@@ -222,7 +222,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
                     ctx->nthread = 0;
                     goto nextoption;
                 case 's':
-                    specificityconsideration = (double)myatof(*++argv);
+                    ctx->specificityconsideration = (double)myatof(*++argv);
                     //					fprintf( stderr, "specificityconsideration = %f\n", specificityconsideration );
                     --argc;
                     goto nextoption;
@@ -255,7 +255,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
                     ctx->dorp = 'p';
                     break;
                 case 'L':
-                    legacygapcost = 1;
+                    ctx->legacygapcost = 1;
                     break;
 #if 1
                 case 'O':
@@ -272,7 +272,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
 					break;
 #else
                 case 'S':
-                    spscoreout = 1;  // 2014/Dec/30, sp score
+                    ctx->spscoreout = 1;  // 2014/Dec/30, sp score
                     break;
 #endif
                 case 'H':
@@ -307,7 +307,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
                     ctx->treemethod = 'q';
                     break;
                 case 'n':
-                    outnumber = 1;
+                    ctx->outnumber = 1;
                     break;
 #if 0
 				case 'a':
@@ -375,7 +375,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
                     --argc;
                     goto nextoption;
                 case 'W':
-                    minimumweight = atof(*++argv);
+                    ctx->minimumweight = atof(*++argv);
                     //					fprintf( stderr, "minimumweight = %f\n", minimumweight );
                     --argc;
                     goto nextoption;
@@ -395,7 +395,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
                     specifictarget = 1;
                     break;
                 case ':':
-                    nwildcard = 1;
+                    ctx->nwildcard = 1;
                     break;
                 case '+':
                     opts->outputhat23 = myatoi(*++argv);
@@ -547,7 +547,7 @@ treebase(Context* ctx, TbfastOpts* opts, int* nlen, char** aseq, int nadd, char*
     gaplen = AllocateIntVec(*alloclen + 10);
     gapmap = AllocateIntVec(*alloclen + 10);
     alreadyaligned = AllocateIntVec(ctx->njob);
-    dynamicmtx = AllocateDoubleMtx(nalphabets, nalphabets);
+    dynamicmtx = AllocateDoubleMtx(ctx->nalphabets, ctx->nalphabets);
     localmem = calloc(sizeof(int*), 2);
     cpmxhist = (double***)calloc(ctx->njob - 1, sizeof(double**));
     for (i = 0; i < ctx->njob - 1; i++)
@@ -594,11 +594,11 @@ treebase(Context* ctx, TbfastOpts* opts, int* nlen, char** aseq, int nadd, char*
 
     if (ctx->constraint && compacttree != 3) {
         if (specifictarget)
-            calcimportance_target(ctx->njob, ntarget, effarr, aseq, localhomtable, targetmap, targetmapr, *alloclen);
+            calcimportance_target(ctx, ctx->njob, ntarget, effarr, aseq, localhomtable, targetmap, targetmapr, *alloclen);
         else
-            calcimportance_half(ctx->njob, effarr, aseq, localhomtable, *alloclen);
+            calcimportance_half(ctx, ctx->njob, effarr, aseq, localhomtable, *alloclen);
     } else if (ctx->constraint && nseed) {
-        dontcalcimportance_half(nseed, aseq, localhomtable);  //CHUUI
+        dontcalcimportance_half(ctx, nseed, aseq, localhomtable);
     }
 
     tscore = 0.0;
@@ -677,14 +677,14 @@ treebase(Context* ctx, TbfastOpts* opts, int* nlen, char** aseq, int nadd, char*
             clus1 = fastconjuction_noname_kozo(localmem[0], aseq, mseq1, effarr1, effarr, effarr1_kozo, effarr_kozo, indication1);
             clus2 = fastconjuction_noname_kozo(localmem[1], aseq, mseq2, effarr2, effarr, effarr2_kozo, effarr_kozo, indication2);
         } else {
-            clus1 = fastconjuction_noname(localmem[0], aseq, mseq1, effarr1, effarr, indication1, minimumweight, &orieff1);  // orieff tsukau!
-            clus2 = fastconjuction_noname(localmem[1], aseq, mseq2, effarr2, effarr, indication2, minimumweight, &orieff2);  // orieff tsukau!
+            clus1 = fastconjuction_noname(localmem[0], aseq, mseq1, effarr1, effarr, indication1, ctx->minimumweight, &orieff1);  // orieff tsukau!
+            clus2 = fastconjuction_noname(localmem[1], aseq, mseq2, effarr2, effarr, indication2, ctx->minimumweight, &orieff2);  // orieff tsukau!
         }
 
         if (mergeoralign[l] == '1' || mergeoralign[l] == '2') {
-            newgapstr = "=";
+            ctx->newgapstr = "=";
         } else
-            newgapstr = "-";
+            ctx->newgapstr = "-";
 
         len1nocommongap = len1;
         if (mergeoralign[l] == '1')  // nai
@@ -999,6 +999,13 @@ tbfast_main(int argc, char* argv[]) {
     ctx->nthread = 1;
     ctx->nthreadpair = 1;
     ctx->parallelizationstrategy = BAATARI1;
+    ctx->minimumweight = 0.0005;
+    ctx->newgapstr = "-";
+    ctx->nalphabets = 26;
+    ctx->nscoredalphabets = 20;
+    ctx->specificityconsideration = 0.0;
+    ctx->ndistclass = 10;
+    ctx->maxdistclass = -1;
 
     TbfastOpts opts_ = {};
     TbfastOpts* opts = &opts_;
@@ -1156,9 +1163,9 @@ tbfast_main(int argc, char* argv[]) {
     fclose(infp);
 
     if (opts->treein) {
-        loadtree(ctx->njob, topol, len, name, dep, opts->treeout);
+        loadtree(ctx, ctx->njob, topol, len, name, dep, opts->treeout);
         fprintf(stderr, "\ndone.\n\n");
-        if (opts->callpairlocalalign && specificityconsideration > 0.0) {
+        if (opts->callpairlocalalign && ctx->specificityconsideration > 0.0) {
             int* mem0 = calloc(sizeof(int), ctx->njob);
             int* mem1 = calloc(sizeof(int), ctx->njob);
             expdist = AllocateDoubleMtx(ctx->njob, ctx->njob);
@@ -2011,9 +2018,9 @@ tbfast_main(int argc, char* argv[]) {
         if (opts->mapout) {
             dlf = fopen("_deletemap", "w");
             if (opts->mapout == 1)
-                reconstructdeletemap(nadd, addbk, deletelist, bseq + ctx->njob - nadd, dlf, name + ctx->njob - nadd);
+                reconstructdeletemap(ctx, nadd, addbk, deletelist, bseq + ctx->njob - nadd, dlf, name + ctx->njob - nadd);
             else
-                reconstructdeletemap_compact(nadd, addbk, deletelist, seq + ctx->njob - nadd, dlf, name + ctx->njob - nadd);
+                reconstructdeletemap_compact(ctx, nadd, addbk, deletelist, seq + ctx->njob - nadd, dlf, name + ctx->njob - nadd);
             FreeCharMtx(addbk);
             addbk = NULL;
             fclose(dlf);
@@ -2025,7 +2032,7 @@ tbfast_main(int argc, char* argv[]) {
         deletelist = NULL;
     }
 
-    if (scoreout) {
+    if (ctx->scoreout) {
         unweightedspscore = plainscore(ctx, ctx->njob, bseq);
         fprintf(stderr, "\nSCORE %s = %.0f, ", "(treebase)", unweightedspscore);
         fprintf(stderr, "SCORE / residue = %f", unweightedspscore / (ctx->njob * strlen(bseq[0])));
@@ -2076,7 +2083,7 @@ tbfast_main(int argc, char* argv[]) {
         free(uselh);
     uselh = NULL;
 
-    if (spscoreout)
+    if (ctx->spscoreout)
         reporterr("Unweighted sum-of-pairs score = %10.5f\n", sumofpairsscore(ctx, ctx->njob, bseq));
     ctx->nthread = MAX(opts->nthreadtb, ctx->nthreadreadlh);  // toriaezu
     if (opts->ndeleted > 0) {

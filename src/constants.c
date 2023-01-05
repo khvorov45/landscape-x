@@ -1184,20 +1184,20 @@ overridematrix(double** matrix) {
 }
 
 int
-extendedmtx(double** matrix, double* freq, unsigned char* amino, char* amino_grp) {
+extendedmtx(Context* ctx, double** matrix, double* freq, unsigned char* amino, char* amino_grp) {
     int i;
     int j;
     int userdefined;
 
-    for (i = 0; i < nalphabets; i++) {
+    for (i = 0; i < ctx->nalphabets; i++) {
         amino[i] = (unsigned char)i;
     }
-    for (i = 0; i < nalphabets; i++)
+    for (i = 0; i < ctx->nalphabets; i++)
         amino_grp[(int)amino[i]] = i % 6;
-    for (i = 0; i < nalphabets; i++)
-        freq[i] = 1.0 / nalphabets;
+    for (i = 0; i < ctx->nalphabets; i++)
+        freq[i] = 1.0 / ctx->nalphabets;
 
-    for (i = 0; i < nalphabets; i++) {
+    for (i = 0; i < ctx->nalphabets; i++) {
         for (j = 0; j <= i; j++) {
             matrix[i][j] = matrix[j][i] = (double)-1.0;
         }
@@ -1349,25 +1349,25 @@ calcfreq(Context* ctx, int nseq, char** seq, double* datafreq) {
     int    i, j, l;
     int    aan;
     double total;
-    for (i = 0; i < nscoredalphabets; i++)
+    for (i = 0; i < ctx->nscoredalphabets; i++)
         datafreq[i] = 0.0;
     total = 0.0;
     for (i = 0; i < nseq; i++) {
         l = strlen(seq[i]);
         for (j = 0; j < l; j++) {
             aan = ctx->amino_n[(int)seq[i][j]];
-            if (aan >= 0 && aan < nscoredalphabets && seq[i][j] != '-') {
+            if (aan >= 0 && aan < ctx->nscoredalphabets && seq[i][j] != '-') {
                 datafreq[aan] += 1.0;
                 total += 1.0;
             }
         }
     }
     total = 0.0;
-    for (i = 0; i < nscoredalphabets; i++)
+    for (i = 0; i < ctx->nscoredalphabets; i++)
         total += datafreq[i];
-    for (i = 0; i < nscoredalphabets; i++)
+    for (i = 0; i < ctx->nscoredalphabets; i++)
         datafreq[i] /= (double)total;
-    for (i = 0; i < nscoredalphabets; i++)
+    for (i = 0; i < ctx->nscoredalphabets; i++)
         if (datafreq[i] < 0.0001)
             datafreq[i] = 0.0001;
 
@@ -1376,20 +1376,20 @@ calcfreq(Context* ctx, int nseq, char** seq, double* datafreq) {
     //		reporterr(       "%f\n", datafreq[i] );
 
     total = 0.0;
-    for (i = 0; i < nscoredalphabets; i++)
+    for (i = 0; i < ctx->nscoredalphabets; i++)
         total += datafreq[i];
     //	reporterr(       "total = %f\n", total );
-    for (i = 0; i < nscoredalphabets; i++)
+    for (i = 0; i < ctx->nscoredalphabets; i++)
         datafreq[i] /= (double)total;
 }
 
-void
-calcfreq_from_scoremtx(double** n_distmp, double* datafreq) {
+static void
+calcfreq_from_scoremtx(Context* ctx, double** n_distmp, double* datafreq) {
     int i, j;
     int nused = 0;
-    for (i = 0; i < nalphabets; i++)
+    for (i = 0; i < ctx->nalphabets; i++)
         datafreq[i] = 0.0;
-    for (i = 0; i < nalphabets; i++)
+    for (i = 0; i < ctx->nalphabets; i++)
         for (j = 0; j < i; j++) {
             if (n_distmp[i][j] != -1) {
                 if (datafreq[i] == 0.0)
@@ -1399,7 +1399,7 @@ calcfreq_from_scoremtx(double** n_distmp, double* datafreq) {
                 datafreq[i] = datafreq[j] = 1.0;
             }
         }
-    for (i = 0; i < nalphabets; i++)
+    for (i = 0; i < ctx->nalphabets; i++)
         datafreq[i] /= (double)nused;
     reporterr("nused=\n", nused);
     //	for( i=0; i<nalphabets; i++ ) reporterr( "%f\n", datafreq[i] );
@@ -1413,12 +1413,12 @@ checkscoremtx(Context* ctx, double** n_distmp, int nseq, char** seq) {
         l = strlen(seq[i]);
         for (j = 0; j < l; j++) {
             aan = ctx->amino_n[(unsigned char)seq[i][j]];
-            for (k = 0; k < nalphabets; k++) {
+            for (k = 0; k < ctx->nalphabets; k++) {
                 //				if( n_distmp[k][aan] != -1.0 && k != aan ) break;
                 if (n_distmp[k][aan] != -1.0)
                     break;
             }
-            if (k == nalphabets)
+            if (k == ctx->nalphabets)
                 return aan;
         }
     }
@@ -1430,23 +1430,23 @@ calcfreq_extended(Context* ctx, int nseq, char** seq, double* datafreq) {
     int    i, j, l;
     int    aan;
     double total;
-    for (i = 0; i < nscoredalphabets; i++)
+    for (i = 0; i < ctx->nscoredalphabets; i++)
         datafreq[i] = 0.0;
     total = 0.0;
     for (i = 0; i < nseq; i++) {
         l = strlen(seq[i]);
         for (j = 0; j < l; j++) {
             aan = ctx->amino_n[(unsigned char)seq[i][j]];
-            if (aan >= 0 && aan < nscoredalphabets && seq[i][j] != '-') {
+            if (aan >= 0 && aan < ctx->nscoredalphabets && seq[i][j] != '-') {
                 datafreq[aan] += 1.0;
                 total += 1.0;
             }
         }
     }
     total = 0.0;
-    for (i = 0; i < nscoredalphabets; i++)
+    for (i = 0; i < ctx->nscoredalphabets; i++)
         total += datafreq[i];
-    for (i = 0; i < nscoredalphabets; i++)
+    for (i = 0; i < ctx->nscoredalphabets; i++)
         datafreq[i] /= (double)total;
         //	for( i=0; i<nscoredalphabets; i++ ) if( datafreq[i] < 0.0001 ) datafreq[i] = 0.0001;
 
@@ -1457,10 +1457,10 @@ calcfreq_extended(Context* ctx, int nseq, char** seq, double* datafreq) {
 #endif
 
     total = 0.0;
-    for (i = 0; i < nscoredalphabets; i++)
+    for (i = 0; i < ctx->nscoredalphabets; i++)
         total += datafreq[i];
     //	reporterr(       "total = %f\n", total );
-    for (i = 0; i < nscoredalphabets; i++)
+    for (i = 0; i < ctx->nscoredalphabets; i++)
         datafreq[i] /= (double)total;
 }
 
@@ -1526,12 +1526,12 @@ constants(Context* ctx, int nseq, char** seq) {
         double** pam1 = AllocateDoubleMtx(4, 4);
         double*  freq = AllocateDoubleVec(4);
 
-        nalphabets = 26;
-        nscoredalphabets = 10;
+        ctx->nalphabets = 26;
+        ctx->nscoredalphabets = 10;
         charsize = 0x80;
 
-        ctx->n_dis = AllocateIntMtx(nalphabets, nalphabets);
-        ctx->n_disLN = AllocateDoubleMtx(nalphabets, nalphabets);
+        ctx->n_dis = AllocateIntMtx(ctx->nalphabets, ctx->nalphabets);
+        ctx->n_disLN = AllocateDoubleMtx(ctx->nalphabets, ctx->nalphabets);
 
         ctx->scoremtx = -1;
         if (ctx->RNAppenalty == NOTSPECIFIED)
@@ -1772,7 +1772,7 @@ constants(Context* ctx, int nseq, char** seq) {
                 ctx->n_dis[i][j] = shishagonyuu(pamx[i][j]);
 
         ambiguousscore(ctx->amino_n, ctx->n_dis);
-        if (nwildcard)
+        if (ctx->nwildcard)
             nscore(ctx->amino_n, ctx->n_dis);
 
         if (ctx->disp) {
@@ -1916,17 +1916,17 @@ constants(Context* ctx, int nseq, char** seq) {
         double** n_distmp;
         int      userdefined;
 
-        nalphabets = 0x100;
-        nscoredalphabets = 0x100;
+        ctx->nalphabets = 0x100;
+        ctx->nscoredalphabets = 0x100;
         charsize = 0x100;
 
-        reporterr("nalphabets = %d\n", nalphabets);
+        reporterr("nalphabets = %d\n", ctx->nalphabets);
 
-        ctx->n_dis = AllocateIntMtx(nalphabets, nalphabets);
-        ctx->n_disLN = AllocateDoubleMtx(nalphabets, nalphabets);
-        n_distmp = AllocateDoubleMtx(nalphabets, nalphabets);
-        datafreq = AllocateDoubleVec(nalphabets);
-        freq = AllocateDoubleVec(nalphabets);
+        ctx->n_dis = AllocateIntMtx(ctx->nalphabets, ctx->nalphabets);
+        ctx->n_disLN = AllocateDoubleMtx(ctx->nalphabets, ctx->nalphabets);
+        n_distmp = AllocateDoubleMtx(ctx->nalphabets, ctx->nalphabets);
+        datafreq = AllocateDoubleVec(ctx->nalphabets);
+        freq = AllocateDoubleVec(ctx->nalphabets);
 
         if (ctx->ppenalty == NOTSPECIFIED)
             ctx->ppenalty = DEFAULTGOP_B;
@@ -1956,7 +1956,7 @@ constants(Context* ctx, int nseq, char** seq) {
         ctx->penaltyLN = (int)(600.0 / 1000.0 * -2000 + 0.5);
         ctx->penalty_exLN = (int)(600.0 / 1000.0 * -100 + 0.5);
 
-        userdefined = extendedmtx(n_distmp, freq, ctx->amino, ctx->amino_grp);
+        userdefined = extendedmtx(ctx, n_distmp, freq, ctx->amino, ctx->amino_grp);
 
         if (ctx->trywarp)
             sprintf(shiftmodel, "%4.2f", -(double)ctx->penalty_shift / 600);
@@ -1967,7 +1967,7 @@ constants(Context* ctx, int nseq, char** seq) {
 
         for (i = 0; i < 0x100; i++)
             ctx->amino_n[i] = -1;
-        for (i = 0; i < nalphabets; i++) {
+        for (i = 0; i < ctx->nalphabets; i++) {
             ctx->amino_n[(unsigned char)ctx->amino[i]] = i;
         }
 
@@ -1975,7 +1975,7 @@ constants(Context* ctx, int nseq, char** seq) {
             calcfreq_extended(ctx, nseq, seq, datafreq);
             freq1 = datafreq;
         } else {
-            calcfreq_from_scoremtx(n_distmp, datafreq);
+            calcfreq_from_scoremtx(ctx, n_distmp, datafreq);
             freq1 = datafreq;
         }
 #if 1
@@ -2004,16 +2004,16 @@ constants(Context* ctx, int nseq, char** seq) {
                 fprintf(stdout, "freq[%c] = %f, datafreq[%c] = %f, freq1[] = %f\n", amino[i], freq[i], amino[i], datafreq[i], freq1[i]);
 #endif
             average = 0.0;
-            for (i = 0; i < nalphabets; i++)
-                for (j = 0; j < nalphabets; j++)
+            for (i = 0; i < ctx->nalphabets; i++)
+                for (j = 0; j < ctx->nalphabets; j++)
                     average += n_distmp[i][j] * freq1[i] * freq1[j];
         }
 #if 0
 		if( disp ) fprintf( stdout, "####### average2  = %f\n", average );
 #endif
 
-        for (i = 0; i < nalphabets; i++)
-            for (j = 0; j < nalphabets; j++) {
+        for (i = 0; i < ctx->nalphabets; i++)
+            for (j = 0; j < ctx->nalphabets; j++) {
                 if (n_distmp[i][j] == -1.0)
                     n_distmp[i][j] = -average;
                 else
@@ -2034,7 +2034,7 @@ constants(Context* ctx, int nseq, char** seq) {
 #endif
 
         average = 0.0;
-        for (i = 0; i < nalphabets; i++)
+        for (i = 0; i < ctx->nalphabets; i++)
             average += n_distmp[i][i] * freq1[i];
 #if 0
 		if( disp ) fprintf( stdout, "####### average1  = %f\n", average );
@@ -2045,8 +2045,8 @@ constants(Context* ctx, int nseq, char** seq) {
             exit(1);
         }
 
-        for (i = 0; i < nalphabets; i++)
-            for (j = 0; j < nalphabets; j++)
+        for (i = 0; i < ctx->nalphabets; i++)
+            for (j = 0; j < ctx->nalphabets; j++)
                 n_distmp[i][j] *= 600.0 / average;
 #if TEST
         fprintf(stderr, "after average division : \n");
@@ -2059,8 +2059,8 @@ constants(Context* ctx, int nseq, char** seq) {
         }
 #endif
 
-        for (i = 0; i < nalphabets; i++)
-            for (j = 0; j < nalphabets; j++)
+        for (i = 0; i < ctx->nalphabets; i++)
+            for (j = 0; j < ctx->nalphabets; j++)
                 n_distmp[i][j] -= ctx->offset;
 #if TEST
         fprintf(stderr, "after offset subtruction (offset = %d): \n", offset);
@@ -2077,33 +2077,33 @@ constants(Context* ctx, int nseq, char** seq) {
 			penalty -= offset;
 #endif
 
-        for (i = 0; i < nalphabets; i++)
-            for (j = 0; j < nalphabets; j++)
+        for (i = 0; i < ctx->nalphabets; i++)
+            for (j = 0; j < ctx->nalphabets; j++)
                 n_distmp[i][j] = shishagonyuu(n_distmp[i][j]);
 
         if (ctx->disp) {
             fprintf(stdout, "freq = \n");
-            for (i = 0; i < nalphabets; i++)
+            for (i = 0; i < ctx->nalphabets; i++)
                 fprintf(stdout, "%c %f\n", ctx->amino[i], freq1[i]);
             fprintf(stdout, " scoring matrix  \n");
-            for (i = 0; i < nalphabets; i++) {
+            for (i = 0; i < ctx->nalphabets; i++) {
                 fprintf(stdout, "%c    ", ctx->amino[i]);
-                for (j = 0; j < nalphabets; j++)
+                for (j = 0; j < ctx->nalphabets; j++)
                     fprintf(stdout, "%5.0f", n_distmp[i][j]);
                 fprintf(stdout, "\n");
             }
             fprintf(stdout, "     ");
-            for (i = 0; i < nalphabets; i++)
+            for (i = 0; i < ctx->nalphabets; i++)
                 fprintf(stdout, "    %c", ctx->amino[i]);
 
             average = 0.0;
-            for (i = 0; i < nalphabets; i++)
-                for (j = 0; j < nalphabets; j++)
+            for (i = 0; i < ctx->nalphabets; i++)
+                for (j = 0; j < ctx->nalphabets; j++)
                     average += n_distmp[i][j] * freq1[i] * freq1[j];
             fprintf(stdout, "average = %f\n", average);
 
             average = 0.0;
-            for (i = 0; i < nalphabets; i++)
+            for (i = 0; i < ctx->nalphabets; i++)
                 average += n_distmp[i][i] * freq1[i];
             fprintf(stdout, "itch average = %f\n", average);
             reporterr("parameters: %d, %d, %d\n", ctx->penalty, ctx->penalty_ex, ctx->offset);
@@ -2111,14 +2111,14 @@ constants(Context* ctx, int nseq, char** seq) {
             exit(1);
         }
 
-        for (i = 0; i < nalphabets; i++)
-            for (j = 0; j < nalphabets; j++)
+        for (i = 0; i < ctx->nalphabets; i++)
+            for (j = 0; j < ctx->nalphabets; j++)
                 ctx->n_dis[i][j] = 0;
-        for (i = 0; i < nalphabets; i++)
-            for (j = 0; j < nalphabets; j++)
+        for (i = 0; i < ctx->nalphabets; i++)
+            for (j = 0; j < ctx->nalphabets; j++)
                 ctx->n_dis[i][j] = (int)n_distmp[i][j];
-        for (i = 0; i < nalphabets; i++)
-            for (j = 0; j < nalphabets; j++)
+        for (i = 0; i < ctx->nalphabets; i++)
+            for (j = 0; j < ctx->nalphabets; j++)
                 ctx->n_dis[i][ctx->amino_n['-']] = ctx->n_dis[ctx->amino_n['-']][i] = 0;
 
         FreeDoubleMtx(n_distmp);
@@ -2138,12 +2138,12 @@ constants(Context* ctx, int nseq, char** seq) {
             exit(1);
         }
 
-        nalphabets = 26;
-        nscoredalphabets = 20;
+        ctx->nalphabets = 26;
+        ctx->nscoredalphabets = 20;
         charsize = 0x80;
 
-        ctx->n_dis = AllocateIntMtx(nalphabets, nalphabets);
-        ctx->n_disLN = AllocateDoubleMtx(nalphabets, nalphabets);
+        ctx->n_dis = AllocateIntMtx(ctx->nalphabets, ctx->nalphabets);
+        ctx->n_disLN = AllocateDoubleMtx(ctx->nalphabets, ctx->nalphabets);
         n_distmp = AllocateDoubleMtx(20, 20);
         datafreq = AllocateDoubleVec(20);
         freq = AllocateDoubleVec(20);
@@ -2348,12 +2348,12 @@ constants(Context* ctx, int nseq, char** seq) {
         double   delta;
         int      makeaverage0;
 
-        nalphabets = 26;
-        nscoredalphabets = 20;
+        ctx->nalphabets = 26;
+        ctx->nscoredalphabets = 20;
         charsize = 0x80;
 
-        ctx->n_dis = AllocateIntMtx(nalphabets, nalphabets);
-        ctx->n_disLN = AllocateDoubleMtx(nalphabets, nalphabets);
+        ctx->n_dis = AllocateIntMtx(ctx->nalphabets, ctx->nalphabets);
+        ctx->n_disLN = AllocateDoubleMtx(ctx->nalphabets, ctx->nalphabets);
         rsr = AllocateDoubleMtx(20, 20);
         pam1 = AllocateDoubleMtx(20, 20);
         pamx = AllocateDoubleMtx(20, 20);
@@ -2657,22 +2657,22 @@ constants(Context* ctx, int nseq, char** seq) {
 
     for (i = 0; i < charsize; i++)
         ctx->amino_n[i] = -1;
-    for (i = 0; i < nalphabets; i++)
+    for (i = 0; i < ctx->nalphabets; i++)
         ctx->amino_n[(int)ctx->amino[i]] = i;
     for (i = 0; i < charsize; i++)
         for (j = 0; j < charsize; j++)
             ctx->amino_dis[i][j] = 0;
-    for (i = 0; i < nalphabets; i++)
-        for (j = 0; j < nalphabets; j++)
+    for (i = 0; i < ctx->nalphabets; i++)
+        for (j = 0; j < ctx->nalphabets; j++)
             ctx->n_disLN[i][j] = 0;
     for (i = 0; i < charsize; i++)
         for (j = 0; j < charsize; j++)
             ctx->amino_dis_consweight_multi[i][j] = 0.0;
 
-    ctx->n_dis_consweight_multi = AllocateDoubleMtx(nalphabets, nalphabets);
-    ctx->n_disFFT = AllocateIntMtx(nalphabets, nalphabets);
-    for (i = 0; i < nalphabets; i++)
-        for (j = 0; j < nalphabets; j++) {
+    ctx->n_dis_consweight_multi = AllocateDoubleMtx(ctx->nalphabets, ctx->nalphabets);
+    ctx->n_disFFT = AllocateIntMtx(ctx->nalphabets, ctx->nalphabets);
+    for (i = 0; i < ctx->nalphabets; i++)
+        for (j = 0; j < ctx->nalphabets; j++) {
             ctx->amino_dis[(int)ctx->amino[i]][(int)ctx->amino[j]] = ctx->n_dis[i][j];
             ctx->n_dis_consweight_multi[i][j] = (double)ctx->n_dis[i][j] * ctx->consweight_multi;
             ctx->amino_dis_consweight_multi[(int)ctx->amino[i]][(int)ctx->amino[j]] = (double)ctx->n_dis[i][j] * ctx->consweight_multi;

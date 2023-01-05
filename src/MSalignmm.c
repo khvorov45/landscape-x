@@ -13,9 +13,8 @@
 
 static int reccycle = 0;
 
-// [seq][alphabet]
 static void
-match_calc_add(double** scoringmtx, double* match, double** cpmx1, double** cpmx2, int i1, int lgth2, double** doublework, int** intwork, int initialize) {
+match_calc_add(Context* ctx, double** scoringmtx, double* match, double** cpmx1, double** cpmx2, int i1, int lgth2, double** doublework, int** intwork, int initialize) {
     int j, k, l;
     //	double scarr[26];
     double** cpmxpd = doublework;
@@ -26,11 +25,11 @@ match_calc_add(double** scoringmtx, double* match, double** cpmx1, double** cpmx
     int**    cpmxpdnpt;
     int      cpkd;
     double*  scarr;
-    scarr = calloc(nalphabets, sizeof(double));
+    scarr = calloc(ctx->nalphabets, sizeof(double));
     if (initialize) {
         for (j = 0; j < lgth2; j++) {
             count = 0;
-            for (l = 0; l < nalphabets; l++) {
+            for (l = 0; l < ctx->nalphabets; l++) {
                 if (cpmx2[j][l]) {
                     cpmxpd[j][count] = cpmx2[j][l];
                     cpmxpdn[j][count] = l;
@@ -41,9 +40,9 @@ match_calc_add(double** scoringmtx, double* match, double** cpmx1, double** cpmx
         }
     }
 
-    for (l = 0; l < nalphabets; l++) {
+    for (l = 0; l < ctx->nalphabets; l++) {
         scarr[l] = 0.0;
-        for (k = 0; k < nalphabets; k++) {
+        for (k = 0; k < ctx->nalphabets; k++) {
             //			scarr[l] += n_dis[k][l] * cpmx1[i1][k];
             scarr[l] += scoringmtx[k][l] * cpmx1[i1][k];
         }
@@ -168,9 +167,8 @@ static void match_calc( double **n_dynamicmtx, double *match, double **cpmx1, do
 }
 #endif
 
-// [alphabet][seq]
 static void
-match_calc_alphabet_seq(double** n_dynamicmtx, double* match, double** cpmx1, double** cpmx2, int i1, int start2, int lgth2, double** doublework, int** intwork, int initialize) {
+match_calc_alphabet_seq(Context* ctx, double** n_dynamicmtx, double* match, double** cpmx1, double** cpmx2, int i1, int start2, int lgth2, double** doublework, int** intwork, int initialize) {
 #if FASTMATCHCALC
     //	fprintf( stderr, "\nmatch_calc... %d", i1 );
     int j, l, p;
@@ -180,14 +178,14 @@ match_calc_alphabet_seq(double** n_dynamicmtx, double* match, double** cpmx1, do
     double * matchpt, *cpmxpdpt, **cpmxpdptpt;
     int *    cpmxpdnpt, **cpmxpdnptpt;
     double*  scarr;
-    scarr = calloc(nalphabets, sizeof(double));
+    scarr = calloc(ctx->nalphabets, sizeof(double));
 
     //	reporterr( "lgth2=%d.  j=%d-%d, p=%d-%d\n", lgth2, 0, lgth2, start2, start2+lgth2 );
     if (initialize) {
         int count = 0;
         for (j = 0, p = start2; j < lgth2; j++, p++) {
             count = 0;
-            for (l = 0; l < nalphabets; l++) {
+            for (l = 0; l < ctx->nalphabets; l++) {
                 if (cpmx2[l][p]) {
                     cpmxpd[j][count] = cpmx2[l][p];
                     cpmxpdn[j][count] = l;
@@ -199,9 +197,9 @@ match_calc_alphabet_seq(double** n_dynamicmtx, double* match, double** cpmx1, do
     }
 
     {
-        for (l = 0; l < nalphabets; l++) {
+        for (l = 0; l < ctx->nalphabets; l++) {
             scarr[l] = 0.0;
-            for (j = 0; j < nalphabets; j++)
+            for (j = 0; j < ctx->nalphabets; j++)
                 //				scarr[l] += n_dis[j][l] * cpmx1[j][i1];
                 //				scarr[l] += n_dis_consweight_multi[j][l] * cpmx1[j][i1];
                 scarr[l] += n_dynamicmtx[j][l] * cpmx1[j][i1];
@@ -259,14 +257,11 @@ match_calc_alphabet_seq(double** n_dynamicmtx, double* match, double** cpmx1, do
 }
 
 static void
-createcpmxresult(double** cpmxresult, double eff1, double eff2, double** cpmx1, double** cpmx2, char* gaptable1, char* gaptable2) {
+createcpmxresult(Context* ctx, double** cpmxresult, double eff1, double eff2, double** cpmx1, double** cpmx2, char* gaptable1, char* gaptable2) {
     int i, j, p;
     int alen = strlen(gaptable1);
 
-    //	reporterr( "eff1 = %f, eff2=%f\n", eff1, eff2 );
-
-#if 1  // sukoshi osoi
-    for (i = 0; i < nalphabets; i++) {
+    for (i = 0; i < ctx->nalphabets; i++) {
         for (j = 0; j < alen; j++)
             cpmxresult[i][j] = 0.0;
         for (j = 0, p = 0; j < alen; j++) {
@@ -283,7 +278,6 @@ createcpmxresult(double** cpmxresult, double eff1, double eff2, double** cpmx1, 
                 cpmxresult[i][j] += cpmx2[i][p++] * eff2;
         }
     }
-#endif
 }
 
 static void
@@ -414,7 +408,7 @@ createfgresult(double* gapfresult, double eff1, double eff2, double* ori1, doubl
 }
 
 static double
-Atracking(double* lasthorizontalw, double* lastverticalw, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int icyc, int jcyc, int ist, int ien, int jst, int jen, int fulllen1, int fulllen2, int tailgp, char** gt1, char** gt2) {
+Atracking(Context* ctx, double* lasthorizontalw, double* lastverticalw, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int icyc, int jcyc, int ist, int ien, int jst, int jen, int fulllen1, int fulllen2, int tailgp, char** gt1, char** gt2) {
     int    i, j, l, iin, jin, ifi, jfi, lgth1, lgth2, k, klim;
     char * gaptable1, *gt1bk;
     char * gaptable2, *gt2bk;
@@ -442,8 +436,6 @@ Atracking(double* lasthorizontalw, double* lastverticalw, char** seq1, char** se
 		fprintf( stderr, "lastverticalw[%d] = %f\n", i, lastverticalw[i] );
 	}
 #endif
-
-    //	fprintf( stderr, "in Atracking, tailgp=%d, ien=%d, fulllen1=%d, jen=%d, fulllen2=%d\n", tailgp, ien, fulllen1, jen, fulllen2 );
 
     if (tailgp == 1)
         ;
@@ -547,7 +539,7 @@ Atracking(double* lasthorizontalw, double* lastverticalw, char** seq1, char** se
     //	klim = strlen( gaptable1 );
     if (strchr(gaptable1, '-'))
         for (i = 0; i < icyc; i++)
-            gapireru(mseq1[i], seq1[i] + ist, gaptable1);
+            gapireru(ctx, mseq1[i], seq1[i] + ist, gaptable1);
     else
         for (i = 0; i < icyc; i++) {
             strncpy(mseq1[i], seq1[i] + ist, klim);
@@ -556,7 +548,7 @@ Atracking(double* lasthorizontalw, double* lastverticalw, char** seq1, char** se
 
     if (strchr(gaptable2, '-'))
         for (j = 0; j < jcyc; j++)
-            gapireru(mseq2[j], seq2[j] + jst, gaptable2);
+            gapireru(ctx, mseq2[j], seq2[j] + jst, gaptable2);
     else
         for (j = 0; j < jcyc; j++) {
             strncpy(mseq2[j], seq2[j] + jst, klim);
@@ -571,15 +563,11 @@ Atracking(double* lasthorizontalw, double* lastverticalw, char** seq1, char** se
         *gt2 = gaptable2;
     }
 
-    //	fprintf( stderr, "in Atracking (owari), mseq1 = %s\n", mseq1[0] );
-    //	fprintf( stderr, "in Atracking (owari), mseq2 = %s\n", mseq2[0] );
     return (0.0);
 }
 
 static double
-MSalignmm_tanni(double** n_dynamicmtx, int icyc, int jcyc, char** seq1, char** seq2, double** cpmx1pt, double** cpmx2pt, int ist, int ien, int jst, int jen, int fulllen1, int fulllen2, char** mseq1, char** mseq2, char* mgt1, char* mgt2, double** gapinfo, int headgp, int tailgp, double headgapfreq1_g, double headgapfreq2_g)
-/* score no keisan no sai motokaraaru gap no atukai ni mondai ga aru */
-{
+MSalignmm_tanni(Context* ctx, double** n_dynamicmtx, int icyc, int jcyc, char** seq1, char** seq2, double** cpmx1pt, double** cpmx2pt, int ist, int ien, int jst, int jen, int fulllen1, int fulllen2, char** mseq1, char** mseq2, char* mgt1, char* mgt2, double** gapinfo, int headgp, int tailgp, double headgapfreq1_g, double headgapfreq2_g) {
     //	int k;
     register int i, j;
     int          ll1, ll2;
@@ -654,22 +642,8 @@ MSalignmm_tanni(double** n_dynamicmtx, int icyc, int jcyc, char** seq1, char** s
     fprintf(stderr, "ttt2 = %s\n", ttt2);
 #endif
 
-#if 0
-	fprintf( stderr, "in _tanni ist,ien = %d,%d, fulllen1=%d\n", ist, ien, fulllen1 );
-	fprintf( stderr, "in _tanni jst,jen = %d,%d, fulllen2=%d\n", jst, jen, fulllen2 );
-	fprintf( stderr, "in _tanni seq1[0] = %-*.*s\n", ien-ist+1, ien-ist+1, seq1[0]+ist );
-	fprintf( stderr, "in _tanni seq2[0] = %-*.*s\n", jen-jst+1, jen-jst+1, seq2[0]+jst );
-#endif
-
     ll1 = ((int)(lgth1)) + 100;
     ll2 = ((int)(lgth2)) + 100;
-
-    //	aseq1 = AllocateCharMtx( icyc, 0 );
-    //	aseq2 = AllocateCharMtx( jcyc, 0 );
-    //	aseq1bk = AllocateCharMtx( icyc, lgth1+lgth2+100 );
-    //	aseq2bk = AllocateCharMtx( jcyc, lgth1+lgth2+100 );
-    //	for( i=0; i<icyc; i++ ) aseq1[i] = aseq1bk[i];
-    //	for( i=0; i<jcyc; i++ ) aseq2[i] = aseq2bk[i];
 
     w1 = AllocateFloatVec(ll2 + 2);
     w2 = AllocateFloatVec(ll2 + 2);
@@ -681,8 +655,8 @@ MSalignmm_tanni(double** n_dynamicmtx, int icyc, int jcyc, char** seq1, char** s
     mp = AllocateIntVec(ll2 + 2);
 
 #if FASTMATCHCALC
-    doublework = AllocateFloatMtx(MAX(ll1, ll2) + 2, nalphabets + 1);
-    intwork = AllocateIntMtx(MAX(ll1, ll2) + 2, nalphabets + 1);
+    doublework = AllocateFloatMtx(MAX(ll1, ll2) + 2, ctx->nalphabets + 1);
+    intwork = AllocateIntMtx(MAX(ll1, ll2) + 2, ctx->nalphabets + 1);
 #else
     doublework = AllocateFloatMtx(nalphabets + 1, MAX(ll1, ll2) + 2);
     intwork = AllocateIntMtx(nalphabets + 1, MAX(ll1, ll2) + 2);
@@ -695,11 +669,8 @@ MSalignmm_tanni(double** n_dynamicmtx, int icyc, int jcyc, char** seq1, char** s
     currentw = w1;
     previousw = w2;
 
-    //	match_calc( n_dynamicmtx, initverticalw, cpmx2+jst, cpmx1+ist, 0, lgth1, doublework, intwork, 1 );
-    match_calc_alphabet_seq(n_dynamicmtx, initverticalw, cpmx2pt, cpmx1pt, jst, ist, lgth1, doublework, intwork, 1);
-
-    //	match_calc( n_dynamicmtx, currentw, cpmx1+ist, cpmx2+jst, 0, lgth2, doublework, intwork, 1 );
-    match_calc_alphabet_seq(n_dynamicmtx, currentw, cpmx1pt, cpmx2pt, ist, jst, lgth2, doublework, intwork, 1);
+    match_calc_alphabet_seq(ctx, n_dynamicmtx, initverticalw, cpmx2pt, cpmx1pt, jst, ist, lgth1, doublework, intwork, 1);
+    match_calc_alphabet_seq(ctx, n_dynamicmtx, currentw, cpmx1pt, cpmx2pt, ist, jst, lgth2, doublework, intwork, 1);
 
     if (headgp || ist != 0) {
         for (i = 1; i < (int)lgth1 + 1; i++) {
@@ -732,8 +703,7 @@ MSalignmm_tanni(double** n_dynamicmtx, int icyc, int jcyc, char** seq1, char** s
 
         previousw[0] = initverticalw[i - 1];
 
-        //		match_calc( n_dynamicmtx, currentw, cpmx1+ist, cpmx2+jst, i, lgth2, doublework, intwork, 0 );
-        match_calc_alphabet_seq(n_dynamicmtx, currentw, cpmx1pt, cpmx2pt, ist + i, jst, lgth2, doublework, intwork, 0);
+        match_calc_alphabet_seq(ctx, n_dynamicmtx, currentw, cpmx1pt, cpmx2pt, ist + i, jst, lgth2, doublework, intwork, 0);
         currentw[0] = initverticalw[i];
 
         mi = previousw[0] + ogcp2[1] * gapfreq1f[i - 1];
@@ -806,7 +776,7 @@ MSalignmm_tanni(double** n_dynamicmtx, int icyc, int jcyc, char** seq1, char** s
     gt1 = gt1bk = AllocateCharVec(ien - ist + jen - jst + 3);
     gt2 = gt2bk = AllocateCharVec(ien - ist + jen - jst + 3);
 
-    Atracking(currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, ist, ien, jst, jen, fulllen1, fulllen2, tailgp, &gt1, &gt2);
+    Atracking(ctx, currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, ist, ien, jst, jen, fulllen1, fulllen2, tailgp, &gt1, &gt2);
     strcpy(mgt1, gt1);
     strcpy(mgt2, gt2);
 
@@ -913,7 +883,7 @@ freearrays_rec2(char* gaps, char** aseq1, char** aseq2) {
 }
 
 static double
-MSalignmm_rec(double** n_dynamicmtx, int icyc, int jcyc, double* eff1, double* eff2, char** seq1, char** seq2, double** cpmx1pt, double** cpmx2pt, int ist, int ien, int jst, int jen, int alloclen, int fulllen1, int fulllen2, char** mseq1, char** mseq2, char* mgt1, char* mgt2, int depth, double** gapinfo, int headgp, int tailgp, double headgapfreq1_g, double headgapfreq2_g) {
+MSalignmm_rec(Context* ctx, double** n_dynamicmtx, int icyc, int jcyc, double* eff1, double* eff2, char** seq1, char** seq2, double** cpmx1pt, double** cpmx2pt, int ist, int ien, int jst, int jen, int alloclen, int fulllen1, int fulllen2, char** mseq1, char** mseq2, char* mgt1, char* mgt2, int depth, double** gapinfo, int headgp, int tailgp, double headgapfreq1_g, double headgapfreq2_g) {
     //	int k;
     int          alnlen;
     double       value = 0.0;
@@ -977,14 +947,6 @@ MSalignmm_rec(double** n_dynamicmtx, int icyc, int jcyc, double* eff1, double* e
     double  headgapfreq1;
     double  headgapfreq2;
 
-#if 0
-	int nglen1, nglen2;
-	nglen1 = seqlen( seq1[0] );
-	nglen2 = seqlen( seq2[0] );
-#endif
-
-    //	fprintf( stderr, "fulllen1 = %d, fulllen2 = %d, headgp = %d, tailgp = %d\n", fulllen1, fulllen2, headgp, tailgp );
-
     ogcp1 = gapinfo[0] + ist;
     fgcp1 = gapinfo[1] + ist;
     ogcp2 = gapinfo[2] + jst;
@@ -1007,12 +969,6 @@ MSalignmm_rec(double** n_dynamicmtx, int icyc, int jcyc, double* eff1, double* e
     lgth1 = ien - ist + 1;
     lgth2 = jen - jst + 1;
 
-    //	if( lgth1 < 5 )
-    //		fprintf( stderr, "\nWARNING: lgth1 = %d\n", lgth1 );
-    //	if( lgth2 < 5 )
-    //		fprintf( stderr, "\nWARNING: lgth2 = %d\n", lgth2 );
-    //
-
 #if STOREWM
     fprintf(stderr, "==== MSalign (depth=%d, reccycle=%d), ist=%d, ien=%d, jst=%d, jen=%d\n", depth, reccycle, ist, ien, jst, jen);
     strncpy(ttt1, seq1[0] + ist, lgth1);
@@ -1031,7 +987,7 @@ MSalignmm_rec(double** n_dynamicmtx, int icyc, int jcyc, double* eff1, double* e
             mseq1[i][lgth1] = 0;
         }
         for (j = 0; j < lgth1; j++)
-            mseq2[0][j] = *newgapstr;
+            mseq2[0][j] = *ctx->newgapstr;
         mseq2[0][lgth1] = 0;
         for (i = 1; i < jcyc; i++)
             strcpy(mseq2[i], mseq2[0]);
@@ -1067,16 +1023,9 @@ MSalignmm_rec(double** n_dynamicmtx, int icyc, int jcyc, double* eff1, double* e
     aseq2 = AllocateCharMtx(jcyc, lgth1 + lgth2 + 100);
 #endif
 
-    //	fprintf( stderr, "####(s) seq1[0] (%d) = \n%-*.*s\n (a%d-a%d)\n", depth, ien-ist+1, ien-ist+1, seq1[0]+ist, ist, ien );
-    //	fprintf( stderr, "####(s) seq2[0] (%d) = \n%-*.*s\n (b%d-b%d)\n", depth, jen-jst+1, jen-jst+1, seq2[0]+jst, jst, jen );
-
-    //  if( lgth1 < DPTANNI && lgth2 < DPTANNI ) // & dato lgth ==1 no kanousei ga arunode yokunai
-    //    if( lgth1 < DPTANNI ) // kore mo lgth2 ga mijikasugiru kanousei ari
     if (lgth1 < DPTANNI || lgth2 < DPTANNI)  // zettai ni anzen ka?
     {
-        //		fprintf( stderr, "==== Going to _tanni\n" );
-
-        value = MSalignmm_tanni(n_dynamicmtx, icyc, jcyc, seq1, seq2, cpmx1pt, cpmx2pt, ist, ien, jst, jen, fulllen1, fulllen2, aseq1, aseq2, agt1, agt2, gapinfo, headgp, tailgp, headgapfreq1_g, headgapfreq2_g);
+        value = MSalignmm_tanni(ctx, n_dynamicmtx, icyc, jcyc, seq1, seq2, cpmx1pt, cpmx2pt, ist, ien, jst, jen, fulllen1, fulllen2, aseq1, aseq2, agt1, agt2, gapinfo, headgp, tailgp, headgapfreq1_g, headgapfreq2_g);
 
 #if MEMSAVE
         free(aseq1);
@@ -1123,8 +1072,8 @@ MSalignmm_rec(double** n_dynamicmtx, int icyc, int jcyc, double* eff1, double* e
     gaps = AllocateCharVec(MAX(ll1, ll2) + 2);
 
 #if FASTMATCHCALC
-    doublework = AllocateFloatMtx(MAX(ll1, ll2) + 2, nalphabets);
-    intwork = AllocateIntMtx(MAX(ll1, ll2) + 2, nalphabets);
+    doublework = AllocateFloatMtx(MAX(ll1, ll2) + 2, ctx->nalphabets);
+    intwork = AllocateIntMtx(MAX(ll1, ll2) + 2, ctx->nalphabets);
 #else
     doublework = AllocateFloatMtx(nalphabets, MAX(ll1, ll2) + 2);
     intwork = AllocateIntMtx(nalphabets, MAX(ll1, ll2) + 2);
@@ -1151,11 +1100,8 @@ MSalignmm_rec(double** n_dynamicmtx, int icyc, int jcyc, double* eff1, double* e
     currentw = w1;
     previousw = w2;
 
-    //	match_calc( n_dynamicmtx, initverticalw, cpmx2+jst, cpmx1+ist, 0, lgth1, doublework, intwork, 1 );
-    match_calc_alphabet_seq(n_dynamicmtx, initverticalw, cpmx2pt, cpmx1pt, jst, ist, lgth1, doublework, intwork, 1);
-
-    //	match_calc( n_dynamicmtx, currentw, cpmx1+ist, cpmx2+jst, 0, lgth2, doublework, intwork, 1 );
-    match_calc_alphabet_seq(n_dynamicmtx, currentw, cpmx1pt, cpmx2pt, ist, jst, lgth2, doublework, intwork, 1);
+    match_calc_alphabet_seq(ctx, n_dynamicmtx, initverticalw, cpmx2pt, cpmx1pt, jst, ist, lgth1, doublework, intwork, 1);
+    match_calc_alphabet_seq(ctx, n_dynamicmtx, currentw, cpmx1pt, cpmx2pt, ist, jst, lgth2, doublework, intwork, 1);
 
     for (i = 1; i < (int)lgth1 + 1; i++) {
         //		initverticalw[i] += ( ogcp1[0] + fgcp1[i-1] ) ;
@@ -1231,8 +1177,7 @@ MSalignmm_rec(double** n_dynamicmtx, int icyc, int jcyc, double* eff1, double* e
 
         previousw[0] = initverticalw[i - 1];
 
-        //		match_calc( n_dynamicmtx, currentw, cpmx1+ist, cpmx2+jst, i, lgth2, doublework, intwork, 0 );
-        match_calc_alphabet_seq(n_dynamicmtx, currentw, cpmx1pt, cpmx2pt, ist + i, jst, lgth2, doublework, intwork, 0);
+        match_calc_alphabet_seq(ctx, n_dynamicmtx, currentw, cpmx1pt, cpmx2pt, ist + i, jst, lgth2, doublework, intwork, 0);
         currentw[0] = initverticalw[i];
 
         m[0] = ogcp1[i];
@@ -1364,13 +1309,8 @@ MSalignmm_rec(double** n_dynamicmtx, int icyc, int jcyc, double* eff1, double* e
 	fprintf( stderr, "\n" );
 #endif
 
-    // gyakudp
-
-    //	match_calc( n_dynamicmtx, initverticalw, cpmx2+jst, cpmx1+ist, lgth2-1, lgth1, doublework, intwork, 1 );
-    match_calc_alphabet_seq(n_dynamicmtx, initverticalw, cpmx2pt, cpmx1pt, jst + lgth2 - 1, ist, lgth1, doublework, intwork, 1);
-
-    //	match_calc( n_dynamicmtx, currentw, cpmx1+ist, cpmx2+jst, lgth1-1, lgth2, doublework, intwork, 1 );
-    match_calc_alphabet_seq(n_dynamicmtx, currentw, cpmx1pt, cpmx2pt, ist + lgth1 - 1, jst, lgth2, doublework, intwork, 1);
+    match_calc_alphabet_seq(ctx, n_dynamicmtx, initverticalw, cpmx2pt, cpmx1pt, jst + lgth2 - 1, ist, lgth1, doublework, intwork, 1);
+    match_calc_alphabet_seq(ctx, n_dynamicmtx, currentw, cpmx1pt, cpmx2pt, ist + lgth1 - 1, jst, lgth2, doublework, intwork, 1);
 
     for (i = 0; i < (int)lgth1 - 1; i++) {
         //		initverticalw[i] += ( fgcp1[lgth1-1] + ogcp1[i+1] );
@@ -1452,15 +1392,9 @@ MSalignmm_rec(double** n_dynamicmtx, int icyc, int jcyc, double* eff1, double* e
         previousw = currentw;
         currentw = wtmp;
         previousw[lgth2 - 1] = initverticalw[i + 1];
-        //		match_calc( currentw, seq1, seq2, i, lgth2 );
-        //		match_calc( n_dynamicmtx, currentw, cpmx1+ist, cpmx2+jst, i, lgth2, doublework, intwork, 0 );
-        match_calc_alphabet_seq(n_dynamicmtx, currentw, cpmx1pt, cpmx2pt, ist + i, jst, lgth2, doublework, intwork, 0);
+        match_calc_alphabet_seq(ctx, n_dynamicmtx, currentw, cpmx1pt, cpmx2pt, ist + i, jst, lgth2, doublework, intwork, 0);
 
         currentw[lgth2 - 1] = initverticalw[i];
-
-        //		m[lgth2] = fgcp1[i];
-        //		WMMTX2[i][lgth2] += m[lgth2];
-        //		fprintf( stderr, "m[] = %f\n", m[lgth2] );
 
         mi = previousw[lgth2 - 1] + fgcp2[lgth2 - 2] * gapfreq1f[i + 1];
         //		mi = previousw[lgth2-1];
@@ -1741,25 +1675,6 @@ MSalignmm_rec(double** n_dynamicmtx, int icyc, int jcyc, double* eff1, double* e
 
 #endif
 
-    //	Atracking( currentw, lastverticalw, seq1, seq2, mseq1, mseq2, cpmx1, cpmx2, ijp, icyc, jcyc );
-
-#if 0  // irukamo
-	resultlen = strlen( mseq1[0] );
-	if( alloclen < resultlen || resultlen > N )
-	{
-		fprintf( stderr, "alloclen=%d, resultlen=%d, N=%d\n", alloclen, resultlen, N );
-		ErrorExit( "LENGTH OVER!\n" );
-	}
-#endif
-
-#if 0
-	fprintf( stderr, "jumpi = %d, imid = %d\n", jumpi, imid );
-	fprintf( stderr, "jumpj = %d, jmid = %d\n", jumpj, jmid );
-
-	fprintf( stderr, "imid = %d\n", imid );
-	fprintf( stderr, "jmid = %d\n", jmid );
-#endif
-
     freearrays_rec1(
         w1,
         w2,
@@ -1785,13 +1700,7 @@ MSalignmm_rec(double** n_dynamicmtx, int icyc, int jcyc, double* eff1, double* e
 #endif
     );
 
-//	fprintf( stderr, "==== calling myself (first), depth=%d\n", depth );
-#if 0
-		fprintf( stderr, "seq1[0] = %.*s\n", lgth1, seq1[0] );
-		fprintf( stderr, "seq2[0] = %.*s\n", lgth2, seq2[0] );
-#endif
-
-    value = MSalignmm_rec(n_dynamicmtx, icyc, jcyc, eff1, eff2, seq1, seq2, cpmx1pt, cpmx2pt, ist, ist + jumpi, jst, jst + jumpj, alloclen, fulllen1, fulllen2, aseq1, aseq2, agt1, agt2, depth, gapinfo, headgp, tailgp, headgapfreq1_g, headgapfreq2_g);
+    value = MSalignmm_rec(ctx, n_dynamicmtx, icyc, jcyc, eff1, eff2, seq1, seq2, cpmx1pt, cpmx2pt, ist, ist + jumpi, jst, jst + jumpj, alloclen, fulllen1, fulllen2, aseq1, aseq2, agt1, agt2, depth, gapinfo, headgp, tailgp, headgapfreq1_g, headgapfreq2_g);
 #if 0
 	reporterr( "length1=%d -> %d? %d?\n", lgth1, strlen(seq1[0]), strlen(aseq1[0]) );
 		reporterr( "after first _rec\n" );
@@ -1818,7 +1727,7 @@ MSalignmm_rec(double** n_dynamicmtx, int icyc, int jcyc, double* eff1, double* e
     if (l > 0) {
         //		for( i=0; i<l; i++ ) gaps[i] = '-'; gaps[i] = 0;
         for (i = 0; i < l; i++)
-            gaps[i] = *newgapstr;
+            gaps[i] = *ctx->newgapstr;
         gaps[i] = 0;
         for (i = 0; i < icyc; i++) {
             strcat(mseq1[i], gaps);
@@ -1844,7 +1753,7 @@ MSalignmm_rec(double** n_dynamicmtx, int icyc, int jcyc, double* eff1, double* e
     if (l > 0) {
         //		for( i=0; i<l; i++ ) gaps[i] = '-'; gaps[i] = 0;
         for (i = 0; i < l; i++)
-            gaps[i] = *newgapstr;
+            gaps[i] = *ctx->newgapstr;
         gaps[i] = 0;
         for (i = 0; i < icyc; i++) {
             strncat(mseq1[i], seq1[i] + ist + jumpi + 1, l);
@@ -1885,19 +1794,7 @@ MSalignmm_rec(double** n_dynamicmtx, int icyc, int jcyc, double* eff1, double* e
     agt2 += alnlen;
 #endif
 
-#if 0
-		fprintf( stderr, "seq1[0] = %.*s\n", lgth1, seq1[0] );
-		fprintf( stderr, "seq2[0] = %.*s\n", lgth2, seq2[0] );
-#endif
-    value += MSalignmm_rec(n_dynamicmtx, icyc, jcyc, eff1, eff2, seq1, seq2, cpmx1pt, cpmx2pt, ist + imid, ien, jst + jmid, jen, alloclen, fulllen1, fulllen2, aseq1, aseq2, agt1, agt2, depth, gapinfo, headgp, tailgp, headgapfreq1_g, headgapfreq2_g);
-#if 0
-		reporterr( "after second _rec\n" );
-		if( strlen( aseq1[0] ) != strlen( agt1 ) ) reporterr( "WARNING\n" );
-		fprintf( stderr, "aseq1[0] = %s\n", aseq1[0] );
-		fprintf( stderr, "aseq2[0] = %s\n", aseq2[0] );
-		fprintf( stderr, "agt1     = %s\n", agt1     );
-		fprintf( stderr, "agt2     = %s\n", agt2     );
-#endif
+    value += MSalignmm_rec(ctx, n_dynamicmtx, icyc, jcyc, eff1, eff2, seq1, seq2, cpmx1pt, cpmx2pt, ist + imid, ien, jst + jmid, jen, alloclen, fulllen1, fulllen2, aseq1, aseq2, agt1, agt2, depth, gapinfo, headgp, tailgp, headgapfreq1_g, headgapfreq2_g);
 
 #if DEBUG
     if (value - maxwm > 1 || maxwm - value > 1) {
@@ -1925,37 +1822,7 @@ MSalignmm_rec(double** n_dynamicmtx, int icyc, int jcyc, double* eff1, double* e
         strcat(mseq2[i], aseq2[i]);
 #endif
 
-    //	fprintf( stderr, "====(s) aseq1[0] (%d) = \n%s\n (a%d-a%d)\n", depth, mseq1[0], ist, ien );
-    //	fprintf( stderr, "====(s) aseq2[0] (%d) = \n%s\n (b%d-b%d)\n", depth, mseq2[0], jst, jen );
-    //	reporterr( "agt1     = %s\n", agt1     );
-
-#if 0
-	reporterr( "At the end of _rec,\n" );
-	reporterr( "aseq1[0] = %s\n", aseq1[0] );
-	reporterr( "agt1     = %s\n", agt1     );
-	if( strlen( aseq1[0] ) != strlen (agt1) )
-		reporterr( "Dame\n" );
-#endif
-
     freearrays_rec2(gaps, aseq1, aseq2);
-
-#if 0
-	if( seqlen( seq1[0] ) != nglen1 )
-	{
-		fprintf( stderr, "bug! hairetsu ga kowareta! (nglen1) seqlen(seq1[0])=%d but nglen1=%d\n", seqlen( seq1[0] ), nglen1 );
-		fprintf( stderr, "seq1[0] = %s\n", seq1[0] );
-		exit( 1 );
-	}
-	else
-		fprintf( stderr, "nglen1 is ok in _rec\n" );
-	if( seqlen( seq2[0] ) != nglen2 )
-	{
-		fprintf( stderr, "bug! hairetsu ga kowareta! (nglen2) seqlen(seq2[0])=%d but nglen2=%d\n", seqlen( seq2[0] ), nglen2 );
-		exit( 1 );
-	}
-	else
-		fprintf( stderr, "nglen2 is ok in _rec\n" );
-#endif
 
     return (value);
 }
@@ -2025,8 +1892,8 @@ MSalignmm(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double*
     double   headgapfreq1;
     double   headgapfreq2;
 
-    nglen1 = seqlen(seq1[0]);
-    nglen2 = seqlen(seq2[0]);
+    nglen1 = seqlen(ctx, seq1[0]);
+    nglen2 = seqlen(ctx, seq2[0]);
 
 #if 0
 	fprintf( stderr, "\n" );
@@ -2056,8 +1923,8 @@ MSalignmm(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double*
     fgcp1o = AllocateFloatVec(ll1 + 2);
     fgcp2o = AllocateFloatVec(ll2 + 2);
 
-    cpmx1 = AllocateFloatMtx(nalphabets, ll1 + 2);
-    cpmx2 = AllocateFloatMtx(nalphabets, ll2 + 2);
+    cpmx1 = AllocateFloatMtx(ctx->nalphabets, ll1 + 2);
+    cpmx2 = AllocateFloatMtx(ctx->nalphabets, ll2 + 2);
 
     gapfreq1f = AllocateFloatVec(ll1 + 2);  // must be filled with 0.0
     gapfreq2f = AllocateFloatVec(ll2 + 2);  // must be filled with 0.0
@@ -2077,7 +1944,7 @@ MSalignmm(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double*
         }
     }
 
-    if (cpmxresult && specificityconsideration == 0.0)  // n_dynamicmtx ga henka suru toki profile ha sairiyou dekinai.
+    if (cpmxresult && ctx->specificityconsideration == 0.0)  // n_dynamicmtx ga henka suru toki profile ha sairiyou dekinai.
     {
         if (sgap1) {
             reporterr("The combination of sgap1 and cpmxhit is not supported. See Salignmm.c\n");
@@ -2088,9 +1955,9 @@ MSalignmm(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double*
             //			reporterr( "\nUse cpmxhist for child 0!\n" );
             cpmx1pt = *cpmxchild0;
 #if ATO
-            gapfreq1pt = (*cpmxchild0)[nalphabets];
-            ogcp1opt = (*cpmxchild0)[nalphabets + 1];
-            fgcp1opt = (*cpmxchild0)[nalphabets + 2];
+            gapfreq1pt = (*cpmxchild0)[ctx->nalphabets];
+            ogcp1opt = (*cpmxchild0)[ctx->nalphabets + 1];
+            fgcp1opt = (*cpmxchild0)[ctx->nalphabets + 2];
 #endif
         } else {
             cpmx1pt = cpmx1;
@@ -2112,9 +1979,9 @@ MSalignmm(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double*
             //			reporterr( "\nUse cpmxhist for child 1!\n" );
             cpmx2pt = *cpmxchild1;
 #if ATO
-            gapfreq2pt = (*cpmxchild1)[nalphabets];
-            ogcp2opt = (*cpmxchild1)[nalphabets + 1];
-            fgcp2opt = (*cpmxchild1)[nalphabets + 2];
+            gapfreq2pt = (*cpmxchild1)[ctx->nalphabets];
+            ogcp2opt = (*cpmxchild1)[ctx->nalphabets + 1];
+            fgcp2opt = (*cpmxchild1)[ctx->nalphabets + 2];
 #endif
         } else {
             cpmx2pt = cpmx2;
@@ -2177,7 +2044,7 @@ MSalignmm(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double*
             gapfreq2pt[lgth2] = 0.0;
         }
 
-        if (legacygapcost == 0)  // sgap1 no toki headgapfreq, gapfreq1pt[lgth] ha 1 toha kagiranai.
+        if (ctx->legacygapcost == 0)  // sgap1 no toki headgapfreq, gapfreq1pt[lgth] ha 1 toha kagiranai.
         {
             gapcountf(gapfreq1pt, seq1, icyc, eff1, lgth1);
             gapcountf(gapfreq2pt, seq2, jcyc, eff2, lgth2);
@@ -2272,22 +2139,7 @@ MSalignmm(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double*
     gapinfo[5] = gapfreq2f;
 #endif
 
-#if 0
-	fprintf( stdout, "in MSalignmm.c\n" );
-	for( i=0; i<icyc; i++ )
-	{
-		fprintf( stdout, ">%d of GROUP1\n", i );
-		fprintf( stdout, "%s\n", seq1[i] );
-	}
-	for( i=0; i<jcyc; i++ )
-	{
-		fprintf( stdout, ">%d of GROUP2\n", i );
-		fprintf( stdout, "%s\n", seq2[i] );
-	}
-	fflush( stdout );
-#endif
-
-    wm = MSalignmm_rec(n_dynamicmtx, icyc, jcyc, eff1, eff2, seq1, seq2, cpmx1pt, cpmx2pt, 0, lgth1 - 1, 0, lgth2 - 1, alloclen, lgth1, lgth2, mseq1, mseq2, mgt1, mgt2, 0, gapinfo, headgp, tailgp, headgapfreq1, headgapfreq2);
+    wm = MSalignmm_rec(ctx, n_dynamicmtx, icyc, jcyc, eff1, eff2, seq1, seq2, cpmx1pt, cpmx2pt, 0, lgth1 - 1, 0, lgth2 - 1, alloclen, lgth1, lgth2, mseq1, mseq2, mgt1, mgt2, 0, gapinfo, headgp, tailgp, headgapfreq1, headgapfreq2);
 
 #if 1
     if (cpmxresult) {
@@ -2315,12 +2167,12 @@ MSalignmm(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double*
             double totaleff2 = orieff2 / (orieff1 + orieff2);
 #endif
 
-            *cpmxresult = AllocateDoubleMtx(nalphabets + 3, strlen(mgt1) + 1);  // gapcount, opg, fng no bun de +3
-            createcpmxresult(*cpmxresult, totaleff1, totaleff2, cpmx1pt, cpmx2pt, mgt1, mgt2);
+            *cpmxresult = AllocateDoubleMtx(ctx->nalphabets + 3, strlen(mgt1) + 1);  // gapcount, opg, fng no bun de +3
+            createcpmxresult(ctx, *cpmxresult, totaleff1, totaleff2, cpmx1pt, cpmx2pt, mgt1, mgt2);
 #if ATO
-            creategapfreqresult((*cpmxresult)[nalphabets], totaleff1, totaleff2, gapfreq1pt, gapfreq2pt, mgt1, mgt2);
-            createogresult((*cpmxresult)[nalphabets + 1], totaleff1, totaleff2, ogcp1o, ogcp2o, gapfreq1pt, gapfreq2pt, mgt1, mgt2);
-            createfgresult((*cpmxresult)[nalphabets + 2], totaleff1, totaleff2, fgcp1o, fgcp2o, gapfreq1pt, gapfreq2pt, mgt1, mgt2);
+            creategapfreqresult((*cpmxresult)[ctx->nalphabets], totaleff1, totaleff2, gapfreq1pt, gapfreq2pt, mgt1, mgt2);
+            createogresult((*cpmxresult)[ctx->nalphabets + 1], totaleff1, totaleff2, ogcp1o, ogcp2o, gapfreq1pt, gapfreq2pt, mgt1, mgt2);
+            createfgresult((*cpmxresult)[ctx->nalphabets + 2], totaleff1, totaleff2, fgcp1o, fgcp2o, gapfreq1pt, gapfreq2pt, mgt1, mgt2);
 #endif
 
 #if 0
@@ -2368,13 +2220,13 @@ MSalignmm(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double*
     for (i = 0; i < jcyc; i++)
         strcpy(seq2[i], mseq2[i]);
 
-    if (seqlen(seq1[0]) != nglen1) {
-        fprintf(stderr, "bug! hairetsu ga kowareta! (nglen1) seqlen(seq1[0])=%d but nglen1=%d\n", seqlen(seq1[0]), nglen1);
+    if (seqlen(ctx, seq1[0]) != nglen1) {
+        fprintf(stderr, "bug! hairetsu ga kowareta! (nglen1) seqlen(seq1[0])=%d but nglen1=%d\n", seqlen(ctx, seq1[0]), nglen1);
         fprintf(stderr, "seq1[0] = %s\n", seq1[0]);
         exit(1);
     }
-    if (seqlen(seq2[0]) != nglen2) {
-        fprintf(stderr, "bug! hairetsu ga kowareta! (nglen2) seqlen(seq2[0])=%d but nglen2=%d\n", seqlen(seq2[0]), nglen2);
+    if (seqlen(ctx, seq2[0]) != nglen2) {
+        fprintf(stderr, "bug! hairetsu ga kowareta! (nglen2) seqlen(seq2[0])=%d but nglen2=%d\n", seqlen(ctx, seq2[0]), nglen2);
         exit(1);
     }
 
@@ -2418,9 +2270,7 @@ fillzero(double* s, int l) {
 }
 
 static double
-MSalignmm_tanni_variousdist(double*** matrices, int icyc, int jcyc, char** seq1, char** seq2, double*** cpmx1s, double*** cpmx2s, int ist, int ien, int jst, int jen, int fulllen1, int fulllen2, char** mseq1, char** mseq2, double** gapinfo, int headgp, int tailgp, double headgapfreq1_g, double headgapfreq2_g)
-/* score no keisan no sai motokaraaru gap no atukai ni mondai ga aru */
-{
+MSalignmm_tanni_variousdist(Context* ctx, double*** matrices, int icyc, int jcyc, char** seq1, char** seq2, double*** cpmx1s, double*** cpmx2s, int ist, int ien, int jst, int jen, int fulllen1, int fulllen2, char** mseq1, char** mseq2, double** gapinfo, int headgp, int tailgp, double headgapfreq1_g, double headgapfreq2_g) {
     //	int k;
     register int i, j, c;
     int          ll1, ll2;
@@ -2494,22 +2344,8 @@ MSalignmm_tanni_variousdist(double*** matrices, int icyc, int jcyc, char** seq1,
     fprintf(stderr, "ttt2 = %s\n", ttt2);
 #endif
 
-#if 0
-	fprintf( stderr, "in _tanni ist,ien = %d,%d, fulllen1=%d\n", ist, ien, fulllen1 );
-	fprintf( stderr, "in _tanni jst,jen = %d,%d, fulllen2=%d\n", jst, jen, fulllen2 );
-	fprintf( stderr, "in _tanni seq1[0] = %-*.*s\n", ien-ist+1, ien-ist+1, seq1[0]+ist );
-	fprintf( stderr, "in _tanni seq2[0] = %-*.*s\n", jen-jst+1, jen-jst+1, seq2[0]+jst );
-#endif
-
     ll1 = ((int)(lgth1)) + 100;
     ll2 = ((int)(lgth2)) + 100;
-
-    //	aseq1 = AllocateCharMtx( icyc, 0 );
-    //	aseq2 = AllocateCharMtx( jcyc, 0 );
-    //	aseq1bk = AllocateCharMtx( icyc, lgth1+lgth2+100 );
-    //	aseq2bk = AllocateCharMtx( jcyc, lgth1+lgth2+100 );
-    //	for( i=0; i<icyc; i++ ) aseq1[i] = aseq1bk[i];
-    //	for( i=0; i<jcyc; i++ ) aseq2[i] = aseq2bk[i];
 
     w1 = AllocateFloatVec(ll2 + 2);
     w2 = AllocateFloatVec(ll2 + 2);
@@ -2520,8 +2356,8 @@ MSalignmm_tanni_variousdist(double*** matrices, int icyc, int jcyc, char** seq1,
     m = AllocateFloatVec(ll2 + 2);
     mp = AllocateIntVec(ll2 + 2);
 
-    doublework = AllocateFloatCub(maxdistclass, MAX(ll1, ll2) + 2, nalphabets + 1);
-    intwork = AllocateIntCub(maxdistclass, MAX(ll1, ll2) + 2, nalphabets + 1);
+    doublework = AllocateFloatCub(ctx->maxdistclass, MAX(ll1, ll2) + 2, ctx->nalphabets + 1);
+    intwork = AllocateIntCub(ctx->maxdistclass, MAX(ll1, ll2) + 2, ctx->nalphabets + 1);
 
     intmtx = AllocateIntMtx(ll1 + 1, ll2 + 1);
 
@@ -2535,12 +2371,12 @@ MSalignmm_tanni_variousdist(double*** matrices, int icyc, int jcyc, char** seq1,
 	match_calc( n_dynamicmtx, currentw, cpmx1+ist, cpmx2+jst, 0, lgth2, doublework, intwork, 1 );
 #else
     fillzero(initverticalw, lgth1);
-    for (c = 0; c < maxdistclass; c++)
-        match_calc_add(matrices[c], initverticalw, cpmx2s[c] + jst, cpmx1s[c] + ist, 0, lgth1, doublework[c], intwork[c], 1);
+    for (c = 0; c < ctx->maxdistclass; c++)
+        match_calc_add(ctx, matrices[c], initverticalw, cpmx2s[c] + jst, cpmx1s[c] + ist, 0, lgth1, doublework[c], intwork[c], 1);
 
     fillzero(currentw, lgth2);
-    for (c = 0; c < maxdistclass; c++)
-        match_calc_add(matrices[c], currentw, cpmx1s[c] + ist, cpmx2s[c] + jst, 0, lgth2, doublework[c], intwork[c], 1);
+    for (c = 0; c < ctx->maxdistclass; c++)
+        match_calc_add(ctx, matrices[c], currentw, cpmx1s[c] + ist, cpmx2s[c] + jst, 0, lgth2, doublework[c], intwork[c], 1);
 #endif
 
     if (headgp || ist != 0) {
@@ -2574,13 +2410,9 @@ MSalignmm_tanni_variousdist(double*** matrices, int icyc, int jcyc, char** seq1,
 
         previousw[0] = initverticalw[i - 1];
 
-#if 0
-		match_calc( n_dynamicmtx, currentw, cpmx1+ist, cpmx2+jst, i, lgth2, doublework, intwork, 0 );
-#else
         fillzero(currentw, lgth2);
-        for (c = 0; c < maxdistclass; c++)
-            match_calc_add(matrices[c], currentw, cpmx1s[c] + ist, cpmx2s[c] + jst, i, lgth2, doublework[c], intwork[c], 0);
-#endif
+        for (c = 0; c < ctx->maxdistclass; c++)
+            match_calc_add(ctx, matrices[c], currentw, cpmx1s[c] + ist, cpmx2s[c] + jst, i, lgth2, doublework[c], intwork[c], 0);
         currentw[0] = initverticalw[i];
 
         mi = previousw[0] + ogcp2[1] * gapfreq1f[i - 1];
@@ -2648,19 +2480,7 @@ MSalignmm_tanni_variousdist(double*** matrices, int icyc, int jcyc, char** seq1,
         lastverticalw[i] = currentw[lgth2 - 1];
     }
 
-    //	fprintf( stderr, "wm = %f\n", wm );
-
-    Atracking(currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, ist, ien, jst, jen, fulllen1, fulllen2, tailgp, NULL, NULL);
-#if 0
-	fprintf( stderr, "res in _tanni mseq1[0] = %s\n", mseq1[0] );
-	fprintf( stderr, "res in _tanni mseq2[0] = %s\n", mseq2[0] );
-#endif
-
-    //	for( i=0; i<icyc; i++ ) strcpy( mseq1[i], aseq1[i] );
-    //	for( i=0; i<jcyc; i++ ) strcpy( mseq2[i], aseq2[i] );
-
-    //	fprintf( stderr, "in _tanni, aseq1 = %s\n", aseq1[0] );
-    //	fprintf( stderr, "in _tanni, mseq1 = %s\n", mseq1[0] );
+    Atracking(ctx, currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, ist, ien, jst, jen, fulllen1, fulllen2, tailgp, NULL, NULL);
 
     FreeFloatVec(w1);
     FreeFloatVec(w2);
@@ -2738,7 +2558,7 @@ freearrays_rec1_variousdist(
 }
 
 static double
-MSalignmm_rec_variousdist(double*** matrices, int icyc, int jcyc, char** seq1, char** seq2, double*** cpmx1s, double*** cpmx2s, int ist, int ien, int jst, int jen, int alloclen, int fulllen1, int fulllen2, char** mseq1, char** mseq2, int depth, double** gapinfo, int headgp, int tailgp, double headgapfreq1_g, double headgapfreq2_g) {
+MSalignmm_rec_variousdist(Context* ctx, double*** matrices, int icyc, int jcyc, char** seq1, char** seq2, double*** cpmx1s, double*** cpmx2s, int ist, int ien, int jst, int jen, int alloclen, int fulllen1, int fulllen2, char** mseq1, char** mseq2, int depth, double** gapinfo, int headgp, int tailgp, double headgapfreq1_g, double headgapfreq2_g) {
     //	int k;
     int          alnlen;
     double       value = 0.0;
@@ -2802,14 +2622,6 @@ MSalignmm_rec_variousdist(double*** matrices, int icyc, int jcyc, char** seq1, c
     double  headgapfreq1;
     double  headgapfreq2;
 
-#if 0
-	int nglen1, nglen2;
-	nglen1 = seqlen( seq1[0] );
-	nglen2 = seqlen( seq2[0] );
-#endif
-
-    //	fprintf( stderr, "fulllen1 = %d, fulllen2 = %d, headgp = %d, tailgp = %d\n", fulllen1, fulllen2, headgp, tailgp );
-
     ogcp1 = gapinfo[0] + ist;
     fgcp1 = gapinfo[1] + ist;
     ogcp2 = gapinfo[2] + jst;
@@ -2832,12 +2644,6 @@ MSalignmm_rec_variousdist(double*** matrices, int icyc, int jcyc, char** seq1, c
     lgth1 = ien - ist + 1;
     lgth2 = jen - jst + 1;
 
-    //	if( lgth1 < 5 )
-    //		fprintf( stderr, "\nWARNING: lgth1 = %d\n", lgth1 );
-    //	if( lgth2 < 5 )
-    //		fprintf( stderr, "\nWARNING: lgth2 = %d\n", lgth2 );
-    //
-
 #if STOREWM
     fprintf(stderr, "==== MSalign (depth=%d, reccycle=%d), ist=%d, ien=%d, jst=%d, jen=%d\n", depth, reccycle, ist, ien, jst, jen);
     strncpy(ttt1, seq1[0] + ist, lgth1);
@@ -2859,7 +2665,7 @@ MSalignmm_rec_variousdist(double*** matrices, int icyc, int jcyc, char** seq1, c
             mseq2[i][0] = 0;
             for (j = 0; j < lgth1; j++)
                 //				strcat( mseq2[i], "-" );
-                strcat(mseq2[i], newgapstr);
+                strcat(mseq2[i], ctx->newgapstr);
         }
 
         //		fprintf( stderr, "==== mseq1[0] (%d) = %s\n", depth, mseq1[0] );
@@ -2880,16 +2686,8 @@ MSalignmm_rec_variousdist(double*** matrices, int icyc, int jcyc, char** seq1, c
     aseq2 = AllocateCharMtx(jcyc, lgth1 + lgth2 + 100);
 #endif
 
-    //	fprintf( stderr, "####(s) seq1[0] (%d) = \n%-*.*s\n (a%d-a%d)\n", depth, ien-ist+1, ien-ist+1, seq1[0]+ist, ist, ien );
-    //	fprintf( stderr, "####(s) seq2[0] (%d) = \n%-*.*s\n (b%d-b%d)\n", depth, jen-jst+1, jen-jst+1, seq2[0]+jst, jst, jen );
-
-    //  if( lgth1 < DPTANNI && lgth2 < DPTANNI ) // & dato lgth ==1 no kanousei ga arunode yokunai
-    //    if( lgth1 < DPTANNI ) // kore mo lgth2 ga mijikasugiru kanousei ari
-    if (lgth1 < DPTANNI || lgth2 < DPTANNI)  // zettai ni anzen ka?
-    {
-        //		fprintf( stderr, "==== Going to _tanni\n" );
-
-        value = MSalignmm_tanni_variousdist(matrices, icyc, jcyc, seq1, seq2, cpmx1s, cpmx2s, ist, ien, jst, jen, fulllen1, fulllen2, aseq1, aseq2, gapinfo, headgp, tailgp, headgapfreq1_g, headgapfreq2_g);
+    if (lgth1 < DPTANNI || lgth2 < DPTANNI) {
+        value = MSalignmm_tanni_variousdist(ctx, matrices, icyc, jcyc, seq1, seq2, cpmx1s, cpmx2s, ist, ien, jst, jen, fulllen1, fulllen2, aseq1, aseq2, gapinfo, headgp, tailgp, headgapfreq1_g, headgapfreq2_g);
 
 #if MEMSAVE
         free(aseq1);
@@ -2935,8 +2733,8 @@ MSalignmm_rec_variousdist(double*** matrices, int icyc, int jcyc, char** seq1, c
     mp = AllocateIntVec(ll2 + 2);
     gaps = AllocateCharVec(MAX(ll1, ll2) + 2);
 
-    doublework = AllocateFloatCub(maxdistclass, MAX(ll1, ll2) + 2, nalphabets);
-    intwork = AllocateIntCub(maxdistclass, MAX(ll1, ll2) + 2, nalphabets);
+    doublework = AllocateFloatCub(ctx->maxdistclass, MAX(ll1, ll2) + 2, ctx->nalphabets);
+    intwork = AllocateIntCub(ctx->maxdistclass, MAX(ll1, ll2) + 2, ctx->nalphabets);
 
 #if DEBUG
     fprintf(stderr, "succeeded\n");
@@ -2964,12 +2762,12 @@ MSalignmm_rec_variousdist(double*** matrices, int icyc, int jcyc, char** seq1, c
 	match_calc( n_dynamicmtx, currentw, cpmx1+ist, cpmx2+jst, 0, lgth2, doublework, intwork, 1 );
 #else
     fillzero(initverticalw, lgth1);
-    for (c = 0; c < maxdistclass; c++)
-        match_calc_add(matrices[c], initverticalw, cpmx2s[c] + jst, cpmx1s[c] + ist, 0, lgth1, doublework[c], intwork[c], 1);
+    for (c = 0; c < ctx->maxdistclass; c++)
+        match_calc_add(ctx, matrices[c], initverticalw, cpmx2s[c] + jst, cpmx1s[c] + ist, 0, lgth1, doublework[c], intwork[c], 1);
 
     fillzero(currentw, lgth2);
-    for (c = 0; c < maxdistclass; c++)
-        match_calc_add(matrices[c], currentw, cpmx1s[c] + ist, cpmx2s[c] + jst, 0, lgth2, doublework[c], intwork[c], 1);
+    for (c = 0; c < ctx->maxdistclass; c++)
+        match_calc_add(ctx, matrices[c], currentw, cpmx1s[c] + ist, cpmx2s[c] + jst, 0, lgth2, doublework[c], intwork[c], 1);
 #endif
 
     for (i = 1; i < (int)lgth1 + 1; i++) {
@@ -3050,8 +2848,8 @@ MSalignmm_rec_variousdist(double*** matrices, int icyc, int jcyc, char** seq1, c
 		match_calc( n_dynamicmtx, currentw, cpmx1+ist, cpmx2+jst, i, lgth2, doublework, intwork, 0 );
 #else
         fillzero(currentw, lgth2);
-        for (c = 0; c < maxdistclass; c++)
-            match_calc_add(matrices[c], currentw, cpmx1s[c] + ist, cpmx2s[c] + jst, i, lgth2, doublework[c], intwork[c], 0);
+        for (c = 0; c < ctx->maxdistclass; c++)
+            match_calc_add(ctx, matrices[c], currentw, cpmx1s[c] + ist, cpmx2s[c] + jst, i, lgth2, doublework[c], intwork[c], 0);
 #endif
         currentw[0] = initverticalw[i];
 
@@ -3191,12 +2989,12 @@ MSalignmm_rec_variousdist(double*** matrices, int icyc, int jcyc, char** seq1, c
 	match_calc( n_dynamicmtx, currentw, cpmx1+ist, cpmx2+jst, lgth1-1, lgth2, doublework, intwork, 1 );
 #else
     fillzero(initverticalw, lgth1);
-    for (c = 0; c < maxdistclass; c++)
-        match_calc_add(matrices[c], initverticalw, cpmx2s[c] + jst, cpmx1s[c] + ist, lgth2 - 1, lgth1, doublework[c], intwork[c], 1);
+    for (c = 0; c < ctx->maxdistclass; c++)
+        match_calc_add(ctx, matrices[c], initverticalw, cpmx2s[c] + jst, cpmx1s[c] + ist, lgth2 - 1, lgth1, doublework[c], intwork[c], 1);
 
     fillzero(currentw, lgth2);
-    for (c = 0; c < maxdistclass; c++)
-        match_calc_add(matrices[c], currentw, cpmx1s[c] + ist, cpmx2s[c] + jst, lgth1 - 1, lgth2, doublework[c], intwork[c], 1);
+    for (c = 0; c < ctx->maxdistclass; c++)
+        match_calc_add(ctx, matrices[c], currentw, cpmx1s[c] + ist, cpmx2s[c] + jst, lgth1 - 1, lgth2, doublework[c], intwork[c], 1);
 #endif
 
     for (i = 0; i < (int)lgth1 - 1; i++) {
@@ -3279,22 +3077,13 @@ MSalignmm_rec_variousdist(double*** matrices, int icyc, int jcyc, char** seq1, c
         previousw = currentw;
         currentw = wtmp;
         previousw[lgth2 - 1] = initverticalw[i + 1];
-#if 0
-		match_calc( n_dynamicmtx, currentw, cpmx1+ist, cpmx2+jst, i, lgth2, doublework, intwork, 0 );
-#else
         fillzero(currentw, lgth2);
-        for (c = 0; c < maxdistclass; c++)
-            match_calc_add(matrices[c], currentw, cpmx1s[c] + ist, cpmx2s[c] + jst, i, lgth2, doublework[c], intwork[c], 0);
-#endif
+        for (c = 0; c < ctx->maxdistclass; c++)
+            match_calc_add(ctx, matrices[c], currentw, cpmx1s[c] + ist, cpmx2s[c] + jst, i, lgth2, doublework[c], intwork[c], 0);
 
         currentw[lgth2 - 1] = initverticalw[i];
 
-        //		m[lgth2] = fgcp1[i];
-        //		WMMTX2[i][lgth2] += m[lgth2];
-        //		fprintf( stderr, "m[] = %f\n", m[lgth2] );
-
         mi = previousw[lgth2 - 1] + fgcp2[lgth2 - 2] * gapfreq1f[i + 1];
-        //		mi = previousw[lgth2-1];
         mpi = lgth2 - 1;
 
         mjpt = m + lgth2 - 2;
@@ -3572,25 +3361,6 @@ MSalignmm_rec_variousdist(double*** matrices, int icyc, int jcyc, char** seq1, c
 
 #endif
 
-    //	Atracking( currentw, lastverticalw, seq1, seq2, mseq1, mseq2, cpmx1, cpmx2, ijp, icyc, jcyc );
-
-#if 0  // irukamo
-	resultlen = strlen( mseq1[0] );
-	if( alloclen < resultlen || resultlen > N )
-	{
-		fprintf( stderr, "alloclen=%d, resultlen=%d, N=%d\n", alloclen, resultlen, N );
-		ErrorExit( "LENGTH OVER!\n" );
-	}
-#endif
-
-#if 0
-	fprintf( stderr, "jumpi = %d, imid = %d\n", jumpi, imid );
-	fprintf( stderr, "jumpj = %d, jmid = %d\n", jumpj, jmid );
-
-	fprintf( stderr, "imid = %d\n", imid );
-	fprintf( stderr, "jmid = %d\n", jmid );
-#endif
-
     freearrays_rec1_variousdist(
         w1,
         w2,
@@ -3616,7 +3386,7 @@ MSalignmm_rec_variousdist(double*** matrices, int icyc, int jcyc, char** seq1, c
 #endif
     );
 
-    value = MSalignmm_rec_variousdist(matrices, icyc, jcyc, seq1, seq2, cpmx1s, cpmx2s, ist, ist + jumpi, jst, jst + jumpj, alloclen, fulllen1, fulllen2, aseq1, aseq2, depth, gapinfo, headgp, tailgp, headgapfreq1_g, headgapfreq2_g);
+    value = MSalignmm_rec_variousdist(ctx, matrices, icyc, jcyc, seq1, seq2, cpmx1s, cpmx2s, ist, ist + jumpi, jst, jst + jumpj, alloclen, fulllen1, fulllen2, aseq1, aseq2, depth, gapinfo, headgp, tailgp, headgapfreq1_g, headgapfreq2_g);
 
 #if MEMSAVE
 #else
@@ -3626,9 +3396,6 @@ MSalignmm_rec_variousdist(double*** matrices, int icyc, int jcyc, char** seq1, c
         strcpy(mseq2[i], aseq2[i]);
 #endif
 
-    //	fprintf( stderr, "====(f) aseq1[0] (%d) = %s (%d-%d)\n", depth, aseq1[0], ist, ien );
-    //	fprintf( stderr, "====(f) aseq2[0] (%d) = %s (%d-%d)\n", depth, aseq2[0], jst, jen );
-
     len = strlen(mseq1[0]);
     //	fprintf( stderr, "len = %d\n", len );
     l = jmid - jumpj - 1;
@@ -3636,7 +3403,7 @@ MSalignmm_rec_variousdist(double*** matrices, int icyc, int jcyc, char** seq1, c
     if (l > 0) {
         //		for( i=0; i<l; i++ ) gaps[i] = '-'; gaps[i] = 0;
         for (i = 0; i < l; i++)
-            gaps[i] = *newgapstr;
+            gaps[i] = *ctx->newgapstr;
         gaps[i] = 0;
         for (i = 0; i < icyc; i++) {
             strcat(mseq1[i], gaps);
@@ -3656,7 +3423,7 @@ MSalignmm_rec_variousdist(double*** matrices, int icyc, int jcyc, char** seq1, c
     if (l > 0) {
         //		for( i=0; i<l; i++ ) gaps[i] = '-'; gaps[i] = 0;
         for (i = 0; i < l; i++)
-            gaps[i] = *newgapstr;
+            gaps[i] = *ctx->newgapstr;
         gaps[i] = 0;
         for (i = 0; i < icyc; i++) {
             strncat(mseq1[i], seq1[i] + ist + jumpi + 1, l);
@@ -3689,11 +3456,7 @@ MSalignmm_rec_variousdist(double*** matrices, int icyc, int jcyc, char** seq1, c
         aseq2[i] += alnlen;
 #endif
 
-    value += MSalignmm_rec_variousdist(matrices, icyc, jcyc, seq1, seq2, cpmx1s, cpmx2s, ist + imid, ien, jst + jmid, jen, alloclen, fulllen1, fulllen2, aseq1, aseq2, depth, gapinfo, headgp, tailgp, headgapfreq1_g, headgapfreq2_g);
-#if 0
-		fprintf( stderr, "aseq1[0] = %s\n", aseq1[0] );
-		fprintf( stderr, "aseq2[0] = %s\n", aseq2[0] );
-#endif
+    value += MSalignmm_rec_variousdist(ctx, matrices, icyc, jcyc, seq1, seq2, cpmx1s, cpmx2s, ist + imid, ien, jst + jmid, jen, alloclen, fulllen1, fulllen2, aseq1, aseq2, depth, gapinfo, headgp, tailgp, headgapfreq1_g, headgapfreq2_g);
 
 #if DEBUG
     if (value - maxwm > 1 || maxwm - value > 1) {
@@ -3725,24 +3488,6 @@ MSalignmm_rec_variousdist(double*** matrices, int icyc, int jcyc, char** seq1, c
     //	fprintf( stderr, "====(s) aseq2[0] (%d) = \n%s\n (b%d-b%d)\n", depth, mseq2[0], jst, jen );
 
     freearrays_rec2(gaps, aseq1, aseq2);
-
-#if 0
-	if( seqlen( seq1[0] ) != nglen1 )
-	{
-		fprintf( stderr, "bug! hairetsu ga kowareta! (nglen1) seqlen(seq1[0])=%d but nglen1=%d\n", seqlen( seq1[0] ), nglen1 );
-		fprintf( stderr, "seq1[0] = %s\n", seq1[0] );
-		exit( 1 );
-	}
-	else
-		fprintf( stderr, "nglen1 is ok in _rec\n" );
-	if( seqlen( seq2[0] ) != nglen2 )
-	{
-		fprintf( stderr, "bug! hairetsu ga kowareta! (nglen2) seqlen(seq2[0])=%d but nglen2=%d\n", seqlen( seq2[0] ), nglen2 );
-		exit( 1 );
-	}
-	else
-		fprintf( stderr, "nglen2 is ok in _rec\n" );
-#endif
 
     return (value);
 }
@@ -3797,20 +3542,8 @@ MSalignmm_variousdist(Context* ctx, double*** matrices, char** seq1, char** seq2
     double    headgapfreq1;
     double    headgapfreq2;
 
-#if 0
-	fprintf( stderr, "eff in SA+++align\n" );
-	for( i=0; i<icyc; i++ ) fprintf( stderr, "eff1[%d] = %f\n", i, eff1[i] );
-#endif
-
-    nglen1 = seqlen(seq1[0]);
-    nglen2 = seqlen(seq2[0]);
-
-#if 0
-	fprintf( stderr, "\n" );
-	for( i=0; i<icyc; i++ ) fprintf( stderr, "seq1[%d] at root = %s\n", i, seq1[i] );
-	for( j=0; j<jcyc; j++ ) fprintf( stderr, "seq2[%d] at root = %s\n", j, seq2[j] );
-	fprintf( stderr, "\n" );
-#endif
+    nglen1 = seqlen(ctx, seq1[0]);
+    nglen2 = seqlen(ctx, seq2[0]);
 
     lgth1 = strlen(seq1[0]);
     lgth2 = strlen(seq2[0]);
@@ -3827,8 +3560,8 @@ MSalignmm_variousdist(Context* ctx, double*** matrices, char** seq1, char** seq2
     fgcp1 = AllocateFloatVec(ll1 + 2);
     fgcp2 = AllocateFloatVec(ll2 + 2);
 
-    cpmx1s = AllocateFloatCub(maxdistclass, ll1 + 2, nalphabets + 1);
-    cpmx2s = AllocateFloatCub(maxdistclass, ll2 + 2, nalphabets + 1);
+    cpmx1s = AllocateFloatCub(ctx->maxdistclass, ll1 + 2, ctx->nalphabets + 1);
+    cpmx2s = AllocateFloatCub(ctx->maxdistclass, ll2 + 2, ctx->nalphabets + 1);
 
     gapfreq1f = AllocateFloatVec(ll1 + 2);  // must be filled with 0.0
     gapfreq2f = AllocateFloatVec(ll2 + 2);  // must be filled with 0.0
@@ -3848,7 +3581,7 @@ MSalignmm_variousdist(Context* ctx, double*** matrices, char** seq1, char** seq2
         }
     }
 
-    for (c = 0; c < maxdistclass; c++) {
+    for (c = 0; c < ctx->maxdistclass; c++) {
         MScpmx_calc_new(ctx, seq1, cpmx1s[c], eff1s[c], lgth1, icyc);
         MScpmx_calc_new(ctx, seq2, cpmx2s[c], eff2s[c], lgth2, jcyc);
     }
@@ -3875,7 +3608,7 @@ MSalignmm_variousdist(Context* ctx, double*** matrices, char** seq1, char** seq2
         gapfreq2f[lgth2] = 0.0;
     }
 
-    if (legacygapcost == 0) {
+    if (ctx->legacygapcost == 0) {
         gapcountf(gapfreq1f, seq1, icyc, eff1, lgth1);
         gapcountf(gapfreq2f, seq2, jcyc, eff2, lgth2);
         for (i = 0; i < (int)lgth1 + 1; i++)
@@ -3923,54 +3656,20 @@ MSalignmm_variousdist(Context* ctx, double*** matrices, char** seq1, char** seq2
     gapinfo[5] = gapfreq2f;
 #endif
 
-#if 0
-	fprintf( stdout, "in MSalignmm.c\n" );
-	for( i=0; i<icyc; i++ )
-	{
-		fprintf( stdout, ">%d of GROUP1\n", i );
-		fprintf( stdout, "%s\n", seq1[i] );
-	}
-	for( i=0; i<jcyc; i++ )
-	{
-		fprintf( stdout, ">%d of GROUP2\n", i );
-		fprintf( stdout, "%s\n", seq2[i] );
-	}
-	fflush( stdout );
-#endif
-
-    wm = MSalignmm_rec_variousdist(matrices, icyc, jcyc, seq1, seq2, cpmx1s, cpmx2s, 0, lgth1 - 1, 0, lgth2 - 1, alloclen, lgth1, lgth2, mseq1, mseq2, 0, gapinfo, headgp, tailgp, headgapfreq1, headgapfreq2);
-#ifdef enablemultithread
-    if (chudanres && *chudanres) {
-        //		fprintf( stderr, "\n\n## CHUUDAN!!! relay\n" );
-        *chudanres = 1;
-        freearrays_variousdist(ogcp1, ogcp2, fgcp1, fgcp2, cpmx1s, cpmx2s, gapfreq1f, gapfreq2f, gapinfo, mseq1, mseq2);
-        return (-1.0);
-    }
-#endif
-
-#if 0
-		fprintf( stderr, "\n" );
-		fprintf( stderr, " seq1[0] = %s\n", seq1[0] );
-		fprintf( stderr, " seq2[0] = %s\n", seq2[0] );
-		fprintf( stderr, "mseq1[0] = %s\n", mseq1[0] );
-		fprintf( stderr, "mseq2[0] = %s\n", mseq2[0] );
-		fprintf( stderr, "\n" );
-#endif
-
-    //	fprintf( stderr, "wm = %f\n", wm );
+    wm = MSalignmm_rec_variousdist(ctx, matrices, icyc, jcyc, seq1, seq2, cpmx1s, cpmx2s, 0, lgth1 - 1, 0, lgth2 - 1, alloclen, lgth1, lgth2, mseq1, mseq2, 0, gapinfo, headgp, tailgp, headgapfreq1, headgapfreq2);
 
     for (i = 0; i < icyc; i++)
         strcpy(seq1[i], mseq1[i]);
     for (i = 0; i < jcyc; i++)
         strcpy(seq2[i], mseq2[i]);
 
-    if (seqlen(seq1[0]) != nglen1) {
-        fprintf(stderr, "bug! hairetsu ga kowareta! (nglen1) seqlen(seq1[0])=%d but nglen1=%d\n", seqlen(seq1[0]), nglen1);
+    if (seqlen(ctx, seq1[0]) != nglen1) {
+        fprintf(stderr, "bug! hairetsu ga kowareta! (nglen1) seqlen(ctx, seq1[0])=%d but nglen1=%d\n", seqlen(ctx, seq1[0]), nglen1);
         fprintf(stderr, "seq1[0] = %s\n", seq1[0]);
         exit(1);
     }
-    if (seqlen(seq2[0]) != nglen2) {
-        fprintf(stderr, "bug! hairetsu ga kowareta! (nglen2) seqlen(seq2[0])=%d but nglen2=%d\n", seqlen(seq2[0]), nglen2);
+    if (seqlen(ctx, seq2[0]) != nglen2) {
+        fprintf(stderr, "bug! hairetsu ga kowareta! (nglen2) seqlen(ctx, seq2[0])=%d but nglen2=%d\n", seqlen(ctx, seq2[0]), nglen2);
         exit(1);
     }
 

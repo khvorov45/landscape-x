@@ -995,7 +995,7 @@ readData_pointer(Context* ctx, FILE* fp, char** name, int* nlen, char** seq) {
     if (ctx->dorp == 'd' && upperCase != -1)
         seqLower(ctx->njob, seq);
 
-    if (outnumber) {
+    if (ctx->outnumber) {
         char* namebuf;
         char* cptr;
         namebuf = calloc(B + 100, sizeof(char));

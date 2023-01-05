@@ -26,12 +26,12 @@ match_calc(Context* ctx, double* match, double** cpmx1, double** cpmx2, int i1, 
     int**    cpmxpdnpt;
     int      cpkd;
     double*  scarr;
-    scarr = calloc(nalphabets, sizeof(double));
+    scarr = calloc(ctx->nalphabets, sizeof(double));
 
     if (initialize) {
         for (j = 0; j < lgth2; j++) {
             count = 0;
-            for (l = 0; l < nalphabets; l++) {
+            for (l = 0; l < ctx->nalphabets; l++) {
                 if (cpmx2[j][l]) {
                     cpmxpd[j][count] = cpmx2[j][l];
                     cpmxpdn[j][count] = l;
@@ -42,9 +42,9 @@ match_calc(Context* ctx, double* match, double** cpmx1, double** cpmx2, int i1, 
         }
     }
 
-    for (l = 0; l < nalphabets; l++) {
+    for (l = 0; l < ctx->nalphabets; l++) {
         scarr[l] = 0.0;
-        for (k = 0; k < nalphabets; k++) {
+        for (k = 0; k < ctx->nalphabets; k++) {
             scarr[l] += (ctx->n_dis[k][l] - ctx->RNAthr) * cpmx1[i1][k];
         }
     }
@@ -140,99 +140,6 @@ static void match_add( double *match, double **cpmx1, double **cpmx2, int i1, in
 		cpmxpdpt++;
 	}
 #endif
-}
-#endif
-
-#if 0
-static double Atracking( 
-						char **seq1, char **seq2, 
-                        char **mseq1, char **mseq2, 
-                        int **ijp, int icyc, int jcyc,
-						int ist, int ien, int jst, int jen )
-{
-	int i, j, l, iin, jin, ifi, jfi, lgth1, lgth2, k, klim;
-	char *gaptable1, *gt1bk;
-	char *gaptable2, *gt2bk;
-	lgth1 = ien-ist+1;
-	lgth2 = jen-jst+1;
-
-	gt1bk = AllocateCharVec( lgth1+lgth2+1 );
-	gt2bk = AllocateCharVec( lgth1+lgth2+1 );
-
-#if 0
-	for( i=0; i<lgth1; i++ ) 
-	{
-		fprintf( stderr, "lastverticalw[%d] = %f\n", i, lastverticalw[i] );
-	}
-#endif
-
-
-//	fprintf( stderr, "in Atracking, lgth1=%d, lgth2=%d\n", lgth1, lgth2 );
- 
-    for( i=0; i<lgth1+1; i++ ) 
-    {
-        ijp[i][0] = i + 1;
-    }
-    for( j=0; j<lgth2+1; j++ ) 
-    {
-        ijp[0][j] = -( j + 1 );
-    }
-
-
-	gaptable1 = gt1bk + lgth1+lgth2;
-	*gaptable1 = 0;
-	gaptable2 = gt2bk + lgth1+lgth2;
-	*gaptable2 = 0;
-
-//	if( lgth2 == 1 ) fprintf( stderr, "in Atracking, mseq1 = %s, mseq2 = %s\n", mseq1[0], mseq2[0] );
-
-	iin = lgth1; jin = lgth2;
-	klim = lgth1+lgth2;
-	for( k=0; k<=klim; k++ ) 
-	{
-		if( ijp[iin][jin] < 0 ) 
-		{
-			ifi = iin-1; jfi = jin+ijp[iin][jin];
-		}
-		else if( ijp[iin][jin] > 0 )
-		{
-			ifi = iin-ijp[iin][jin]; jfi = jin-1;
-		}
-		else
-		{
-			ifi = iin-1; jfi = jin-1;
-		}
-		l = iin - ifi;
-		while( --l ) 
-		{
-			*--gaptable1 = 'o';
-			*--gaptable2 = '-';
-			k++;
-		}
-		l= jin - jfi;
-		while( --l )
-		{
-			*--gaptable1 = '-';
-			*--gaptable2 = 'o';
-			k++;
-		}
-		if( iin <= 0 || jin <= 0 ) break;
-		*--gaptable1 = 'o';
-		*--gaptable2 = 'o';
-		k++;
-		iin = ifi; jin = jfi;
-
-	}
-
-	for( i=0; i<icyc; i++ ) gapireru( mseq1[i], seq1[i]+ist, gaptable1 );
-	for( j=0; j<jcyc; j++ ) gapireru( mseq2[j], seq2[j]+jst, gaptable2 );
-
-	free( gt1bk );
-	free( gt2bk );
-
-//	fprintf( stderr, "in Atracking (owari), mseq1 = %s\n", mseq1[0] );
-//	fprintf( stderr, "in Atracking (owari), mseq2 = %s\n", mseq2[0] );
-	return( 0.0 );
 }
 #endif
 
@@ -402,8 +309,8 @@ MSalignmm_rec(Context* ctx, int icyc, int jcyc, char** seq1, double** cpmx1, dou
     mp = AllocateIntVec(ll2 + 2);
     gaps = AllocateCharVec(MAX(ll1, ll2) + 2);
 
-    doublework = AllocateFloatMtx(MAX(ll1, ll2) + 2, nalphabets);
-    intwork = AllocateIntMtx(MAX(ll1, ll2) + 2, nalphabets);
+    doublework = AllocateFloatMtx(MAX(ll1, ll2) + 2, ctx->nalphabets);
+    intwork = AllocateIntMtx(MAX(ll1, ll2) + 2, ctx->nalphabets);
 
 #if DEBUG
     fprintf(stderr, "succeeded\n");
@@ -1111,8 +1018,8 @@ Lalignmm_hmout(Context* ctx, char** seq1, char** seq2, double* eff1, double* eff
 	for( i=0; i<icyc; i++ ) fprintf( stderr, "eff1[%d] = %f\n", i, eff1[i] );
 #endif
 
-    seqlen(seq1[0]);
-    seqlen(seq2[0]);
+    seqlen(ctx, seq1[0]);
+    seqlen(ctx, seq2[0]);
 
     lgth1 = strlen(seq1[0]);
     lgth2 = strlen(seq2[0]);
@@ -1129,8 +1036,8 @@ Lalignmm_hmout(Context* ctx, char** seq1, char** seq2, double* eff1, double* eff
     fgcp1 = AllocateFloatVec(ll1 + 2);
     fgcp2 = AllocateFloatVec(ll2 + 2);
 
-    cpmx1 = AllocateFloatMtx(ll1 + 2, nalphabets + 1);
-    cpmx2 = AllocateFloatMtx(ll2 + 2, nalphabets + 1);
+    cpmx1 = AllocateFloatMtx(ll1 + 2, ctx->nalphabets + 1);
+    cpmx2 = AllocateFloatMtx(ll2 + 2, ctx->nalphabets + 1);
 
     for (i = 0; i < icyc; i++) {
         if ((int)strlen(seq1[i]) != lgth1) {

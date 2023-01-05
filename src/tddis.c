@@ -10,7 +10,7 @@ cpmx_calc(Context* ctx, char** seq, double** cpmx, double* eff, int lgth, int cl
 
     for (i = 0; i < clus; i++)
         totaleff += eff[i];
-    for (i = 0; i < nalphabets; i++)
+    for (i = 0; i < ctx->nalphabets; i++)
         for (j = 0; j < lgth; j++)
             cpmx[i][j] = 0.0;
     for (j = 0; j < lgth; j++)
@@ -27,7 +27,7 @@ cpmx_calc_add(Context* ctx, char** seq, double** cpmx, double* eff, int lgth, in
     neweff = eff[clus - 1];
     orieff = 1.0 - neweff;
     for (j = 0; j < lgth; j++) {
-        for (i = 0; i < nalphabets; i++)
+        for (i = 0; i < ctx->nalphabets; i++)
             cpmx[i][j] *= orieff;
         cpmx[(unsigned char)ctx->amino_n[(unsigned char)seq[newmem][j]]][j] += neweff;
     }
@@ -40,7 +40,7 @@ cpmx_calc_new(Context* ctx, char** seq, double** cpmx, double* eff, int lgth, in
     double *cpmxpt, **cpmxptpt;
     char*   seqpt;
 
-    j = nalphabets;
+    j = ctx->nalphabets;
     cpmxptpt = cpmx;
     while (j--) {
         cpmxpt = *cpmxptpt++;
@@ -69,7 +69,7 @@ MScpmx_calc_new(Context* ctx, char** seq, double** cpmx, double* eff, int lgth, 
     cpmxptpt = cpmx;
     while (j--) {
         cpmxpt = *cpmxptpt++;
-        i = nalphabets;
+        i = ctx->nalphabets;
         while (i--)
             *cpmxpt++ = 0.0;
     }
@@ -415,15 +415,6 @@ fastconjuction(int* memlist, char** seq, char** aseq, double* peff, double* eff,
         peff[m] /= total;
 #endif
     return (k);
-}
-
-void
-doubledelete(double** cpmx, int d, int len) {
-    for (int i = d; i < len - 1; i++) {
-        for (int j = 0; j < nalphabets; j++) {
-            cpmx[j][i] = cpmx[j][i + 1];
-        }
-    }
 }
 
 void

@@ -10,12 +10,12 @@ match_calc(Context* ctx, double* match, double** cpmx1, double** cpmx2, int i1, 
     int**    cpmxpdn = intwork;
     int      count = 0;
     double*  scarr;
-    scarr = calloc(nalphabets, sizeof(double));
+    scarr = calloc(ctx->nalphabets, sizeof(double));
 
     if (initialize) {
         for (j = 0; j < lgth2; j++) {
             count = 0;
-            for (l = 0; l < nalphabets; l++) {
+            for (l = 0; l < ctx->nalphabets; l++) {
                 if (cpmx2[l][j]) {
                     cpmxpd[count][j] = cpmx2[l][j];
                     cpmxpdn[count][j] = l;
@@ -26,9 +26,9 @@ match_calc(Context* ctx, double* match, double** cpmx1, double** cpmx2, int i1, 
         }
     }
 
-    for (l = 0; l < nalphabets; l++) {
+    for (l = 0; l < ctx->nalphabets; l++) {
         scarr[l] = 0.0;
-        for (k = 0; k < nalphabets; k++)
+        for (k = 0; k < ctx->nalphabets; k++)
             scarr[l] += ctx->n_dis[k][l] * cpmx1[k][i1];
     }
     for (j = 0; j < lgth2; j++) {
@@ -45,7 +45,7 @@ Atracking(Context* ctx, double* lasthorizontalw, double* lastverticalw, char** s
     //	char gap[] = "-";
     char*  gap;
     double wm;
-    gap = newgapstr;
+    gap = ctx->newgapstr;
     lgth1 = strlen(seq1[0]);
     lgth2 = strlen(seq2[0]);
 
@@ -212,11 +212,11 @@ Aalign(Context* ctx, char** seq1, char** seq2, double* eff1, double* eff2, int i
 
         mseq = AllocateCharMtx(ctx->njob, ll1 + ll2);
 
-        cpmx1 = AllocateFloatMtx(nalphabets, ll1 + 2);
-        cpmx2 = AllocateFloatMtx(nalphabets, ll2 + 2);
+        cpmx1 = AllocateFloatMtx(ctx->nalphabets, ll1 + 2);
+        cpmx2 = AllocateFloatMtx(ctx->nalphabets, ll2 + 2);
 
-        doublework = AllocateFloatMtx(nalphabets, MAX(ll1, ll2) + 2);
-        intwork = AllocateIntMtx(nalphabets, MAX(ll1, ll2) + 2);
+        doublework = AllocateFloatMtx(ctx->nalphabets, MAX(ll1, ll2) + 2);
+        intwork = AllocateIntMtx(ctx->nalphabets, MAX(ll1, ll2) + 2);
 
         fprintf(stderr, "succeeded\n");
 

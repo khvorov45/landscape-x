@@ -220,22 +220,20 @@ fillzero(double* s, int l) {
 }
 
 static void
-match_calc_add(double** scoreingmtx, double* match, double** cpmx1, double** cpmx2, int i1, int lgth2, double** doublework, int** intwork, int initialize) {
+match_calc_add(Context* ctx, double** scoreingmtx, double* match, double** cpmx1, double** cpmx2, int i1, int lgth2, double** doublework, int** intwork, int initialize) {
 #if FASTMATCHCALC
-    //	fprintf( stderr, "\nmatch_calc... %d", i1 );
     int j, l;
-    //	double scarr[26];
     double** cpmxpd = doublework;
     int**    cpmxpdn = intwork;
     double * matchpt, *cpmxpdpt, **cpmxpdptpt;
     int *    cpmxpdnpt, **cpmxpdnptpt;
     double*  scarr;
-    scarr = calloc(nalphabets, sizeof(double));
+    scarr = calloc(ctx->nalphabets, sizeof(double));
     if (initialize) {
         int count = 0;
         for (j = 0; j < lgth2; j++) {
             count = 0;
-            for (l = 0; l < nalphabets; l++) {
+            for (l = 0; l < ctx->nalphabets; l++) {
                 if (cpmx2[l][j]) {
                     cpmxpd[j][count] = cpmx2[l][j];
                     cpmxpdn[j][count] = l;
@@ -247,9 +245,9 @@ match_calc_add(double** scoreingmtx, double* match, double** cpmx1, double** cpm
     }
 
     {
-        for (l = 0; l < nalphabets; l++) {
+        for (l = 0; l < ctx->nalphabets; l++) {
             scarr[l] = 0.0;
-            for (j = 0; j < nalphabets; j++)
+            for (j = 0; j < ctx->nalphabets; j++)
                 //				scarr[l] += n_dis[j][l] * cpmx1[j][i1];
                 //				scarr[l] += n_dis_consweight_multi[j][l] * cpmx1[j][i1];
                 scarr[l] += scoreingmtx[j][l] * cpmx1[j][i1];
@@ -307,22 +305,20 @@ match_calc_add(double** scoreingmtx, double* match, double** cpmx1, double** cpm
 }
 
 static void
-match_calc(double** n_dynamicmtx, double* match, double** cpmx1, double** cpmx2, int i1, int lgth2, double** doublework, int** intwork, int initialize) {
+match_calc(Context* ctx, double** n_dynamicmtx, double* match, double** cpmx1, double** cpmx2, int i1, int lgth2, double** doublework, int** intwork, int initialize) {
 #if FASTMATCHCALC
-    //	fprintf( stderr, "\nmatch_calc... %d", i1 );
     int j, l;
-    //	double scarr[26];
     double** cpmxpd = doublework;
     int**    cpmxpdn = intwork;
     double * matchpt, *cpmxpdpt, **cpmxpdptpt;
     int *    cpmxpdnpt, **cpmxpdnptpt;
     double*  scarr;
-    scarr = calloc(nalphabets, sizeof(double));
+    scarr = calloc(ctx->nalphabets, sizeof(double));
     if (initialize) {
         int count = 0;
         for (j = 0; j < lgth2; j++) {
             count = 0;
-            for (l = 0; l < nalphabets; l++) {
+            for (l = 0; l < ctx->nalphabets; l++) {
                 if (cpmx2[l][j]) {
                     cpmxpd[j][count] = cpmx2[l][j];
                     cpmxpdn[j][count] = l;
@@ -334,9 +330,9 @@ match_calc(double** n_dynamicmtx, double* match, double** cpmx1, double** cpmx2,
     }
 
     {
-        for (l = 0; l < nalphabets; l++) {
+        for (l = 0; l < ctx->nalphabets; l++) {
             scarr[l] = 0.0;
-            for (j = 0; j < nalphabets; j++)
+            for (j = 0; j < ctx->nalphabets; j++)
                 //				scarr[l] += n_dis[j][l] * cpmx1[j][i1];
                 //				scarr[l] += n_dis_consweight_multi[j][l] * cpmx1[j][i1];
                 scarr[l] += n_dynamicmtx[j][l] * cpmx1[j][i1];
@@ -507,16 +503,16 @@ Atracking_localhom(Context* ctx, double* impwmpt, double* lasthorizontalw, doubl
     }
 
     for (i = 0; i < icyc; i++)
-        gapireru(mseq1[i], seq1[i], gaptable1);
+        gapireru(ctx, mseq1[i], seq1[i], gaptable1);
     for (j = 0; j < jcyc; j++)
-        gapireru(mseq2[j], seq2[j], gaptable2);
+        gapireru(ctx, mseq2[j], seq2[j], gaptable2);
 
     free(gt1bk);
     free(gt2bk);
 }
 
 static double
-Atracking(double* lasthorizontalw, double* lastverticalw, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int icyc, int jcyc, int tailgp, int* warpis, int* warpjs, int warpbase) {
+Atracking(Context* ctx, double* lasthorizontalw, double* lastverticalw, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int icyc, int jcyc, int tailgp, int* warpis, int* warpjs, int warpbase) {
     int    i, j, l, iin, jin, ifi, jfi, lgth1, lgth2, k, limk;
     double wm;
     char * gaptable1, *gt1bk;
@@ -623,9 +619,9 @@ Atracking(double* lasthorizontalw, double* lastverticalw, char** seq1, char** se
     }
 
     for (i = 0; i < icyc; i++)
-        gapireru(mseq1[i], seq1[i], gaptable1);
+        gapireru(ctx, mseq1[i], seq1[i], gaptable1);
     for (j = 0; j < jcyc; j++)
-        gapireru(mseq2[j], seq2[j], gaptable2);
+        gapireru(ctx, mseq2[j], seq2[j], gaptable2);
 
     free(gt1bk);
     free(gt2bk);
@@ -1355,7 +1351,6 @@ calcpfac(Gaplen** gaplen1, Gaplen** gaplen2, int i, int j, char* seq1, char* seq
         reporterr("i,j=%d,%d\n", i, j);
 
         reporterr("In calcpfac(), gaplen1[%d(%c)] = \n", i, seq1[i]);
-        //		showgaplen( gaplen1, seqlen( seq1 ) );
         for (k = 0; gaplen1[i] && (id1 = gaplen1[i][k].idatend) != -1; k++) {
             pos1 = gaplen1[i][k].relend;
             reporterr("pos1=%d, id1=%d\n", pos1, id1);
@@ -1363,7 +1358,6 @@ calcpfac(Gaplen** gaplen1, Gaplen** gaplen2, int i, int j, char* seq1, char* seq
         }
 
         reporterr("In calcpfac(), gaplen2[%d(%c)] = \n", j, seq2[j]);
-        //		showgaplen( gaplen2, seqlen( seq2 ) );
         for (k = 0; gaplen2[j] && (id2 = gaplen2[j][k].idatend) != -1; k++) {
             pos2 = gaplen2[j][k].relend;
             reporterr("j=%d, k=%d, id2=%d, pos2=%d\n", j, k, id2, pos2);
@@ -1488,14 +1482,14 @@ calcpfacnoidatend(Gaplen** gaplen1, Gaplen** gaplen2, int i, int j) {
         reporterr("i,j=%d,%d\n", i, j);
 
         reporterr("In calcpfacnoidatend(), gaplen1[%d(%c)] = \n", i, seq1[i]);
-        showgaplen(gaplen1, seqlen(seq1));
+        showgaplen(gaplen1, seqlen(ctx, seq1));
         for (k = 0; gaplen1[i] && gaplen1[i][k].idatnext != -1; k++) {
             pos1 = gaplen1[i][k].relend;
             reporterr(".len=%d, .relend=%d, .freq=%f (i=%d)\n", gaplen1[i][k].len, gaplen1[i][k].relend, gaplen1[i][k].freq, i);
         }
 
         reporterr("In calcpfacnoidatend(), gaplen2[%d(%c)] = \n", j, seq2[j]);
-        showgaplen(gaplen2, seqlen(seq2));
+        showgaplen(gaplen2, seqlen(ctx, seq2));
         for (k = 0; gaplen2[j] && gaplen2[j][k].idatnext != -1; k++) {
             pos2 = gaplen2[j][k].relend;
             reporterr(".len=%d, .relend=%d (j=%d)\n", gaplen2[j][k].len, gaplen2[j][k].relend, j);
@@ -2458,7 +2452,7 @@ D__align(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* 
             j = lgth2;
             seq1[i][j] = 0;
             while (j)
-                seq1[i][--j] = *newgapstr;
+                seq1[i][--j] = *ctx->newgapstr;
             //			fprintf( stderr, "seq1[i] = %s\n", seq1[i] );
         }
         return (0.0);
@@ -2469,7 +2463,7 @@ D__align(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* 
             j = lgth1;
             seq2[i][j] = 0;
             while (j)
-                seq2[i][--j] = *newgapstr;
+                seq2[i][--j] = *ctx->newgapstr;
             //			fprintf( stderr, "seq2[i] = %s\n", seq2[i] );
         }
         return (0.0);
@@ -2609,12 +2603,12 @@ D__align(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* 
 
         mseq = AllocateCharMtx(ctx->njob, ll1 + ll2);
 
-        cpmx1 = AllocateFloatMtx(nalphabets, ll1 + 2);
-        cpmx2 = AllocateFloatMtx(nalphabets, ll2 + 2);
+        cpmx1 = AllocateFloatMtx(ctx->nalphabets, ll1 + 2);
+        cpmx2 = AllocateFloatMtx(ctx->nalphabets, ll2 + 2);
 
 #if FASTMATCHCALC
-        doublework = AllocateFloatMtx(MAX(ll1, ll2) + 2, nalphabets);
-        intwork = AllocateIntMtx(MAX(ll1, ll2) + 2, nalphabets + 1);
+        doublework = AllocateFloatMtx(MAX(ll1, ll2) + 2, ctx->nalphabets);
+        intwork = AllocateIntMtx(MAX(ll1, ll2) + 2, ctx->nalphabets + 1);
 #else
         doublework = AllocateFloatMtx(nalphabets, MAX(ll1, ll2) + 2);
         intwork = AllocateIntMtx(nalphabets, MAX(ll1, ll2) + 2);
@@ -2971,18 +2965,13 @@ D__align(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* 
     currentw = w1;
     previousw = w2;
 
-    match_calc(n_dynamicmtx, initverticalw, cpmx2, cpmx1, 0, lgth1, doublework, intwork, 1);
+    match_calc(ctx, n_dynamicmtx, initverticalw, cpmx2, cpmx1, 0, lgth1, doublework, intwork, 1);
     if (constraint)
         imp_match_out_vead_tate(initverticalw, 0, lgth1);  // 060306
 
-    match_calc(n_dynamicmtx, currentw, cpmx1, cpmx2, 0, lgth2, doublework, intwork, 1);
+    match_calc(ctx, n_dynamicmtx, currentw, cpmx1, cpmx2, 0, lgth2, doublework, intwork, 1);
     if (constraint)
         imp_match_out_vead(currentw, 0, lgth2);  // 060306
-#if 0  // -> tbfast.c // impossible
-	if( localhom )
-		imp_match_calc( n_dynamicmtx, currentw, icyc, jcyc, lgth1, lgth2, seq1, seq2, eff1, eff2, localhom, 1, 0 );
-
-#endif
 
     for (j = 1; j < lgth2 + 1; j++) {
         pfac = calcpfac_gap_noidatend(gaplen1, gaplen2, j, 0, j);
@@ -3075,7 +3064,7 @@ D__align(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* 
         copygaplencompactx(gaplen1jprev[0], gaplen1icurr[i - 1], -1, 0, i, 1);  // half? lgth1-i?
         copygaplencompactx(gaplen2jprev[0], gaplen2icurr[i - 1], -1, 0, 0, 0);  // half?? lgth2-j?
 
-        match_calc(n_dynamicmtx, currentw, cpmx1, cpmx2, i, lgth2, doublework, intwork, 0);
+        match_calc(ctx, n_dynamicmtx, currentw, cpmx1, cpmx2, i, lgth2, doublework, intwork, 0);
 #if XXXXXXX
         fprintf(stderr, "\n");
         fprintf(stderr, "i=%d\n", i);
@@ -3086,12 +3075,7 @@ D__align(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* 
         fprintf(stderr, "\n");
 #endif
         if (constraint) {
-//			fprintf( stderr, "Calling imp_match_calc (o) lgth = %d, i = %d\n", lgth1, i );
-#if 0
-			imp_match_out_vead( currentw, i, lgth2 );
-#else
             imp_match_out_vead(currentw, i, lgth2);
-#endif
         }
 #if XXXXXXX
         fprintf(stderr, "\n");
@@ -3693,7 +3677,7 @@ D__align(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* 
     if (constraint) {
         Atracking_localhom(ctx, impmatch, currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, warpis, warpjs, warpbase);
     } else
-        Atracking(currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, tailgp, warpis, warpjs, warpbase);
+        Atracking(ctx, currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, tailgp, warpis, warpjs, warpbase);
 
     if (warpis)
         free(warpis);
@@ -3999,11 +3983,11 @@ D__align_variousdist(Context* ctx, int** which, double*** matrices, char** seq1,
 #if SLOW
     nmask = calloc(maxdistclass, sizeof(int));
 #else
-    masklist1 = AllocateIntMtx(maxdistclass, 0);
-    masklist2 = AllocateIntMtx(maxdistclass, 0);
-    nmask = calloc(maxdistclass, sizeof(int));
+    masklist1 = AllocateIntMtx(ctx->maxdistclass, 0);
+    masklist2 = AllocateIntMtx(ctx->maxdistclass, 0);
+    nmask = calloc(ctx->maxdistclass, sizeof(int));
 
-    for (c = 0; c < maxdistclass; c++) {
+    for (c = 0; c < ctx->maxdistclass; c++) {
         for (i = 0; i < icyc; i++)
             for (j = 0; j < jcyc; j++) {
                 if (eff1s[c][i] * eff2s[c][j] != 0.0) {
@@ -4019,10 +4003,10 @@ D__align_variousdist(Context* ctx, int** which, double*** matrices, char** seq1,
                 }
             }
     }
-    for (c = 0; c < maxdistclass; c++)
+    for (c = 0; c < ctx->maxdistclass; c++)
         if (nmask[c])
             break;
-    if (c < maxdistclass)
+    if (c < ctx->maxdistclass)
         reporterr("Found a complex grouping. This step may be a bit slow.\n");
 #endif
 
@@ -4045,7 +4029,7 @@ D__align_variousdist(Context* ctx, int** which, double*** matrices, char** seq1,
             j = lgth2;
             seq1[i][j] = 0;
             while (j)
-                seq1[i][--j] = *newgapstr;
+                seq1[i][--j] = *ctx->newgapstr;
             //			fprintf( stderr, "seq1[i] = %s\n", seq1[i] );
         }
         return (0.0);
@@ -4056,7 +4040,7 @@ D__align_variousdist(Context* ctx, int** which, double*** matrices, char** seq1,
             j = lgth1;
             seq2[i][j] = 0;
             while (j)
-                seq2[i][--j] = *newgapstr;
+                seq2[i][--j] = *ctx->newgapstr;
             //			fprintf( stderr, "seq2[i] = %s\n", seq2[i] );
         }
         return (0.0);
@@ -4187,11 +4171,11 @@ D__align_variousdist(Context* ctx, int** which, double*** matrices, char** seq1,
 
         mseq = AllocateCharMtx(ctx->njob, ll1 + ll2);
 
-        cpmx1s = AllocateFloatCub(maxdistclass, nalphabets, ll1 + 2);
-        cpmx2s = AllocateFloatCub(maxdistclass, nalphabets, ll2 + 2);
+        cpmx1s = AllocateFloatCub(ctx->maxdistclass, ctx->nalphabets, ll1 + 2);
+        cpmx2s = AllocateFloatCub(ctx->maxdistclass, ctx->nalphabets, ll2 + 2);
 
-        doublework = AllocateFloatCub(maxdistclass, MAX(ll1, ll2) + 2, nalphabets);
-        intwork = AllocateIntCub(maxdistclass, MAX(ll1, ll2) + 2, nalphabets + 1);
+        doublework = AllocateFloatCub(ctx->maxdistclass, MAX(ll1, ll2) + 2, ctx->nalphabets);
+        intwork = AllocateIntCub(ctx->maxdistclass, MAX(ll1, ll2) + 2, ctx->nalphabets + 1);
 
 #if DEBUG
         fprintf(stderr, "succeeded\n");
@@ -4433,7 +4417,7 @@ D__align_variousdist(Context* ctx, int** which, double*** matrices, char** seq1,
 
 #if SLOW
 #else
-    for (c = 0; c < maxdistclass; c++) {
+    for (c = 0; c < ctx->maxdistclass; c++) {
         cpmx_calc_new(ctx, seq1, cpmx1s[c], eff1s[c], lgth1, icyc);
         cpmx_calc_new(ctx, seq2, cpmx2s[c], eff2s[c], lgth2, jcyc);
     }
@@ -4554,33 +4538,15 @@ D__align_variousdist(Context* ctx, int** which, double*** matrices, char** seq1,
         copygaplencompactx(gaplen1jbest[j], gaplen1, 0, j, 0, 0);  // TEST
     }
 
-    //	reporterr( "Duplication end\n" );
-
-#if 0
-	reporterr( "Checking gaplen1icurr\n" );
-	checkgaplen( gaplen1icurr[0], 100 );
-	reporterr( "Checking gaplen2icurr\n" );
-	checkgaplen( gaplen2icurr[0], 100 );
-#endif
-
-    //	showgaplen( gaplen1jcurr[50], lgth2 );
-
     currentw = w1;
     previousw = w2;
 
-//	match_calc( n_dynamicmtx, initverticalw, cpmx2, cpmx1, 0, lgth1, doublework, intwork, 1 );
 #if SLOW
     match_calc_slow(which, matrices, initverticalw, jcyc, seq2, eff2, icyc, seq1, eff1, 0, lgth1, *doublework, *intwork, 1, 1);
-//	for( i=0; i<lgth1; i++ ) fprintf( stderr, "%d - %f\n", i, initverticalw[i] );
 #else
     fillzero(initverticalw, lgth1);
-    for (c = 0; c < maxdistclass; c++) {
-        //		fprintf( stderr, "c=%d matrices[c][W][W] = %f\n", c, matrices[c][amino_n['W']][amino_n['W']] );
-        //		for( i=0; i<lgth1; i++ ) fprintf( stderr, "seq1[i] = %c, cpmx1s[c][3][%d] = %f\n", seq1[0][i], i, cpmx1s[c][3][i] );
-        //		for( i=0; i<lgth2; i++ ) fprintf( stderr, "seq2[i] = %c, cpmx2s[c][3][%d] = %f\n", seq2[0][i], i, cpmx2s[c][3][i] );
-        match_calc_add(matrices[c], initverticalw, cpmx2s[c], cpmx1s[c], 0, lgth1, doublework[c], intwork[c], 1);
-        //		for( i=0; i<lgth1; i++ ) fprintf( stderr, "c=%d, %d - %f\n", c, i, initverticalw[i] );
-
+    for (c = 0; c < ctx->maxdistclass; c++) {
+        match_calc_add(ctx, matrices[c], initverticalw, cpmx2s[c], cpmx1s[c], 0, lgth1, doublework[c], intwork[c], 1);
         if (nmask[c])
             match_calc_del(ctx, matrices, initverticalw, seq2, eff2, seq1, eff1, 0, lgth1, c, nmask[c], masklist2[c], masklist1[c]);
     }
@@ -4598,8 +4564,8 @@ D__align_variousdist(Context* ctx, int** which, double*** matrices, char** seq1,
 //	exit( 1 );
 #else
     fillzero(currentw, lgth2);
-    for (c = 0; c < maxdistclass; c++) {
-        match_calc_add(matrices[c], currentw, cpmx1s[c], cpmx2s[c], 0, lgth2, doublework[c], intwork[c], 1);
+    for (c = 0; c < ctx->maxdistclass; c++) {
+        match_calc_add(ctx, matrices[c], currentw, cpmx1s[c], cpmx2s[c], 0, lgth2, doublework[c], intwork[c], 1);
         if (nmask[c])
             match_calc_del(ctx, matrices, currentw, seq1, eff1, seq2, eff2, 0, lgth2, c, nmask[c], masklist1[c], masklist2[c]);
     }
@@ -4722,8 +4688,8 @@ D__align_variousdist(Context* ctx, int** which, double*** matrices, char** seq1,
         match_calc_slow(which, matrices, currentw, icyc, seq1, eff1, jcyc, seq2, eff2, i, lgth2, *doublework, *intwork, 0, 0);
 #else
         fillzero(currentw, lgth2);
-        for (c = 0; c < maxdistclass; c++) {
-            match_calc_add(matrices[c], currentw, cpmx1s[c], cpmx2s[c], i, lgth2, doublework[c], intwork[c], 0);
+        for (c = 0; c < ctx->maxdistclass; c++) {
+            match_calc_add(ctx, matrices[c], currentw, cpmx1s[c], cpmx2s[c], i, lgth2, doublework[c], intwork[c], 0);
             if (nmask[c])
                 match_calc_del(ctx, matrices, currentw, seq1, eff1, seq2, eff2, i, lgth2, c, nmask[c], masklist1[c], masklist2[c]);
         }
@@ -5365,7 +5331,7 @@ D__align_variousdist(Context* ctx, int** which, double*** matrices, char** seq1,
     if (constraint) {
         Atracking_localhom(ctx, impmatch, currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, warpis, warpjs, warpbase);
     } else
-        Atracking(currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, tailgp, warpis, warpjs, warpbase);
+        Atracking(ctx, currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, tailgp, warpis, warpjs, warpbase);
 
     if (warpis)
         free(warpis);

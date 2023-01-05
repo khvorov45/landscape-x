@@ -5,10 +5,10 @@
 #define USE_PENALTY_EX 0
 
 static void
-extendmseq(char** mseq1, char** mseq2, char** seq1, char** seq2, int i, int j, int prevhiti, int prevhitj) {
+extendmseq(Context* ctx, char** mseq1, char** mseq2, char** seq1, char** seq2, int i, int j, int prevhiti, int prevhitj) {
     //	char gap[] = "-";
     char* gap;
-    gap = newgapstr;
+    gap = ctx->newgapstr;
     int l;
 
     fprintf(stderr, "i=%d, prevhiti=%d\n", i, prevhiti);
@@ -43,20 +43,12 @@ match_calc(Context* ctx, double* match, char** s1, char** s2, int i1, int lgth2)
 }
 
 static double
-Atracking(char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp) {
+Atracking(Context* ctx, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp) {
     int i, j, l, iin, jin, ifi, jfi, lgth1, lgth2, k, limk;
-    //	char gap[] = "-";
     char* gap;
-    gap = newgapstr;
+    gap = ctx->newgapstr;
     lgth1 = strlen(seq1[0]);
     lgth2 = strlen(seq2[0]);
-
-#if 0
-	for( i=0; i<lgth1; i++ ) 
-	{
-		fprintf( stderr, "lastverticalw[%d] = %f\n", i, lastverticalw[i] );
-	}
-#endif
 
     for (i = 0; i < lgth1 + 1; i++) {
         ijp[i][0] = i + 1;
@@ -133,7 +125,7 @@ backdp(Context* ctx, double** WMMTX, double wmmax, double* maxinw, double* maxin
     prevhitj = jin;
     fprintf(stderr, "prevhiti = %d, lgth1 = %d\n", prevhiti, lgth1);
     fprintf(stderr, "prevhitj = %d, lgth2 = %d\n", prevhitj, lgth2);
-    extendmseq(mseq1, mseq2, seq1, seq2, prevhiti, prevhitj, lgth1, lgth2);
+    extendmseq(ctx, mseq1, mseq2, seq1, seq2, prevhiti, prevhitj, lgth1, lgth2);
 
     for (i = 0; i < lgth1 - 1; i++) {
         initverticalw[i] += fpenalty;
@@ -231,7 +223,7 @@ backdp(Context* ctx, double** WMMTX, double wmmax, double* maxinw, double* maxin
             WMMTX[i][j] = forwwm;
             if (forwwm == wmmax && i < prevhiti && j < prevhitj) {
                 fprintf(stderr, "hit!\n");
-                extendmseq(mseq1, mseq2, seq1, seq2, i, j, prevhiti, prevhitj);
+                extendmseq(ctx, mseq1, mseq2, seq1, seq2, i, j, prevhiti, prevhitj);
                 if (forwwm == wmmax) {
                     *--mseq1[0] = 'u';
                     *--mseq2[0] = 'u';
@@ -247,7 +239,7 @@ backdp(Context* ctx, double** WMMTX, double wmmax, double* maxinw, double* maxin
             curpt--;
         }
     }
-    extendmseq(mseq1, mseq2, seq1, seq2, -1, -1, prevhiti, prevhitj);
+    extendmseq(ctx, mseq1, mseq2, seq1, seq2, -1, -1, prevhiti, prevhitj);
 }
 
 double
@@ -344,11 +336,11 @@ MSalign11(Context* ctx, char** seq1, char** seq2, int alloclen) {
 
         mseq = AllocateCharMtx(ctx->njob, ll1 + ll2);
 
-        cpmx1 = AllocateFloatMtx(nalphabets, ll1 + 2);
-        cpmx2 = AllocateFloatMtx(nalphabets, ll2 + 2);
+        cpmx1 = AllocateFloatMtx(ctx->nalphabets, ll1 + 2);
+        cpmx2 = AllocateFloatMtx(ctx->nalphabets, ll2 + 2);
 
-        doublework = AllocateFloatMtx(nalphabets, MAX(ll1, ll2) + 2);
-        intwork = AllocateIntMtx(nalphabets, MAX(ll1, ll2) + 2);
+        doublework = AllocateFloatMtx(ctx->nalphabets, MAX(ll1, ll2) + 2);
+        intwork = AllocateIntMtx(ctx->nalphabets, MAX(ll1, ll2) + 2);
 
 #if DEBUG
         fprintf(stderr, "succeeded\n");
@@ -589,7 +581,7 @@ MSalign11(Context* ctx, char** seq1, char** seq2, int alloclen) {
     mseq2[0] += lgth1 + lgth2;
     *mseq2[0] = 0;
 
-    Atracking(seq1, seq2, mseq1, mseq2, ijp);
+    Atracking(ctx, seq1, seq2, mseq1, mseq2, ijp);
 
     resultlen = strlen(mseq1[0]);
     if (alloclen < resultlen || resultlen > N) {

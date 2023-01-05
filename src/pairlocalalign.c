@@ -1366,10 +1366,10 @@ arguments(Context* ctx, int argc, char* argv[]) {
     ctx->fftThreshold = NOTSPECIFIED;
     ctx->RNAppenalty = NOTSPECIFIED;
     ctx->RNApthr = NOTSPECIFIED;
-    specificityconsideration = 0.0;
+    ctx->specificityconsideration = 0.0;
     usenaivescoreinsteadofalignmentscore = 0;
     specifictarget = 0;
-    nwildcard = 0;
+    ctx->nwildcard = 0;
 
     //	reporterr( "argc=%d\n", argc );
     //	reporterr( "*argv=%s\n", *argv );
@@ -1478,7 +1478,7 @@ arguments(Context* ctx, int argc, char* argv[]) {
                     --argc;
                     goto nextoption;
                 case 'u':
-                    specificityconsideration = (double)myatof(*++argv);
+                    ctx->specificityconsideration = (double)myatof(*++argv);
                     //					fprintf( stderr, "specificityconsideration = %f\n", specificityconsideration );
                     --argc;
                     goto nextoption;
@@ -1597,7 +1597,7 @@ arguments(Context* ctx, int argc, char* argv[]) {
                     specifictarget = 1;
                     break;
                 case ':':
-                    nwildcard = 1;
+                    ctx->nwildcard = 1;
                     break;
                     /* Modified 01/08/27, default: user tree */
                 case 'J':
@@ -1832,8 +1832,8 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
 
     {
         double** dynamicmtx = NULL;
-        if (specificityconsideration > 0.0)
-            dynamicmtx = AllocateDoubleMtx(nalphabets, nalphabets);
+        if (ctx->specificityconsideration > 0.0)
+            dynamicmtx = AllocateDoubleMtx(ctx->nalphabets, ctx->nalphabets);
 
         if (ctx->alg == 'Y' || ctx->alg == 'r')
             ilim = ctx->njob - nadd;
@@ -1911,12 +1911,12 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
                                     if (thereisx)
                                         pscore = G__align11_noalign(ctx, ctx->n_dis_consweight_multi, ctx->penalty, ctx->penalty_ex, distseq1, distseq2);
 #if 1
-                                    if (specificityconsideration > 0.0) {
+                                    if (ctx->specificityconsideration > 0.0) {
                                         if (expdist)
                                             dist = expdist[i][j];
                                         else
                                             dist = score2dist(pscore, selfscore[i], selfscore[j]);
-                                        if (dist2offset(dist) < 0.0) {
+                                        if (dist2offset(ctx, dist) < 0.0) {
                                             makedynamicmtx(ctx, dynamicmtx, ctx->n_dis_consweight_multi, 0.5 * dist);  // upgma ni awaseru.
                                             strcpy(mseq1[0], seq[i]);
                                             strcpy(mseq2[0], seq[j]);
@@ -1941,13 +1941,13 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
                                     pscore = genL__align11(ctx, ctx->n_dis_consweight_multi, dumseq1, dumseq2, alloclen, &dum1, &dum2);  // uwagaki
                                 }
 #if 1
-                                if (specificityconsideration > 0.0) {
+                                if (ctx->specificityconsideration > 0.0) {
                                     //									fprintf( stderr, "dist = %f\n", score2dist( pscore, selfscore[i], selfscore[j] ) );
                                     if (expdist)
                                         dist = expdist[i][j];
                                     else
                                         dist = score2dist(pscore, selfscore[i], selfscore[j]);
-                                    if (dist2offset(dist) < 0.0) {
+                                    if (dist2offset(ctx, dist) < 0.0) {
                                         makedynamicmtx(ctx, dynamicmtx, ctx->n_dis_consweight_multi, 0.5 * dist);  // upgma ni awaseru.
                                         strcpy(mseq1[0], seq[i]);
                                         strcpy(mseq2[0], seq[j]);
@@ -1983,12 +1983,12 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
                                         if (thereisx)
                                             pscore = L__align11_noalign(ctx, ctx->n_dis_consweight_multi, distseq1, distseq2);  // all pair
 #if 1
-                                        if (specificityconsideration > 0.0) {
+                                        if (ctx->specificityconsideration > 0.0) {
                                             if (expdist)
                                                 dist = expdist[i][j];
                                             else
                                                 dist = score2dist(pscore, selfscore[i], selfscore[j]);
-                                            if ((scoreoffset = dist2offset(dist)) < 0.0) {
+                                            if ((scoreoffset = dist2offset(ctx, dist)) < 0.0) {
                                                 makedynamicmtx(ctx, dynamicmtx, ctx->n_dis_consweight_multi, 0.5 * dist);  // upgma ni awaseru.
                                                 strcpy(mseq1[0], seq[i]);
                                                 strcpy(mseq2[0], seq[j]);

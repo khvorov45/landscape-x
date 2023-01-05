@@ -20,32 +20,22 @@
 
 #define TREE7325 0
 
-#if 0
-int seqlen( char *seq )
-{
-	int val = 0;
-	while( *seq )
-		if( *seq++ != '-' ) val++;
-	return( val );
-}
-#else
 int
-seqlen(char* seq) {
+seqlen(Context* ctx, char* seq) {
     int val = 0;
-    if (*newgapstr == '-') {
+    if (*ctx->newgapstr == '-') {
         while (*seq)
             if (*seq++ != '-')
                 val++;
     } else {
         while (*seq) {
-            if (*seq != '-' && *seq != *newgapstr)
+            if (*seq != '-' && *seq != *ctx->newgapstr)
                 val++;
             seq++;
         }
     }
     return (val);
 }
-#endif
 
 int
 intlen(int* num) {
@@ -658,279 +648,6 @@ loadtreeoneline(int* ar, double* len, FILE* fp) {
     //	reporterr(       "len[0] = %f, len[1] = %f\n", len[0], len[1] );
 }
 
-void
-loadtop(int nseq, double** mtx, int*** topol, double** len, char** name, Treedep* dep) {
-    int     i, j, k, minijm, maxijm;
-    int *   intpt, *intpt2;
-    int*    hist = NULL;
-    Bchain* ac = NULL;
-    int     im = -1, jm = -1;
-    Bchain *acjmnext, *acjmprev;
-    int     prevnode;
-    int *   pt1, *pt2, *pt11, *pt22;
-    int*    nmemar;
-    int     nmemim, nmemjm;
-    char**  tree;
-    char*   treetmp;
-    char *  nametmp, *nameptr, *tmpptr;
-    char    namec;
-    FILE*   fp;
-    int     node[2];
-    double* height;
-    double  clusterdist;
-    int     mpair, mi, mj;
-
-    fp = fopen("_guidetree", "r");
-    if (!fp) {
-        reporterr("cannot open _guidetree\n");
-        exit(1);
-    }
-
-    if (!hist) {
-        hist = AllocateIntVec(nseq);
-        ac = (Bchain*)malloc(nseq * sizeof(Bchain));
-        nmemar = AllocateIntVec(nseq);
-        //		treetmp = AllocateCharVec( nseq*50 );
-        treetmp = NULL;
-        nametmp = AllocateCharVec(1000);  // nagasugi
-        //		tree = AllocateCharMtx( nseq, nseq*50 );
-        tree = AllocateCharMtx(nseq, 0);
-        height = AllocateFloatVec(nseq);
-    }
-
-    for (i = 0; i < nseq; i++) {
-        for (j = 0; j < 999; j++)
-            nametmp[j] = 0;
-        for (j = 0; j < 999; j++) {
-            namec = name[i][j];
-            if (namec == 0)
-                break;
-            else if (isalnum(namec) || namec == '/' || namec == '=' || namec == '-' || namec == '{' || namec == '}')
-                nametmp[j] = namec;
-            else
-                nametmp[j] = '_';
-        }
-        nametmp[j] = 0;
-        //		sprintf( tree[i], "%d_l=%d_%.20s", i+1, nlen[i], nametmp+1 );
-        if (outnumber)
-            nameptr = strstr(nametmp, "_numo_e") + 8;
-        else
-            nameptr = nametmp + 1;
-
-        if ((tmpptr = strstr(nameptr, "_oe_")))
-            nameptr = tmpptr + 4;  // = -> _ no tame
-
-        tree[i] = calloc(strlen(nametmp) + 100, sizeof(char));  // suuji no bun de +100
-        if (tree[i] == NULL) {
-            reporterr("Cannot allocate tree!\n");
-            exit(1);
-        }
-        sprintf(tree[i], "\n%d_%.900s\n", i + 1, nameptr);
-    }
-
-    for (i = 0; i < nseq; i++) {
-        ac[i].next = ac + i + 1;
-        ac[i].prev = ac + i - 1;
-        ac[i].pos = i;
-    }
-    ac[nseq - 1].next = NULL;
-
-    for (i = 0; i < nseq; i++) {
-        hist[i] = -1;
-        nmemar[i] = 1;
-    }
-
-    reporterr("\n");
-    for (k = 0; k < nseq - 1; k++) {
-        if (k % 10 == 0)
-            reporterr("\r% 5d / %d", k, nseq);
-#if 0
-		minscore = 999.9;
-		for( acpti=ac; acpti->next!=NULL; acpti=acpti->next ) 
-		{
-			i = acpti->pos;
-//			reporterr(       "k=%d i=%d\n", k, i );
-			if( mindisfrom[i] < minscore ) // muscle
-			{
-				im = i;
-				minscore = mindisfrom[i];
-			}
-		}
-		jm = nearest[im];
-		if( jm < im ) 
-		{
-			j=jm; jm=im; im=j;
-		}
-#else
-        len[k][0] = len[k][1] = -1.0;
-        loadtreeoneline(node, len[k], fp);
-        im = node[0];
-        jm = node[1];
-
-        if (im > nseq - 1 || jm > nseq - 1 || tree[im] == NULL || tree[jm] == NULL) {
-            reporterr("\n\nCheck the guide tree.\n");
-            reporterr("im=%d, jm=%d\n", im + 1, jm + 1);
-            reporterr("Please use newick2mafft.rb to generate a tree file from a newick tree.\n\n");
-            exit(1);
-        }
-
-#endif
-
-        prevnode = hist[im];
-        if (dep)
-            dep[k].child0 = prevnode;
-        nmemim = nmemar[im];
-
-        //		reporterr(       "prevnode = %d, nmemim = %d\n", prevnode, nmemim );
-
-        intpt = topol[k][0] = (int*)realloc(topol[k][0], (nmemim + 1) * sizeof(int));
-        if (prevnode == -1) {
-            *intpt++ = im;
-            *intpt = -1;
-        } else {
-            pt1 = topol[prevnode][0];
-            pt2 = topol[prevnode][1];
-            if (*pt1 > *pt2) {
-                pt11 = pt2;
-                pt22 = pt1;
-            } else {
-                pt11 = pt1;
-                pt22 = pt2;
-            }
-            for (intpt2 = pt11; *intpt2 != -1;)
-                *intpt++ = *intpt2++;
-            for (intpt2 = pt22; *intpt2 != -1;)
-                *intpt++ = *intpt2++;
-            *intpt = -1;
-        }
-
-        nmemjm = nmemar[jm];
-        prevnode = hist[jm];
-        if (dep)
-            dep[k].child1 = prevnode;
-
-        //		reporterr(       "prevnode = %d, nmemjm = %d\n", prevnode, nmemjm );
-
-        intpt = topol[k][1] = (int*)realloc(topol[k][1], (nmemjm + 1) * sizeof(int));
-        if (!intpt) {
-            reporterr("Cannot reallocate topol\n");
-            exit(1);
-        }
-        if (prevnode == -1) {
-            *intpt++ = jm;
-            *intpt = -1;
-        } else {
-            pt1 = topol[prevnode][0];
-            pt2 = topol[prevnode][1];
-            if (*pt1 > *pt2) {
-                pt11 = pt2;
-                pt22 = pt1;
-            } else {
-                pt11 = pt1;
-                pt22 = pt2;
-            }
-            for (intpt2 = pt11; *intpt2 != -1;)
-                *intpt++ = *intpt2++;
-            for (intpt2 = pt22; *intpt2 != -1;)
-                *intpt++ = *intpt2++;
-            *intpt = -1;
-        }
-
-        //		len[k][0] = ( minscore - tmptmplen[im] );
-        //		len[k][1] = ( minscore - tmptmplen[jm] );
-        //		len[k][0] = -1;
-        //		len[k][1] = -1;
-
-        hist[im] = k;
-        nmemar[im] = nmemim + nmemjm;
-
-        if (len[k][0] == -1 || len[k][1] == -1) {
-            reporterr("Re-computing the length of branch %d..\n", k);
-            clusterdist = 0.0;
-            mpair = 0;
-            for (i = 0; (mi = topol[k][0][i]) > -1; i++)
-                for (j = 0; (mj = topol[k][1][j]) > -1; j++) {
-                    minijm = MIN(mi, mj);
-                    maxijm = MAX(mi, mj);
-                    clusterdist += mtx[minijm][maxijm - minijm];
-                    mpair += 1;
-                }
-            clusterdist /= (double)mpair;
-            reporterr("clusterdist = %f\n", clusterdist);
-            if (len[k][0] == -1)
-                len[k][0] = clusterdist / 2.0 - height[im];
-            if (len[k][1] == -1)
-                len[k][1] = clusterdist / 2.0 - height[im];
-
-            fprintf(stderr, "len0 = %f\n", len[k][0]);
-            fprintf(stderr, "len1 = %f\n\n", len[k][1]);
-        }
-
-#if 0
-        fprintf( stderr, "vSTEP-%03d:\n", k+1 );
-		fprintf( stderr, "len0 = %f\n", len[k][0] );
-        for( i=0; topol[k][0][i]>-1; i++ ) fprintf( stderr, " %03d", topol[k][0][i]+1 );
-        fprintf( stderr, "\n" );
-		fprintf( stderr, "len1 = %f\n", len[k][1] );
-        for( i=0; topol[k][1][i]>-1; i++ ) fprintf( stderr, " %03d", topol[k][1][i]+1 );
-        fprintf( stderr, "\n" );
-
-#endif
-        height[im] += len[k][0];  // for ig tree, 2015/Dec/25
-        dep[k].distfromtip = height[im];  // for ig tree, 2015/Dec/25
-        //		reporterr( "##### dep[%d].distfromtip = %f\n", k, height[im] );
-
-        treetmp = realloc(treetmp, strlen(tree[im]) + strlen(tree[jm]) + 100);  // 22 de juubunn (:%7,:%7) %7 ha minus kamo
-        if (!treetmp) {
-            reporterr("Cannot allocate treetmp\n");
-            exit(1);
-        }
-        sprintf(treetmp, "(%s:%7.5f,%s:%7.5f)", tree[im], len[k][0], tree[jm], len[k][1]);
-        free(tree[im]);
-        free(tree[jm]);
-        tree[im] = calloc(strlen(treetmp) + 1, sizeof(char));
-        tree[jm] = NULL;
-        if (tree[im] == NULL) {
-            reporterr("Cannot reallocate tree!\n");
-            exit(1);
-        }
-        strcpy(tree[im], treetmp);
-
-        //		reporterr(       "im,jm=%d,%d\n", im, jm );
-        acjmprev = ac[jm].prev;
-        acjmnext = ac[jm].next;
-        acjmprev->next = acjmnext;
-        if (acjmnext != NULL)
-            acjmnext->prev = acjmprev;
-            //		free( (void *)eff[jm] ); eff[jm] = NULL;
-
-#if 0  // muscle seems to miss this.
-		for( acpti=ac; acpti!=NULL; acpti=acpti->next )
-		{
-			i = acpti->pos;
-			if( nearest[i] == im ) 
-			{
-//				reporterr(       "calling setnearest\n" );
-//				setnearest( nseq, ac, eff, mindisfrom+i, nearest+i, i );
-			}
-		}
-#endif
-    }
-    fclose(fp);
-    fp = fopen("infile.tree", "w");
-    fprintf(fp, "%s;\n", treetmp);
-    fprintf(fp, "#by loadtop\n");
-    fclose(fp);
-
-    FreeCharMtx(tree);
-    free(treetmp);
-    free(nametmp);
-    free(hist);
-    free((char*)ac);
-    free((void*)nmemar);
-    free(height);
-}
-
 static void
 shufflelennum(Lennum* ary, int size) {
     int i;
@@ -1135,404 +852,8 @@ topolorder_mudaari(int* n1, int* n2, int* order1, int* order2, int*** topol, Tre
 }
 #endif
 
-#if CANONICALTREEFORMAT
 void
-createchain(int nseq, int*** topol, double** len, char** name, Treedep* dep, int treeout, int shuffle, int seed) {
-    FILE*  fp;
-    int    i, j;
-    double l, ll;
-    int    treelen;
-    char** tree;
-    char*  instanttree;
-    int    posinit;
-    //	char *treetmp, *tt;
-    char *nametmp, *nameptr, *tmpptr;
-    char  namec;
-    int*  order;
-    int   im, jm, mm;
-
-    if (treeout) {
-        //		treetmp = NULL;
-        nametmp = AllocateCharVec(1000);  // nagasugi
-        tree = AllocateCharMtx(nseq, 0);
-
-        treelen = nseq;
-        for (i = 0; i < nseq; i++) {
-            for (j = 0; j < 999; j++)
-                nametmp[j] = 0;
-            for (j = 0; j < 999; j++) {
-                namec = name[i][j];
-                if (namec == 0)
-                    break;
-                else if (isalnum(namec) || namec == '/' || namec == '=' || namec == '-' || namec == '{' || namec == '}')
-                    nametmp[j] = namec;
-                else
-                    nametmp[j] = '_';
-            }
-            nametmp[j] = 0;
-            //			sprintf( tree[i], "%d_l=%d_%.20s", i+1, nlen[i], nametmp+1 );
-            if (outnumber)
-                nameptr = strstr(nametmp, "_numo_e") + 8;
-            else
-                nameptr = nametmp + 1;
-
-            if ((tmpptr = strstr(nameptr, "_oe_")))
-                nameptr = tmpptr + 4;  // = -> _ no tame
-
-            tree[i] = calloc(strlen(nametmp) + 100, sizeof(char));  // suuji no bun de +100
-            if (tree[i] == NULL) {
-                reporterr("Cannot allocate tree!\n");
-                exit(1);
-            }
-            sprintf(tree[i], "\n%d_%.900s\n", i + 1, nameptr);
-            treelen += strlen(tree[i]) + 20;
-        }
-
-        instanttree = calloc(treelen, sizeof(char));
-        posinit = 0;
-        for (i = 0; i < nseq - 1; i++) {
-            instanttree[i] = '(';
-            posinit++;
-        }
-    }
-
-    order = calloc(nseq, sizeof(int));
-    for (i = 0; i < nseq; i++)
-        order[i] = i;
-
-    srand(seed);
-    if (shuffle)
-        stringshuffle(order, nseq);
-
-    ll = l = 2.0 / nseq;
-
-    im = order[0];
-    jm = order[1];
-
-    topol[0][0] = (int*)realloc(topol[0][0], (2) * sizeof(int));
-    topol[0][1] = (int*)realloc(topol[0][1], (2) * sizeof(int));
-    if (im < jm) {
-        topol[0][0][0] = im;
-        topol[0][0][1] = -1;
-        topol[0][1][0] = jm;
-        topol[0][1][1] = -1;
-        mm = im;
-    } else {
-        topol[0][0][0] = jm;
-        topol[0][0][1] = -1;
-        topol[0][1][0] = im;
-        topol[0][1][1] = -1;
-        mm = jm;
-    }
-    len[0][0] = len[0][1] = l;
-    dep[0].child1 = -1;
-    dep[0].child0 = -1;
-    dep[0].distfromtip = l;
-    ll += l;
-
-    if (treeout) {
-        posinit += sprintf(instanttree + posinit, "%s:%7.5f,", tree[im], len[0][0]);
-        //		reporterr( "instanttree = %s\n", instanttree );
-    }
-
-    for (i = 1; i < nseq - 1; i++) {
-        im = order[i];
-        jm = order[i + 1];
-
-        if (mm < jm) {
-#if MEMSAVE
-            topol[i][0] = (int*)realloc(topol[i][0], (2) * sizeof(int));
-            topol[i][0][0] = mm;
-            topol[i][0][1] = -1;
-#else
-            topol[i][0] = (int*)realloc(topol[i][0], (i + 2) * sizeof(int));
-            intcpy(topol[i][0], topol[i - 1][0]);
-            intcat(topol[i][0], topol[i - 1][1]);
-#endif
-            topol[i][1] = (int*)realloc(topol[i][1], (2) * sizeof(int));
-            topol[i][1][0] = jm;
-            topol[i][1][1] = -1;
-
-            //			reporterr( "step %d\n", i );
-            //			for( j=0; topol[i][0][j]!=-1; j++ ) reporterr( "%5d ", topol[i][0][j] );
-            //			reporterr( "\n", i );
-            //			for( j=0; topol[i][1][j]!=-1; j++ ) reporterr( "%5d ", topol[i][1][j] );
-            //			reporterr( "\n\n", i );
-            //
-            len[i][0] = l;
-            len[i][1] = ll;
-
-            if (dep) {
-                dep[i].child0 = i - 1;
-                dep[i].child1 = -1;
-                dep[i].distfromtip = ll;
-            }
-        } else {
-#if MEMSAVE
-            topol[i][1] = (int*)realloc(topol[i][1], (2) * sizeof(int));
-            topol[i][1][0] = mm;
-            topol[i][1][1] = -1;
-#else
-            topol[i][1] = (int*)realloc(topol[i][1], (i + 2) * sizeof(int));
-            intcpy(topol[i][1], topol[i - 1][0]);
-            intcat(topol[i][1], topol[i - 1][1]);
-#endif
-            topol[i][0] = (int*)realloc(topol[i][0], (2) * sizeof(int));
-            topol[i][0][0] = jm;
-            topol[i][0][1] = -1;
-
-            mm = jm;
-
-            //			reporterr( "step %d\n", i );
-            //			for( j=0; topol[i][0][j]!=-1; j++ ) reporterr( "%5d ", topol[i][0][j] );
-            //			reporterr( "\n", i );
-            //			for( j=0; topol[i][1][j]!=-1; j++ ) reporterr( "%5d ", topol[i][1][j] );
-            //			reporterr( "\n\n", i );
-            //
-
-            len[i][1] = l;
-            len[i][0] = ll;
-
-            if (dep) {
-                dep[i].child1 = i - 1;
-                dep[i].child0 = -1;
-                dep[i].distfromtip = ll;
-            }
-        }
-
-        if (treeout) {
-            posinit += sprintf(instanttree + posinit, "%s:%7.5f):%7.5f,", tree[im], ll - l, l);
-//			reporterr( "instanttree (in loop) = %s\n", instanttree );
-#if 0
-			if( i % 1000 == 0 ) reporterr( "\r%d/%d", i, nseq );
-//			reporterr( "size = %d\n", ( strlen( tree[im] ) + strlen( tree[jm] ) + 100 ) * sizeof( char ) );
-//			reporterr( "size = %d\n", ( strlen( tree[im] ) + strlen( tree[jm] ) + 100 ) );
-//			reporterr( "treetmp = %p\n", treetmp  );
-			tt = realloc( treetmp, ( strlen( tree[im] ) + strlen( tree[jm] ) + 100 ) * sizeof( char ) ); // 22 de juubunn (:%7,:%7) %7 ha minus kamo
-			if( tt == NULL )
-			{
-				reporterr(       "Cannot allocate treetmp\n" );
-				exit( 1 );
-			}
-			treetmp = tt;
-//			reporterr( "i=%d\n", i );
-//			reporterr( "part1=%s\n", tree[0] );
-//			reporterr( "part2=%s\n", tree[i+1] );
-//			reporterr( "size = %d, %d\n", strlen( tree[0] ), strlen( tree[i+1] )  );
-			sprintf( treetmp, "(%s:%7.5f,%s:%7.5f)", tree[im], len[i][0], tree[jm], len[i][1] );
-			free( tree[im] );
-			free( tree[jm] );
-			tree[jm] = calloc( strlen( treetmp )+1, sizeof( char ) );
-			tree[im] = NULL;
-			if( tree[jm] == NULL )
-			{
-				reporterr(       "Cannot reallocate tree!\n" );
-				exit( 1 );
-			}
-			strcpy( tree[jm], treetmp );
-#endif
-        }
-        ll += l;
-    }
-    if (treeout) {
-        posinit += sprintf(instanttree + posinit, "%s:%7.5f)", tree[jm], ll - l);
-        fp = fopen("infile.tree", "w");
-        //		fprintf( fp, "%s;\n", treetmp );
-        //		fprintf( fp, "#by createchain\n" );
-        fprintf(fp, "%s;\n", instanttree);
-        fclose(fp);
-        FreeCharMtx(tree);
-        free(nametmp);
-        free(instanttree);
-    }
-
-    fp = fopen("_guidetree", "w");
-    if (!fp) {
-        reporterr("cannot open _guidetree\n");
-        exit(1);
-    }
-    for (i = 0; i < nseq - 1; i++)
-        fprintf(fp, "%d %d %f %f\n", topol[i][0][0] + 1, topol[i][1][0] + 1, len[i][0], len[i][1]);
-    fclose(fp);
-
-    free(order);
-}
-#else
-void
-createchain(int nseq, int*** topol, double** len, char** name, int* nlen, Treedep* dep, int treeout, int shuffle, int seed) {
-    FILE*  fp;
-    int    i, j;
-    double l, ll;
-    int    treelen;
-    char** tree;
-    char*  instanttree;
-    int    posinit;
-    //	char *treetmp, *tt;
-    char *nametmp, *nameptr, *tmpptr;
-    char  namec;
-    int*  order;
-    int   im, jm;
-
-    if (treeout) {
-        //		treetmp = NULL;
-        nametmp = AllocateCharVec(1000);  // nagasugi
-        tree = AllocateCharMtx(nseq, 0);
-
-        treelen = nseq;
-        for (i = 0; i < nseq; i++) {
-            for (j = 0; j < 999; j++)
-                nametmp[j] = 0;
-            for (j = 0; j < 999; j++) {
-                namec = name[i][j];
-                if (namec == 0)
-                    break;
-                else if (isalnum(namec) || namec == '/' || namec == '=' || namec == '-' || namec == '{' || namec == '}')
-                    nametmp[j] = namec;
-                else
-                    nametmp[j] = '_';
-            }
-            nametmp[j] = 0;
-            //			sprintf( tree[i], "%d_l=%d_%.20s", i+1, nlen[i], nametmp+1 );
-            if (outnumber)
-                nameptr = strstr(nametmp, "_numo_e") + 8;
-            else
-                nameptr = nametmp + 1;
-
-            if ((tmpptr = strstr(nameptr, "_oe_")))
-                nameptr = tmpptr + 4;  // = -> _ no tame
-
-            tree[i] = calloc(strlen(nametmp) + 100, sizeof(char));  // suuji no bun de +100
-            if (tree[i] == NULL) {
-                reporterr("Cannot allocate tree!\n");
-                exit(1);
-            }
-            sprintf(tree[i], "\n%d_%.900s\n", i + 1, nameptr);
-            treelen += strlen(tree[i]) + 20;
-        }
-
-        instanttree = calloc(treelen, sizeof(char));
-        posinit = 0;
-        for (i = 0; i < nseq - 1; i++) {
-            instanttree[i] = '(';
-            posinit++;
-        }
-    }
-
-    order = calloc(nseq, sizeof(int));
-    for (i = 0; i < nseq; i++)
-        order[i] = i;
-
-    srand(seed);
-    if (shuffle)
-        stringshuffle(order, nseq);
-
-    ll = l = 2.0 / nseq;
-
-    for (i = 0; i < nseq - 1; i++) {
-        im = order[i];
-        jm = order[i + 1];
-
-        topol[i][0] = (int*)realloc(topol[i][0], (i + 2) * sizeof(int));
-        topol[i][1] = (int*)realloc(topol[i][1], (2) * sizeof(int));
-
-        for (j = 0; j < i; j++)
-            topol[i][0][j] = order[j];
-        topol[i][0][i] = im;
-        topol[i][0][i + 1] = -1;
-
-        topol[i][1][0] = jm;
-        topol[i][1][1] = -1;
-
-        len[i][0] = l;
-        len[i][1] = ll;
-        ll += l;
-
-        if (dep) {
-            dep[i].child0 = i - 1;
-            dep[i].child1 = -1;
-            dep[i].distfromtip = ll;
-        }
-
-        if (treeout) {
-            if (i == 0) {
-                posinit += sprintf(instanttree + posinit, "%s:%7.5f,", tree[im], len[i][0]);
-                //				reporterr( "instanttree = %s\n", instanttree );
-            } else if (i == nseq - 2) {
-                posinit += sprintf(instanttree + posinit, "%s:%7.5f):%7.5f,", tree[im], len[i - 1][1], len[i - 1][0]);
-                posinit += sprintf(instanttree + posinit, "%s:%7.5f)", tree[jm], len[i][1]);
-            } else {
-                posinit += sprintf(instanttree + posinit, "%s:%7.5f):%7.5f,", tree[im], len[i - 1][1], len[i - 1][0]);
-                //				reporterr( "instanttree (in loop) = %s\n", instanttree );
-            }
-#if 0
-			if( i % 1000 == 0 ) reporterr( "\r%d/%d", i, nseq );
-//			reporterr( "size = %d\n", ( strlen( tree[im] ) + strlen( tree[jm] ) + 100 ) * sizeof( char ) );
-//			reporterr( "size = %d\n", ( strlen( tree[im] ) + strlen( tree[jm] ) + 100 ) );
-//			reporterr( "treetmp = %p\n", treetmp  );
-			tt = realloc( treetmp, ( strlen( tree[im] ) + strlen( tree[jm] ) + 100 ) * sizeof( char ) ); // 22 de juubunn (:%7,:%7) %7 ha minus kamo
-			if( tt == NULL )
-			{
-				reporterr(       "Cannot allocate treetmp\n" );
-				exit( 1 );
-			}
-			treetmp = tt;
-//			reporterr( "i=%d\n", i );
-//			reporterr( "part1=%s\n", tree[0] );
-//			reporterr( "part2=%s\n", tree[i+1] );
-//			reporterr( "size = %d, %d\n", strlen( tree[0] ), strlen( tree[i+1] )  );
-			sprintf( treetmp, "(%s:%7.5f,%s:%7.5f)", tree[im], len[i][0], tree[jm], len[i][1] );
-			free( tree[im] );
-			free( tree[jm] );
-			tree[jm] = calloc( strlen( treetmp )+1, sizeof( char ) );
-			tree[im] = NULL;
-			if( tree[jm] == NULL )
-			{
-				reporterr(       "Cannot reallocate tree!\n" );
-				exit( 1 );
-			}
-			strcpy( tree[jm], treetmp );
-#endif
-        }
-    }
-    if (treeout) {
-        fp = fopen("infile.tree", "w");
-        //		fprintf( fp, "%s;\n", treetmp );
-        //		fprintf( fp, "#by createchain\n" );
-        fprintf(fp, "%s;\n", instanttree);
-        fclose(fp);
-        FreeCharMtx(tree);
-        free(nametmp);
-        free(instanttree);
-    }
-
-    fp = fopen("_guidetree", "w");
-    if (!fp) {
-        reporterr("cannot open _guidetree\n");
-        exit(1);
-    }
-#if CANONICALTREEFORMAT
-    for (i = 0; i < nseq - 1; i++)
-        fprintf(fp, "%d %d %f %f\n", topol[i][0][0] + 1, topol[i][1][0] + 1, len[i][0], len[i][1]);
-#else
-    k = topol[0][0][0];
-    for (i = 0; i < nseq - 1; i++) {
-        jm = topol[i][1][0];
-
-        if (jm > k) {
-            fprintf(fp, "%d %d %f %f\n", k + 1, jm + 1, len[i][0], len[i][1]);
-        } else {
-            fprintf(fp, "%d %d %f %f\n", jm + 1, k + 1, len[i][1], len[i][0]);
-            k = jm;
-        }
-    }
-#endif
-    fclose(fp);
-    free(order);
-}
-#endif
-
-void
-loadtree(int nseq, int*** topol, double** len, char** name, Treedep* dep, int treeout) {
+loadtree(Context* ctx, int nseq, int*** topol, double** len, char** name, Treedep* dep, int treeout) {
     int     i, j, k;
     int *   intpt, *intpt2;
     int*    hist = NULL;
@@ -1589,7 +910,7 @@ loadtree(int nseq, int*** topol, double** len, char** name, Treedep* dep, int tr
             }
             nametmp[j] = 0;
             //			sprintf( tree[i], "%d_l=%d_%.20s", i+1, nlen[i], nametmp+1 );
-            if (outnumber)
+            if (ctx->outnumber)
                 nameptr = strstr(nametmp, "_numo_e") + 8;
             else
                 nameptr = nametmp + 1;
@@ -2073,7 +1394,7 @@ fixed_supg_double_realloc_nobk_halfmtx_treeout_constrained(Context* ctx, int nse
         }
         nametmp[j] = 0;
         //		sprintf( tree[i], "%d_l=%d_%.20s", i+1, nlen[i], nametmp+1 );
-        if (outnumber)
+        if (ctx->outnumber)
             nameptr = strstr(nametmp, "_numo_e") + 8;
         else
             nameptr = nametmp + 1;
@@ -3090,7 +2411,7 @@ reformattree(Context* ctx, Treept* root, Treept* ori, int n, int*** topol, doubl
             }
             nametmp[j] = 0;
             //			sprintf( tree[i], "%d_l=%d_%.20s", i+1, nlen[i], nametmp+1 );
-            if (outnumber)
+            if (ctx->outnumber)
                 nameptr = strstr(nametmp, "_numo_e") + 8;
             else
                 nameptr = nametmp + 1;
@@ -3447,8 +2768,8 @@ recalcpairs4thread(recalcpairs4thread_arg_t* targ) {
 
     localhomtable = (LocalHom*)calloc(1, sizeof(LocalHom));
     freelocalhom1(localhomtable);
-    if (specificityconsideration > 0.0) {
-        dynamicmtx = AllocateDoubleMtx(nalphabets, nalphabets);
+    if (ctx->specificityconsideration > 0.0) {
+        dynamicmtx = AllocateDoubleMtx(ctx->nalphabets, ctx->nalphabets);
         mtxptr = dynamicmtx;
     } else
         mtxptr = ctx->n_dis_consweight_multi;
@@ -3505,7 +2826,7 @@ recalcpairs4thread(recalcpairs4thread_arg_t* targ) {
 
 #if EXACTLYSAMEASPAIRLOCALALIGN
 #else
-        if (specificityconsideration > 0.0)
+        if (ctx->specificityconsideration > 0.0)
             makedynamicmtx(ctx, dynamicmtx, ctx->n_dis_consweight_multi, dep[n].distfromtip);
 #endif
 
@@ -4164,7 +3485,7 @@ compacttree_memsaveselectable(Context* ctx, int nseq, double** partmtx, int* nea
             }
             nametmp[j] = 0;
             //			sprintf( tree[i], "%d_l=%d_%.20s", i+1, nlen[i], nametmp+1 );
-            if (outnumber)
+            if (ctx->outnumber)
                 nameptr = strstr(nametmp, "_numo_e") + 8;
             else
                 nameptr = nametmp + 1;
@@ -4628,7 +3949,7 @@ fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(Context* ctx, int n
         }
         nametmp[j] = 0;
         //		sprintf( tree[i], "%d_l=%d_%.20s", i+1, nlen[i], nametmp+1 );
-        if (outnumber)
+        if (ctx->outnumber)
             nameptr = strstr(nametmp, "_numo_e") + 8;
         else
             nameptr = nametmp + 1;
@@ -4998,7 +4319,7 @@ fixed_musclesupg_double_realloc_nobk_halfmtx_treeout(Context* ctx, int nseq, dou
         }
         nametmp[j] = 0;
         //		sprintf( tree[i], "%d_l=%d_%.20s", i+1, nlen[i], nametmp+1 );
-        if (outnumber)
+        if (ctx->outnumber)
             nameptr = strstr(nametmp, "_numo_e") + 8;
         else
             nameptr = nametmp + 1;
@@ -6468,7 +5789,7 @@ doublencpy(double* vec1, double* vec2, int len) {
 #define SEGMENTSIZE 150
 
 void
-dontcalcimportance_half(int nseq, char** seq, LocalHom** localhom) {
+dontcalcimportance_half(Context* ctx, int nseq, char** seq, LocalHom** localhom) {
     int       i, j;
     LocalHom* ptr;
     int*      nogaplen;
@@ -6476,8 +5797,7 @@ dontcalcimportance_half(int nseq, char** seq, LocalHom** localhom) {
     nogaplen = AllocateIntVec(nseq);
 
     for (i = 0; i < nseq; i++) {
-        nogaplen[i] = seqlen(seq[i]);
-        //		reporterr(       "nogaplen[%d] = %d\n", i, nogaplen[i] );
+        nogaplen[i] = seqlen(ctx, seq[i]);
     }
 
     for (i = 0; i < nseq; i++) {
@@ -6500,47 +5820,9 @@ dontcalcimportance_half(int nseq, char** seq, LocalHom** localhom) {
 }
 
 void
-dontcalcimportance(int nseq, char** seq, LocalHom** localhom) {
-    int       i, j;
-    LocalHom* ptr;
-    int*      nogaplen;
-
-    nogaplen = AllocateIntVec(nseq);
-
-    for (i = 0; i < nseq; i++) {
-        nogaplen[i] = seqlen(seq[i]);
-        //		reporterr(       "nogaplen[%d] = %d\n", i, nogaplen[i] );
-    }
-
-    for (i = 0; i < nseq; i++) {
-        for (j = 0; j < nseq; j++) {
-            for (ptr = localhom[i] + j; ptr; ptr = ptr->next) {
-//				reporterr(       "i,j=%d,%d,ptr=%p\n", i, j, ptr );
-#if 1
-                ptr->importance = ptr->opt / ptr->overlapaa;
-//				ptr->fimportance = (double)ptr->importance;
-#else
-                ptr->importance = ptr->opt / MIN(nogaplen[i], nogaplen[j]);
-#endif
-            }
-        }
-    }
-    free(nogaplen);
-}
-
-void
 dontcalcimportance_firstone(int nseq, LocalHom** localhom) {
     int       i, j, nseq1;
     LocalHom* ptr;
-#if 1
-#else
-    int* nogaplen;
-    nogaplen = AllocateIntVec(nseq);
-    for (i = 0; i < nseq; i++) {
-        nogaplen[i] = seqlen(seq[i]);
-        //		reporterr(       "nogaplen[%d] = %d\n", i, nogaplen[i] );
-    }
-#endif
 
     nseq1 = nseq - 1;
     for (i = 0; i < nseq1; i++) {
@@ -6566,7 +5848,7 @@ dontcalcimportance_firstone(int nseq, LocalHom** localhom) {
 }
 
 void
-calcimportance_target(int nseq, int ntarget, double* eff, char** seq, LocalHom** localhom, int* targetmap, int* targetmapr, int alloclen) {
+calcimportance_target(Context* ctx, int nseq, int ntarget, double* eff, char** seq, LocalHom** localhom, int* targetmap, int* targetmapr, int alloclen) {
     int       i, j, pos, len, ti, tj;
     double*   importance;  // static -> local, 2012/02/25
     double    tmpdouble;
@@ -6580,8 +5862,7 @@ calcimportance_target(int nseq, int ntarget, double* eff, char** seq, LocalHom**
 
     totaleff = 0.0;
     for (i = 0; i < nseq; i++) {
-        nogaplen[i] = seqlen(seq[i]);
-        //		reporterr(       "nogaplen[] = %d\n", nogaplen[i] );
+        nogaplen[i] = seqlen(ctx, seq[i]);
         if (nogaplen[i] == 0)
             ieff[i] = 0.0;
         else
@@ -6795,7 +6076,7 @@ calcimportance_target(int nseq, int ntarget, double* eff, char** seq, LocalHom**
 }
 
 void
-calcimportance_half(int nseq, double* eff, char** seq, LocalHom** localhom, int alloclen) {
+calcimportance_half(Context* ctx, int nseq, double* eff, char** seq, LocalHom** localhom, int alloclen) {
     int       i, j, pos, len;
     double*   importance;  // static -> local, 2012/02/25
     double    tmpdouble;
@@ -6810,7 +6091,7 @@ calcimportance_half(int nseq, double* eff, char** seq, LocalHom** localhom, int 
 
     totaleff = 0.0;
     for (i = 0; i < nseq; i++) {
-        nogaplen[i] = seqlen(seq[i]);
+        nogaplen[i] = seqlen(ctx, seq[i]);
         //		reporterr(       "nogaplen[] = %d\n", nogaplen[i] );
         if (nogaplen[i] == 0)
             ieff[i] = 0.0;
@@ -7011,9 +6292,9 @@ exit( 1 );
 }
 
 void
-gapireru(char* res, char* ori, char* gt) {
+gapireru(Context* ctx, char* res, char* ori, char* gt) {
     char g;
-    char gapchar = *newgapstr;
+    char gapchar = *ctx->newgapstr;
     while ((g = *gt++)) {
         if (g == '-') {
             *res++ = gapchar;
@@ -9203,9 +8484,8 @@ outgapcount(double* freq, int nseq, char* gappat, double* eff) {
 }
 
 double
-dist2offset(double dist) {
-    double val = dist * 0.5 - specificityconsideration;  // dist ha 0..2 dakara
-    //	double val = dist * 1.0 - specificityconsideration; // dist ha 0..2 dakara
+dist2offset(Context* ctx, double dist) {
+    double val = dist * 0.5 - ctx->specificityconsideration;
     if (val > 0.0)
         val = 0.0;
     return val;
@@ -9216,23 +8496,23 @@ makedynamicmtx(Context* ctx, double** out, double** in, double offset) {
     int    i, j, ii, jj;
     double av;
 
-    offset = dist2offset(offset * 2.0);  // offset 0..1 -> 0..2
+    offset = dist2offset(ctx, offset * 2.0);  // offset 0..1 -> 0..2
 
     //	if( offset > 0.0 ) offset = 0.0;
     //	reporterr(       "dynamic offset = %f\n", offset );
 
-    for (i = 0; i < nalphabets; i++)
-        for (j = 0; j < nalphabets; j++) {
+    for (i = 0; i < ctx->nalphabets; i++)
+        for (j = 0; j < ctx->nalphabets; j++) {
             out[i][j] = in[i][j];
         }
     if (offset == 0.0)
         return;
 
-    for (i = 0; i < nalphabets; i++) {
+    for (i = 0; i < ctx->nalphabets; i++) {
         ii = (int)ctx->amino[i];
         if (ii == '-')
             continue;  // text no toki arieru
-        for (j = 0; j < nalphabets; j++) {
+        for (j = 0; j < ctx->nalphabets; j++) {
             jj = (int)ctx->amino[j];
             if (jj == '-')
                 continue;  // text no toki arieru
@@ -9251,17 +8531,17 @@ makedynamicmtx(Context* ctx, double** out, double** in, double offset) {
     // Hitaikaku youso ga ookiku narisugi.
 
     av = 0.0;
-    for (i = 0; i < nalphabets; i++) {
+    for (i = 0; i < ctx->nalphabets; i++) {
         if (ii == '-')
             continue;  // text no toki arieru
         av += out[i][i];
     }
-    av /= (double)nalphabets;
+    av /= (double)ctx->nalphabets;
 
-    for (i = 0; i < nalphabets; i++) {
+    for (i = 0; i < ctx->nalphabets; i++) {
         if (ctx->amino[i] == '-')
             continue;  // text no toki arieru
-        for (j = 0; j < nalphabets; j++) {
+        for (j = 0; j < ctx->nalphabets; j++) {
             if (ctx->amino[j] == '-')
                 continue;  // text no toki arieru
             out[i][j] = out[i][j] * 600 / av;

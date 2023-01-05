@@ -291,22 +291,19 @@ typedef struct Context {
     int      nthreadpair;
     int      randomseed;
     int      parallelizationstrategy;
+    int      scoreout;
+    int      spscoreout;
+    int      outnumber;
+    int      legacygapcost;
+    double   minimumweight;
+    int      nwildcard;
+    char*    newgapstr;
+    int      nalphabets;
+    int      nscoredalphabets;
+    double   specificityconsideration;
+    int      ndistclass;
+    int      maxdistclass;
 } Context;
-
-extern int scoreout;
-extern int spscoreout;
-extern int outnumber;
-
-extern int    legacygapcost;
-extern double minimumweight;
-extern int    nwildcard;
-
-extern char* newgapstr;
-
-extern int    nalphabets;
-extern int    nscoredalphabets;
-extern double specificityconsideration;
-extern int    ndistclass, maxdistclass;
 
 extern int gmsg;
 
@@ -415,12 +412,11 @@ extern void         strins(char* str1, char* str2);
 extern int          isaligned(int nseq, char** seq);
 extern void         doublencpy(double* vec1, double* vec2, int len);
 extern char*        progName(char* str);
-extern void         dontcalcimportance(int nseq, char** seq, LocalHom** localhom);
-extern void         calcimportance_target(int nseq, int ntarget, double* eff, char** seq, LocalHom** localhom, int* targetmap, int* targetmapr, int alloclen);
+extern void         calcimportance_target(Context* ctx, int nseq, int ntarget, double* eff, char** seq, LocalHom** localhom, int* targetmap, int* targetmapr, int alloclen);
 extern void         dontcalcimportance_lastone(int nseq, double* eff, char** seq, LocalHom** localhom);
 extern void         dontcalcimportance_firstone(int nseq, LocalHom** localhom);
-extern void         dontcalcimportance_half(int nseq, char** seq, LocalHom** localhom);
-extern void         calcimportance_half(int nseq, double* eff, char** seq, LocalHom** localhom, int alloclen);
+extern void         dontcalcimportance_half(Context* ctx, int nseq, char** seq, LocalHom** localhom);
+extern void         calcimportance_half(Context* ctx, int nseq, double* eff, char** seq, LocalHom** localhom, int alloclen);
 extern void         weightimportance2(int nseq, double* eff, LocalHom** localhom);
 extern void         weightimportance4(int clus1, int clus2, double* eff1, double* eff2, LocalHom*** localhom);
 extern void         extendlocalhom(int nseq, LocalHom** localhom);
@@ -435,7 +431,6 @@ extern int          fastconjuction_noname_kozo(int* memlist, char** seq, char** 
 extern int          fastconjuction_noname(int* memlist, char** seq, char** aseq, double* peff, double* eff, char* d, double mineff, double* oritotal);
 extern int          fastconjuction_target(int* memlist, char** seq, char** aseq, double* peff, double* eff, char* d, double mineff, int* targetmap);
 extern int          fastconjuction_noweight(int* memlist, char** seq, char** aseq, double* peff, char* d);
-extern void         doubledelete(double** cpmx, int d, int len);
 extern void         chardelete(char* seq, int d);
 extern int          RootBranchNode(int nseq, int*** topol, int step, int branch);
 extern void         BranchLeafNode(int nseq, int*** topol, int* node, int step, int branch);
@@ -500,7 +495,7 @@ extern double       VAalign11(char** seq1, char** seq2, int alloclen, int* off1p
 extern int          fft(int n, Fukusosuu* x, int dum);
 extern void         JTTmtx(double** rsr, double* freq, unsigned char locamino[0x80], char locgrp[0x80], int isTM);
 extern void         BLOSUMmtx(Context* ctx, int n, double** matrix, double* freq, unsigned char* amino, char* amino_grp, int* rescale);
-extern int          extendedmtx(double** matrix, double* freq, unsigned char* amino, char* amino_grp);
+extern int          extendedmtx(Context* ctx, double** matrix, double* freq, unsigned char* amino, char* amino_grp);
 extern void         putlocalhom2(Context* ctx, char* al1, char* al2, LocalHom* localhompt, int off1, int off2, char korh);
 extern void         putlocalhom_str(char* al1, char* al2, double* equiv, double scale, LocalHom* localhompt, int off1, int off2, char korh);
 extern void         putlocalhom_ext(Context* ctx, char* al1, char* al2, LocalHom* localhompt, int off1, int off2, char korh);
@@ -574,8 +569,8 @@ extern int                load1SeqWithoutName_new(Context* ctx, FILE* fpp, char*
 extern char*              load1SeqWithoutName_realloc(Context* ctx, FILE* fpp);
 extern char*              load1SeqWithoutName_realloc_casepreserve(FILE* fpp);
 extern void               searchKUorWA(FILE* fp);
-extern void               gapireru(char* res, char* ori, char* gt);
-extern int                seqlen(char* seq);
+extern void               gapireru(Context* ctx, char* res, char* ori, char* gt);
+extern int                seqlen(Context* ctx, char* seq);
 extern void               st_FinalGapCount(double* fgcp, int clus, char** seq, double* eff, int len);
 extern void               st_FinalGapAdd(double* fgcp, int clus, char** seq, double* eff, int len);
 extern void               st_OpeningGapCount(double* ogcp, int clus, char** seq, double* eff, int len);
@@ -610,10 +605,8 @@ void                      makegrouprna(RNApair*** group, RNApair*** all, int* me
 void                      makegrouprnait(RNApair*** group, RNApair*** all, char* pair, int s);
 extern void               fixed_musclesupg_double_realloc_nobk_halfmtx(Context* ctx, int nseq, double** eff, int*** topol, double** len, Treedep*, int progressout, int efffree);
 extern void               fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(Context* ctx, int nseq, double** eff, int*** topol, double** len, Treedep*, int progressout, int efffree);
-extern void               loadtop(int nseq, double** mtx, int*** topol, double** len, char** name, Treedep*);
-extern void               loadtree(int nseq, int*** topol, double** len, char** name, Treedep*, int treeout);
+extern void               loadtree(Context* ctx, int nseq, int*** topol, double** len, char** name, Treedep*, int treeout);
 extern int                check_guidetreefile(int* seed, int* npick, double* limitram);
-extern void               createchain(int nseq, int*** topol, double** len, char** name, Treedep* dep, int treeout, int shuffle, int seed);
 extern void               fixed_musclesupg_double_realloc_nobk_halfmtx_treeout(Context* ctx, int nseq, double** eff, int*** topol, double** len, char** name, Treedep*, int efffree);  // KESU
 extern void               fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(Context* ctx, int nseq, double** eff, int*** topol, double** len, char** name, Treedep*, int efffree, int treeout);
 extern void               fixed_supg_double_realloc_nobk_halfmtx_treeout_constrained(Context* ctx, int nseq, double** eff, int*** topol, double** len, char** name, Treedep*, int ncons, int** constraints, int efffree);
@@ -654,7 +647,7 @@ extern void               gapcountf(double* freq, char** seq, int nseq, double* 
 extern void               gapcountadd(double* freq, char** seq, int nseq, double* eff, int lgth);
 extern void               outgapcount(double* freq, int nseq, char* gappat, double* eff);
 extern void               makedynamicmtx(Context* ctx, double** out, double** in, double offset);
-extern double             dist2offset(double dist);
+extern double             dist2offset(Context* ctx, double dist);
 extern void               reporterr(const char* str, ...);
 extern void               freeconstants(Context* ctx);
 extern void               closeFiles(Context* ctx);
@@ -669,8 +662,8 @@ extern int    deletenewinsertions_whole_eq(int on, int an, char** oseq, char** a
 extern int    deletenewinsertions_difflist(int on, int an, char** oseq, char** aseq, GapPos** difflist);
 extern int    recordoriginalgaps(char* originallygapped, int n, char** s);
 extern void   restoreoriginalgaps(int n, char** seq, char* originalgaps);
-extern void   reconstructdeletemap(int nadd, char** addbk, GapPos** deletelist, char** realn, FILE* fp, char** name);
-extern void   reconstructdeletemap_compact(int nadd, char** addbk, GapPos** deletelist, char** realn, FILE* fp, char** name);
+extern void   reconstructdeletemap(Context* ctx, int nadd, char** addbk, GapPos** deletelist, char** realn, FILE* fp, char** name);
+extern void   reconstructdeletemap_compact(Context* ctx, int nadd, char** addbk, GapPos** deletelist, char** realn, FILE* fp, char** name);
 extern double D__align(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int headgp, int tailgp);
 extern double D__align_variousdist(Context* ctx, int** whichmtx, double*** matrices, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int headgp, int tailgp);
 extern void   stringshuffle(int* ary, int size);
