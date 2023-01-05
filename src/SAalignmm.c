@@ -258,15 +258,15 @@ Aalign(Context* ctx, char** seq1, char** seq2, double* eff1, double* eff2, int i
 
     if (outgap == 1) {
         for (i = 1; i < lgth1 + 1; i++) {
-            initverticalw[i] += penalty * 0.5;
+            initverticalw[i] += ctx->penalty * 0.5;
         }
         for (j = 1; j < lgth2 + 1; j++) {
-            currentw[j] += penalty * 0.5;
+            currentw[j] += ctx->penalty * 0.5;
         }
     }
 
     for (j = 0; j < lgth2 + 1; ++j) {
-        m[j] = currentw[j - 1] + penalty * 0.5;
+        m[j] = currentw[j - 1] + ctx->penalty * 0.5;
         mp[j] = 0;
     }
 
@@ -284,32 +284,32 @@ Aalign(Context* ctx, char** seq1, char** seq2, double* eff1, double* eff2, int i
         match_calc(ctx, currentw, cpmx1, cpmx2, i, lgth2, doublework, intwork, 0);
         currentw[0] = initverticalw[i];
 
-        mi = previousw[0] + penalty * 0.5;
+        mi = previousw[0] + ctx->penalty * 0.5;
         mpi = 0;
         for (j = 1; j < lgth2 + 1; j++) {
             wm = previousw[j - 1];
             ijp[i][j] = 0;
 
-            g = penalty * 0.5;
+            g = ctx->penalty * 0.5;
             x = mi + g;
             if (x > wm) {
                 wm = x;
                 ijp[i][j] = -(j - mpi);
             }
-            g = penalty * 0.5;
+            g = ctx->penalty * 0.5;
             x = previousw[j - 1] + g;
             if (mi <= x) {
                 mi = x;
                 mpi = j - 1;
             }
 
-            g = penalty * 0.5;
+            g = ctx->penalty * 0.5;
             x = m[j] + g;
             if (x > wm) {
                 wm = x;
                 ijp[i][j] = +(i - mp[j]);
             }
-            g = penalty * 0.5;
+            g = ctx->penalty * 0.5;
             x = previousw[j - 1] + g;
             if (m[j] <= x) {
                 m[j] = x;

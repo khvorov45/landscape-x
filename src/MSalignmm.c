@@ -2018,7 +2018,7 @@ MSalignmm(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double*
     double **cpmx1, **cpmx1pt;
     double **cpmx2, **cpmx2pt;
     double** gapinfo;
-    double   fpenalty = (double)penalty;
+    double   fpenalty = (double)ctx->penalty;
     double * gapfreq1f, *gapfreq1pt;
     double * gapfreq2f, *gapfreq2pt;
     int      nglen1, nglen2;
@@ -3790,7 +3790,7 @@ MSalignmm_variousdist(Context* ctx, double*** matrices, char** seq1, char** seq2
     double*** cpmx1s;
     double*** cpmx2s;
     double**  gapinfo;
-    double    fpenalty = (double)penalty;
+    double    fpenalty = (double)ctx->penalty;
     double*   gapfreq1f;
     double*   gapfreq2f;
     int       nglen1, nglen2;

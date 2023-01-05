@@ -155,68 +155,6 @@ display(char** seq, int nseq) {
 }
 
 void
-intergroup_score_gapnomi(char** seq1, char** seq2, double* eff1, double* eff2, int clus1, int clus2, int len, double* value) {
-    int    i, j, k;
-    int    len2 = len - 2;
-    int    ms1, ms2;
-    double tmpscore;
-    char * mseq1, *mseq2;
-    double efficient;
-
-    //	totaleff1 = 0.0; for( i=0; i<clus1; i++ ) totaleff1 += eff1[i];
-    //	totaleff2 = 0.0; for( i=0; i<clus2; i++ ) totaleff2 += eff2[i];
-
-    *value = 0.0;
-    for (i = 0; i < clus1; i++) {
-        for (j = 0; j < clus2; j++) {
-            efficient = eff1[i] * eff2[j]; /* なぜか配列を使わないとおかしくなる, 多分バグ */
-            mseq1 = seq1[i];
-            mseq2 = seq2[j];
-            tmpscore = 0.0;
-            for (k = 0; k < len; k++) {
-                ms1 = (int)mseq1[k];
-                ms2 = (int)mseq2[k];
-                if (ms1 == (int)'-' && ms2 == (int)'-')
-                    continue;
-                //				tmpscore += (double)amino_dis[ms1][ms2];
-
-                if (ms1 == (int)'-') {
-                    tmpscore += (double)penalty;
-                    //					tmpscore += (double)amino_dis[ms1][ms2];
-                    while ((ms1 = (int)mseq1[++k]) == (int)'-')
-                        ;
-                    //						tmpscore += (double)amino_dis[ms1][ms2];
-                    k--;
-                    if (k > len2)
-                        break;
-                    continue;
-                }
-                if (ms2 == (int)'-') {
-                    tmpscore += (double)penalty;
-                    //					tmpscore += (double)amino_dis[ms1][ms2];
-                    while ((ms2 = (int)mseq2[++k]) == (int)'-')
-                        ;
-                    //						tmpscore += (double)amino_dis[ms1][ms2];
-                    k--;
-                    if (k > len2)
-                        break;
-                    continue;
-                }
-            }
-            *value += (double)tmpscore * (double)efficient;
-            //			reporterr(       "val in _gapnomi = %f\n", *value );
-        }
-    }
-#if 0
-	fprintf( stdout, "###score = %f\n", score );
-#endif
-#if DEBUG
-    reporterr("score in intergroup_score = %f\n", score);
-#endif
-    //	return( score );
-}
-
-void
 upg2(Context* ctx, int nseq, double** eff, int*** topol, double** len) {
     int    i, j, k;
     double tmplen[M];
@@ -3223,7 +3161,7 @@ distdp(Context* ctx, double** scoringmtx, char* s1, char* s2, LocalHom* lh, doub
 double
 distdp_noalign(Context* ctx, char* s1, char* s2, double selfscore1, double selfscore2, int alloclen) {
     (void)alloclen;
-    double v = G__align11_noalign(ctx, ctx->n_dis_consweight_multi, penalty, penalty_ex, &s1, &s2);
+    double v = G__align11_noalign(ctx, ctx->n_dis_consweight_multi, ctx->penalty, penalty_ex, &s1, &s2);
     return (score2dist(v, selfscore1, selfscore2));
 }
 
@@ -8086,10 +8024,10 @@ plainscore(Context* ctx, int nseq, char** s) {
     ilim = nseq - 1;
     for (i = 0; i < ilim; i++)
         for (j = i + 1; j < nseq; j++) {
-            v += (double)naivepairscore11(ctx, s[i], s[j], penalty);
+            v += (double)naivepairscore11(ctx, s[i], s[j], ctx->penalty);
         }
 
-    reporterr("penalty = %d\n", penalty);
+    reporterr("penalty = %d\n", ctx->penalty);
 
     return (v);
 }
@@ -9452,7 +9390,7 @@ sumofpairsscore(Context* ctx, int nseq, char** seq) {
     int    i, j;
     for (i = 1; i < nseq; i++) {
         for (j = 0; j < i; j++) {
-            v += naivepairscore11(ctx, seq[i], seq[j], penalty) / 600;
+            v += naivepairscore11(ctx, seq[i], seq[j], ctx->penalty) / 600;
         }
     }
     //	v /= ( (nseq-1) * nseq ) / 2;

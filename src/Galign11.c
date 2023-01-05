@@ -92,7 +92,7 @@ match_calc(double* match, char** s1, char** s2, int i1, int lgth2) {
 #endif
 
 static double
-Atracking(double* lasthorizontalw, double* lastverticalw, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int tailgp, int* warpis, int* warpjs, int warpbase) {
+Atracking(Context* ctx, double* lasthorizontalw, double* lastverticalw, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int tailgp, int* warpis, int* warpjs, int warpbase) {
     int i, j, l, iin, jin, ifi, jfi, lgth1, lgth2, k, limk;
     //	char gap[] = "-";
     char* gap;
@@ -100,7 +100,7 @@ Atracking(double* lasthorizontalw, double* lastverticalw, char** seq1, char** se
     lgth1 = strlen(seq1[0]);
     lgth2 = strlen(seq2[0]);
     double wm, g;
-    double fpenalty = (double)penalty;
+    double fpenalty = (double)ctx->penalty;
     double fpenalty_ex = (double)penalty_ex;
 
 #if 0
@@ -246,7 +246,7 @@ G__align11psg(Context* ctx, double** codonmtx, double** n_dynamicmtx, char** seq
     double       wm, wmo; /* int ?????? */
     double       g;
     double *     currentw, *previousw;
-    double       fpenalty = (double)penalty;
+    double       fpenalty = (double)ctx->penalty;
     double       fpenalty_shift = (double)penalty_shift;
     double       fpenalty_tmp;
 #if USE_PENALTY_EX
@@ -832,7 +832,7 @@ G__align11psg(Context* ctx, double** codonmtx, double** n_dynamicmtx, char** seq
         free(prevwarpj);
     }
 
-    wmo = Atracking(currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, tailgp, warpis, warpjs, warpbase);
+    wmo = Atracking(ctx, currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, tailgp, warpis, warpjs, warpbase);
     if (!tailgp)
         wm = wmo;
 
@@ -870,7 +870,7 @@ G__align11(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int al
     double       wm, wmo; /* int ?????? */
     double       g;
     double *     currentw, *previousw;
-    double       fpenalty = (double)penalty;
+    double       fpenalty = (double)ctx->penalty;
     double       fpenalty_shift = (double)penalty_shift;
     double       fpenalty_tmp;
 #if USE_PENALTY_EX
@@ -1379,7 +1379,7 @@ G__align11(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int al
         free(prevwarpj);
     }
 
-    wmo = Atracking(currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, tailgp, warpis, warpjs, warpbase);
+    wmo = Atracking(ctx, currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, tailgp, warpis, warpjs, warpbase);
     if (!tailgp)
         wm = wmo;
 

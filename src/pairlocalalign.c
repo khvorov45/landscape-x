@@ -295,7 +295,7 @@ block2reg(char* block, Reg* reg1, Reg* reg2, int start1, int start2) {
 }
 
 static void
-readlastresx_singleq(FILE* fp, int nameq, Lastresx** lastresx) {
+readlastresx_singleq(Context* ctx, FILE* fp, int nameq, Lastresx** lastresx) {
     char* gett;
     Aln*  tmpaln;
     int   prevnaln, naln, nreg;
@@ -400,7 +400,7 @@ readlastresx_singleq(FILE* fp, int nameq, Lastresx** lastresx) {
 
         if (includeintoscore) {
             if (lastresx[name1][name2].score)
-                score += penalty;
+                score += ctx->penalty;
             lastresx[name1][name2].score += score;
         }
 
@@ -527,7 +527,7 @@ static void readlastresx_group( FILE *fp, Lastresx **lastresx )
 #endif
 
 static void
-readlastresx(FILE* fp, Lastresx** lastresx) {
+readlastresx(Context* ctx, FILE* fp, Lastresx** lastresx) {
     char* gett;
     Aln*  tmpaln;
     int   prevnaln, naln, nreg;
@@ -628,7 +628,7 @@ readlastresx(FILE* fp, Lastresx** lastresx) {
 
         if (includeintoscore) {
             if (lastresx[name1][name2].score)
-                score += penalty;
+                score += ctx->penalty;
             lastresx[name1][name2].score += score;
         }
 
@@ -729,7 +729,7 @@ lastcallthread(lastcallthread_arg_t* targ) {
         //		fprintf( stderr, "Calling lastal from lastcallthread, msize = %d, k=%d\n", msize, k );
         //		sprintf( command, "grep '>' _db%sd", kd );
         //		system( command );
-        sprintf(command, "%s/lastal -m %d -e %d -f 0 -s 1 -p _scoringmatrixforlast -a %d -b %d _db%sd _q%d > _lastres%d", whereispairalign, msize, laste, -penalty, -penalty_ex, kd, k, k);
+        sprintf(command, "%s/lastal -m %d -e %d -f 0 -s 1 -p _scoringmatrixforlast -a %d -b %d _db%sd _q%d > _lastres%d", whereispairalign, msize, laste, -ctx->penalty, -penalty_ex, kd, k, k);
         if (system(command))
             exit(1);
 
@@ -739,9 +739,7 @@ lastcallthread(lastcallthread_arg_t* targ) {
             fprintf(stderr, "Cannot read _lastres%d", k);
             exit(1);
         }
-        //		readlastres( lfp, nd, nq, lastres, dseq, qseq );
-        //		fprintf( stderr, "Reading lastres\n" );
-        readlastresx_singleq(lfp, k, lastresx);
+        readlastresx_singleq(ctx, lfp, k, lastresx);
         fclose(lfp);
     }
     return (NULL);
@@ -906,7 +904,7 @@ calllast_once(Context* ctx, int nd, char** dseq, int nq, char** qseq, Lastresx**
 
     msize = MAX(10, nd * lastm);
 
-    sprintf(command, "%s/lastal -v -m %d -e %d -f 0 -s 1 -p _scoringmatrixforlast -a %d -b %d _db _q > _lastres", whereispairalign, msize, laste, -penalty, -penalty_ex);
+    sprintf(command, "%s/lastal -v -m %d -e %d -f 0 -s 1 -p _scoringmatrixforlast -a %d -b %d _db _q > _lastres", whereispairalign, msize, laste, -ctx->penalty, -penalty_ex);
     res = system(command);
     if (res) {
         fprintf(stderr, "LAST aborted\n");
@@ -920,7 +918,7 @@ calllast_once(Context* ctx, int nd, char** dseq, int nq, char** qseq, Lastresx**
     }
     //	readlastres( lfp, nd, nq, lastres, dseq, qseq );
     fprintf(stderr, "Reading lastres\n");
-    readlastresx(lfp, lastresx);
+    readlastresx(ctx, lfp, lastresx);
     fclose(lfp);
 }
 
@@ -1032,7 +1030,7 @@ recalllara(Context* ctx, char** mseq1, char** mseq2, int alloclen) {
         exit(1);
     }
 
-    value = (double)naivepairscore11(ctx, *mseq1, *mseq2, penalty);
+    value = (double)naivepairscore11(ctx, *mseq1, *mseq2, ctx->penalty);
 
     //	fclose( fp ); // saigo dake yatta houga yoi.
 
@@ -1131,7 +1129,7 @@ calldafs_giving_bpp(Context* ctx, char** mseq1, char** mseq2, char** bpp1, char*
     //	fprintf( stderr, "*mseq1 = %s\n", *mseq1 );
     //	fprintf( stderr, "*mseq2 = %s\n", *mseq2 );
 
-    value = (double)naivepairscore11(ctx, *mseq1, *mseq2, penalty);
+    value = (double)naivepairscore11(ctx, *mseq1, *mseq2, ctx->penalty);
 
 #if 0
 	sprintf( com, "rm -rf %s > /dev/null 2>&1", dirname );
@@ -1243,7 +1241,7 @@ callmxscarna_giving_bpp(Context* ctx, char** mseq1, char** mseq2, char** bpp1, c
     //	fprintf( stderr, "*mseq1 = %s\n", *mseq1 );
     //	fprintf( stderr, "*mseq2 = %s\n", *mseq2 );
 
-    value = (double)naivepairscore11(ctx, *mseq1, *mseq2, penalty);
+    value = (double)naivepairscore11(ctx, *mseq1, *mseq2, ctx->penalty);
 
 #if 0
 	sprintf( com, "rm -rf %s > /dev/null 2>&1", dirname );
@@ -1355,7 +1353,7 @@ arguments(Context* ctx, int argc, char* argv[]) {
     store_dist = 1;
     store_localhom = 1;
     //	dorp = NOTSPECIFIED;
-    ppenalty = NOTSPECIFIED;
+    ctx->ppenalty = NOTSPECIFIED;
     ppenalty_OP = NOTSPECIFIED;
     ppenalty_ex = NOTSPECIFIED;
     ppenalty_EX = NOTSPECIFIED;
@@ -1386,7 +1384,7 @@ arguments(Context* ctx, int argc, char* argv[]) {
                     --argc;
                     goto nextoption;
                 case 'f':
-                    ppenalty = (int)(atof(*++argv) * 1000 - 0.5);
+                    ctx->ppenalty = (int)(atof(*++argv) * 1000 - 0.5);
                     --argc;
                     goto nextoption;
                 case 'g':
@@ -1902,7 +1900,7 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
                 } else {
                     switch (alg) {
                         case ('t'):
-                            pscore = G__align11_noalign(ctx, ctx->n_dis_consweight_multi, penalty, penalty_ex, distseq1, distseq2);
+                            pscore = G__align11_noalign(ctx, ctx->n_dis_consweight_multi, ctx->penalty, penalty_ex, distseq1, distseq2);
                             off1 = off2 = 0;
                             break;
                         case ('A'):
@@ -1914,7 +1912,7 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
                                 if (store_localhom && (targetmap[i] != -1 || targetmap[j] != -1)) {
                                     pscore = G__align11(ctx, ctx->n_dis_consweight_multi, mseq1, mseq2, alloclen, outgap, outgap);
                                     if (thereisx)
-                                        pscore = G__align11_noalign(ctx, ctx->n_dis_consweight_multi, penalty, penalty_ex, distseq1, distseq2);
+                                        pscore = G__align11_noalign(ctx, ctx->n_dis_consweight_multi, ctx->penalty, penalty_ex, distseq1, distseq2);
 #if 1
                                     if (specificityconsideration > 0.0) {
                                         if (expdist)
@@ -1930,7 +1928,7 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
                                     }
 #endif
                                 } else
-                                    pscore = G__align11_noalign(ctx, ctx->n_dis_consweight_multi, penalty, penalty_ex, distseq1, distseq2);
+                                    pscore = G__align11_noalign(ctx, ctx->n_dis_consweight_multi, ctx->penalty, penalty_ex, distseq1, distseq2);
                             }
                             off1 = off2 = 0;
                             break;

@@ -2332,7 +2332,7 @@ D__align(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* 
     static Gaplen***  gaplen2ibestkamo = NULL;
     static Gaplen***  gaplen1jbest = NULL;
     static Gaplen***  gaplen2jbest = NULL;
-    double            fpenalty = (double)penalty;
+    double            fpenalty = (double)ctx->penalty;
     double            fpenalty_shift = (double)penalty_shift;
     static Gaplen**** gaplens = NULL;
 
@@ -3807,7 +3807,7 @@ D__align(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* 
             strcpy(pseq[0], seq1[i]);
             strcpy(pseq[1], seq2[j]);
             commongappick(2, pseq);
-            pairscore += eff1[i] * eff2[j] * naivepairscore11_dynmtx(ctx, n_dynamicmtx, pseq[0], pseq[1], penalty);
+            pairscore += eff1[i] * eff2[j] * naivepairscore11_dynmtx(ctx, n_dynamicmtx, pseq[0], pseq[1], ctx->penalty);
             nogappairscore += eff1[i] * eff2[j] * naivepairscore11_dynmtx(ctx, n_dynamicmtx, pseq[0], pseq[1], 0);
         }
 
@@ -3895,7 +3895,7 @@ D__align_variousdist(Context* ctx, int** which, double*** matrices, char** seq1,
     static Gaplen***  gaplen2ibestkamo = NULL;
     static Gaplen***  gaplen1jbest = NULL;
     static Gaplen***  gaplen2jbest = NULL;
-    double            fpenalty = (double)penalty;
+    double            fpenalty = (double)ctx->penalty;
     double            fpenalty_shift = (double)penalty_shift;
     static Gaplen**** gaplens = NULL;
 
@@ -5499,7 +5499,7 @@ D__align_variousdist(Context* ctx, int** which, double*** matrices, char** seq1,
             strcpy(pseq[1], seq2[j]);
             commongappick(2, pseq);
             c = which[i][j];
-            pairscore += eff1[i] * eff2[j] * naivepairscore11_dynmtx(ctx, matrices[c], pseq[0], pseq[1], penalty);
+            pairscore += eff1[i] * eff2[j] * naivepairscore11_dynmtx(ctx, matrices[c], pseq[0], pseq[1], ctx->penalty);
             nogappairscore += eff1[i] * eff2[j] * naivepairscore11_dynmtx(ctx, matrices[c], pseq[0], pseq[1], 0);
         }
 

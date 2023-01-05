@@ -229,7 +229,7 @@ L__align11(Context* ctx, double** n_dynamicmtx, double scoreoffset, char** seq1,
     double localthr2 = -offset + scoreoffset * 600;  // 2013/12/13
     //	double localthr = -offset;
     //	double localthr2 = -offset;
-    double fpenalty = (double)penalty;
+    double fpenalty = (double)ctx->penalty;
     double fpenalty_ex = (double)penalty_ex;
     double fpenalty_shift = (double)penalty_shift;
     double fpenalty_tmp;  // atode kesu
@@ -727,7 +727,7 @@ L__align11_noalign(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2
     double localthr2 = -offset;
     //	double localthr = 100;
     //	double localthr2 = 100;
-    double fpenalty = (double)penalty;
+    double fpenalty = (double)ctx->penalty;
     double fpenalty_ex = (double)penalty_ex;
 
     if (seq1 == NULL) {

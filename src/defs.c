@@ -9,7 +9,6 @@ int   nthreadpair = 1;
 int   randomseed = 0;
 int   parallelizationstrategy = BAATARI1;
 
-int    penalty, ppenalty, penaltyLN;
 int    penalty_dist, ppenalty_dist;
 int    RNApenalty, RNAppenalty;
 int    RNApenalty_ex, RNAppenalty_ex;

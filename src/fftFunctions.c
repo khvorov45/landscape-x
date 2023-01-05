@@ -339,7 +339,7 @@ permit(Segment* seg1, Segment* seg2) {
 }
 
 void
-blockAlign2(int* cut1, int* cut2, Segment** seg1, Segment** seg2, double** ocrossscore, int* ncut) {
+blockAlign2(Context* ctx, int* cut1, int* cut2, Segment** seg1, Segment** seg2, double** ocrossscore, int* ncut) {
     int             i, j, k, shift, cur1, cur2, count, klim;
     static int      crossscoresize = 0;
     static int*     result1 = NULL;
@@ -396,20 +396,6 @@ blockAlign2(int* cut1, int* cut2, Segment** seg1, Segment** seg2, double** ocros
         crossscore = AllocateDoubleMtx(crossscoresize, crossscoresize);
     }
 
-#if 0
-	for( i=0; i<*ncut-2; i++ )
-		fprintf( stderr, "%d.start = %d, score = %f\n", i, seg1[i]->start, seg1[i]->score );
-
-	for( i=0; i<*ncut; i++ )
-		fprintf( stderr, "i=%d, cut1 = %d, cut2 = %d\n", i, cut1[i], cut2[i] );
-	for( i=0; i<*ncut; i++ ) 
-	{
-		for( j=0; j<*ncut; j++ )
-			fprintf( stderr, "%#4.0f ", ocrossscore[i][j] );
-		fprintf( stderr, "\n" );
-	}
-#endif
-
     for (i = 0; i < *ncut; i++)
         for (j = 0; j < *ncut; j++) /* mudadanaa */
             crossscore[i][j] = ocrossscore[i][j];
@@ -450,8 +436,8 @@ blockAlign2(int* cut1, int* cut2, Segment** seg1, Segment** seg2, double** ocros
                 }
             }
 
-            maxi += penalty;
-            maxj += penalty;
+            maxi += ctx->penalty;
+            maxj += ctx->penalty;
 
             maximum = crossscore[i - 1][j - 1];
             track[i][j] = 0;

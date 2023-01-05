@@ -216,9 +216,11 @@ typedef struct Context {
     int      utree;
     int      tbutree;
     int      trywarp;
+    int      penalty;
+    int      ppenalty;
+    int      penaltyLN;
 } Context;
 
-extern int    penalty, ppenalty, penaltyLN;
 extern int    penalty_dist, ppenalty_dist;
 extern int    RNApenalty, RNAppenalty;
 extern int    RNApenalty_ex, RNAppenalty_ex;
@@ -383,7 +385,6 @@ extern int    fastconjuction(int* memlist, char** seq, char** aseq, double* peff
 extern int          intlen(int* num);
 extern void         exitall(char arr[]);
 extern void         display(char** seq, int nseq);
-extern void         intergroup_score_gapnomi(char** seq1, char** seq2, double* eff1, double* eff2, int clus1, int clus2, int len, double* value);
 extern void         intergroup_score_new(char** seq1, char** seq2, double* eff1, double* eff2, int clus1, int clus2, int len, double* value);
 extern void         upg2(Context* ctx, int nseq, double** eff, int*** topol, double** len);
 extern void         veryfastsupg_int_realloc_nobk(int njob, int** mtx, int*** topol, double** len);
@@ -471,7 +472,7 @@ extern void         zurasu2(int lag, int clus1, int clus2, char** seq1, char** s
 extern void         zurasu(int lag, int clus1, int clus2, char** seq1, char** seq2, char** aseq1, char** aseq2);
 extern int          alignableReagion(Context* ctx, int clus1, int clus2, char** seq1, char** seq2, double* eff1, double* eff2, Segment* seg);
 extern void         blockAlign(int* cut1, int* cut2, double** ocrossscore, int* ncut);
-extern void         blockAlign2(int* cut1, int* cut2, Segment** seg1, Segment** seg2, double** ocrossscore, int* ncut);
+extern void         blockAlign2(Context* ctx, int* cut1, int* cut2, Segment** seg1, Segment** seg2, double** ocrossscore, int* ncut);
 extern void         blockAlign3(int* cut1, int* cut2, Segment** seg1, Segment** seg2, double** ocrossscore, int* ncut);
 extern double       imp_match_out_scD(int i1, int j1);
 extern void         imp_match_init_strictD(Context* ctx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1kozo, double* eff2kozo, LocalHom*** localhom, char* swaplist, int* memlist1, int* memlist2, int* uselh, int* seedinlh1, int* seedinlh2, int nodeid, int nfiles);

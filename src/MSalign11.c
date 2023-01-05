@@ -112,7 +112,7 @@ backdp(Context* ctx, double** WMMTX, double wmmax, double* maxinw, double* maxin
     int          prevhiti, prevhitj;
     //	int lasti, lastj;
     double g;
-    double fpenalty = (double)penalty;
+    double fpenalty = (double)ctx->penalty;
 #if USE_PENALTY_EX
     double fpenalty_ex = (double)penalty_ex;
 #endif
@@ -261,7 +261,7 @@ MSalign11(Context* ctx, char** seq1, char** seq2, int alloclen) {
     double       wm = 0.0; /* int ?????? */
     double       g;
     double *     currentw, *previousw;
-    double       fpenalty = (double)penalty;
+    double       fpenalty = (double)ctx->penalty;
 #if USE_PENALTY_EX
     double fpenalty_ex = (double)penalty_ex;
 #endif

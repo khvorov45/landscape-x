@@ -236,7 +236,7 @@ Falign(Context* ctx, int** whichmtx, double*** scoringmatrices, double** n_dynam
             D__align_variousdist(ctx, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0);
             G__align11(ctx, NULL, NULL, NULL, 0, 0, 0);
             G__align11psg(ctx, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
-            blockAlign2(NULL, NULL, NULL, NULL, NULL, NULL);
+            blockAlign2(ctx, NULL, NULL, NULL, NULL, NULL, NULL);
             if (crossscore)
                 FreeDoubleMtx(crossscore);
             crossscore = NULL;
@@ -819,10 +819,7 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
         count += 2;
         count0 = count;
 
-        blockAlign2(cut1, cut2, sortedseg1, sortedseg2, crossscore, &count);
-
-        //		if( count-count0 )
-        //			fprintf( stderr, "%d unused anchors\n", count0-count );
+        blockAlign2(ctx, cut1, cut2, sortedseg1, sortedseg2, crossscore, &count);
 
         if (!ctx->kobetsubunkatsu && fftkeika)
             fprintf(stderr, "%d anchors found\n", count);
@@ -1022,9 +1019,9 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
                     }
                     if (scoringmatrices)  // called by tditeration.c
                     {
-                        totalscore += A__align_variousdist(ctx, whichmtx, scoringmatrices, penalty, penalty_ex, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, 0, &dumdb, sgap1, sgap2, egap1, egap2, headgp, tailgp);
+                        totalscore += A__align_variousdist(ctx, whichmtx, scoringmatrices, ctx->penalty, penalty_ex, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, 0, &dumdb, sgap1, sgap2, egap1, egap2, headgp, tailgp);
                     } else
-                        totalscore += A__align(ctx, n_dynamicmtx, penalty, penalty_ex, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, 0, &dumdb, sgap1, sgap2, egap1, egap2, headgp, tailgp, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
+                        totalscore += A__align(ctx, n_dynamicmtx, ctx->penalty, penalty_ex, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, 0, &dumdb, sgap1, sgap2, egap1, egap2, headgp, tailgp, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
                 }
                 break;
             default:
@@ -1193,7 +1190,7 @@ Falign_udpari_long(
             A__align_variousdist(ctx, NULL, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0);
             D__align_variousdist(ctx, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0);
             G__align11(ctx, NULL, NULL, NULL, 0, 0, 0);
-            blockAlign2(NULL, NULL, NULL, NULL, NULL, NULL);
+            blockAlign2(ctx, NULL, NULL, NULL, NULL, NULL, NULL);
             if (crossscore)
                 FreeDoubleMtx(crossscore);
             crossscore = NULL;  // reallocate sareru kanousei ga arunode.
@@ -1607,11 +1604,7 @@ system( "less seqVec < /dev/tty > /dev/tty" );
             count += 2;
             count0 = count;
 
-            //			fprintf( stderr, "\n\n\ncalling blockAlign2\n\n\n\n" );
-            blockAlign2(cut1, cut2, sortedseg1, sortedseg2, crossscore, &count);
-
-            //			if( count-count0 )
-            //				fprintf( stderr, "%d unused anchors\n", count0-count );
+            blockAlign2(ctx, cut1, cut2, sortedseg1, sortedseg2, crossscore, &count);
 
             if (!ctx->kobetsubunkatsu && fftkeika)
                 fprintf(stderr, "%d anchors found\n", count);

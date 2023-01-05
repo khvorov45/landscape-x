@@ -82,7 +82,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
     scoremtx = 1;
     ctx->kobetsubunkatsu = 0;
     ppenalty_dist = NOTSPECIFIED;
-    ppenalty = NOTSPECIFIED;
+    ctx->ppenalty = NOTSPECIFIED;
     penalty_shift_factor = 1000.0;
     ppenalty_ex = NOTSPECIFIED;
     poffset = NOTSPECIFIED;
@@ -161,7 +161,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
                     --argc;
                     goto nextoption;
                 case 'f':
-                    ppenalty = (int)(atof(*++argv) * 1000 - 0.5);
+                    ctx->ppenalty = (int)(atof(*++argv) * 1000 - 0.5);
                     --argc;
                     goto nextoption;
                 case 'Q':
@@ -755,7 +755,7 @@ treebase(Context* ctx, TbfastOpts* opts, int* nlen, char** aseq, int nadd, char*
 #if REPORTCOSTS
 //				reporterr(       "\n\n %d - %d (%d x %d) : \n", topol[l][0][0], topol[l][1][0], clus1, clus2 );
 #endif
-                pscore = A__align(ctx, dynamicmtx, penalty, penalty_ex, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, ctx->constraint, &dumdb, NULL, NULL, NULL, NULL, outgap, outgap, localmem[0][0], 1, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
+                pscore = A__align(ctx, dynamicmtx, ctx->penalty, penalty_ex, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, ctx->constraint, &dumdb, NULL, NULL, NULL, NULL, outgap, outgap, localmem[0][0], 1, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
             }
             if (alg == 'd') {
                 imp_match_init_strictD(ctx, clus1, clus2, strlen(mseq1[0]), strlen(mseq2[0]), mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, localmem[0], localmem[1], uselh, seedinlh1, seedinlh2, (compacttree == 3) ? l : -1, nfiles);
@@ -785,7 +785,7 @@ treebase(Context* ctx, TbfastOpts* opts, int* nlen, char** aseq, int nadd, char*
                     pscore = MSalignmm(ctx, dynamicmtx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, NULL, NULL, NULL, NULL, outgap, outgap, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
                     break;
                 case ('A'):
-                    pscore = A__align(ctx, dynamicmtx, penalty, penalty_ex, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, 0, &dumdb, NULL, NULL, NULL, NULL, outgap, outgap, localmem[0][0], 1, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
+                    pscore = A__align(ctx, dynamicmtx, ctx->penalty, penalty_ex, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, 0, &dumdb, NULL, NULL, NULL, NULL, outgap, outgap, localmem[0][0], 1, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
                     break;
                 case ('d'):
                     pscore = D__align(ctx, dynamicmtx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, 0, &dumdb, outgap, outgap);
@@ -925,7 +925,7 @@ WriteOptions(Context* ctx, FILE* fp) {
         else if (scoremtx == 2)
             fprintf(fp, "M-Y\n");
     }
-    fprintf(stderr, "Gap Penalty = %+5.2f, %+5.2f, %+5.2f\n", (double)ppenalty / 1000, (double)ppenalty_ex / 1000, (double)poffset / 1000);
+    fprintf(stderr, "Gap Penalty = %+5.2f, %+5.2f, %+5.2f\n", (double)ctx->ppenalty / 1000, (double)ppenalty_ex / 1000, (double)poffset / 1000);
     if (use_fft)
         fprintf(fp, "FFT on\n");
 
@@ -945,7 +945,7 @@ WriteOptions(Context* ctx, FILE* fp) {
         fprintf(fp, "\n");
     }
 
-    fprintf(fp, "Gap Penalty = %+5.2f, %+5.2f, %+5.2f\n", (double)ppenalty / 1000, (double)ppenalty_ex / 1000, (double)poffset / 1000);
+    fprintf(fp, "Gap Penalty = %+5.2f, %+5.2f, %+5.2f\n", (double)ctx->ppenalty / 1000, (double)ppenalty_ex / 1000, (double)poffset / 1000);
 
     if (alg == 'a')
         fprintf(fp, "Algorithm A\n");
