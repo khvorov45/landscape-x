@@ -104,21 +104,6 @@ fltncpy(double* s1, double* s2, int n) {
         *s1++ = *s2++;
 }
 
-static int
-countmem(int* s) {
-    int v = 0;
-    while (*s++ != -1)
-        v++;
-    return (v);
-}
-
-static int
-lastmem(int* s) {
-    while (*s++ != -1)
-        ;
-    return (*(s - 2));
-}
-
 void
 exitall(char arr[]) {
     reporterr("%s\n", arr);
@@ -241,9 +226,9 @@ typedef struct generaldistarrthread_arg_t {
 } generaldistarrthread_arg_t;
 
 static void*
-generalkmerdistarrthread(void* arg)  // enablemultithread == 0 demo tsukau
-{
+generalkmerdistarrthread(void* arg) {
     generaldistarrthread_arg_t* targ = (generaldistarrthread_arg_t*)arg;
+    Context* ctx = targ->ctx;
     int                         njob = targ->njob;
     int                         m = targ->m;
     int*                        nlen = targ->nlen;
@@ -257,7 +242,7 @@ generalkmerdistarrthread(void* arg)  // enablemultithread == 0 demo tsukau
 
     while (1) {
         if (*posshared >= njob) {
-            commonsextet_p(NULL, NULL);
+            commonsextet_p(ctx, NULL, NULL);
             return (NULL);
         }
         posinjoblist = *posshared;
@@ -270,9 +255,7 @@ generalkmerdistarrthread(void* arg)  // enablemultithread == 0 demo tsukau
         for (n = 0; n < LARGEBLOCKSIZE && posinjoblist < njob; n++) {
             i = joblist[posinjoblist++];
 
-            //				if( i == m ) continue; // iranai
-
-            result[i] = distcompact(nlen[m], nlen[i], ttable, pointt[i], tselfscore[m], tselfscore[i]);
+            result[i] = distcompact(ctx, nlen[m], nlen[i], ttable, pointt[i], tselfscore[m], tselfscore[i]);
         }
     }
 }
@@ -1351,8 +1334,8 @@ fixed_supg_double_realloc_nobk_halfmtx_treeout_constrained(Context* ctx, int nse
 
     increaseintergroupdistanceshalfmtx(eff, ngroup, groups, nseq);
 
-    sueff1 = 1 - (double)sueff_global;
-    sueff05 = (double)sueff_global * 0.5;
+    sueff1 = 1 - (double)ctx->sueff_global;
+    sueff05 = (double)ctx->sueff_global * 0.5;
     if (ctx->treemethod == 'X')
         clusterfuncpt[0] = cluster_mix_double;
     else if (ctx->treemethod == 'E')
@@ -1810,7 +1793,7 @@ msaresetnearestthread(void* arg) {
             if (para)
                 pthread_mutex_unlock(targ->mutex);
 #endif
-            commonsextet_p(NULL, NULL);
+            commonsextet_p(ctx, NULL, NULL);
             return (NULL);
         }
         acptbk = *acpt;
@@ -1857,7 +1840,7 @@ kmerresetnearestthread(void* arg) {
             if (para)
                 pthread_mutex_unlock(targ->mutex);
 #endif
-            commonsextet_p(NULL, NULL);
+            commonsextet_p(ctx, NULL, NULL);
             return (NULL);
         }
         acptbk = *acpt;
@@ -1872,7 +1855,7 @@ kmerresetnearestthread(void* arg) {
             if (partmtx[im][i] > mindist[i]) {
                 if (pointt)  // kmer
                 {
-                    singlettable1 = (int*)calloc(tsize, sizeof(int));
+                    singlettable1 = (int*)calloc(ctx->tsize, sizeof(int));
                     makecompositiontable_global(singlettable1, pointt[i]);
                 }
                 kmerresetnearest(ctx, ac, partmtx, mindist + i, nearest + i, i, tselfscore, pointt, nlen, singlettable1, result, joblist);
@@ -1880,7 +1863,7 @@ kmerresetnearestthread(void* arg) {
                     free(singlettable1);
                 singlettable1 = NULL;  // kmer
                 if (pointt)
-                    commonsextet_p(NULL, NULL);
+                    commonsextet_p(ctx, NULL, NULL);
             }
         }
     }
@@ -1910,13 +1893,12 @@ typedef struct compactdistarrthread_arg_t {
 } compactdistarrthread_arg_t;
 
 static void*
-verycompactkmerdistarrthreadjoblist(void* arg)  // enablemultithread == 0 demo tsukau
-{
+verycompactkmerdistarrthreadjoblist(void* arg) {
     compactdistarrthread_arg_t* targ = (compactdistarrthread_arg_t*)arg;
+    Context* ctx = targ->ctx;
     int                         njob = targ->njob;
     int                         im = targ->im;
     int                         jm = targ->jm;
-    //	int thread_no = targ->thread_no;
     int*    nlen = targ->nlen;
     int**   pointt = targ->pointt;
     int*    table1 = targ->table1;
@@ -1926,7 +1908,6 @@ verycompactkmerdistarrthreadjoblist(void* arg)  // enablemultithread == 0 demo t
     int*    posshared = targ->posshared;
     double* mindist = targ->mindist;
     int*    nearest = targ->nearest;
-    //	double **partmtx = targ->partmtx;
     double* newarr = targ->newarr;
     int     i, posinjoblist, n;
 
@@ -1934,28 +1915,14 @@ verycompactkmerdistarrthreadjoblist(void* arg)  // enablemultithread == 0 demo t
     double tmpdist2;
     double tmpdouble;
 
-    //			for( acpti=ac; acpti!=NULL; acpti=acpti->next )
-
     while (1) {
-#ifdef enablemultithread
-        if (para)
-            pthread_mutex_lock(targ->mutex);
-#endif
         if (*posshared >= njob)  // block no toki >=
         {
-#ifdef enablemultithread
-            if (para)
-                pthread_mutex_unlock(targ->mutex);
-#endif
-            commonsextet_p(NULL, NULL);
+            commonsextet_p(ctx, NULL, NULL);
             return (NULL);
         }
         posinjoblist = *posshared;
         *posshared += BLOCKSIZE;
-#ifdef enablemultithread
-        if (para)
-            pthread_mutex_unlock(targ->mutex);
-#endif
 
         for (n = 0; n < BLOCKSIZE && posinjoblist < njob; n++) {
             i = joblist[posinjoblist++];
@@ -1965,19 +1932,8 @@ verycompactkmerdistarrthreadjoblist(void* arg)  // enablemultithread == 0 demo t
             if (i == jm)
                 continue;
 
-            //			if( partmtx[im] )
-            //				tmpdist1 = partmtx[im][i];
-            //			else if( partmtx[i] )
-            //				tmpdist1 = partmtx[i][im];
-            //			else
-            tmpdist1 = distcompact(nlen[im], nlen[i], table1, pointt[i], tselfscore[im], tselfscore[i]);
-
-            //			if( partmtx[jm] )
-            //				tmpdist2 = partmtx[jm][i];
-            //			else if( partmtx[i] )
-            //				tmpdist2 = partmtx[i][jm];
-            //			else
-            tmpdist2 = distcompact(nlen[jm], nlen[i], table2, pointt[i], tselfscore[jm], tselfscore[i]);
+            tmpdist1 = distcompact(ctx, nlen[im], nlen[i], table1, pointt[i], tselfscore[im], tselfscore[i]);
+            tmpdist2 = distcompact(ctx, nlen[jm], nlen[i], table2, pointt[i], tselfscore[jm], tselfscore[i]);
 
             tmpdouble = cluster_mix_double(tmpdist1, tmpdist2);
             newarr[i] = tmpdouble;
@@ -2006,6 +1962,7 @@ static void*
 kmerdistarrthreadjoblist(void* arg)  // enablemultithread == 0 demo tsukau
 {
     compactdistarrthread_arg_t* targ = (compactdistarrthread_arg_t*)arg;
+    Context* ctx = targ->ctx;
     int                         njob = targ->njob;
     int                         im = targ->im;
     int                         jm = targ->jm;
@@ -2040,7 +1997,7 @@ kmerdistarrthreadjoblist(void* arg)  // enablemultithread == 0 demo tsukau
             if (para)
                 pthread_mutex_unlock(targ->mutex);
 #endif
-            commonsextet_p(NULL, NULL);
+            commonsextet_p(ctx, NULL, NULL);
             return (NULL);
         }
         posinjoblist = *posshared;
@@ -2063,14 +2020,14 @@ kmerdistarrthreadjoblist(void* arg)  // enablemultithread == 0 demo tsukau
             else if (partmtx[i])
                 tmpdist1 = partmtx[i][im];
             else
-                tmpdist1 = distcompact(nlen[im], nlen[i], table1, pointt[i], tselfscore[im], tselfscore[i]);
+                tmpdist1 = distcompact(ctx, nlen[im], nlen[i], table1, pointt[i], tselfscore[im], tselfscore[i]);
 
             if (partmtx[jm])
                 tmpdist2 = partmtx[jm][i];
             else if (partmtx[i])
                 tmpdist2 = partmtx[i][jm];
             else
-                tmpdist2 = distcompact(nlen[jm], nlen[i], table2, pointt[i], tselfscore[jm], tselfscore[i]);
+                tmpdist2 = distcompact(ctx, nlen[jm], nlen[i], table2, pointt[i], tselfscore[jm], tselfscore[i]);
 
             tmpdouble = cluster_mix_double(tmpdist1, tmpdist2);
             newarr[i] = tmpdouble;
@@ -2133,7 +2090,7 @@ verycompactmsadistarrthreadjoblist(void* arg)  // enablemultithread == 0 demo ts
             if (para)
                 pthread_mutex_unlock(targ->mutex);
 #endif
-            commonsextet_p(NULL, NULL);
+            commonsextet_p(ctx, NULL, NULL);
             return (NULL);
         }
         posinjoblist = *posshared;
@@ -2214,7 +2171,7 @@ msadistarrthreadjoblist(void* arg)  // enablemultithread == 0 demo tsukau
             if (para)
                 pthread_mutex_unlock(targ->mutex);
 #endif
-            commonsextet_p(NULL, NULL);
+            commonsextet_p(ctx, NULL, NULL);
             return (NULL);
         }
         posinjoblist = *posshared;
@@ -3380,11 +3337,6 @@ compacttreedpdist(Context* ctx, int njob, char** bseq, char** dseq, double* self
     if (ctx->commonJP)
         FreeIntMtx(ctx->commonJP);
     ctx->commonJP = NULL;
-
-    //	free( commonanc );
-    //	commonsextet_p( NULL, NULL );
-    //	distdppairs_para( 0, 0, NULL, NULL, 0, 0, NULL, 0, NULL, NULL );
-    //	distdppairsthread( NULL );
 }
 
 void
@@ -3422,8 +3374,8 @@ compacttree_memsaveselectable(Context* ctx, int nseq, double** partmtx, int* nea
     int *                       joblist, nactive, posshared;
     double*                     result;
 
-    sueff1 = 1 - (double)sueff_global;
-    sueff05 = (double)sueff_global * 0.5;
+    sueff1 = 1 - (double)ctx->sueff_global;
+    sueff05 = (double)ctx->sueff_global * 0.5;
     if (ctx->treemethod == 'X')
         clusterfuncpt[0] = cluster_mix_double;
     else {
@@ -3648,8 +3600,8 @@ compacttree_memsaveselectable(Context* ctx, int nseq, double** partmtx, int* nea
 
         if (pointt)  // kmer
         {
-            singlettable1 = (int*)calloc(tsize, sizeof(int));
-            singlettable2 = (int*)calloc(tsize, sizeof(int));
+            singlettable1 = (int*)calloc(ctx->tsize, sizeof(int));
+            singlettable2 = (int*)calloc(ctx->tsize, sizeof(int));
             makecompositiontable_global(singlettable1, pointt[im]);
             makecompositiontable_global(singlettable2, pointt[jm]);
         }
@@ -3776,34 +3728,6 @@ compacttree_memsaveselectable(Context* ctx, int nseq, double** partmtx, int* nea
         acjmprev->next = acjmnext;
         if (acjmnext != NULL)
             acjmnext->prev = acjmprev;
-
-#if 0  // muscle seems to miss this.
-//		int nwork = 0;
-		for( acpti=ac; acpti!=NULL; acpti=acpti->next )
-		{
-			i = acpti->pos;
-//			printf( "reset nearest? i=%d, k=%d, nearest[i]=%d, im=%d, mindist=%f\n", i, k, nearest[i], im, mindist[i] );
-			if( nearest[i] == im ) 
-			{
-//				printf( "reset nearest, i=%d, k=%d\n", i, k );
-				if( partmtx[im][i] > mindist[i] )
-				{
-//					nwork++;
-//					printf( "go\n" );
-					if( pointt ) // kmer
-					{
-						singlettable1 = (int *)calloc( tsize, sizeof( int ) );
-						makecompositiontable_global( singlettable1, pointt[i] );
-					}
-					resetnearest( nseq, ac, partmtx, mindist+i, nearest+i, i, seq, skiptable, tselfscore, pointt, nlen, singlettable1 );
-					if( pointt ) free( singlettable1 ); singlettable1 = NULL;// kmer
-					if( pointt ) commonsextet_p( NULL, NULL );
-				}
-			}
-		}
-//		reporterr( "nwork = %d\n", nwork );
-#else
-
         if (howcompact == 2)
             continue;
 
@@ -3831,17 +3755,7 @@ compacttree_memsaveselectable(Context* ctx, int nseq, double** partmtx, int* nea
                 resetnearestfunc(targ);
             }
         }
-#endif
 
-#if 0
-        printf(       "\nooSTEP-%03d:\n", k+1 );
-		printf(       "len0 = %f\n", len[k][0] );
-        for( i=0; topol[k][0][i]>-1; i++ ) printf(       " %03d", topol[k][0][i]+1 );
-        printf(       "\n" );
-		printf(       "len1 = %f\n", len[k][1] );
-        for( i=0; topol[k][1][i]>-1; i++ ) printf(       " %03d", topol[k][1][i]+1 );
-        printf(       "\n" );
-#endif
     }
     if (treeout) {
         fp = fopen("infile.tree", "w");
@@ -3908,8 +3822,8 @@ fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(Context* ctx, int n
     char    namec;
     double* density;
 
-    sueff1 = 1 - (double)sueff_global;
-    sueff05 = (double)sueff_global * 0.5;
+    sueff1 = 1 - (double)ctx->sueff_global;
+    sueff05 = (double)ctx->sueff_global * 0.5;
     if (ctx->treemethod == 'X')
         clusterfuncpt[0] = cluster_mix_double;
     else if (ctx->treemethod == 'E')
@@ -4280,8 +4194,8 @@ fixed_musclesupg_double_realloc_nobk_halfmtx_treeout(Context* ctx, int nseq, dou
     double (*clusterfuncpt[1])(double, double);
     char namec;
 
-    sueff1 = 1 - (double)sueff_global;
-    sueff05 = (double)sueff_global * 0.5;
+    sueff1 = 1 - (double)ctx->sueff_global;
+    sueff05 = (double)ctx->sueff_global * 0.5;
     if (ctx->treemethod == 'X')
         clusterfuncpt[0] = cluster_mix_double;
     else if (ctx->treemethod == 'E')
@@ -4581,8 +4495,8 @@ fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(Context* ctx, int nseq, dou
     double* mindisfrom = NULL;  // by Mathog, a guess
     double (*clusterfuncpt[1])(double, double);
 
-    sueff1 = 1 - (double)sueff_global;
-    sueff05 = (double)sueff_global * 0.5;
+    sueff1 = 1 - (double)ctx->sueff_global;
+    sueff05 = (double)ctx->sueff_global * 0.5;
     if (ctx->treemethod == 'X')
         clusterfuncpt[0] = cluster_mix_double;
     else if (ctx->treemethod == 'E')
@@ -4835,8 +4749,8 @@ fixed_musclesupg_double_realloc_nobk_halfmtx(Context* ctx, int nseq, double** ef
     double* mindisfrom = NULL;  // by Mathog, a guess
     double (*clusterfuncpt[1])(double, double);
 
-    sueff1 = 1 - (double)sueff_global;
-    sueff05 = (double)sueff_global * 0.5;
+    sueff1 = 1 - (double)ctx->sueff_global;
+    sueff05 = (double)ctx->sueff_global * 0.5;
     if (ctx->treemethod == 'X')
         clusterfuncpt[0] = cluster_mix_double;
     else if (ctx->treemethod == 'E')
@@ -7314,980 +7228,6 @@ plainscore(Context* ctx, int nseq, char** s) {
 }
 
 int
-addonetip2top(int njobc, int*** topolc, double** lenc, double** iscorec, int*** topol, double** len, Treedep* dep, int treeout, Addtree* addtree, int iadd) {
-    int    i, j, mem0, mem1, posinnew, m;
-    int    nstep;
-    int    norg;
-    double minscore, minscoreo, eff0, eff1, addedlen, tmpmin;
-    int    nearest, nearesto;
-    int    repnorg;
-    int*   leaf2node;
-    int*   additionaltopol;
-    //	double (*clusterfuncpt[1])(double,double);
-    Bchain *ac, *acpt, *acori, *acnext, *acprev;
-    int     neighbor;
-    char*   neighborlist;
-    char*   npt;
-    int     nearestnode;
-    int*    topoldum0 = NULL;
-    int*    topoldum1 = NULL;
-    int*    topolo0;
-    int*    topolo1;
-    double  sueff1_double_local = 1.0 - sueff_global;
-    double  sueff05_double_local = sueff_global * 0.5;
-    //	char **tree; //static?
-    //	char *treetmp; //static?
-
-    //	for( i=0; i<njobc; i++ ) reporterr( "nogaplen of %d = %d\n", i+1, nogaplen[i] );
-    //exit( 1 );
-
-    //	treetmp = AllocateCharVec( njob*150 );
-    //	tree = AllocateCharMtx( njob, njob*150 );
-
-    //	sueff1_double = 1.0 - sueff_global;
-    //	sueff05_double = sueff_global * 0.5;
-    //	if ( treemethod == 'X' )
-    //		clusterfuncpt[0] = cluster_mix_double;
-    //	else if ( treemethod == 'E' )
-    //		clusterfuncpt[0] = cluster_average_double;
-    //	else if ( treemethod == 'q' )
-    //		clusterfuncpt[0] = cluster_minimum_double;
-    //	else
-    //	{
-    //		reporterr(       "Unknown treemethod, %c\n", treemethod );
-    //		exit( 1 );
-    //	}
-
-    norg = njobc - 1;
-    nstep = njobc - 2;
-
-    additionaltopol = (int*)calloc(2, sizeof(int));
-    leaf2node = (int*)calloc(norg, sizeof(int));
-    if (treeout) {
-        neighborlist = calloc(norg * 30, sizeof(char));
-    }
-    //	for( i=0; i<njobc; i++ ) sprintf( tree[i], "%d", i+1 );
-    if (!leaf2node) {
-        reporterr("Cannot allocate leaf2node.\n");
-        exit(1);
-    }
-    additionaltopol[0] = norg;
-    additionaltopol[1] = -1;
-
-    ac = (Bchain*)malloc(norg * sizeof(Bchain));
-    for (i = 0; i < norg; i++) {
-        ac[i].next = ac + i + 1;
-        ac[i].prev = ac + i - 1;
-        ac[i].pos = i;
-    }
-    ac[norg - 1].next = NULL;
-
-    acori = (Bchain*)malloc(1 * sizeof(Bchain));
-    acori->next = ac;
-    acori->pos = -1;
-    ac[0].prev = acori;
-
-    //	for( i=0; i<nstep; i++ )
-    //	{
-    //		reporterr(       "distfromtip = %f\n", dep[i].distfromtip );
-    //	}
-    //
-    //	for( i=0; i<norg; i++ )
-    //	{
-    //		reporterr(       "disttofrag(%d,%d) = %f\n", i, njobc-1, iscorec[i][norg-i] );
-    //	}
-
-#if 0
-	minscore = 9999.9;
-	nearest = -1;
-	for( i=0; i<norg; i++ )
-	{
-		tmpmin = iscorec[i][norg-i];
-		if( minscore > tmpmin )
-		{
-			minscore = tmpmin;
-			nearest = i;
-		}
-	}
-#else
-    nearest = 0;
-    minscore = 0.0;
-#endif
-
-    nearesto = nearest;
-    minscoreo = minscore;
-
-    //	for( i=0; i<njobc-1; i++ ) for( j=i+1; j<njobc; j++ )
-    //		reporterr(       "iscorec[%d][%d] = %f\n", i, j, iscorec[i][j-i] );
-    //	reporterr( "nearest = %d\n", nearest+1 );
-    //	reporterr( "nearesto = %d\n", nearesto+1 );
-
-    posinnew = 0;
-    repnorg = -1;
-
-    for (i = 0; i < norg; i++)
-        leaf2node[i] = -1;
-    for (i = 0; i < nstep; i++) {
-        mem0 = topol[i][0][0];
-        mem1 = topol[i][1][0];
-#if 0
-		reporterr(       "\n\nstep %d (old) \n", i );
-
-		reporterr( "group0 = \n" );
-		for( j=0; topol[i][0][j]>-1; j++ ) 
-		{
-			reporterr( "%d ", topol[i][0][j]+1 );
-		}
-		reporterr( "\n" );
-		reporterr( "len=%f\n", len[i][0] );
-		reporterr( "group1 = \n" );
-		for( j=0; topol[i][1][j]>-1; j++ ) 
-		{
-			reporterr( "%d ", topol[i][1][j]+1 );
-		}
-		reporterr( "\n" );
-		reporterr( "len=%f\n", len[i][1] );
-		
-		reporterr(       "\n\n\nminscore = %f ? %f\n", minscore, dep[i].distfromtip*2 );
-		reporterr(       "i = %d\n", i );
-		if( leaf2node[nearest] == -1 )
-		{
-			reporterr(       "nogaplen[nearest] = %d\n", nogaplen[nearest] );
-		}
-		else
-		{
-			reporterr(       "alnleninnode[leaf2node[nearest]] = %d\n", alnleninnode[leaf2node[nearest]] );
-			reporterr(       "leaf2node[nearest] = %d\n", leaf2node[nearest] );
-		}
-#endif
-        nearestnode = leaf2node[nearest];
-
-        if (repnorg == -1 && dep[i].distfromtip * 2 >= minscore)  // Keitouteki ichi dake ga hitsuyouna baaiha kore wo tsukau.
-        {
-            //			reporterr(       "INSERT HERE, %d-%d\n", nearest, norg );
-            //			reporterr(       "nearest = %d\n", nearest );
-            //			reporterr(       "\n\n\nminscore = %f\n", minscore );
-            //			reporterr(       "distfromtip *2 = %f\n", dep[i].distfromtip * 2 );
-            //			reporterr(       "nearest=%d, leaf2node[]=%d\n", nearest, leaf2node[nearest] );
-
-            if (nearestnode == -1) {
-                //				reporterr(       "INSERTING to 0!!!\n" );
-                //				reporterr(       "lastlength = %d\n", nogaplen[norg] );
-                //				reporterr(       "reflength = %d\n", nogaplen[nearest] );
-                topolc[posinnew][0] = (int*)realloc(topolc[posinnew][0], (1 + 1) * sizeof(int));
-                topolc[posinnew][0][0] = nearest;
-                topolc[posinnew][0][1] = -1;
-
-                addedlen = lenc[posinnew][0] = minscore / 2;
-
-            } else {
-                //				reporterr(       "INSERTING to g, leaf2node = %d, cm=%d!!!\n", leaf2node[nearest], countmem(topol[leaf2node[nearest]][0] ) );
-                //				reporterr(       "alnleninnode[i] = %d\n", alnleninnode[i] );
-                //				reporterr(       "alnleninnode[leaf2node[nearest]] = %d\n", alnleninnode[leaf2node[nearest]] );
-
-                topolc[posinnew][0] = (int*)realloc(topolc[posinnew][0], ((countmem(topol[nearestnode][0]) + countmem(topol[nearestnode][1]) + 1) * sizeof(int)));
-                //				reporterr(       "leaf2node[%d] = %d\n", nearest, leaf2node[nearest] );
-                intcpy(topolc[posinnew][0], topol[nearestnode][0]);
-                intcat(topolc[posinnew][0], topol[nearestnode][1]);
-                //				addedlen = lenc[posinnew][0] = minscore / 2 - len[nearestnode][0]; // bug!!
-                addedlen = lenc[posinnew][0] = dep[i].distfromtip - minscore / 2;  // 2014/06/10
-                //				fprintf( stderr, "addedlen = %f, dep[i].distfromtip = %f, len[nearestnode][0] = %f, minscore/2 = %f, lenc[posinnew][0] = %f\n", addedlen, dep[i].distfromtip, len[nearestnode][0], minscore/2, lenc[posinnew][0] );
-            }
-            neighbor = lastmem(topolc[posinnew][0]);
-
-            if (treeout) {
-#if 0
-				fp = fopen( "infile.tree", "a" ); // kyougou!!
-				if( fp == 0 )
-				{
-					reporterr(       "File error!\n" );
-					exit( 1 );
-				}
-				fprintf( fp, "\n" );
-				fprintf( fp, "%8d: %s\n", norg+iadd+1, name[norg+iadd] );
-				fprintf( fp, "          nearest sequence: %d\n", nearest + 1 );
-				fprintf( fp, "          distance: %f\n", minscore );
-				fprintf( fp, "          cousin: " );
-				for( j=0; topolc[posinnew][0][j]!=-1; j++ )
-					fprintf( fp, "%d ", topolc[posinnew][0][j]+1 );
-				fprintf( fp, "\n" );
-				fclose( fp );
-#else
-                addtree[iadd].nearest = nearesto;
-                addtree[iadd].dist1 = minscoreo;
-                addtree[iadd].dist2 = minscore;
-                neighborlist[0] = 0;
-                npt = neighborlist;
-                for (j = 0; topolc[posinnew][0][j] != -1; j++) {
-                    sprintf(npt, "%d ", topolc[posinnew][0][j] + 1);
-                    npt += strlen(npt);
-                }
-                addtree[iadd].neighbors = calloc(npt - neighborlist + 1, sizeof(char));
-                strcpy(addtree[iadd].neighbors, neighborlist);
-#endif
-            }
-
-            //			reporterr(       "INSERTING to 1!!!\n" );
-            topolc[posinnew][1] = (int*)realloc(topolc[posinnew][1], (1 + 1) * sizeof(int));
-            topolc[posinnew][1][0] = norg;
-            topolc[posinnew][1][1] = -1;
-            lenc[posinnew][1] = minscore / 2;
-
-            //			reporterr(       "STEP %d (newnew)\n", posinnew );
-            //			for( j=0; topolc[posinnew][0][j]!=-1; j++ ) reporterr(       " %d", topolc[posinnew][0][j]+1 );
-            //			reporterr(       "\n len=%f\n", lenc[posinnew][0] );
-            //			for( j=0; topolc[posinnew][1][j]!=-1; j++ ) reporterr(       " %d", topolc[posinnew][1][j]+1 );
-            //			reporterr(       "\n len=%f\n", lenc[posinnew][1] );
-
-            repnorg = nearest;
-
-            //			reporterr(       "STEP %d\n", posinnew );
-            //			for( j=0; topolc[posinnew][0][j]!=-1; j++ ) reporterr(       " %d", topolc[posinnew][0][j] );
-            //			reporterr(       "\n len=%f\n", lenc[i][0] );
-            //			for( j=0; topolc[posinnew][1][j]!=-1; j++ ) reporterr(       " %d", topolc[posinnew][1][j] );
-            //			reporterr(       "\n len=%f\n", lenc[i][1] );
-
-            //			im = topolc[posinnew][0][0];
-            //			jm = topolc[posinnew][1][0];
-            //			sprintf( treetmp, "(%s:%7.5f,%s:%7.5f)", tree[im], lenc[posinnew][0], tree[jm], lenc[posinnew][1] );
-            //			strcpy( tree[im], treetmp );
-
-            posinnew++;
-        }
-
-        //		reporterr(       "minscore = %f\n", minscore );
-        //		reporterr(       "distfromtip = %f\n", dep[i].distfromtip );
-        //		reporterr(       "Modify matrix, %d-%d\n", nearest, norg );
-        eff0 = iscorec[mem0][norg - mem0];
-        eff1 = iscorec[mem1][norg - mem1];
-
-        //		iscorec[mem0][norg-mem0] = (clusterfuncpt[0])( eff0, eff1 );
-        iscorec[mem0][norg - mem0] = MIN(eff0, eff1) * sueff1_double_local + (eff0 + eff1) * sueff05_double_local;
-        iscorec[mem1][norg - mem1] = 9999.9;  // sukoshi muda
-
-        acprev = ac[mem1].prev;
-        acnext = ac[mem1].next;
-        acprev->next = acnext;
-        if (acnext != NULL)
-            acnext->prev = acprev;
-
-        if ((nearest == mem1 || nearest == mem0)) {
-            minscore = 9999.9;
-            //			for( j=0; j<norg; j++ ) // sukoshi muda
-            //			{
-            //				if( minscore > iscorec[j][norg-j] )
-            //				{
-            //					minscore = iscorec[j][norg-j];
-            //					nearest = j;
-            //				}
-            //			}
-            //			reporterr(       "searching on modified ac " );
-            for (acpt = acori->next; acpt != NULL; acpt = acpt->next)  // sukoshi muda
-            {
-                //				reporterr(       "." );
-                j = acpt->pos;
-                tmpmin = iscorec[j][norg - j];
-                if (minscore > tmpmin) {
-                    minscore = tmpmin;
-                    nearest = j;
-                }
-            }
-            //			reporterr(       "done\n" );
-        }
-
-        //		reporterr(       "posinnew = %d\n", posinnew );
-
-        if (topol[i][0][0] == repnorg) {
-            topolc[posinnew][0] = (int*)realloc(topolc[posinnew][0], (countmem(topol[i][0]) + 2) * sizeof(int));
-            intcpy(topolc[posinnew][0], topol[i][0]);
-            intcat(topolc[posinnew][0], additionaltopol);
-            lenc[posinnew][0] = len[i][0] - addedlen;  // 2014/6/10
-            //			fprintf( stderr, "i=%d, dep[i].distfromtip=%f\n", i, dep[i].distfromtip );
-            //			fprintf( stderr, "addedlen=%f, len[i][0]=%f, lenc[][0]=%f\n", addedlen, len[i][0], lenc[posinnew][0] );
-            //			fprintf( stderr, "lenc[][1] = %f\n", lenc[posinnew][0] );
-            addedlen = 0.0;
-        } else {
-            topolc[posinnew][0] = (int*)realloc(topolc[posinnew][0], (countmem(topol[i][0]) + 1) * sizeof(int));
-            intcpy(topolc[posinnew][0], topol[i][0]);
-            lenc[posinnew][0] = len[i][0];
-        }
-
-        if (topol[i][1][0] == repnorg) {
-            topolc[posinnew][1] = (int*)realloc(topolc[posinnew][1], (countmem(topol[i][1]) + 2) * sizeof(int));
-            intcpy(topolc[posinnew][1], topol[i][1]);
-            intcat(topolc[posinnew][1], additionaltopol);
-            lenc[posinnew][1] = len[i][1] - addedlen;  // 2014/6/10
-            //			fprintf( stderr, "i=%d, dep[i].distfromtip=%f\n", i, dep[i].distfromtip );
-            //			fprintf( stderr, "addedlen=%f, len[i][1]=%f, lenc[][1]=%f\n", addedlen, len[i][1], lenc[posinnew][1] );
-            //			fprintf( stderr, "lenc[][1] = %f\n", lenc[posinnew][1] );
-            addedlen = 0.0;
-
-            repnorg = topolc[posinnew][0][0];  // juuyou
-        } else {
-            topolc[posinnew][1] = (int*)realloc(topolc[posinnew][1], (countmem(topol[i][1]) + 1) * sizeof(int));
-            intcpy(topolc[posinnew][1], topol[i][1]);
-            lenc[posinnew][1] = len[i][1];
-        }
-
-        //		reporterr(       "\nSTEP %d (new)\n", posinnew );
-        //		for( j=0; topolc[posinnew][0][j]!=-1; j++ ) reporterr(       " %d", topolc[posinnew][0][j]+1 );
-        //		reporterr(       "\n len=%f\n", lenc[posinnew][0] );
-        //		for( j=0; topolc[posinnew][1][j]!=-1; j++ ) reporterr(       " %d", topolc[posinnew][1][j]+1 );
-        //		reporterr(       "\n len=%f\n", lenc[posinnew][1] );
-
-        //		reporterr("\ni=%d\n####### leaf2node[nearest]= %d\n", i, leaf2node[nearest] );
-
-        for (j = 0; (m = topol[i][0][j]) != -1; j++)
-            leaf2node[m] = i;
-        for (j = 0; (m = topol[i][1][j]) != -1; j++)
-            leaf2node[m] = i;
-
-        //		reporterr("####### leaf2node[nearest]= %d\n", leaf2node[nearest] );
-
-        //		im = topolc[posinnew][0][0];
-        //		jm = topolc[posinnew][1][0];
-        //		sprintf( treetmp, "(%s:%7.5f,%s:%7.5f)", tree[im], lenc[posinnew][0], tree[jm], lenc[posinnew][1] );
-        //		strcpy( tree[im], treetmp );
-        //
-        //		reporterr(       "%s\n", treetmp );
-
-        posinnew++;
-    }
-
-    if (nstep) {
-        i--;
-        topolo0 = topol[i][0];
-        topolo1 = topol[i][1];
-    } else {
-        //		i = 0;
-        //		free( topol[i][0] );//?
-        //		free( topol[i][1] );//?
-        //		topol[i][0] = calloc( 2, sizeof( int ) );
-        //		topol[i][1] = calloc( 1, sizeof( int ) );
-        //		topol[i][0][0] = 0;
-        //		topol[i][0][1] = -1;
-        //		topol[i][1][0] = -1;
-
-        topoldum0 = calloc(2, sizeof(int));
-        topoldum1 = calloc(1, sizeof(int));
-        topoldum0[0] = 0;
-        topoldum0[1] = -1;
-        topoldum1[0] = -1;
-
-        topolo0 = topoldum0;
-        topolo1 = topoldum1;
-    }
-    if (repnorg == -1) {
-        //		topolc[posinnew][0] = (int *)realloc( topolc[posinnew][0], ( countmem( topol[i][0] ) + countmem( topol[i][1] ) + 1 ) * sizeof( int ) );
-        //		intcpy( topolc[posinnew][0], topol[i][0] );
-        //		intcat( topolc[posinnew][0], topol[i][1] );
-        topolc[posinnew][0] = (int*)realloc(topolc[posinnew][0], (countmem(topolo0) + countmem(topolo1) + 1) * sizeof(int));
-        intcpy(topolc[posinnew][0], topolo0);
-        intcat(topolc[posinnew][0], topolo1);
-        //		lenc[posinnew][0] = len[i][0] + len[i][1] - minscore / 2; // BUG!! 2014/06/07 ni hakken
-        if (nstep)
-            lenc[posinnew][0] = minscore / 2 - dep[nstep - 1].distfromtip;  // only when nstep>0, 2014/11/21
-        else
-            lenc[posinnew][0] = minscore / 2;
-
-        //		reporterr( "\ndep[nstep-1].distfromtip = %f\n", dep[nstep-1].distfromtip );
-        //		reporterr( "lenc[][0] = %f\n", lenc[posinnew][0] );
-
-        topolc[posinnew][1] = (int*)realloc(topolc[posinnew][1], 2 * sizeof(int));
-        intcpy(topolc[posinnew][1], additionaltopol);
-        lenc[posinnew][1] = minscore / 2;
-
-        //		neighbor = lastmem( topolc[posinnew][0] );
-        neighbor = norg - 1;  // hakkirishita neighbor ga inai baai saigo ni hyouji
-
-        if (treeout) {
-#if 0
-			fp = fopen( "infile.tree", "a" ); // kyougou!!
-			if( fp == 0 )
-			{
-				reporterr(       "File error!\n" );
-				exit( 1 );
-			}
-			fprintf( fp, "\n" );
-			fprintf( fp, "%8d: %s\n", norg+iadd+1, name[norg+iadd] );
-			fprintf( fp, "          nearest sequence: %d\n", nearest + 1 );
-			fprintf( fp, "          cousin: " );
-			for( j=0; topolc[posinnew][0][j]!=-1; j++ )
-				fprintf( fp, "%d ", topolc[posinnew][0][j]+1 );
-			fprintf( fp, "\n" );
-			fclose( fp );
-#else
-            addtree[iadd].nearest = nearesto;
-            addtree[iadd].dist1 = minscoreo;
-            addtree[iadd].dist2 = minscore;
-            neighborlist[0] = 0;
-            npt = neighborlist;
-            for (j = 0; topolc[posinnew][0][j] != -1; j++) {
-                sprintf(npt, "%d ", topolc[posinnew][0][j] + 1);
-                npt += strlen(npt);
-            }
-            addtree[iadd].neighbors = calloc(npt - neighborlist + 1, sizeof(char));
-            strcpy(addtree[iadd].neighbors, neighborlist);
-#endif
-        }
-
-        //		reporterr(       "STEP %d\n", posinnew );
-        //		for( j=0; topolc[posinnew][0][j]!=-1; j++ ) reporterr(       " %d", topolc[posinnew][0][j] );
-        //		reporterr(       "\n len=%f", lenc[posinnew][0] );
-        //		for( j=0; topolc[posinnew][1][j]!=-1; j++ ) reporterr(       " %d", topolc[posinnew][1][j] );
-        //		reporterr(       "\n len=%f\n", lenc[posinnew][1] );
-    }
-
-    if (topoldum0)
-        free(topoldum0);
-    if (topoldum1)
-        free(topoldum1);
-    free(leaf2node);
-    free(additionaltopol);
-    free(ac);
-    free(acori);
-    if (treeout)
-        free(neighborlist);
-
-#if 0  //	create a newick tree for CHECK
-	char **tree;
-	char *treetmp;
-	int im, jm;
-
-	treetmp = AllocateCharVec( njob*150 );
-	tree = AllocateCharMtx( njob, njob*150 );
-	for( i=0; i<njobc; i++ ) sprintf( tree[i], "%d", i+1 );
-
-	for( i=0; i<njobc-1; i++ )
-	{
-		reporterr( "\nSTEP %d\n", i );
-		for( j=0; topolc[i][0][j]!=-1; j++ ) reporterr( " %d", topolc[i][0][j]+1 );
-		reporterr( "\n len=%f\n", lenc[i][0] );
-		for( j=0; topolc[i][1][j]!=-1; j++ ) reporterr( " %d", topolc[i][1][j]+1 );
-		reporterr( "\n len=%f\n", lenc[i][1] );
-
-		im = topolc[i][0][0];
-		jm = topolc[i][1][0];
-		sprintf( treetmp, "(%s:%7.5f,%s:%7.5f)", tree[im], lenc[i][0], tree[jm], lenc[i][1] );
-		strcpy( tree[im], treetmp );
-
-	}
-
-	reporterr(       "%s\n", treetmp );
-	FreeCharMtx( tree );
-	free( treetmp );
-#endif
-
-    return (neighbor);
-}
-
-int
-addonetip(int njobc, int*** topolc, double** lenc, double** iscorec, int*** topol, double** len, Treedep* dep, int treeout, Addtree* addtree, int iadd, int* alnleninnode, int* nogaplen, int noalign) {
-    int    i, j, mem0, mem1, posinnew, m;
-    int    nstep;
-    int    norg;
-    double minscore, minscoreo, eff0, eff1, addedlen, tmpmin;
-    int    nearest, nearesto;
-    int    repnorg;
-    int*   leaf2node;
-    int*   additionaltopol;
-    //	double (*clusterfuncpt[1])(double,double);
-    Bchain *ac, *acpt, *acori, *acnext, *acprev;
-    int     neighbor;
-    char*   neighborlist;
-    char*   npt;
-    int     reflen, nearestnode, nogaplentoadd;
-    int*    topoldum0 = NULL;
-    int*    topoldum1 = NULL;
-    int*    topolo0;
-    int*    topolo1;
-    int     seqlengthcondition;
-    double  sueff1_double_local = 1.0 - sueff_global;
-    double  sueff05_double_local = sueff_global * 0.5;
-    //	char **tree; //static?
-    //	char *treetmp; //static?
-
-    //	for( i=0; i<njobc; i++ ) reporterr( "nogaplen of %d = %d\n", i+1, nogaplen[i] );
-    //exit( 1 );
-
-    //	treetmp = AllocateCharVec( njob*150 );
-    //	tree = AllocateCharMtx( njob, njob*150 );
-
-    //	sueff1_double = 1.0 - sueff_global;
-    //	sueff05_double = sueff_global * 0.5;
-    //	if ( treemethod == 'X' )
-    //		clusterfuncpt[0] = cluster_mix_double;
-    //	else if ( treemethod == 'E' )
-    //		clusterfuncpt[0] = cluster_average_double;
-    //	else if ( treemethod == 'q' )
-    //		clusterfuncpt[0] = cluster_minimum_double;
-    //	else
-    //	{
-    //		reporterr(       "Unknown treemethod, %c\n", treemethod );
-    //		exit( 1 );
-    //	}
-
-    norg = njobc - 1;
-    nstep = njobc - 2;
-
-    additionaltopol = (int*)calloc(2, sizeof(int));
-    leaf2node = (int*)calloc(norg, sizeof(int));
-    if (treeout) {
-        neighborlist = calloc(norg * 30, sizeof(char));
-    }
-    //	for( i=0; i<njobc; i++ ) sprintf( tree[i], "%d", i+1 );
-    if (!leaf2node) {
-        reporterr("Cannot allocate leaf2node.\n");
-        exit(1);
-    }
-    additionaltopol[0] = norg;
-    additionaltopol[1] = -1;
-
-    ac = (Bchain*)malloc(norg * sizeof(Bchain));
-    for (i = 0; i < norg; i++) {
-        ac[i].next = ac + i + 1;
-        ac[i].prev = ac + i - 1;
-        ac[i].pos = i;
-    }
-    ac[norg - 1].next = NULL;
-
-    acori = (Bchain*)malloc(1 * sizeof(Bchain));
-    acori->next = ac;
-    acori->pos = -1;
-    ac[0].prev = acori;
-
-    //	for( i=0; i<nstep; i++ )
-    //	{
-    //		reporterr(       "distfromtip = %f\n", dep[i].distfromtip );
-    //	}
-    //
-    //	for( i=0; i<norg; i++ )
-    //	{
-    //		reporterr(       "disttofrag(%d,%d) = %f\n", i, njobc-1, iscorec[i][norg-i] );
-    //	}
-
-    minscore = 9999.9;
-    nearest = -1;
-    for (i = 0; i < norg; i++) {
-        tmpmin = iscorec[i][norg - i];
-        if (minscore > tmpmin) {
-            minscore = tmpmin;
-            nearest = i;
-        }
-    }
-    nearesto = nearest;
-    minscoreo = minscore;
-
-    //	for( i=0; i<njobc-1; i++ ) for( j=i+1; j<njobc; j++ )
-    //		reporterr(       "iscorec[%d][%d] = %f\n", i, j, iscorec[i][j-i] );
-    //	reporterr( "nearest = %d\n", nearest+1 );
-    //	reporterr( "nearesto = %d\n", nearesto+1 );
-
-    posinnew = 0;
-    repnorg = -1;
-    nogaplentoadd = nogaplen[norg];
-
-    for (i = 0; i < norg; i++)
-        leaf2node[i] = -1;
-    for (i = 0; i < nstep; i++) {
-        mem0 = topol[i][0][0];
-        mem1 = topol[i][1][0];
-#if 0
-		reporterr(       "\n\nstep %d (old) \n", i );
-
-		reporterr( "group0 = \n" );
-		for( j=0; topol[i][0][j]>-1; j++ ) 
-		{
-			reporterr( "%d ", topol[i][0][j]+1 );
-		}
-		reporterr( "\n" );
-		reporterr( "len=%f\n", len[i][0] );
-		reporterr( "group1 = \n" );
-		for( j=0; topol[i][1][j]>-1; j++ ) 
-		{
-			reporterr( "%d ", topol[i][1][j]+1 );
-		}
-		reporterr( "\n" );
-		reporterr( "len=%f\n", len[i][1] );
-		
-		reporterr(       "\n\n\nminscore = %f ? %f\n", minscore, dep[i].distfromtip*2 );
-		reporterr(       "i = %d\n", i );
-		if( leaf2node[nearest] == -1 )
-		{
-			reporterr(       "nogaplen[nearest] = %d\n", nogaplen[nearest] );
-		}
-		else
-		{
-			reporterr(       "alnleninnode[leaf2node[nearest]] = %d\n", alnleninnode[leaf2node[nearest]] );
-			reporterr(       "leaf2node[nearest] = %d\n", leaf2node[nearest] );
-		}
-#endif
-        nearestnode = leaf2node[nearest];
-        if (nearestnode == -1)
-            reflen = nogaplen[nearest];
-        else
-            reflen = alnleninnode[nearestnode];
-        //			reflen = alnleninnode[i]; // BUG!!
-
-        if (noalign)
-            seqlengthcondition = 1;
-        else
-            seqlengthcondition = (nogaplentoadd <= reflen);
-
-        //seqlengthcondition = 1; // CHUUI
-        //seqlengthcondition = ( nogaplentoadd <= reflen ); // CHUUI
-
-        if (repnorg == -1 && dep[i].distfromtip * 2 > minscore && seqlengthcondition)  // Keitouteki ichi ha fuseikaku.
-        //		if( repnorg == -1 && dep[i].distfromtip * 2 > minscore ) // Keitouteki ichi dake ga hitsuyouna baaiha kore wo tsukau.
-        {
-            //			reporterr(       "INSERT HERE, %d-%d\n", nearest, norg );
-            //			reporterr(       "nearest = %d\n", nearest );
-            //			reporterr(       "\n\n\nminscore = %f\n", minscore );
-            //			reporterr(       "distfromtip *2 = %f\n", dep[i].distfromtip * 2 );
-            //			reporterr(       "nearest=%d, leaf2node[]=%d\n", nearest, leaf2node[nearest] );
-
-            if (nearestnode == -1) {
-                //				reporterr(       "INSERTING to 0!!!\n" );
-                //				reporterr(       "lastlength = %d\n", nogaplen[norg] );
-                //				reporterr(       "reflength = %d\n", nogaplen[nearest] );
-                topolc[posinnew][0] = (int*)realloc(topolc[posinnew][0], (1 + 1) * sizeof(int));
-                topolc[posinnew][0][0] = nearest;
-                topolc[posinnew][0][1] = -1;
-
-                addedlen = lenc[posinnew][0] = minscore / 2;
-
-            } else {
-                //				reporterr(       "INSERTING to g, leaf2node = %d, cm=%d!!!\n", leaf2node[nearest], countmem(topol[leaf2node[nearest]][0] ) );
-                //				reporterr(       "alnleninnode[i] = %d\n", alnleninnode[i] );
-                //				reporterr(       "alnleninnode[leaf2node[nearest]] = %d\n", alnleninnode[leaf2node[nearest]] );
-
-                topolc[posinnew][0] = (int*)realloc(topolc[posinnew][0], ((countmem(topol[nearestnode][0]) + countmem(topol[nearestnode][1]) + 1) * sizeof(int)));
-                //				reporterr(       "leaf2node[%d] = %d\n", nearest, leaf2node[nearest] );
-                intcpy(topolc[posinnew][0], topol[nearestnode][0]);
-                intcat(topolc[posinnew][0], topol[nearestnode][1]);
-                //				addedlen = lenc[posinnew][0] = minscore / 2 - len[nearestnode][0]; // bug!!
-                addedlen = lenc[posinnew][0] = dep[i].distfromtip - minscore / 2;  // 2014/06/10
-                //				fprintf( stderr, "addedlen = %f, dep[i].distfromtip = %f, len[nearestnode][0] = %f, minscore/2 = %f, lenc[posinnew][0] = %f\n", addedlen, dep[i].distfromtip, len[nearestnode][0], minscore/2, lenc[posinnew][0] );
-            }
-            neighbor = lastmem(topolc[posinnew][0]);
-
-            if (treeout) {
-#if 0
-				fp = fopen( "infile.tree", "a" ); // kyougou!!
-				if( fp == 0 )
-				{
-					reporterr(       "File error!\n" );
-					exit( 1 );
-				}
-				fprintf( fp, "\n" );
-				fprintf( fp, "%8d: %s\n", norg+iadd+1, name[norg+iadd] );
-				fprintf( fp, "          nearest sequence: %d\n", nearest + 1 );
-				fprintf( fp, "          distance: %f\n", minscore );
-				fprintf( fp, "          cousin: " );
-				for( j=0; topolc[posinnew][0][j]!=-1; j++ )
-					fprintf( fp, "%d ", topolc[posinnew][0][j]+1 );
-				fprintf( fp, "\n" );
-				fclose( fp );
-#else
-                addtree[iadd].nearest = nearesto;
-                addtree[iadd].dist1 = minscoreo;
-                addtree[iadd].dist2 = minscore;
-                neighborlist[0] = 0;
-                npt = neighborlist;
-                for (j = 0; topolc[posinnew][0][j] != -1; j++) {
-                    sprintf(npt, "%d ", topolc[posinnew][0][j] + 1);
-                    npt += strlen(npt);
-                }
-                addtree[iadd].neighbors = calloc(npt - neighborlist + 1, sizeof(char));
-                strcpy(addtree[iadd].neighbors, neighborlist);
-#endif
-            }
-
-            //			reporterr(       "INSERTING to 1!!!\n" );
-            topolc[posinnew][1] = (int*)realloc(topolc[posinnew][1], (1 + 1) * sizeof(int));
-            topolc[posinnew][1][0] = norg;
-            topolc[posinnew][1][1] = -1;
-            lenc[posinnew][1] = minscore / 2;
-
-            //			reporterr(       "STEP %d (newnew)\n", posinnew );
-            //			for( j=0; topolc[posinnew][0][j]!=-1; j++ ) reporterr(       " %d", topolc[posinnew][0][j]+1 );
-            //			reporterr(       "\n len=%f\n", lenc[posinnew][0] );
-            //			for( j=0; topolc[posinnew][1][j]!=-1; j++ ) reporterr(       " %d", topolc[posinnew][1][j]+1 );
-            //			reporterr(       "\n len=%f\n", lenc[posinnew][1] );
-
-            repnorg = nearest;
-
-            //			reporterr(       "STEP %d\n", posinnew );
-            //			for( j=0; topolc[posinnew][0][j]!=-1; j++ ) reporterr(       " %d", topolc[posinnew][0][j] );
-            //			reporterr(       "\n len=%f\n", lenc[i][0] );
-            //			for( j=0; topolc[posinnew][1][j]!=-1; j++ ) reporterr(       " %d", topolc[posinnew][1][j] );
-            //			reporterr(       "\n len=%f\n", lenc[i][1] );
-
-            //			im = topolc[posinnew][0][0];
-            //			jm = topolc[posinnew][1][0];
-            //			sprintf( treetmp, "(%s:%7.5f,%s:%7.5f)", tree[im], lenc[posinnew][0], tree[jm], lenc[posinnew][1] );
-            //			strcpy( tree[im], treetmp );
-
-            posinnew++;
-        }
-
-        //		reporterr(       "minscore = %f\n", minscore );
-        //		reporterr(       "distfromtip = %f\n", dep[i].distfromtip );
-        //		reporterr(       "Modify matrix, %d-%d\n", nearest, norg );
-        eff0 = iscorec[mem0][norg - mem0];
-        eff1 = iscorec[mem1][norg - mem1];
-
-        //		iscorec[mem0][norg-mem0] = (clusterfuncpt[0])( eff0, eff1 );
-        iscorec[mem0][norg - mem0] = MIN(eff0, eff1) * sueff1_double_local + (eff0 + eff1) * sueff05_double_local;
-        iscorec[mem1][norg - mem1] = 9999.9;  // sukoshi muda
-
-        acprev = ac[mem1].prev;
-        acnext = ac[mem1].next;
-        acprev->next = acnext;
-        if (acnext != NULL)
-            acnext->prev = acprev;
-
-        if ((nearest == mem1 || nearest == mem0)) {
-            minscore = 9999.9;
-            //			for( j=0; j<norg; j++ ) // sukoshi muda
-            //			{
-            //				if( minscore > iscorec[j][norg-j] )
-            //				{
-            //					minscore = iscorec[j][norg-j];
-            //					nearest = j;
-            //				}
-            //			}
-            //			reporterr(       "searching on modified ac " );
-            for (acpt = acori->next; acpt != NULL; acpt = acpt->next)  // sukoshi muda
-            {
-                //				reporterr(       "." );
-                j = acpt->pos;
-                tmpmin = iscorec[j][norg - j];
-                if (minscore > tmpmin) {
-                    minscore = tmpmin;
-                    nearest = j;
-                }
-            }
-            //			reporterr(       "done\n" );
-        }
-
-        //		reporterr(       "posinnew = %d\n", posinnew );
-
-        if (topol[i][0][0] == repnorg) {
-            topolc[posinnew][0] = (int*)realloc(topolc[posinnew][0], (countmem(topol[i][0]) + 2) * sizeof(int));
-            intcpy(topolc[posinnew][0], topol[i][0]);
-            intcat(topolc[posinnew][0], additionaltopol);
-            lenc[posinnew][0] = len[i][0] - addedlen;  // 2014/6/10
-            //			fprintf( stderr, "i=%d, dep[i].distfromtip=%f\n", i, dep[i].distfromtip );
-            //			fprintf( stderr, "addedlen=%f, len[i][0]=%f, lenc[][0]=%f\n", addedlen, len[i][0], lenc[posinnew][0] );
-            //			fprintf( stderr, "lenc[][1] = %f\n", lenc[posinnew][0] );
-            addedlen = 0.0;
-        } else {
-            topolc[posinnew][0] = (int*)realloc(topolc[posinnew][0], (countmem(topol[i][0]) + 1) * sizeof(int));
-            intcpy(topolc[posinnew][0], topol[i][0]);
-            lenc[posinnew][0] = len[i][0];
-        }
-
-        if (topol[i][1][0] == repnorg) {
-            topolc[posinnew][1] = (int*)realloc(topolc[posinnew][1], (countmem(topol[i][1]) + 2) * sizeof(int));
-            intcpy(topolc[posinnew][1], topol[i][1]);
-            intcat(topolc[posinnew][1], additionaltopol);
-            lenc[posinnew][1] = len[i][1] - addedlen;  // 2014/6/10
-            //			fprintf( stderr, "i=%d, dep[i].distfromtip=%f\n", i, dep[i].distfromtip );
-            //			fprintf( stderr, "addedlen=%f, len[i][1]=%f, lenc[][1]=%f\n", addedlen, len[i][1], lenc[posinnew][1] );
-            //			fprintf( stderr, "lenc[][1] = %f\n", lenc[posinnew][1] );
-            addedlen = 0.0;
-
-            repnorg = topolc[posinnew][0][0];  // juuyou
-        } else {
-            topolc[posinnew][1] = (int*)realloc(topolc[posinnew][1], (countmem(topol[i][1]) + 1) * sizeof(int));
-            intcpy(topolc[posinnew][1], topol[i][1]);
-            lenc[posinnew][1] = len[i][1];
-        }
-
-        //		reporterr(       "\nSTEP %d (new)\n", posinnew );
-        //		for( j=0; topolc[posinnew][0][j]!=-1; j++ ) reporterr(       " %d", topolc[posinnew][0][j]+1 );
-        //		reporterr(       "\n len=%f\n", lenc[posinnew][0] );
-        //		for( j=0; topolc[posinnew][1][j]!=-1; j++ ) reporterr(       " %d", topolc[posinnew][1][j]+1 );
-        //		reporterr(       "\n len=%f\n", lenc[posinnew][1] );
-
-        //		reporterr("\ni=%d\n####### leaf2node[nearest]= %d\n", i, leaf2node[nearest] );
-
-        for (j = 0; (m = topol[i][0][j]) != -1; j++)
-            leaf2node[m] = i;
-        for (j = 0; (m = topol[i][1][j]) != -1; j++)
-            leaf2node[m] = i;
-
-        //		reporterr("####### leaf2node[nearest]= %d\n", leaf2node[nearest] );
-
-        //		im = topolc[posinnew][0][0];
-        //		jm = topolc[posinnew][1][0];
-        //		sprintf( treetmp, "(%s:%7.5f,%s:%7.5f)", tree[im], lenc[posinnew][0], tree[jm], lenc[posinnew][1] );
-        //		strcpy( tree[im], treetmp );
-        //
-        //		reporterr(       "%s\n", treetmp );
-
-        posinnew++;
-    }
-
-    if (nstep) {
-        i--;
-        topolo0 = topol[i][0];
-        topolo1 = topol[i][1];
-    } else {
-        //		i = 0;
-        //		free( topol[i][0] );//?
-        //		free( topol[i][1] );//?
-        //		topol[i][0] = calloc( 2, sizeof( int ) );
-        //		topol[i][1] = calloc( 1, sizeof( int ) );
-        //		topol[i][0][0] = 0;
-        //		topol[i][0][1] = -1;
-        //		topol[i][1][0] = -1;
-
-        topoldum0 = calloc(2, sizeof(int));
-        topoldum1 = calloc(1, sizeof(int));
-        topoldum0[0] = 0;
-        topoldum0[1] = -1;
-        topoldum1[0] = -1;
-
-        topolo0 = topoldum0;
-        topolo1 = topoldum1;
-    }
-    if (repnorg == -1) {
-        //		topolc[posinnew][0] = (int *)realloc( topolc[posinnew][0], ( countmem( topol[i][0] ) + countmem( topol[i][1] ) + 1 ) * sizeof( int ) );
-        //		intcpy( topolc[posinnew][0], topol[i][0] );
-        //		intcat( topolc[posinnew][0], topol[i][1] );
-        topolc[posinnew][0] = (int*)realloc(topolc[posinnew][0], (countmem(topolo0) + countmem(topolo1) + 1) * sizeof(int));
-        intcpy(topolc[posinnew][0], topolo0);
-        intcat(topolc[posinnew][0], topolo1);
-        //		lenc[posinnew][0] = len[i][0] + len[i][1] - minscore / 2; // BUG!! 2014/06/07 ni hakken
-        if (nstep)
-            lenc[posinnew][0] = minscore / 2 - dep[nstep - 1].distfromtip;  // only when nstep>0, 2014/11/21
-        else
-            lenc[posinnew][0] = minscore / 2;
-
-        //		reporterr( "\ndep[nstep-1].distfromtip = %f\n", dep[nstep-1].distfromtip );
-        //		reporterr( "lenc[][0] = %f\n", lenc[posinnew][0] );
-
-        topolc[posinnew][1] = (int*)realloc(topolc[posinnew][1], 2 * sizeof(int));
-        intcpy(topolc[posinnew][1], additionaltopol);
-        lenc[posinnew][1] = minscore / 2;
-
-        //		neighbor = lastmem( topolc[posinnew][0] );
-        neighbor = norg - 1;  // hakkirishita neighbor ga inai baai saigo ni hyouji
-
-        if (treeout) {
-#if 0
-			fp = fopen( "infile.tree", "a" ); // kyougou!!
-			if( fp == 0 )
-			{
-				reporterr(       "File error!\n" );
-				exit( 1 );
-			}
-			fprintf( fp, "\n" );
-			fprintf( fp, "%8d: %s\n", norg+iadd+1, name[norg+iadd] );
-			fprintf( fp, "          nearest sequence: %d\n", nearest + 1 );
-			fprintf( fp, "          cousin: " );
-			for( j=0; topolc[posinnew][0][j]!=-1; j++ )
-				fprintf( fp, "%d ", topolc[posinnew][0][j]+1 );
-			fprintf( fp, "\n" );
-			fclose( fp );
-#else
-            addtree[iadd].nearest = nearesto;
-            addtree[iadd].dist1 = minscoreo;
-            addtree[iadd].dist2 = minscore;
-            neighborlist[0] = 0;
-            npt = neighborlist;
-            for (j = 0; topolc[posinnew][0][j] != -1; j++) {
-                sprintf(npt, "%d ", topolc[posinnew][0][j] + 1);
-                npt += strlen(npt);
-            }
-            addtree[iadd].neighbors = calloc(npt - neighborlist + 1, sizeof(char));
-            strcpy(addtree[iadd].neighbors, neighborlist);
-#endif
-        }
-
-        //		reporterr(       "STEP %d\n", posinnew );
-        //		for( j=0; topolc[posinnew][0][j]!=-1; j++ ) reporterr(       " %d", topolc[posinnew][0][j] );
-        //		reporterr(       "\n len=%f", lenc[posinnew][0] );
-        //		for( j=0; topolc[posinnew][1][j]!=-1; j++ ) reporterr(       " %d", topolc[posinnew][1][j] );
-        //		reporterr(       "\n len=%f\n", lenc[posinnew][1] );
-    }
-
-    if (topoldum0)
-        free(topoldum0);
-    if (topoldum1)
-        free(topoldum1);
-    free(leaf2node);
-    free(additionaltopol);
-    free(ac);
-    free(acori);
-    if (treeout)
-        free(neighborlist);
-
-#if 0  //	create a newick tree for CHECK
-	char **tree;
-	char *treetmp;
-	int im, jm;
-
-	treetmp = AllocateCharVec( njob*150 );
-	tree = AllocateCharMtx( njob, njob*150 );
-	for( i=0; i<njobc; i++ ) sprintf( tree[i], "%d", i+1 );
-
-	for( i=0; i<njobc-1; i++ )
-	{
-		reporterr( "\nSTEP %d\n", i );
-		for( j=0; topolc[i][0][j]!=-1; j++ ) reporterr( " %d", topolc[i][0][j] );
-		reporterr( "\n len=%f\n", lenc[i][0] );
-		for( j=0; topolc[i][1][j]!=-1; j++ ) reporterr( " %d", topolc[i][1][j] );
-		reporterr( "\n len=%f\n", lenc[i][1] );
-
-		im = topolc[i][0][0];
-		jm = topolc[i][1][0];
-		sprintf( treetmp, "(%s:%7.5f,%s:%7.5f)", tree[im], lenc[i][0], tree[jm], lenc[i][1] );
-		strcpy( tree[im], treetmp );
-
-	}
-
-	reporterr(       "%s\n", treetmp );
-	FreeCharMtx( tree );
-	free( treetmp );
-#endif
-
-    return (neighbor);
-}
-
-#if 0
-int samemember( int *mem, int *cand )
-{
-	int i, j;
-
-#if 0
-	reporterr(       "mem = " );
-	for( i=0; mem[i]>-1; i++ )	reporterr(       "%d ", mem[i] );
-	reporterr(       "\n" );
-
-	reporterr(       "cand = " );
-	for( i=0; cand[i]>-1; i++ )	reporterr(       "%d ", cand[i] );
-	reporterr(       "\n" );
-#endif
-
-	for( i=0, j=0; mem[i]>-1; )	
-	{
-		if( mem[i++] != cand[j++] ) return( 0 );
-	}
-
-	if( cand[j] == -1 )
-	{
-		return( 1 );
-	}
-	else
-	{
-		return( 0 );
-	}
-}
-#else
-int
 samemember(int* mem, int* cand) {
     int i, j;
     int nm, nc;
@@ -8311,21 +7251,11 @@ samemember(int* mem, int* cand) {
     }
 
     if (mem[i] == -1) {
-#if 0
-		reporterr(       "mem = " );
-		for( i=0; mem[i]>-1; i++ )	reporterr(       "%d ", mem[i] );
-		reporterr(       "\n" );
-	
-		reporterr(       "cand = " );
-		for( i=0; cand[i]>-1; i++ )	reporterr(       "%d ", cand[i] );
-		reporterr(       "\n" );
-#endif
         return (1);
     } else {
         return (0);
     }
 }
-#endif
 
 int
 samemembern(int* mem, int* cand, int nc) {
@@ -8678,7 +7608,7 @@ sumofpairsscore(Context* ctx, int nseq, char** seq) {
 }
 
 int
-commonsextet_p(int* table, int* pointt) {
+commonsextet_p(Context* ctx, int* table, int* pointt) {
     int         value = 0;
     int         tmp;
     int         point;
@@ -8700,10 +7630,10 @@ commonsextet_p(int* table, int* pointt) {
         return (0);
 
     if (!memo) {
-        memo = (int*)calloc(tsize, sizeof(int));
+        memo = (int*)calloc(ctx->tsize, sizeof(int));
         if (!memo)
             ErrorExit("Cannot allocate memo\n");
-        ct = (int*)calloc(MIN(maxl, tsize) + 1, sizeof(int));  // chuui!!
+        ct = (int*)calloc(MIN(ctx->maxl, ctx->tsize) + 1, sizeof(int));  // chuui!!
         if (!ct)
             ErrorExit("Cannot allocate ct\n");
     }
@@ -8743,7 +7673,7 @@ distcompact_msa(Context* ctx, char* seq1, char* seq2, int* skiptable1, int* skip
 }
 
 double
-distcompact(int len1, int len2, int* table1, int* point2, int ss1, int ss2) {
+distcompact(Context* ctx, int len1, int len2, int* table1, int* point2, int ss1, int ss2) {
     double longer, shorter, lenfac, value;
 
     if (len1 > len2) {
@@ -8753,16 +7683,12 @@ distcompact(int len1, int len2, int* table1, int* point2, int ss1, int ss2) {
         longer = (double)len2;
         shorter = (double)len1;
     }
-    lenfac = 1.0 / (shorter / longer * lenfacd + lenfacb / (longer + lenfacc) + lenfaca);
-    //	reporterr( "lenfac=%f\n", lenfac );
-    //	reporterr( "commonsextet_p()=%d\n", commonsextet_p( table1, point2 ) );
-    //	reporterr( "ss1=%d, ss2=%d\n", ss1, ss2 );
-    //	reporterr( "val=%f\n", (1.0-(double)commonsextet_p( table1, point2 )/ss1) );
+    lenfac = 1.0 / (shorter / longer * ctx->lenfacd + ctx->lenfacb / (longer + ctx->lenfacc) + ctx->lenfaca);
 
     if (ss1 == 0 || ss2 == 0)
         return (2.0);
 
-    value = (1.0 - (double)commonsextet_p(table1, point2) / MIN(ss1, ss2)) * lenfac * 2.0;
+    value = (1.0 - (double)commonsextet_p(ctx, table1, point2) / MIN(ss1, ss2)) * lenfac * 2.0;
 
     return (value);  // 2013/Oct/17 -> 2bai
 }

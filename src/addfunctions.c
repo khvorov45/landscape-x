@@ -300,12 +300,6 @@ adjustgapmap(int newlen, int* gapmap, char* seq) {
         gapmap[j] = tmpmap[j];
 
     free(tmpmap);
-
-#if 0
-	reporterr( "gapmap in adjustgapmap() =\n" );
-	for(j=0; j<newlen1; j++) reporterr( "%d ", gapmap[j] );
-	reporterr( "length = %d\n", newlen );
-#endif
 }
 
 static int
@@ -324,7 +318,6 @@ static int
 countgapmap(int* gapmap, int* term) {
     int v = 0;
     while (gapmap < term) {
-        //		reporterr( "*gapmap = %d\n", *gapmap );
         if (*gapmap++ == 0)
             v++;
         else
@@ -638,20 +631,6 @@ insertnewgaps_bothorders(Context* ctx, int njob, int* alreadyaligned, char** seq
     len = strlen(seq[rep]);
     len0 = len + 1;
 
-    //	reporterr( "alloclen = %d\n", alloclen );
-    //	reporterr( "len0 = %d\n", strlen( seq[list0[0]] ) );
-    //	reporterr( "len1 = %d\n", strlen( seq[list1[0]] ) );
-    //	reporterr( "gapmaplen = %d\n", gapmaplen );
-    //	reporterr( "ng0, ng1, ng2 = %d, %d, %d\n", ngroup0, ngroup1, ngroup2 );
-
-    //
-    //	if( i == njob )
-    //	{
-    ////		fprintf( stderr, "Nothing to do\n" );
-    //		free( mar );
-    //		return;
-    //	}
-
     mseq2 = AllocateCharMtx(ngroup2, alloclen);
     mseq1 = AllocateCharMtx(ngroup1, alloclen);
     mseq0 = AllocateCharMtx(ngroup0, alloclen);
@@ -662,31 +641,6 @@ insertnewgaps_bothorders(Context* ctx, int njob, int* alreadyaligned, char** seq
         aseq[i][0] = 0;
     newpos = 0;
     posin12 = 0;
-
-#if 0
-	if( disp )
-	{
-		int p;
-		fprintf( stderr, "\n" );
-		fprintf( stderr, "len0 = %d\n", len0 );
-		fprintf( stderr, "\ngaplen[] = \n" );
-		reporterr( "seq0[0]  = %s\n", seq[list0[0]] );
-		reporterr( "seq1[1]  = %s\n", seq[list1[0]] );
-		reporterr( "seq2[2]  = %s\n", seq[list2[0]] );
-		reporterr( "seq[rep] = %s\n", seq[rep] );
-		for(i=0,p=0; i<gapmaplen; i++,p++ )
-		{
-			fprintf( stderr, "gaplen %d:%d %-*.*s\n", p, gaplen[p], gaplen[p]+1, gaplen[p]+1, seq[list1[0]]+i );
-			i += gaplen[p];
-		}
-	}
-	fprintf( stderr, "\n" );
-	fprintf( stderr, "\ngapmap[] = \n" );
-	for(i=0; i<gapmaplen; i++ ) fprintf( stderr, "gapmap %d:%d %-*.*s\n", i, gapmap[i], gapmap[i]+1, gapmap[i]+1, seq[list1[0]]+i );
-
-	reporterr( "seq1 = \n" );
-	reporterr( "%s\n", seq[list1[0]] );
-#endif
 
     for (j = 0; j < len0; j++) {
         //		fprintf( stderr, "\nj=%d, gaplen[%d]=%d\n", j, j, gaplen[j] );
@@ -715,40 +669,9 @@ insertnewgaps_bothorders(Context* ctx, int njob, int* alreadyaligned, char** seq
                 mlen0 += gapshiftb;
                 mlen1 += gapshiftb;
                 mlen2 += gapshiftb;
-#if 0
-				reporterr( "\n\n" );
-				for( i=0; i<1; i++ ) fprintf( stderr, "##b mseq0[%d] = %s\n", i, mseq0[i] );
-				for( i=0; i<1; i++ ) fprintf( stderr, "##b mseq1[%d] = %s\n", i, mseq1[i] );
-				for( i=0; i<1; i++ ) fprintf( stderr, "##b mseq2[%d] = %s\n", i, mseq2[i] );
-#endif
                 posin12 += gapshiftb;
             }
-#if 0  // nen no tame
-			for( i=0, jinc=0; i<gapshiftb; i++ ) jinc += 1+gaplen[j+i];
-			if( jinc != gapshiftb )
-			{
-				reporterr( "\n#################!\n" );
-				reporterr( "# Unexpected gap pattern!\n" );
-				reporterr( "# There are overlapped %d gaps in gaplen[] and gapmap[]. j=%d-%d, posin12=%d-%d\n", jinc, j-gapshiftb-jinc, j, posin12-gapshiftb, posin12 );
-				reporterr( "\n#################!\n" );
-				exit( 1 );
-			}
-			j += gapshiftb;
-#else
             j += gapshiftb;
-#endif
-
-#if 0
-			if( disp && gapshiftb )
-			{
-				reporterr( "after gapshiftb, j=%d, posin12=%d\n", j, posin12 );
-				reporterr( "mseq0[0] = %s\n", mseq0[0] );
-				reporterr( "mseq1[0] = %s\n", mseq1[0] );
-				reporterr( "mseq2[0] = %s\n", mseq2[0] );
-			}
-#endif
-
-            //			fprintf( stderr, "gaplen[%d]=%d, posin12 = %d\n", j, gaplen[j], posin12 );
 
             while (1) {
                 gapshiftn = gaplen[j];
@@ -769,25 +692,9 @@ insertnewgaps_bothorders(Context* ctx, int njob, int* alreadyaligned, char** seq
                     mlen0 += gapshiftn;
                     mlen1 += gapshiftn;
                     mlen2 += gapshiftn;
-#if 0
-					for( i=0; i<1; i++ ) fprintf( stderr, "##n mseq0[%d] = %s\n", i, mseq0[i] );
-					for( i=0; i<1; i++ ) fprintf( stderr, "##n mseq1[%d] = %s\n", i, mseq1[i] );
-					for( i=0; i<1; i++ ) fprintf( stderr, "##n mseq2[%d] = %s\n", i, mseq2[i] );
-#endif
                 }
 
-#if 0
-				if( disp && gapshiftn )
-				{
-					reporterr( "after gapshiftn (j=%d, gaplen[j]=%d, posin12=%d, gapshiftn=%d)\n", j, gaplen[j], posin12-gapshiftn, gapshiftn );
-					reporterr( "mseq0[0] = %s\n", mseq0[0] );
-					reporterr( "mseq1[0] = %s\n", mseq1[0] );
-					reporterr( "mseq2[0] = %s\n", mseq2[0] );
-				}
-#endif
-
                 gapshifta = gapmap[posin12];
-                //				fprintf( stderr, "gapmap[%d] kouho = %d, posin12 = %d\n", posin12, gapmap[posin12], posin12 );
 
                 if (gapshifta) {
                     for (i = 0; i < ngroup0; i++)
@@ -824,33 +731,10 @@ insertnewgaps_bothorders(Context* ctx, int njob, int* alreadyaligned, char** seq
                 strcpy(aseq[list1[i]] + newpos, mseq1[i]);
             for (i = 0; i < ngroup2; i++)
                 strcpy(aseq[list2[i]] + newpos, mseq2[i]);
-
-#if 0
-			if( disp )
-			{
-				reporterr( "after profilealignment\n" );
-				reporterr( "mseq0[0] = %s\n", mseq0[0] );
-				reporterr( "mseq1[0] = %s\n", mseq1[0] );
-				reporterr( "mseq2[0] = %s\n", mseq2[0] );
-
-				gappick0equalminustmptmptmp( nogapseq1, aseq[list1[0]] );
-				gappick0equalminustmptmptmp( nogapseq2, seq[list1[0]] );
-	
-				reporterr( "aseq[list1[0].nogap = %s\n", nogapseq1 );
-				reporterr( " seq[list1[0].nogap = %s\n", nogapseq2 );
-			}
-#endif
-
-            //			fprintf( stderr, "gapshift = %d\n", gapshift );
         }
         newpos = strlen(aseq[rep]);
         blocklen = 1 + countnogaplen(gaplen + j + 1, gaplen + len0);
-        //		fprintf( stderr, "\nj=%d, blocklen=%d, len0=%d\n", j, blocklen, len0 );
-
         blockmap = 1 + countgapmap(gapmap + posin12 + 1, gapmap + gapmaplen);
-        //		fprintf( stderr, "posin12=%d, blockmap=%d, len0=%d\n", posin12, blockmap, len0 );
-
-        //		if( disp ) reporterr( "newpos = %d, blocklen = %d, blockmap = %d, j=%d, posin12=%d\n", newpos, blocklen, blockmap, j, posin12 );
 
         if (blockmap < blocklen)
             blocklen = blockmap;
@@ -882,14 +766,8 @@ insertnewgaps_bothorders(Context* ctx, int njob, int* alreadyaligned, char** seq
             lp = list2[i];
             newchar = aseq[lp] + newpos;
             strncpy0(newchar, seq[lp] + posin12, blocklen);
-            //			*(newchar+blocklen) = 0; iranai
         }
 
-//			reporterr( "adding %c to aseq[list1[0]]\n", seq[list1[0]][posin12] );
-
-//		for( i=0; i<ngroup0; i++ ) fprintf( stderr, "### aseq0[%d] = %s\n", i, aseq[list0[i]] );
-//		for( i=0; i<ngroup1; i++ ) fprintf( stderr, "### aseq1[%d] = %s\n", i, aseq[list1[i]] );
-//		for( i=0; i<ngroup2; i++ ) fprintf( stderr, "### aseq2[%d] = %s\n", i, aseq[list2[i]] );
 #endif
 
         //		fprintf( stderr, "j=%d -> %d\n", j, j+blocklen-1 );
@@ -900,94 +778,8 @@ insertnewgaps_bothorders(Context* ctx, int njob, int* alreadyaligned, char** seq
         posin12 += (blocklen - 1);  // sono aida ni gapmap wo miotosu?
 
         posin12++;
-
-#if 0
-		if( disp )
-		{
-			gappick0equalminustmptmptmp( nogapseq1, aseq[list1[0]] );
-			gappick0equalminustmptmptmp( nogapseq2, seq[list1[0]] );
-
-			reporterr( "aseq[list1[0].nogap = %s\n", nogapseq1 );
-			reporterr( " seq[list1[0].nogap = %s\n", nogapseq2 );
-			reporterr( "" );
-//			reporterr( "seq[list1[0]] = %s\n", seq[list1[0]] );
-//			reporterr( "seq[list2[0]] = %s\n", seq[list2[0]] );
-		}
-#endif
     }
-#if 0
-	fprintf( stderr, "\n" );
-	for( i=0; i<ngroup0; i++ ) fprintf( stderr, " seq[l0i] = \n%s\n", seq[list0[i]] );
-	for( i=0; i<ngroup1; i++ ) fprintf( stderr, " seq[l1i] = \n%s\n", seq[list1[i]] );
-	for( i=0; i<ngroup2; i++ ) fprintf( stderr, " seq[l2i] = \n%s\n", seq[list2[i]] );
-	reporterr( "0         1         2         3         4         5         6         7       \n" );
-	reporterr( "012345678901234567890123456789012345678901234567890123456789012345678901234567\n" );
-	fprintf( stderr, "=====>\n" );
-	for( i=0; i<ngroup0; i++ ) fprintf( stderr, "aseq[l0i] = \n%s\n", aseq[list0[i]] );
-	for( i=0; i<ngroup1; i++ ) fprintf( stderr, "aseq[l1i] = \n%s\n", aseq[list1[i]] );
-	for( i=0; i<ngroup2; i++ ) fprintf( stderr, "aseq[l2i] = \n%s\n", aseq[list2[i]] );
-#endif
 
-#if 0
-	reporterr( "list0[0]=%d\n", list0[0] );
-	reporterr( "list0[%d-1]=%d\n", ngroup0, list0[ngroup0-1] );
-	reporterr( "seq0[list[0]]=%s\n", seq[list0[0]] );
-	reporterr( "aseq0[list[0]]=%s\n", aseq[list0[0]] );
-#endif
-
-#if 0
-	for( i=0; i<ngroup0; i++ )
-	{
-		if( strlen( aseq[list0[0]] ) != strlen( aseq[list0[i]] ) )
-		{
-			reporterr( "Length error! len[0] = %d, but len[%d] = %d\n", strlen( aseq[list0[0]] ), list0[i], strlen( aseq[list0[i]] ) );
-			bug = 1;
-			break;
-		}
-	}
-	for( i=0; i<ngroup0; i++ )
-	{
-		gappick0equalminustmptmptmp( nogapseq1, aseq[list0[i]] );
-		gappick0equalminustmptmptmp( nogapseq2, seq[list0[i]] );
-		if( strcmp( nogapseq1, nogapseq2 ) ) bug = 1;
-	}
-	for( i=0; i<ngroup1; i++ )
-	{
-		gappick0equalminustmptmptmp( nogapseq1, aseq[list1[i]] );
-		gappick0equalminustmptmptmp( nogapseq2, seq[list1[i]] );
-		if( strcmp( nogapseq1, nogapseq2 ) ) bug = 1;
-	}
-	for( i=0; i<ngroup2; i++ )
-	{
-		gappick0equalminustmptmptmp( nogapseq1, aseq[list2[i]] );
-		gappick0equalminustmptmptmp( nogapseq2, seq[list2[i]] );
-		if( strcmp( nogapseq1, nogapseq2 ) ) bug = 1;
-	}
-
-	free( nogapseq1 );
-	free( nogapseq2 );
-	
-	if( bug )
-	{
-		reporterr( "ERROR!!!!!!!\n" );
-		reporterr( ">aseq1[%d], len = %d\n%s\n", list1[0], strlen( aseq[list1[0]] ), aseq[list0[0]] );
-		reporterr( ">seq1[%d], len = %d\n%s\n", list1[0], strlen( seq[list1[0]] ), seq[list0[i]] );
-		exit( 1 );
-
-
-		for( i=0; i<ngroup0; i++ ) reporterr( ">aseq0[%d], len = %d\n%s\n", list0[i], strlen( aseq[list0[i]] ), aseq[list0[i]] );
-		for( i=0; i<ngroup1; i++ ) reporterr( ">aseq1[%d], len = %d\n%s\n", list1[i], strlen( aseq[list1[i]] ), aseq[list1[i]] );
-		for( i=0; i<ngroup2; i++ ) reporterr( ">aseq2[%d], len = %d\n%s\n", list2[i], strlen( aseq[list2[i]] ), aseq[list2[i]] );
-
-		for( i=0; i<ngroup0; i++ ) reporterr( ">seq0[%d], len = %d\n%s\n", list0[i], strlen( seq[list0[i]] ), seq[list0[i]] );
-		for( i=0; i<ngroup1; i++ ) reporterr( ">seq1[%d], len = %d\n%s\n", list1[i], strlen( seq[list1[i]] ), seq[list1[i]] );
-		for( i=0; i<ngroup2; i++ ) reporterr( ">seq2[%d], len = %d\n%s\n", list2[i], strlen( seq[list2[i]] ), seq[list2[i]] );
-		exit( 1 );
-	}
-
-#endif
-
-    //	for( i=0; i<njob; i++ ) if( mar[i] != 3 ) strcpy( seq[i], aseq[i] );
     for (i = 0; i < ngroup0; i++)
         strcpy(seq[list0[i]], aseq[list0[i]]);
     for (i = 0; i < ngroup1; i++)
@@ -1011,10 +803,6 @@ reflectsmoothing(char* ref, int* mem, char** seq, int len) {
     char* tmpseq;
     int   i, j, k, p;
 
-    //	reporterr( "#### reflectsmoothing!!!!!\n" );
-
-    //	if( mem[1] != -1 ) reporterr( "original = %s\n", seq[mem[1]] );
-
     tmpseq = calloc(len + 1, sizeof(char));
 
     for (j = 1; (i = mem[j]) != -1; j++) {
@@ -1026,10 +814,6 @@ reflectsmoothing(char* ref, int* mem, char** seq, int len) {
         }
     }
     free(tmpseq);
-
-    //	if( mem[1] != -1 ) reporterr( "output   = %s\n", seq[mem[1]] );
-
-    //	reporterr( "#### done!!!!!\n" );
 }
 
 static int
@@ -1043,13 +827,8 @@ smoothing1rightmulti(int len, char* ref)  // osoi!
 
     hit = NULL;
 
-    //	reporterr( "ref (1rightmulti) = %s\n", ref );
-
-    for (i = 1, nhit = 0; i < len - 1; i++)  // break nashi no baai, hidarihaji ha saigo
-    //	for( i=len-2; i>0; i-- ) // break ari no baai, migihajiha saigo
-    {
+    for (i = 1, nhit = 0; i < len - 1; i++) {
         if (ref[i - 1] == '+' && (ref[i] != '+' && ref[i] != '=') && ref[i + 1] == '=') {
-            //			reporterr( "hit! i=%d, len=%d\n", i, len );
             hit = realloc(hit, (nhit + 1) * sizeof(int));
             hit[nhit] = i;
             nhit += 1;
@@ -1086,10 +865,8 @@ smoothing1rightmulti(int len, char* ref)  // osoi!
     }
     free(hit);
 
-    //	reporterr( "ref (1rightmulti) = %s\n", ref );
     reporterr(" %d out of %d have been smoothed (right).\n", val, nhit);
 
-    //	if( nhit > 1 ) exit( 1 );
     return (val);
 }
 
@@ -1104,11 +881,7 @@ smoothing1leftmulti(int len, char* ref)  // osoi!
 
     hit = NULL;
 
-    //	reporterr( "ref (1leftmulti) = %s\n", ref );
-
-    for (i = 1, nhit = 0; i < len - 1; i++)  // break nashi no baai, hidarihaji ha saigo
-    //	for( i=len-2; i>0; i-- ) // break ari no baai, migihajiha saigo
-    {
+    for (i = 1, nhit = 0; i < len - 1; i++) {
         if (ref[i - 1] == '=' && (ref[i] != '+' && ref[i] != '=') && ref[i + 1] == '+') {
             //			reporterr( "hit! i=%d, len=%d\n", i, len );
             hit = realloc(hit, (nhit + 1) * sizeof(int));

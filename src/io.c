@@ -3758,49 +3758,10 @@ myatof(char* in) {
 
 void
 reporterr(const char* str, ...) {
-    //	static int loglen = 0;
     va_list args;
-
-    if (gmsg) {
-#if 1  // ato de sakujo
-        static FILE* errtmpfp = NULL;
-        if (errtmpfp == NULL)
-            errtmpfp = fopen("maffterr", "w");
-        else
-            errtmpfp = fopen("maffterr", "a");
-        va_start(args, str);
-        vfprintf(errtmpfp, str, args);
-        va_end(args);
-        fclose(errtmpfp);
-#endif
-
-#if 0
-		char *tmpptr;
-		tmpptr = (char *)realloc( *gmsg, (loglen+10000) * sizeof( char ) );
-		if( tmpptr == NULL )
-		{
-			fprintf( stderr, "Cannot relloc *gmsg\n" );
-			exit( 1 );
-		}
-		*gmsg = tmpptr;
-		va_start( args, str );
-		loglen += vsprintf( *gmsg + loglen, str, args );
-		va_end( args );
-
-
-		va_start( args, str );
-		loglen += vsprintf( *gmsg + loglen, str, args );
-		va_end( args );
-		*(*gmsg + loglen) = 0;
-		if( loglen > gmsglen - 100 ) loglen = 0; // tekitou
-#endif
-
-    } else {
-        va_start(args, str);
-        vfprintf(stderr, str, args);
-        va_end(args);
-        //		fflush( stderr ); // iru?
-    }
+    va_start(args, str);
+    vfprintf(stderr, str, args);
+    va_end(args);
     return;
 }
 

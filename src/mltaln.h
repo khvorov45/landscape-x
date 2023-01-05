@@ -303,16 +303,16 @@ typedef struct Context {
     double   specificityconsideration;
     int      ndistclass;
     int      maxdistclass;
+    double   sueff_global;
+    double   lenfaca;
+    double   lenfacb;
+    double   lenfacc;
+    double   lenfacd;
+    int      maxl;
+    int      tsize;
+    char     codonpos;
+    char     codonscore;
 } Context;
-
-extern int gmsg;
-
-extern double sueff_global;
-extern double lenfaca, lenfacb, lenfacc, lenfacd;
-extern int    maxl, tsize;
-
-extern char codonpos;
-extern char codonscore;
 
 /* for --large  */
 extern int compacttree;
@@ -632,8 +632,6 @@ extern int                samemembern(int* mem, int* cand, int candn);
 extern int                includemember(int* mem, int* cand);
 extern int                overlapmember(int* mem1, int* mem2);
 extern void               sreverse(char* r, char* s);
-extern int                addonetip(int njobc, int*** topolc, double** lenc, double** iscorec, int*** topol, double** len, Treedep* dep, int treeout, Addtree* addtree, int iadd, int* alnleninnode, int* nogaplen, int noalign);
-extern int                addonetip2top(int njobc, int*** topolc, double** lenc, double** iscorec, int*** topol, double** len, Treedep* dep, int treeout, Addtree* addtree, int iadd);
 extern void               intcpy(int* s1, int* s2);
 extern void               intncpy(int* s1, int* s2, int n);
 extern void               fltncpy(double* s1, double* s2, int n);
@@ -670,10 +668,10 @@ extern void   stringshuffle(int* ary, int size);
 extern void   topolorder(int* order, int* posinorder, int*** topol, Treedep* dep, int pos, int child);
 extern int*   topolorderz(int* order, int*** topol, Treedep* dep, int pos, int nchild);
 extern int*   topolordery(int* order, int*** topol, Treedep* dep, int pos, int nchild);
-extern int    commonsextet_p(int* table, int* pointt);
+extern int    commonsextet_p(Context* ctx, int* table, int* pointt);
 extern void   compacttree_memsaveselectable(Context* ctx, int nseq, double** partmtx, int* nearest, double* mindist, int** pointt, int* selfscore, char** seq, int** skiptable, int*** topol, double** len, char** name, int* nlen, Treedep* dep, int treeout, int howcompact, int memsave);
 extern void   compacttreedpdist(Context* ctx, int njob, char** seq, char** dseq, double* selfscore, int*** topol, double** len, char** name, Treedep* dep, int treeout, int alloclen, int* uselh, int* nfilesfornode, int treegiven);
-extern double distcompact(int len1, int len2, int* table1, int* point2, int ss1, int ss2);
+extern double distcompact(Context* ctx, int len1, int len2, int* table1, int* point2, int ss1, int ss2);
 extern double distcompact_msa(Context* ctx, char* seq1, char* seq2, int* skiptable1, int* skiptable2, int ss1, int ss2);
 extern void   fillimp(Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2);
 extern void   fillimp_file(Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, int* orinum1, int* orinum2, int* uselh, int* seedinlh1, int* seedinlh2, int nodeid, int nfiles);

@@ -470,7 +470,7 @@ G__align11psg(Context* ctx, double** codonmtx, double** n_dynamicmtx, char** seq
         intwork = AllocateIntMtx(ctx->nalphabets, MAX(ll1, ll2) + 2);
         amino_dynamicmtx = AllocateDoubleMtx(0x100, 0x100);
 
-        if (codonscore) {
+        if (ctx->codonscore) {
             codonseq1 = AllocateIntMtx(3, ll1);  // Only codonseq1[0] is used at this point
             codonseq2 = AllocateIntMtx(3, ll2);  // Only codonseq2[0] is used at this point
         }
@@ -514,7 +514,7 @@ G__align11psg(Context* ctx, double** codonmtx, double** n_dynamicmtx, char** seq
     }
     ijp = ctx->commonIP;
 
-    if (codonscore) {
+    if (ctx->codonscore) {
         // codonseq[1..2] are not used yet.
         for (i = 0; i < 3 && i < lgth1; i++) {
             codonseq1[0][i] = -1;
@@ -549,7 +549,7 @@ G__align11psg(Context* ctx, double** codonmtx, double** n_dynamicmtx, char** seq
     currentw = w1;
     previousw = w2;
 
-    if (codonscore) {
+    if (ctx->codonscore) {
         //		for( i=0; i<5; i++ ) for( j=0; j<5; j++ ) reporterr( "score[%c][%c]=%f\n", amino[i], amino[j], amino_dynamicmtx[amino[i]][amino[j]] );
         //		exit( 1 );
         match_calc_mtx(amino_dynamicmtx, initverticalw, seq2, seq1, 0, lgth1);
@@ -640,7 +640,7 @@ G__align11psg(Context* ctx, double** codonmtx, double** n_dynamicmtx, char** seq
 //		if( codonscore && ( !codonpos || !( gstart[i] == 0.5 && gend[i] == 0.5 ) ) ) // unknown or coding
 //			match_calc_mtx_codon( codonmtx, amino_dynamicmtx, currentw, seq1, seq2, codonseq1, codonseq2, i, lgth2 );
 #if 1
-        if (codonscore && (gstart[i] == 0.5 && gend[i] > 0.5))  // only at 3rd position in seq1
+        if (ctx->codonscore && (gstart[i] == 0.5 && gend[i] > 0.5))  // only at 3rd position in seq1
             match_calc_mtx_codon(codonmtx, amino_dynamicmtx, currentw, seq1, seq2, codonseq1, codonseq2, i, lgth2);
         else
             match_calc_mtx(amino_dynamicmtx, currentw, seq1, seq2, i, lgth2);

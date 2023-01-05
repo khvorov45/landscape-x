@@ -327,7 +327,7 @@ Falign(Context* ctx, int** whichmtx, double*** scoringmatrices, double** n_dynam
 
         gstart = NULL;
         gend = NULL;
-        if (codonpos) {
+        if (ctx->codonpos) {
             FILE* cfp;
             char* buf = calloc(sizeof(char), 1000);
 
@@ -390,12 +390,12 @@ Falign(Context* ctx, int** whichmtx, double*** scoringmatrices, double** n_dynam
             }
         }
 
-        if (codonscore) {
+        if (ctx->codonscore) {
             int     i, j;
             FILE*   cfp;
             double* codonfreq = calloc(sizeof(double), 64);
             double  totalcount, codonscore0av, codonscore1av;
-            if (!codonpos) {
+            if (!ctx->codonpos) {
                 reporterr("\n\n --codonpos is necessary for --codonscore\n\n");
                 exit(1);
             }
@@ -1008,12 +1008,12 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
                 break;
             case ('A'):
                 if (clus1 == 1 && clus2 == 1) {
-                    if (codonpos || codonscore) {
+                    if (ctx->codonpos || ctx->codonscore) {
                         totalscore += G__align11psg(ctx, codonscoremtx, n_dynamicmtx, tmpres1, tmpres2, alloclen, headgp, tailgp, gstart + cut1[i], gend + cut1[i]);
                     } else
                         totalscore += G__align11(ctx, n_dynamicmtx, tmpres1, tmpres2, alloclen, headgp, tailgp);
                 } else {
-                    if (codonpos) {
+                    if (ctx->codonpos) {
                         reporterr("\n\ncodonpos will be soon supported for a reference MSA. For now, use a single sequence as reference.\n\n\n");
                         exit(1);
                     }

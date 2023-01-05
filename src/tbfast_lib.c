@@ -78,7 +78,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
     ctx->tbrweight = 3;
     ctx->checkC = 0;
     ctx->treemethod = 'X';
-    sueff_global = 0.1;
+    ctx->sueff_global = 0.1;
     ctx->scoremtx = 1;
     ctx->kobetsubunkatsu = 0;
     ctx->ppenalty_dist = NOTSPECIFIED;
@@ -296,7 +296,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
 #endif
                 case 'X':
                     ctx->treemethod = 'X';
-                    sueff_global = atof(*++argv);
+                    ctx->sueff_global = atof(*++argv);
                     //					fprintf( stderr, "sueff_global = %f\n", sueff_global );
                     --argc;
                     goto nextoption;
@@ -1006,6 +1006,7 @@ tbfast_main(int argc, char* argv[]) {
     ctx->specificityconsideration = 0.0;
     ctx->ndistclass = 10;
     ctx->maxdistclass = -1;
+    ctx->sueff_global = SUEFF;
 
     TbfastOpts opts_ = {};
     TbfastOpts* opts = &opts_;
@@ -1445,7 +1446,7 @@ tbfast_main(int argc, char* argv[]) {
     free(pav);
     constants(ctx, ctx->njob, seq);
 
-    if (sueff_global < 0.0001 || compacttree == 3) {
+    if (ctx->sueff_global < 0.0001 || compacttree == 3) {
         ctx->nthreadreadlh = ctx->nthread;
         if (ctx->nthreadreadlh == 0)
             ctx->nthreadreadlh = 1;
