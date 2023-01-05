@@ -85,7 +85,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
     ctx->ppenalty = NOTSPECIFIED;
     ctx->penalty_shift_factor = 1000.0;
     ctx->ppenalty_ex = NOTSPECIFIED;
-    poffset = NOTSPECIFIED;
+    ctx->poffset = NOTSPECIFIED;
     kimuraR = NOTSPECIFIED;
     pamN = NOTSPECIFIED;
     geta2 = GETA2;
@@ -173,7 +173,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
                     --argc;
                     goto nextoption;
                 case 'h':
-                    poffset = (int)(atof(*++argv) * 1000 - 0.5);
+                    ctx->poffset = (int)(atof(*++argv) * 1000 - 0.5);
                     //					fprintf( stderr, "poffset = %d\n", poffset );
                     --argc;
                     goto nextoption;
@@ -925,7 +925,7 @@ WriteOptions(Context* ctx, FILE* fp) {
         else if (scoremtx == 2)
             fprintf(fp, "M-Y\n");
     }
-    fprintf(stderr, "Gap Penalty = %+5.2f, %+5.2f, %+5.2f\n", (double)ctx->ppenalty / 1000, (double)ctx->ppenalty_ex / 1000, (double)poffset / 1000);
+    fprintf(stderr, "Gap Penalty = %+5.2f, %+5.2f, %+5.2f\n", (double)ctx->ppenalty / 1000, (double)ctx->ppenalty_ex / 1000, (double)ctx->poffset / 1000);
     if (use_fft)
         fprintf(fp, "FFT on\n");
 
@@ -945,7 +945,7 @@ WriteOptions(Context* ctx, FILE* fp) {
         fprintf(fp, "\n");
     }
 
-    fprintf(fp, "Gap Penalty = %+5.2f, %+5.2f, %+5.2f\n", (double)ctx->ppenalty / 1000, (double)ctx->ppenalty_ex / 1000, (double)poffset / 1000);
+    fprintf(fp, "Gap Penalty = %+5.2f, %+5.2f, %+5.2f\n", (double)ctx->ppenalty / 1000, (double)ctx->ppenalty_ex / 1000, (double)ctx->poffset / 1000);
 
     if (alg == 'a')
         fprintf(fp, "Algorithm A\n");

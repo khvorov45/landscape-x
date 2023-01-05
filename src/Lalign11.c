@@ -225,8 +225,8 @@ L__align11(Context* ctx, double** n_dynamicmtx, double scoreoffset, char** seq1,
     double          maxwm;
     int             endali = 0, endalj = 0;  // by D.Mathog, a guess
     //	int endali, endalj;
-    double localthr = -offset + scoreoffset * 600;  // 2013/12/13
-    double localthr2 = -offset + scoreoffset * 600;  // 2013/12/13
+    double localthr = -ctx->offset + scoreoffset * 600;  // 2013/12/13
+    double localthr2 = -ctx->offset + scoreoffset * 600;  // 2013/12/13
     //	double localthr = -offset;
     //	double localthr2 = -offset;
     double fpenalty = (double)ctx->penalty;
@@ -723,8 +723,8 @@ L__align11_noalign(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2
     double          maxwm;
     //	int endali = 0, endalj = 0; // by D.Mathog, a guess
     //	int endali, endalj;
-    double localthr = -offset;
-    double localthr2 = -offset;
+    double localthr = -ctx->offset;
+    double localthr2 = -ctx->offset;
     //	double localthr = 100;
     //	double localthr2 = 100;
     double fpenalty = (double)ctx->penalty;

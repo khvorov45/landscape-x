@@ -291,7 +291,7 @@ MSalignmm_rec(Context* ctx, int icyc, int jcyc, char** seq1, double** cpmx1, dou
     double  firstm;
     int     firstmp;
 
-    localthr = -offset + 500;  // 0?
+    localthr = -ctx->offset + 500;  // 0?
 
     ogcp1 = gapinfo[0] + ist;
     fgcp1 = gapinfo[1] + ist;

@@ -154,7 +154,7 @@ genL__align11(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int
     double fpenalty_OP = (double)ctx->penalty_OP;
     double fpenalty_ex = (double)ctx->penalty_ex;
     //	double fpenalty_EX = (double)penalty_EX;
-    double foffset = (double)offset;
+    double foffset = (double)ctx->offset;
     double localthr = -foffset;
     double localthr2 = -foffset;
 

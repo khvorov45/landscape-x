@@ -10,7 +10,6 @@ int   randomseed = 0;
 int   parallelizationstrategy = BAATARI1;
 
 int    RNAthr, RNApthr;
-int    offset, poffset, offsetLN, offsetFFT;
 int    scoremtx;
 int    TMorJTT;
 char   use_fft;

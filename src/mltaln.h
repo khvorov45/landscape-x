@@ -234,9 +234,12 @@ typedef struct Context {
     int      ppenalty_OP;
     int      penalty_shift;
     double   penalty_shift_factor;
+    int      offset;
+    int      poffset;
+    int      offsetLN;
+    int      offsetFFT;
 } Context;
 
-extern int    offset, poffset, offsetLN, offsetFFT;
 extern int    RNAthr, RNApthr;
 extern int    scoremtx;
 extern int    TMorJTT;
