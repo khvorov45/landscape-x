@@ -60,7 +60,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
     addprofile = 1;
     fftkeika = 0;
     ctx->constraint = 0;
-    nblosum = 62;
+    ctx->nblosum = 62;
     ctx->fmodel = 0;
     calledByXced = 0;
     devide = 0;
@@ -191,7 +191,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
                     --argc;
                     goto nextoption;
                 case 'b':
-                    nblosum = myatoi(*++argv);
+                    ctx->nblosum = myatoi(*++argv);
                     scoremtx = 1;
                     //					fprintf( stderr, "blosum %d / kimura 200\n", nblosum );
                     --argc;
@@ -923,14 +923,14 @@ treebase(Context* ctx, TbfastOpts* opts, int* nlen, char** aseq, int nadd, char*
 }
 
 static void
-WriteOptions(FILE* fp) {
+WriteOptions(Context* ctx, FILE* fp) {
     if (dorp == 'd')
         fprintf(fp, "DNA\n");
     else {
         if (scoremtx == 0)
             fprintf(fp, "JTT %dPAM\n", pamN);
         else if (scoremtx == 1)
-            fprintf(fp, "BLOSUM %d\n", nblosum);
+            fprintf(fp, "BLOSUM %d\n", ctx->nblosum);
         else if (scoremtx == 2)
             fprintf(fp, "M-Y\n");
     }
@@ -1346,7 +1346,7 @@ tbfast_main(int argc, char* argv[]) {
             expdist = NULL;
             if (ctx->fastathreshold < 0.0001)
                 ctx->constraint = 0;
-            fprintf(stderr, "blosum %d / kimura 200\n", nblosum);
+            fprintf(stderr, "blosum %d / kimura 200\n", ctx->nblosum);
             fprintf(stderr, "scoremtx=%d\n", scoremtx);
             fprintf(stderr, "fastathreshold=%f\n", ctx->fastathreshold);
         }
@@ -1452,7 +1452,7 @@ tbfast_main(int argc, char* argv[]) {
 
     initSignalSM(ctx);
     initFiles(ctx);
-    WriteOptions(trap_g);
+    WriteOptions(ctx, trap_g);
 
     if (opts->distout && !opts->treeout && opts->noalign) {
         writeData_pointer(prep_g, ctx->njob, name, seq);

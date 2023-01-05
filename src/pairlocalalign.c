@@ -1330,7 +1330,7 @@ arguments(Context* ctx, int argc, char* argv[]) {
     fftkeika = 0;
     ctx->pslocal = -1000.0;
     ctx->constraint = 0;
-    nblosum = 62;
+    ctx->nblosum = 62;
     ctx->fmodel = 0;
     calledByXced = 0;
     devide = 0;
@@ -1423,7 +1423,7 @@ arguments(Context* ctx, int argc, char* argv[]) {
                     --argc;
                     goto nextoption;
                 case 'b':
-                    nblosum = myatoi(*++argv);
+                    ctx->nblosum = myatoi(*++argv);
                     scoremtx = 1;
                     //					fprintf( stderr, "blosum %d\n", nblosum );
                     --argc;
@@ -2344,7 +2344,7 @@ pairlocalalign(Context* ctx, int ngui, char** namegui, char** seqgui, double** d
 
     //reporterr( "expdist=%p\n", expdist );
 
-    if (dorp == 'p' && scoremtx == 1 && nblosum > 0)  // protein, not text.  hitsuyou?
+    if (dorp == 'p' && scoremtx == 1 && ctx->nblosum > 0)  // protein, not text.  hitsuyou?
     {
         for (i = 0; i < ctx->njob; i++) {
             gappick0(bseq[i], seq[i]);

@@ -1510,7 +1510,7 @@ constants(Context* ctx, int nseq, char** seq) {
     char shiftmodel[100];
     int  charsize;
 
-    if (nblosum < 0)
+    if (ctx->nblosum < 0)
         dorp = 'p';
 
     if (penalty_shift_factor >= 10)
@@ -1906,7 +1906,7 @@ constants(Context* ctx, int nseq, char** seq) {
         FreeDoubleMtx(pamx);
         free(freq);
 
-    } else if (dorp == 'p' && scoremtx == 1 && nblosum == -2) /* extended */
+    } else if (dorp == 'p' && scoremtx == 1 && ctx->nblosum == -2) /* extended */
     {
         double* freq;
         double* freq1;
@@ -2133,8 +2133,8 @@ constants(Context* ctx, int nseq, char** seq) {
         double** n_distmp;
         int      rescale = 1;
 
-        if (nblosum == 0) {
-            reporterr("nblosum=%d??\n", nblosum);
+        if (ctx->nblosum == 0) {
+            reporterr("nblosum=%d??\n", ctx->nblosum);
             exit(1);
         }
 
@@ -2176,7 +2176,7 @@ constants(Context* ctx, int nseq, char** seq) {
         penaltyLN = (int)(600.0 / 1000.0 * -2000 + 0.5);
         penalty_exLN = (int)(600.0 / 1000.0 * -100 + 0.5);
 
-        BLOSUMmtx(nblosum, n_distmp, freq, ctx->amino, ctx->amino_grp, &rescale);
+        BLOSUMmtx(ctx->nblosum, n_distmp, freq, ctx->amino, ctx->amino_grp, &rescale);
 
         reporterr("rescale = %d\n", rescale);
 
@@ -2185,10 +2185,10 @@ constants(Context* ctx, int nseq, char** seq) {
         else
             sprintf(shiftmodel, "noshift");
 
-        if (nblosum == -1)
+        if (ctx->nblosum == -1)
             sprintf(ctx->modelname, "User-defined, %4.2f, %+4.2f, %+4.2f, %s", -(double)ppenalty / 1000, -(double)poffset / 1000, -(double)ppenalty_ex / 1000, shiftmodel);
         else
-            sprintf(ctx->modelname, "BLOSUM%d, %4.2f, %+4.2f, %+4.2f, %s", nblosum, -(double)ppenalty / 1000, -(double)poffset / 1000, -(double)ppenalty_ex / 1000, shiftmodel);
+            sprintf(ctx->modelname, "BLOSUM%d, %4.2f, %+4.2f, %+4.2f, %s", ctx->nblosum, -(double)ppenalty / 1000, -(double)poffset / 1000, -(double)ppenalty_ex / 1000, shiftmodel);
 
         for (i = 0; i < 0x80; i++)
             ctx->amino_n[i] = -1;

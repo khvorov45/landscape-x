@@ -289,7 +289,7 @@ main() {
                 arrput(srcObjPaths, outpath);
                 prb_Str outlog = prb_replaceExt(arena, outpath, prb_STR("log"));
                 arrput(srcObjPathsLog, outlog);
-                prb_Str cmd = prb_fmt(arena, "clang -g -Wall -Werror -Wextra -c %.*s -o %.*s", prb_LIT(thisFile), prb_LIT(outpath));
+                prb_Str cmd = prb_fmt(arena, "clang -g -Wall -Werror -Wextra -fno-caret-diagnostics -c %.*s -o %.*s", prb_LIT(thisFile), prb_LIT(outpath));
                 prb_writelnToStdout(arena, cmd);
                 prb_Process proc = prb_createProcess(cmd, (prb_ProcessSpec) {.redirectStderr = true, .stderrFilepath = outlog});
                 arrput(srcCompileProcs, proc);

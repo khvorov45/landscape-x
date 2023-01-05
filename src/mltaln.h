@@ -209,9 +209,9 @@ typedef struct Context {
     int      constraint;
     int      divpairscore;
     int      fmodel;
+    int      nblosum;
 } Context;
 
-extern int    nblosum;  // 45, 50, 62, 80
 extern int    kobetsubunkatsu;
 extern int    bunkatsu;
 extern int    dorp;
@@ -579,7 +579,7 @@ extern void         writeData_reorder(FILE* fp, int locnjob, char name[][B], cha
 extern void         writeData_reorder_pointer(FILE* fp, int locnjob, char** name, char** aseq, int* order);
 
 extern int                load1SeqWithoutName_new(FILE* fpp, char* cbuf);
-extern char*              load1SeqWithoutName_realloc(FILE* fpp);
+extern char*              load1SeqWithoutName_realloc(Context* ctx, FILE* fpp);
 extern char*              load1SeqWithoutName_realloc_casepreserve(FILE* fpp);
 extern void               searchKUorWA(FILE* fp);
 extern void               gapireru(char* res, char* ori, char* gt);

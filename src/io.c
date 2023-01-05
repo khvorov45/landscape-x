@@ -922,7 +922,7 @@ load1SeqWithoutName_realloc_casepreserve(FILE* fpp) {
 }
 
 char*
-load1SeqWithoutName_realloc(FILE* fpp) {
+load1SeqWithoutName_realloc(Context* ctx, FILE* fpp) {
     int   c, b;
     char* cbuf;
     int   size = N;
@@ -950,7 +950,7 @@ load1SeqWithoutName_realloc(FILE* fpp) {
     ungetc(c, fpp);
     *cbuf = 0;
 
-    if (nblosum == -2) {
+    if (ctx->nblosum == -2) {
         charfilter((unsigned char*)val);
     } else {
         if (dorp == 'd')
@@ -995,7 +995,7 @@ readData_pointer(Context* ctx, FILE* fp, char** name, int* nlen, char** seq) {
         name[i][0] = '=';
         getc(fp);
         myfgets(name[i] + 1, B - 2, fp);
-        tmpseq = load1SeqWithoutName_realloc(fp);
+        tmpseq = load1SeqWithoutName_realloc(ctx, fp);
         strcpy(seq[i], tmpseq);
         free(tmpseq);
         nlen[i] = strlen(seq[i]);
@@ -1125,7 +1125,7 @@ getnumlen(Context* ctx, FILE* fp) {
     int total = 0;
     for (int i = 0; i < ctx->njob; i++) {
         myfgets(tmpname, N - 1, fp);
-        char* tmpseq = load1SeqWithoutName_realloc(fp);
+        char* tmpseq = load1SeqWithoutName_realloc(ctx, fp);
         int   tmp = strlen(tmpseq);
         if (tmp > ctx->nlenmax)
             ctx->nlenmax = tmp;
