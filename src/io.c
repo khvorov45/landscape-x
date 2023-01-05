@@ -763,21 +763,6 @@ allSpace(char* str) {
     return (value);
 }
 
-static int
-countKUorWA(FILE* fp) {
-    int value = 0;
-    int b = '\n';
-    int c = 0;
-    while ((c = getc(fp)) != EOF) {
-        if (b == '\n' && (c == '>')) {
-            value++;
-        }
-        b = c;
-    }
-    rewind(fp);
-    return value;
-}
-
 void
 searchKUorWA(FILE* fp) {
     int b = '\n';
@@ -1103,41 +1088,6 @@ countnormalletters(char* seq, char* ref) {
         if (strchr(ref, *seq++))
             val++;
     return (val);
-}
-
-void
-getnumlen(Context* ctx, FILE* fp) {
-    int   nsite = 0;
-    char* tmpname = AllocateCharVec(N);
-    ctx->njob = countKUorWA(fp);
-    searchKUorWA(fp);
-    ctx->nlenmax = 0;
-    int atgcnum = 0;
-    int total = 0;
-    for (int i = 0; i < ctx->njob; i++) {
-        myfgets(tmpname, N - 1, fp);
-        char* tmpseq = load1SeqWithoutName_realloc(ctx, fp);
-        int   tmp = strlen(tmpseq);
-        if (tmp > ctx->nlenmax)
-            ctx->nlenmax = tmp;
-        if (total < 1000000) {
-            atgcnum += countATGC(tmpseq, &nsite);
-            total += nsite;
-        }
-        free(tmpseq);
-    }
-
-    double atgcfreq = (double)atgcnum / (double)total;
-    if (ctx->dorp == NOTSPECIFIED) {
-        if (atgcfreq > 0.75) {
-            ctx->dorp = 'd';
-            upperCase = -1;
-        } else {
-            ctx->dorp = 'p';
-            upperCase = 0;
-        }
-    }
-    free(tmpname);
 }
 
 void

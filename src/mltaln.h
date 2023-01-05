@@ -555,7 +555,6 @@ extern int          allSpace(char* str);
 extern void         kake2hiku(char* str);
 extern void         readData_pointer(Context* ctx, FILE* fp, char** name, int* nlen, char** seq);
 extern int          countATGC(char* s, int* total);
-extern void         getnumlen(Context* ctx, FILE* fp);
 extern void         writeDataforgaln(FILE* fp, int locnjob, char** name, char** aseq);
 extern void         writeData_pointer(Context* ctx, FILE* fp, int locnjob, char** name, char** aseq);
 extern void         readhat2_doublehalf_pointer(FILE* fp, int nseq, double** mtx);

@@ -983,13 +983,15 @@ WriteOptions(Context* ctx, FILE* fp) {
 
 int
 tbfast_main(aln_String* strings, int32_t stringsCount, void* out, int32_t outBytes, int argc, char* argv[]) {
-    aln_unused(strings);
-    aln_unused(stringsCount);
     aln_unused(out);
     aln_unused(outBytes);
 
     Context* ctx = calloc(sizeof(Context), 1);
-    ctx->dorp = NOTSPECIFIED;
+
+    // TODO(sen) This is 'dna or protein'. Figure out what to do with this
+    // and why this even matters
+    ctx->dorp = 'p';
+
     ctx->penalty_shift_factor = 100.0;
     ctx->outgap = 1;
     ctx->addprofile = 1;
@@ -1009,6 +1011,13 @@ tbfast_main(aln_String* strings, int32_t stringsCount, void* out, int32_t outByt
     ctx->lhlimit = INT_MAX;
     ctx->nthreadreadlh = 1;
     ctx->LineLengthInFASTA = -1;
+    ctx->njob = stringsCount;
+
+    // NOTE(khvorov) Max input length
+    for (int32_t strIndex = 0; strIndex < stringsCount; strIndex++) {
+        aln_String str = strings[strIndex];
+        ctx->nlenmax = MAX(ctx->nlenmax, str.len);
+    }
 
     TbfastOpts  opts_ = {};
     TbfastOpts* opts = &opts_;
@@ -1029,7 +1038,6 @@ tbfast_main(aln_String* strings, int32_t stringsCount, void* out, int32_t outByt
     Treedep* dep = NULL;
     double **len = NULL, **len_kozo = NULL;
     FILE*    prep = NULL;
-    FILE*    infp = NULL;
     FILE*    orderfp = NULL;
     FILE*    hat2p = NULL;
     double   unweightedspscore;
@@ -1097,18 +1105,6 @@ tbfast_main(aln_String* strings, int32_t stringsCount, void* out, int32_t outByt
     if (ctx->fastathreshold < 0.0001)
         ctx->constraint = 0;
 
-    if (ctx->inputfile) {
-        infp = fopen(ctx->inputfile, "rb");
-        if (!infp) {
-            fprintf(stderr, "Cannot open %s\n", ctx->inputfile);
-            exit(1);
-        }
-    } else
-        infp = stdin;
-
-    getnumlen(ctx, infp);
-    rewind(infp);
-
     nkozo = 0;
 
 #if !defined(mingw) && !defined(_MSC_VER)
@@ -1163,8 +1159,14 @@ tbfast_main(aln_String* strings, int32_t stringsCount, void* out, int32_t outByt
 
     opts->ndeleted = 0;
 
-    readData_pointer(ctx, infp, name, nlen, seq);
-    fclose(infp);
+    // TODO(sen) Get rid of input file entirely
+    {
+        assert(ctx->inputfile);
+        FILE* infp = fopen(ctx->inputfile, "rb");
+        assert(infp);
+        readData_pointer(ctx, infp, name, nlen, seq);
+        fclose(infp);
+    }
 
     if (opts->treein) {
         loadtree(ctx, ctx->njob, topol, len, name, dep, opts->treeout);
