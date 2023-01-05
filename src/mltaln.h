@@ -213,10 +213,10 @@ typedef struct Context {
     int      kobetsubunkatsu;
     int      dorp;
     int      weight;
+    int      utree;
+    int      tbutree;
 } Context;
 
-extern int    utree;
-extern int    tbutree;
 extern int    refine;
 extern int    check;
 extern double cut;

@@ -9,8 +9,6 @@ int   nthreadpair = 1;
 int   randomseed = 0;
 int   parallelizationstrategy = BAATARI1;
 
-int    utree;
-int    tbutree;
 int    refine;
 int    check;
 double cut;

@@ -1337,8 +1337,7 @@ arguments(Context* ctx, int argc, char* argv[]) {
     fftRepeatStop = 0;
     fftNoAnchStop = 0;
     ctx->weight = 3;
-    utree = 1;
-    tbutree = 1;
+    ctx->tbutree = 1;
     refine = 0;
     check = 1;
     cut = 0.0;
@@ -1610,7 +1609,7 @@ arguments(Context* ctx, int argc, char* argv[]) {
                     break;
                     /* Modified 01/08/27, default: user tree */
                 case 'J':
-                    tbutree = 0;
+                    ctx->tbutree = 0;
                     break;
                     /* modification end. */
                 case 'o':

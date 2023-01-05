@@ -68,8 +68,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
     fftRepeatStop = 0;
     fftNoAnchStop = 0;
     ctx->weight = 3;
-    utree = 1;
-    tbutree = 1;
+    ctx->tbutree = 1;
     refine = 0;
     check = 1;
     cut = 0.0;
@@ -365,7 +364,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
 #endif
                     /* Modified 01/08/27, default: user tree */
                 case 'J':
-                    tbutree = 0;
+                    ctx->tbutree = 0;
                     break;
 /* modification end. */
 #if 0
@@ -1145,7 +1144,7 @@ tbfast_main(int argc, char* argv[]) {
     use_getrusage();
 #endif
 
-    if (tbutree && compacttree != 3)
+    if (ctx->tbutree && compacttree != 3)
         iscore = AllocateFloatHalfMtx(ctx->njob);
 
     opts->ndeleted = 0;
@@ -1484,10 +1483,10 @@ tbfast_main(int argc, char* argv[]) {
     }
 
     if (!opts->treein) {
-        reporterr("tbutree = %d, compacttree = %d\n", tbutree, compacttree);
+        reporterr("tbutree = %d, compacttree = %d\n", ctx->tbutree, compacttree);
         if (compacttree == 3) {
             iscore = NULL;
-        } else if (tbutree == 0 && compacttree) {
+        } else if (ctx->tbutree == 0 && compacttree) {
             iscore = NULL;
             reporterr("Making a compact tree from msa, step 1.. \n");
             skiptable = AllocateIntMtx(ctx->njob, 0);
@@ -1529,7 +1528,7 @@ tbfast_main(int argc, char* argv[]) {
                     mindist[i] -= preferenceval(i, mindistfrom[i], ctx->njob);
             }
             reporterr("\rdone.                                          \n");
-        } else if (tbutree == 0 && compacttree == 0) {
+        } else if (ctx->tbutree == 0 && compacttree == 0) {
             reporterr("Making a distance matrix from msa .. \n");
             iscore = AllocateFloatHalfMtx(ctx->njob);
 
@@ -1675,7 +1674,7 @@ tbfast_main(int argc, char* argv[]) {
                 fclose(fp);
                 //				for( i=0; i<ctx->njob; i++ ) reporterr( "uselh[%d]=%d\n", i, uselh[i] );
             }
-        } else if (tbutree == 0 && compacttree)  // tbutree != 0 no toki (aln->mtx) ha, 6merdistance -> disttbfast.c; dp distance -> muzukashii
+        } else if (ctx->tbutree == 0 && compacttree)  // tbutree != 0 no toki (aln->mtx) ha, 6merdistance -> disttbfast.c; dp distance -> muzukashii
         {
             reporterr("Constructing a tree ... nthread=%d", nthread);
             compacttree_memsaveselectable(ctx, ctx->njob, partmtx, mindistfrom, mindist, NULL, selfscore, seq, skiptable, topol, len, name, NULL, dep, opts->treeout, compacttree, 1);
