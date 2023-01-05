@@ -52,8 +52,8 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
     outnumber = 0;
     scoreout = 0;
     spscoreout = 0;
-    rnaprediction = 'm';
-    rnakozo = 0;
+    ctx->rnaprediction = 'm';
+    ctx->rnakozo = 0;
     ctx->nevermemsave = 0;
     ctx->inputfile = NULL;
     ctx->addfile = NULL;
@@ -209,7 +209,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
                     goto nextoption;
                 case 'r':
                     ctx->consweight_rna = atof(*++argv);
-                    rnakozo = 1;
+                    ctx->rnakozo = 1;
                     --argc;
                     goto nextoption;
                 case 'c':
@@ -227,7 +227,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
                     --argc;
                     goto nextoption;
                 case 'R':
-                    rnaprediction = 'r';
+                    ctx->rnaprediction = 'r';
 #if 1
                 case 'a':
                     ctx->fmodel = 1;
@@ -532,7 +532,7 @@ treebase(Context* ctx, TbfastOpts* opts, int* nlen, char** aseq, int nadd, char*
     startclock = clock();
 #endif
 
-    if (rnakozo && rnaprediction == 'm') {
+    if (ctx->rnakozo && ctx->rnaprediction == 'm') {
         grouprna1 = (RNApair***)calloc(ctx->njob, sizeof(RNApair**));
         grouprna2 = (RNApair***)calloc(ctx->njob, sizeof(RNApair**));
     } else {
@@ -723,7 +723,7 @@ treebase(Context* ctx, TbfastOpts* opts, int* nlen, char** aseq, int nadd, char*
                 reporterr("seedinlh2[%d]=%d\n", i, seedinlh2[i]);
         }
 
-        if (rnakozo && rnaprediction == 'm') {
+        if (ctx->rnakozo && ctx->rnaprediction == 'm') {
             makegrouprna(grouprna1, singlerna, localmem[0]);
             makegrouprna(grouprna2, singlerna, localmem[1]);
         }
@@ -749,7 +749,7 @@ treebase(Context* ctx, TbfastOpts* opts, int* nlen, char** aseq, int nadd, char*
             }
             if (ctx->alg == 'A') {
                 imp_match_init_strict(ctx, clus1, clus2, strlen(mseq1[0]), strlen(mseq2[0]), mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, localmem[0], localmem[1], uselh, seedinlh1, seedinlh2, (compacttree == 3) ? l : -1, nfiles);
-                if (rnakozo)
+                if (ctx->rnakozo)
                     imp_rna(ctx, clus1, clus2, mseq1, mseq2, effarr1, effarr2, grouprna1, grouprna2);
 #if REPORTCOSTS
 //				reporterr(       "\n\n %d - %d (%d x %d) : \n", topol[l][0][0], topol[l][1][0], clus1, clus2 );
@@ -758,7 +758,7 @@ treebase(Context* ctx, TbfastOpts* opts, int* nlen, char** aseq, int nadd, char*
             }
             if (ctx->alg == 'd') {
                 imp_match_init_strictD(ctx, clus1, clus2, strlen(mseq1[0]), strlen(mseq2[0]), mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, localmem[0], localmem[1], uselh, seedinlh1, seedinlh2, (compacttree == 3) ? l : -1, nfiles);
-                if (rnakozo)
+                if (ctx->rnakozo)
                     imp_rnaD(ctx, clus1, clus2, mseq1, mseq2, effarr1, effarr2, grouprna1, grouprna2);
                 pscore = D__align(ctx, dynamicmtx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, ctx->constraint, &dumdb, ctx->outgap, ctx->outgap);
             } else if (ctx->alg == 'Q') {
@@ -861,7 +861,7 @@ treebase(Context* ctx, TbfastOpts* opts, int* nlen, char** aseq, int nadd, char*
         fprintf(stderr, "totalscore = %10.2f\n\n", tscore);
     }
 
-    if (rnakozo && rnaprediction == 'm') {
+    if (ctx->rnakozo && ctx->rnaprediction == 'm') {
         if (grouprna1)
             free(grouprna1);  // nakami ha?
         if (grouprna2)
@@ -1449,10 +1449,10 @@ tbfast_main(int argc, char* argv[]) {
 
     initSignalSM(ctx);
     initFiles(ctx);
-    WriteOptions(ctx, trap_g);
+    WriteOptions(ctx, ctx->trap_g);
 
     if (opts->distout && !opts->treeout && opts->noalign) {
-        writeData_pointer(prep_g, ctx->njob, name, seq);
+        writeData_pointer(ctx->prep_g, ctx->njob, name, seq);
         fprintf(stderr, "\n");
         goto chudan;
     }
@@ -1718,7 +1718,7 @@ tbfast_main(int argc, char* argv[]) {
     fclose(orderfp);
 
     if (opts->treeout && opts->noalign) {
-        writeData_pointer(prep_g, ctx->njob, name, seq);
+        writeData_pointer(ctx->prep_g, ctx->njob, name, seq);
         fprintf(stderr, "\n");
         goto chudan;  // 2016Jul31
     }
@@ -1955,7 +1955,7 @@ tbfast_main(int argc, char* argv[]) {
             mergeoralign[i] = 'a';
     }
 
-    if (rnakozo && rnaprediction == 'm') {
+    if (ctx->rnakozo && ctx->rnaprediction == 'm') {
         singlerna = (RNApair***)calloc(ctx->njob, sizeof(RNApair**));
         prep = fopen("hat4", "r");
         if (prep == NULL)
@@ -2029,11 +2029,11 @@ tbfast_main(int argc, char* argv[]) {
         fprintf(stderr, "\n\n");
     }
 
-    fprintf(trap_g, "done.\n");
+    fprintf(ctx->trap_g, "done.\n");
     free(mergeoralign);
     freeconstants(ctx);
 
-    if (rnakozo && rnaprediction == 'm') {
+    if (ctx->rnakozo && ctx->rnaprediction == 'm') {
         if (singlerna)  // nen no tame
         {
             for (i = 0; i < ctx->njob; i++) {
@@ -2049,7 +2049,7 @@ tbfast_main(int argc, char* argv[]) {
         }
     }
 
-    writeData_pointer(prep_g, ctx->njob, name, bseq);
+    writeData_pointer(ctx->prep_g, ctx->njob, name, bseq);
 
 #if IODEBUG
     fprintf(stderr, "OSHIMAI\n");
@@ -2101,7 +2101,7 @@ tbfast_main(int argc, char* argv[]) {
     if (nfilesfornode)
         free(nfilesfornode);
     nfilesfornode = NULL;
-    closeFiles();
+    closeFiles(ctx);
     if (nadd)
         free(addmem);
     FreeIntMtx(localmem);
@@ -2199,7 +2199,7 @@ chudan:
     localmem = NULL;
 
     freeconstants(ctx);
-    closeFiles();
+    closeFiles(ctx);
     FreeCommonIP();
     return (0);
 }

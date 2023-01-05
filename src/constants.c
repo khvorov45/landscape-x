@@ -1581,7 +1581,7 @@ constants(Context* ctx, int nseq, char** seq) {
         else
             sprintf(shiftmodel, "noshift");
 
-        sprintf(ctx->modelname, "%s%d (%d), %4.2f (%4.2f), %4.2f (%4.2f), %s", rnakozo ? "RNA" : "DNA", ctx->pamN, ctx->kimuraR, -(double)ctx->ppenalty * 0.001, -(double)ctx->ppenalty * 0.003, -(double)ctx->poffset * 0.001, -(double)ctx->poffset * 0.003, shiftmodel);
+        sprintf(ctx->modelname, "%s%d (%d), %4.2f (%4.2f), %4.2f (%4.2f), %s", ctx->rnakozo ? "RNA" : "DNA", ctx->pamN, ctx->kimuraR, -(double)ctx->ppenalty * 0.001, -(double)ctx->ppenalty * 0.003, -(double)ctx->poffset * 0.001, -(double)ctx->poffset * 0.003, shiftmodel);
 
         for (i = 0; i < 26; i++)
             ctx->amino[i] = locaminon[i];

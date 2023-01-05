@@ -9,20 +9,12 @@ int   nthreadpair = 1;
 int   randomseed = 0;
 int   parallelizationstrategy = BAATARI1;
 
-int    rnakozo;
-char   rnaprediction;
 int    scoreout = 0;
 int    spscoreout = 0;
 int    outnumber = 0;
 int    legacygapcost = 0;
 double minimumweight = 0.0005;
 int    nwildcard = 0;
-
-char*  signalSM;
-FILE*  prep_g;
-FILE*  trap_g;
-char** seq_g;
-char** res_g;
 
 char* newgapstr = "-";
 

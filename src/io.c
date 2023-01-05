@@ -2151,15 +2151,6 @@ ReadOpt2(FILE* fp, int opt[M], int nseq) {
     return 0;
 }
 
-int
-writePre(int nseq, char** name, char** aseq, int force) {
-    if (force) {
-        rewind(prep_g);
-        writeData_pointer(prep_g, nseq, name, aseq);
-    }
-    return 0;
-}
-
 void
 initSignalSM(Context* ctx) {
     //	int signalsmid;
@@ -2169,7 +2160,7 @@ initSignalSM(Context* ctx) {
         fprintf(stderr, "PID of xced = %d\n", ppid);
 #endif
     if (!ctx->ppid) {
-        signalSM = NULL;
+        ctx->signalSM = NULL;
         return;
     }
 
@@ -2190,24 +2181,24 @@ initFiles(Context* ctx) {
         sprintf(pname, "/tmp/pre.%d", ctx->ppid);
     else
         sprintf(pname, "pre");
-    prep_g = fopen(pname, "w");
-    if (!prep_g)
+    ctx->prep_g = fopen(pname, "w");
+    if (!ctx->prep_g)
         ErrorExit("Cannot open pre");
 
 #if mingw
     setmode(fileno(prep_g), O_BINARY);
 #endif
-    trap_g = fopen("trace", "w");
-    if (!trap_g)
+    ctx->trap_g = fopen("trace", "w");
+    if (!ctx->trap_g)
         ErrorExit("cannot open trace");
-    fprintf(trap_g, "PID = %d\n", getpid());
-    fflush(trap_g);
+    fprintf(ctx->trap_g, "PID = %d\n", getpid());
+    fflush(ctx->trap_g);
 }
 
 void
-closeFiles(void) {
-    fclose(prep_g);
-    fclose(trap_g);
+closeFiles(Context* ctx) {
+    fclose(ctx->prep_g);
+    fclose(ctx->trap_g);
 }
 
 void

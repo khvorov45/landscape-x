@@ -2350,12 +2350,12 @@ pairlocalalign(Context* ctx, int ngui, char** namegui, char** seqgui, double** d
 
     pairalign(ctx, name, bseq, aseq, dseq, thereisxineachseq, mseq1, mseq2, alloclen, lastresx, distancemtx, localhomtable, expdist, ngui);
 
-    fprintf(trap_g, "done.\n");
+    fprintf(ctx->trap_g, "done.\n");
 #if DEBUG
     fprintf(stderr, "closing trap_g\n");
 #endif
-    fclose(trap_g);
-    fclose(prep_g);
+    fclose(ctx->trap_g);
+    fclose(ctx->prep_g);
 
 #if IODEBUG
     fprintf(stderr, "OSHIMAI\n");

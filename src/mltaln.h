@@ -275,15 +275,14 @@ typedef struct Context {
     double   consweight_multi;
     double   consweight_rna;
     char     RNAscoremtx;
+    char*    signalSM;
+    FILE*    prep_g;
+    FILE*    trap_g;
+    char**   seq_g;
+    char**   res_g;
+    int      rnakozo;
+    char     rnaprediction;
 } Context;
-
-extern char*  signalSM;
-extern FILE*  prep_g;
-extern FILE*  trap_g;
-extern char** seq_g;
-extern char** res_g;
-extern int    rnakozo;
-extern char   rnaprediction;
 
 extern int   commonAlloc1;
 extern int   commonAlloc2;
@@ -545,7 +544,6 @@ extern int          ReadFasta3(FILE* fp, double* dis);
 extern int          ReadFasta(FILE* fp, double* dis, int nseq);
 extern int          ReadOpt(FILE* fp, int opt[M], int nseq);
 extern int          ReadOpt2(FILE* fp, int opt[M], int nseq);
-extern int          writePre(int nseq, char** name, char** aseq, int force);
 extern void         initSignalSM(Context* ctx);
 extern void         initFiles(Context* ctx);
 extern void         WriteForFasta(FILE* fp, int locnjob, char** name, char** aseq);
@@ -660,7 +658,7 @@ extern void               makedynamicmtx(Context* ctx, double** out, double** in
 extern double             dist2offset(double dist);
 extern void               reporterr(const char* str, ...);
 extern void               freeconstants(Context* ctx);
-extern void               closeFiles();
+extern void               closeFiles(Context* ctx);
 extern void               FreeCommonIP();
 extern void               makeskiptable(int n, int** skip, char** seq);
 extern int                generatesubalignmentstable(int nseq, int*** tablept, int* nsubpt, int* maxmempt, int*** topol, double** len, double threshold);

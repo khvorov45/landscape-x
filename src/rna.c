@@ -387,7 +387,7 @@ foldrna(Context* ctx, int nseq1, int nseq2, char** seq1, char** seq2, double* ef
     //	rnalocal( oseq1, useq1, eff1, eff1, nseq1, nseq1, lgth1+10, pair1 );
 
     /* base-pairing probability of group 1 */
-    if (rnaprediction == 'r')
+    if (ctx->rnaprediction == 'r')
         rnaalifoldcall(ctx, oseq1, nseq1, pairprob1);
     else
         mccaskillextract(oseq1, useq1, nseq1, pairprob1, grouprna1, sgapmap1, eff1);
@@ -396,7 +396,7 @@ foldrna(Context* ctx, int nseq1, int nseq2, char** seq1, char** seq2, double* ef
     //	rnalocal( oseq2, useq2, eff2, eff2, nseq2, nseq2, lgth2+10, pair2 );
 
     /* base-pairing probability of group 2 */
-    if (rnaprediction == 'r')
+    if (ctx->rnaprediction == 'r')
         rnaalifoldcall(ctx, oseq2, nseq2, pairprob2);
     else
         mccaskillextract(oseq2, useq2, nseq2, pairprob2, grouprna2, sgapmap2, eff2);
