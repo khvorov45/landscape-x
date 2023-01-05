@@ -981,12 +981,6 @@ WriteOptions(Context* ctx, FILE* fp) {
     fflush(fp);
 }
 
-static double**
-preparepartmtx(int nseq) {
-    double** val = (double**)calloc(nseq, sizeof(double*));
-    return val;
-}
-
 int
 tbfast_main(int argc, char* argv[]) {
     Context* ctx = calloc(sizeof(Context), 1);
@@ -1011,7 +1005,7 @@ tbfast_main(int argc, char* argv[]) {
     ctx->nthreadreadlh = 1;
     ctx->LineLengthInFASTA = -1;
 
-    TbfastOpts opts_ = {};
+    TbfastOpts  opts_ = {};
     TbfastOpts* opts = &opts_;
 
     int*     nlen = NULL;
@@ -1061,7 +1055,8 @@ tbfast_main(int argc, char* argv[]) {
     static char* kozoarivec = NULL;
     int          nkozo;
     int          ntarget;
-    int *        targetmap = NULL, *targetmapr = NULL;
+    int*         targetmap = NULL;
+    int*         targetmapr = NULL;
     int          ilim, jst, jj;
 
     FILE* fp;
@@ -1072,8 +1067,8 @@ tbfast_main(int argc, char* argv[]) {
     char** pav = calloc(argc, sizeof(char*));
     char** tav = calloc(argc, sizeof(char*));
 
-    int        pac = 0;
-    int        tac = 0;
+    int pac = 0;
+    int tac = 0;
     arguments(ctx, opts, argc, argv, &pac, pav, &tac, tav);
 
     if (opts->treein) {
@@ -1507,7 +1502,7 @@ tbfast_main(int argc, char* argv[]) {
             makeskiptable(ctx->njob, skiptable, seq);
             mindistfrom = (int*)calloc(ctx->njob, sizeof(int));
             mindist = (double*)calloc(ctx->njob, sizeof(double));
-            partmtx = preparepartmtx(ctx->njob);
+            partmtx = (double**)calloc(ctx->njob, sizeof(double*));
 
             for (i = 0; i < ctx->njob; i++) {
                 selfscore[i] = (int)naivepairscorefast(ctx, seq[i], seq[i], skiptable[i], skiptable[i], ctx->penalty_dist);
