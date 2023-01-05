@@ -74,7 +74,6 @@
 #endif
 // clang-format on
 
-#define PI 3.14159265358979323846
 #define END_OF_VEC -1
 
 #define NKOUHO 20

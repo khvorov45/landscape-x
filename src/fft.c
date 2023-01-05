@@ -11,7 +11,7 @@ make_sintbl(int n, double sintbl[]) {
     n2 = n / 2;
     n4 = n / 4;
     n8 = n / 8;
-    t = sin(PI / n);
+    t = sin(3.14159265358979323846 / n);
     dc = 2 * t * t;
     ds = sqrt(dc * (2 - dc));
     t = 2 * dc;
@@ -53,8 +53,7 @@ make_bitrev(int n, int bitrev[]) {
         j += k;
     }
 }
-/*
-*/
+
 int
 fft(int n, Fukusosuu* x, int freeflag) {
     static int     last_n = 0; /*  {\tt n} */
