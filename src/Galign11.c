@@ -360,7 +360,7 @@ G__align11psg(Context* ctx, double** codonmtx, double** n_dynamicmtx, char** seq
     warpis = NULL;
     warpjs = NULL;
     warpn = 0;
-    if (trywarp) {
+    if (ctx->trywarp) {
         //		fprintf( stderr, "IN G__align11\n" );
         if (headgp == 0 || tailgp == 0) {
             fprintf(stderr, "At present, headgp and tailgp must be 1.\n");
@@ -678,7 +678,7 @@ G__align11psg(Context* ctx, double** codonmtx, double** n_dynamicmtx, char** seq
         prept = previousw;
         curpt = currentw + 1;
         mpjpt = mp + 1;
-        if (trywarp) {
+        if (ctx->trywarp) {
             prevwmrecordspt = prevwmrecords;
             wmrecordspt = wmrecords + 1;
             wmrecords1pt = wmrecords;
@@ -736,7 +736,7 @@ G__align11psg(Context* ctx, double** codonmtx, double** n_dynamicmtx, char** seq
                 m[j] += fpenalty_ex;
 #endif
 #if 1
-            if (trywarp) {
+            if (ctx->trywarp) {
                 fpenalty_tmp = fpenalty_shift + fpenalty_ex * (i - prevwarpi[j - 1] + j - prevwarpj[j - 1]);
                 //				fprintf( stderr, "fpenalty_shift = %f\n", fpenalty_tmp );
 
@@ -814,14 +814,14 @@ G__align11psg(Context* ctx, double** codonmtx, double** n_dynamicmtx, char** seq
         }
         lastverticalw[i] = currentw[lgth2 - 1];  // lgth2==0 no toki error
 
-        if (trywarp) {
+        if (ctx->trywarp) {
             fltncpy(prevwmrecords, wmrecords, lastj);
             intncpy(prevwarpi, warpi, lastj);
             intncpy(prevwarpj, warpj, lastj);
         }
     }
 
-    if (trywarp) {
+    if (ctx->trywarp) {
         //		fprintf( stderr, "\nwm = %f\n", wm );
         //		fprintf( stderr, "warpn = %d\n", warpn );
         free(wmrecords);
@@ -975,7 +975,7 @@ G__align11(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int al
     warpis = NULL;
     warpjs = NULL;
     warpn = 0;
-    if (trywarp) {
+    if (ctx->trywarp) {
         //		fprintf( stderr, "IN G__align11\n" );
         if (headgp == 0 || tailgp == 0) {
             fprintf(stderr, "At present, headgp and tailgp must be 1.\n");
@@ -1227,7 +1227,7 @@ G__align11(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int al
         prept = previousw;
         curpt = currentw + 1;
         mpjpt = mp + 1;
-        if (trywarp) {
+        if (ctx->trywarp) {
             prevwmrecordspt = prevwmrecords;
             wmrecordspt = wmrecords + 1;
             wmrecords1pt = wmrecords;
@@ -1283,7 +1283,7 @@ G__align11(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int al
                 m[j] += fpenalty_ex;
 #endif
 #if 1
-            if (trywarp) {
+            if (ctx->trywarp) {
                 fpenalty_tmp = fpenalty_shift + fpenalty_ex * (i - prevwarpi[j - 1] + j - prevwarpj[j - 1]);
                 //				fprintf( stderr, "fpenalty_shift = %f\n", fpenalty_tmp );
 
@@ -1361,14 +1361,14 @@ G__align11(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int al
         }
         lastverticalw[i] = currentw[lgth2 - 1];  // lgth2==0 no toki error
 
-        if (trywarp) {
+        if (ctx->trywarp) {
             fltncpy(prevwmrecords, wmrecords, lastj);
             intncpy(prevwarpi, warpi, lastj);
             intncpy(prevwarpj, warpj, lastj);
         }
     }
 
-    if (trywarp) {
+    if (ctx->trywarp) {
         //		fprintf( stderr, "\nwm = %f\n", wm );
         //		fprintf( stderr, "warpn = %d\n", warpn );
         free(wmrecords);

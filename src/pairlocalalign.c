@@ -1338,9 +1338,6 @@ arguments(Context* ctx, int argc, char* argv[]) {
     fftNoAnchStop = 0;
     ctx->weight = 3;
     ctx->tbutree = 1;
-    refine = 0;
-    check = 1;
-    cut = 0.0;
     disp = 0;
     outgap = 1;
     alg = 'A';
@@ -1642,7 +1639,6 @@ arguments(Context* ctx, int argc, char* argv[]) {
         ;
     }
     if (argc == 1) {
-        cut = atof((*argv));
         argc--;
     }
     if (argc != 0) {

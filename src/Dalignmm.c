@@ -2480,7 +2480,7 @@ D__align(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* 
     warpjs = NULL;
     warpn = 0;
 
-    if (trywarp) {
+    if (ctx->trywarp) {
         //		reporterr( "Not supported yet!\n" );
         //		exit( 1 );
         //		fprintf( stderr, "IN D__align, penalty_shift = %d\n", penalty_shift );
@@ -3132,7 +3132,7 @@ D__align(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* 
         curpt = currentw + 1;
         mpjpt = mp + 1;
 
-        if (trywarp) {
+        if (ctx->trywarp) {
             prevwmrecordspt = prevwmrecords;
             wmrecordspt = wmrecords + 1;
             wmrecords1pt = wmrecords;
@@ -3499,7 +3499,7 @@ D__align(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* 
 #endif
             m[j] += fpenalty * pfac;
 
-            if (trywarp) {
+            if (ctx->trywarp) {
 #if USE_PENALTY_EX
                 if ((g = *prevwmrecordspt++ + fpenalty_shift + fpenalty_ex * (i - prevwarpi[j - 1] + j - prevwarpj[j - 1])) > wm)  // naka ha osokute kamawanai
 #else
@@ -3659,7 +3659,7 @@ D__align(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* 
         freegaplenpartly(gaplen2ibestkamo[i - 1], 0, lgth2);
 #endif
 
-        if (trywarp) {
+        if (ctx->trywarp) {
             fltncpy(prevwmrecords, wmrecords, lastj);
             intncpy(prevwarpi, warpi, lastj);
             intncpy(prevwarpj, warpj, lastj);
@@ -3670,7 +3670,7 @@ D__align(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* 
         //if( i == 2 ) exit( 1 );
     }
 
-    if (trywarp) {
+    if (ctx->trywarp) {
         //		fprintf( stderr, "wm = %f\n", wm );
         //		fprintf( stderr, "warpn = %d\n", warpn );
         free(wmrecords);
@@ -3818,7 +3818,7 @@ D__align(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* 
     reporterr("diff = %f\n\n", (pairscore - wm + *impmatch) / fpenalty);
 
 #if 1
-    if ((!trywarp && fabs(pairscore - wm + *impmatch) > 0.01) || PFACERROR)  // abs() -> fabs(), 2019/Jan/25
+    if ((!ctx->trywarp && fabs(pairscore - wm + *impmatch) > 0.01) || PFACERROR)  // abs() -> fabs(), 2019/Jan/25
 //	if( abs( pairscore - wm +*impmatch ) > 0.01 )
 #else
     if (abs(pairscore - wm + *impmatch) > 0.01)
@@ -4076,7 +4076,7 @@ D__align_variousdist(Context* ctx, int** which, double*** matrices, char** seq1,
     warpjs = NULL;
     warpn = 0;
 
-    if (trywarp) {
+    if (ctx->trywarp) {
         //		reporterr( "Not supported yet!\n" );
         //		exit( 1 );
         //		fprintf( stderr, "IN D__align, penalty_shift = %d\n", penalty_shift );
@@ -4794,7 +4794,7 @@ D__align_variousdist(Context* ctx, int** which, double*** matrices, char** seq1,
         curpt = currentw + 1;
         mpjpt = mp + 1;
 
-        if (trywarp) {
+        if (ctx->trywarp) {
             prevwmrecordspt = prevwmrecords;
             wmrecordspt = wmrecords + 1;
             wmrecords1pt = wmrecords;
@@ -5180,7 +5180,7 @@ D__align_variousdist(Context* ctx, int** which, double*** matrices, char** seq1,
 #endif
             m[j] += fpenalty * pfac;
 
-            if (trywarp) {
+            if (ctx->trywarp) {
 #if USE_PENALTY_EX
                 if ((g = *prevwmrecordspt++ + fpenalty_shift + fpenalty_ex * (i - prevwarpi[j - 1] + j - prevwarpj[j - 1])) > wm)  // naka ha osokute kamawanai
 #else
@@ -5340,7 +5340,7 @@ D__align_variousdist(Context* ctx, int** which, double*** matrices, char** seq1,
         freegaplenpartly(gaplen2ibestkamo[i - 1], 0, lgth2);
 #endif
 
-        if (trywarp) {
+        if (ctx->trywarp) {
             fltncpy(prevwmrecords, wmrecords, lastj);
             intncpy(prevwarpi, warpi, lastj);
             intncpy(prevwarpj, warpj, lastj);
@@ -5351,7 +5351,7 @@ D__align_variousdist(Context* ctx, int** which, double*** matrices, char** seq1,
         //if( i == 2 ) exit( 1 );
     }
 
-    if (trywarp) {
+    if (ctx->trywarp) {
         //		fprintf( stderr, "wm = %f\n", wm );
         //		fprintf( stderr, "warpn = %d\n", warpn );
         free(wmrecords);
@@ -5511,7 +5511,7 @@ D__align_variousdist(Context* ctx, int** which, double*** matrices, char** seq1,
     reporterr("diff = %f\n\n", diff);
 
 #if 1
-    if ((!trywarp && fabs(diff) > 0.01) || PFACERROR)
+    if ((!ctx->trywarp && fabs(diff) > 0.01) || PFACERROR)
 //	if( abs( pairscore - wm +*impmatch ) > 0.01 )
 #else
     if (abs(pairscore - wm + *impmatch) > 0.01)

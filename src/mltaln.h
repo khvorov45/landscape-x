@@ -215,13 +215,9 @@ typedef struct Context {
     int      weight;
     int      utree;
     int      tbutree;
+    int      trywarp;
 } Context;
 
-extern int    refine;
-extern int    check;
-extern double cut;
-extern int    cooling;
-extern int    trywarp;
 extern int    penalty, ppenalty, penaltyLN;
 extern int    penalty_dist, ppenalty_dist;
 extern int    RNApenalty, RNAppenalty;

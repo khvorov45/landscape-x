@@ -1137,7 +1137,7 @@ A__align(Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_l, c
     warpjs = NULL;
     warpn = 0;
 
-    if (trywarp) {
+    if (ctx->trywarp) {
         //		fprintf( stderr, "IN A__align, penalty_shift = %d\n", penalty_shift );
         if (headgp == 0 || tailgp == 0) {
             fprintf(stderr, "At present, headgp and tailgp must be 1 to allow shift.\n");
@@ -1672,7 +1672,7 @@ A__align(Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_l, c
         gf2pt = gapfreq2pt + 1;
         gf2ptpre = gapfreq2pt;
 
-        if (trywarp) {
+        if (ctx->trywarp) {
             prevwmrecordspt = prevwmrecords;
             wmrecordspt = wmrecords + 1;
             wmrecords1pt = wmrecords;
@@ -1734,7 +1734,7 @@ A__align(Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_l, c
             m[j] += fpenalty_ex;
 #endif
 
-            if (trywarp) {
+            if (ctx->trywarp) {
 #if USE_PENALTY_EX
                 if ((g = *prevwmrecordspt++ + fpenalty_shift + fpenalty_ex * (i - prevwarpi[j - 1] + j - prevwarpj[j - 1])) > wm)  // naka ha osokute kamawanai
 #else
@@ -1788,14 +1788,14 @@ A__align(Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_l, c
         }
         lastverticalw[i] = currentw[lgth2 - 1];
 
-        if (trywarp) {
+        if (ctx->trywarp) {
             fltncpy(prevwmrecords, wmrecords, lastj);
             intncpy(prevwarpi, warpi, lastj);
             intncpy(prevwarpj, warpj, lastj);
         }
     }
 
-    if (trywarp) {
+    if (ctx->trywarp) {
         //		fprintf( stderr, "wm = %f\n", wm );
         //		fprintf( stderr, "warpn = %d\n", warpn );
         free(wmrecords);
@@ -2171,7 +2171,7 @@ A__align_variousdist(Context* ctx, int** which, double*** matrices, int penalty_
     warpjs = NULL;
     warpn = 0;
 
-    if (trywarp) {
+    if (ctx->trywarp) {
         //		fprintf( stderr, "In A__align_variousdist !!!!!\n" );
         if (headgp == 0 || tailgp == 0) {
             fprintf(stderr, "At present, headgp and tailgp must be 1.\n");
@@ -2631,7 +2631,7 @@ A__align_variousdist(Context* ctx, int** which, double*** matrices, int penalty_
         gf2pt = gapfreq2 + 1;
         gf2ptpre = gapfreq2;
 
-        if (trywarp) {
+        if (ctx->trywarp) {
             prevwmrecordspt = prevwmrecords;
             wmrecordspt = wmrecords + 1;
             wmrecords1pt = wmrecords;
@@ -2698,7 +2698,7 @@ A__align_variousdist(Context* ctx, int** which, double*** matrices, int penalty_
 #if USE_PENALTY_EX
             m[j] += fpenalty_ex;
 #endif
-            if (trywarp) {
+            if (ctx->trywarp) {
 #if USE_PENALTY_EX
                 if ((g = *prevwmrecordspt++ + fpenalty_shift + fpenalty_ex * (i - prevwarpi[j - 1] + j - prevwarpj[j - 1])) > wm)  // naka ha osokute kamawanai
 #else
@@ -2750,13 +2750,13 @@ A__align_variousdist(Context* ctx, int** which, double*** matrices, int penalty_
         }
         lastverticalw[i] = currentw[lgth2 - 1];
 
-        if (trywarp) {
+        if (ctx->trywarp) {
             fltncpy(prevwmrecords, wmrecords, lastj);
             intncpy(prevwarpi, warpi, lastj);
             intncpy(prevwarpj, warpj, lastj);
         }
     }
-    if (trywarp) {
+    if (ctx->trywarp) {
         //		fprintf( stderr, "wm = %f\n", wm );
         //		fprintf( stderr, "warpn = %d\n", warpn );
         free(wmrecords);

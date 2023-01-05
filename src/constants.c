@@ -1514,9 +1514,9 @@ constants(Context* ctx, int nseq, char** seq) {
         ctx->dorp = 'p';
 
     if (penalty_shift_factor >= 10)
-        trywarp = 0;
+        ctx->trywarp = 0;
     else
-        trywarp = 1;
+        ctx->trywarp = 1;
 
     if (ctx->dorp == 'd') /* DNA */
     {
@@ -1576,7 +1576,7 @@ constants(Context* ctx, int nseq, char** seq) {
         penaltyLN = (int)(3 * 600.0 / 1000.0 * -2000 + 0.5);
         penalty_exLN = (int)(3 * 600.0 / 1000.0 * -100 + 0.5);
 
-        if (trywarp)
+        if (ctx->trywarp)
             sprintf(shiftmodel, "%4.2f (%4.2f)", -(double)penalty_shift / 1800, -(double)penalty_shift / 600);
         else
             sprintf(shiftmodel, "noshift");
@@ -1958,7 +1958,7 @@ constants(Context* ctx, int nseq, char** seq) {
 
         userdefined = extendedmtx(n_distmp, freq, ctx->amino, ctx->amino_grp);
 
-        if (trywarp)
+        if (ctx->trywarp)
             sprintf(shiftmodel, "%4.2f", -(double)penalty_shift / 600);
         else
             sprintf(shiftmodel, "noshift");
@@ -2180,7 +2180,7 @@ constants(Context* ctx, int nseq, char** seq) {
 
         reporterr("rescale = %d\n", rescale);
 
-        if (trywarp)
+        if (ctx->trywarp)
             sprintf(shiftmodel, "%4.2f", -(double)penalty_shift / 600);
         else
             sprintf(shiftmodel, "noshift");
@@ -2401,7 +2401,7 @@ constants(Context* ctx, int nseq, char** seq) {
         penaltyLN = (int)(600.0 / 1000.0 * -2000 + 0.5);
         penalty_exLN = (int)(600.0 / 1000.0 * -100 + 0.5);
 
-        if (trywarp)
+        if (ctx->trywarp)
             sprintf(shiftmodel, "%4.2f", -(double)penalty_shift / 600);
         else
             sprintf(shiftmodel, "noshift");

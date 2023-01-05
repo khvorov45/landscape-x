@@ -283,7 +283,7 @@ L__align11(Context* ctx, double** n_dynamicmtx, double scoreoffset, char** seq1,
     warpis = NULL;
     warpjs = NULL;
     warpn = 0;
-    if (trywarp) {
+    if (ctx->trywarp) {
         wmrecords = AllocateFloatVec(lgth2 + 1);
         warpi = AllocateIntVec(lgth2 + 1);
         warpj = AllocateIntVec(lgth2 + 1);
@@ -490,7 +490,7 @@ fprintf( stderr, "\n" );
         mpjpt = mp + 1;
         lastj = lgth2 + 1;
 
-        if (trywarp) {
+        if (ctx->trywarp) {
             prevwmrecordspt = prevwmrecords;
             wmrecordspt = wmrecords + 1;
             wmrecords1pt = wmrecords;
@@ -554,7 +554,7 @@ fprintf( stderr, "\n" );
 			fprintf( stderr, "wm (%d,%d) = %5.0f\n", i, j, wm );
 //			fprintf( stderr, "%c-%c *ijppt = %d, localstop = %d\n", seq1[0][i], seq2[0][j], *ijppt, localstop );
 #endif
-            if (trywarp) {
+            if (ctx->trywarp) {
                 fpenalty_tmp = fpenalty_shift + fpenalty_ex * (i - prevwarpi[j - 1] + j - prevwarpj[j - 1]);
                 //				fprintf( stderr, "fpenalty_shift = %f\n", fpenalty_tmp );
 
@@ -634,14 +634,14 @@ fprintf( stderr, "\n" );
 #endif
 
         lastverticalw[i] = currentw[lgth2 - 1];
-        if (trywarp) {
+        if (ctx->trywarp) {
             fltncpy(prevwmrecords, wmrecords, lastj);
             intncpy(prevwarpi, warpi, lastj);
             intncpy(prevwarpj, warpj, lastj);
         }
     }
     //	fprintf( stderr, "\nwm = %f\n", wm );
-    if (trywarp) {
+    if (ctx->trywarp) {
         //		if( warpn ) fprintf( stderr, "warpn = %d\n", warpn );
         free(wmrecords);
         free(prevwmrecords);

@@ -9,11 +9,6 @@ int   nthreadpair = 1;
 int   randomseed = 0;
 int   parallelizationstrategy = BAATARI1;
 
-int    refine;
-int    check;
-double cut;
-int    cooling;
-int    trywarp = 0;
 int    penalty, ppenalty, penaltyLN;
 int    penalty_dist, ppenalty_dist;
 int    RNApenalty, RNAppenalty;
