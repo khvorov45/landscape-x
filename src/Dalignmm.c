@@ -2824,30 +2824,30 @@ D__align(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* 
         seq2[j][lgth2] = 0;
     }
 
-    if (orlgth1 > commonAlloc1 || orlgth2 > commonAlloc2) {
+    if (orlgth1 > ctx->commonAlloc1 || orlgth2 > ctx->commonAlloc2) {
         int ll1, ll2;
 
-        if (commonAlloc1 && commonAlloc2) {
-            FreeIntMtx(commonIP);
+        if (ctx->commonAlloc1 && ctx->commonAlloc2) {
+            FreeIntMtx(ctx->commonIP);
         }
 
-        ll1 = MAX(orlgth1, commonAlloc1);
-        ll2 = MAX(orlgth2, commonAlloc2);
+        ll1 = MAX(orlgth1, ctx->commonAlloc1);
+        ll2 = MAX(orlgth2, ctx->commonAlloc2);
 
 #if DEBUG
         fprintf(stderr, "\n\ntrying to allocate %dx%d matrices ... ", ll1 + 1, ll2 + 1);
 #endif
 
-        commonIP = AllocateIntMtx(ll1 + 10, ll2 + 10);
+        ctx->commonIP = AllocateIntMtx(ll1 + 10, ll2 + 10);
 
 #if DEBUG
         fprintf(stderr, "succeeded\n\n");
 #endif
 
-        commonAlloc1 = ll1;
-        commonAlloc2 = ll2;
+        ctx->commonAlloc1 = ll1;
+        ctx->commonAlloc2 = ll2;
     }
-    ijp = commonIP;
+    ijp = ctx->commonIP;
 
 #if 0
 	{
@@ -4397,30 +4397,30 @@ D__align_variousdist(Context* ctx, int** which, double*** matrices, char** seq1,
         seq2[j][lgth2] = 0;
     }
 
-    if (orlgth1 > commonAlloc1 || orlgth2 > commonAlloc2) {
+    if (orlgth1 > ctx->commonAlloc1 || orlgth2 > ctx->commonAlloc2) {
         int ll1, ll2;
 
-        if (commonAlloc1 && commonAlloc2) {
-            FreeIntMtx(commonIP);
+        if (ctx->commonAlloc1 && ctx->commonAlloc2) {
+            FreeIntMtx(ctx->commonIP);
         }
 
-        ll1 = MAX(orlgth1, commonAlloc1);
-        ll2 = MAX(orlgth2, commonAlloc2);
+        ll1 = MAX(orlgth1, ctx->commonAlloc1);
+        ll2 = MAX(orlgth2, ctx->commonAlloc2);
 
 #if DEBUG
         fprintf(stderr, "\n\ntrying to allocate %dx%d matrices ... ", ll1 + 1, ll2 + 1);
 #endif
 
-        commonIP = AllocateIntMtx(ll1 + 10, ll2 + 10);
+        ctx->commonIP = AllocateIntMtx(ll1 + 10, ll2 + 10);
 
 #if DEBUG
         fprintf(stderr, "succeeded\n\n");
 #endif
 
-        commonAlloc1 = ll1;
-        commonAlloc2 = ll2;
+        ctx->commonAlloc1 = ll1;
+        ctx->commonAlloc2 = ll2;
     }
-    ijp = commonIP;
+    ijp = ctx->commonIP;
 
 #if 0
 	{

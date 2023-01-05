@@ -3311,12 +3311,12 @@ calcnearestthread(calcnearestthread_arg_t* targ) {
             pthread_mutex_unlock(mutex);
 #endif
             //			reporterr( "freeing tmpseq1\n" );
-            if (commonIP)
-                FreeIntMtx(commonIP);
-            commonIP = NULL;
-            if (commonJP)
-                FreeIntMtx(commonJP);
-            commonJP = NULL;
+            if (ctx->commonIP)
+                FreeIntMtx(ctx->commonIP);
+            ctx->commonIP = NULL;
+            if (ctx->commonJP)
+                FreeIntMtx(ctx->commonJP);
+            ctx->commonJP = NULL;
             G__align11_noalign(ctx, NULL, 0, 0, NULL, NULL);
             L__align11_noalign(ctx, NULL, NULL, NULL);
             genL__align11(ctx, NULL, NULL, NULL, 0, NULL, NULL);
@@ -3472,12 +3472,12 @@ recalcpairs4thread(recalcpairs4thread_arg_t* targ) {
             mem0 = NULL;
             free(mem1);
             mem1 = NULL;
-            if (commonIP)
-                FreeIntMtx(commonIP);
-            commonIP = NULL;
-            if (commonJP)
-                FreeIntMtx(commonJP);
-            commonJP = NULL;
+            if (ctx->commonIP)
+                FreeIntMtx(ctx->commonIP);
+            ctx->commonIP = NULL;
+            if (ctx->commonJP)
+                FreeIntMtx(ctx->commonJP);
+            ctx->commonJP = NULL;
             G__align11(ctx, NULL, NULL, NULL, 0, 0, 0);
             L__align11(ctx, NULL, 0.0, NULL, NULL, 0, NULL, NULL);
             genL__align11(ctx, NULL, NULL, NULL, 0, NULL, NULL);
@@ -4053,12 +4053,12 @@ compacttreedpdist(Context* ctx, int njob, char** bseq, char** dseq, double* self
     //	recalcpairs( njob, topol, dep, bseq, selfscore, alloclen, hat3node, fd0, fd1, uselh );
 
     G__align11(ctx, NULL, NULL, NULL, 0, 0, 0);  // 20130603
-    if (commonIP)
-        FreeIntMtx(commonIP);
-    commonIP = NULL;
-    if (commonJP)
-        FreeIntMtx(commonJP);
-    commonJP = NULL;
+    if (ctx->commonIP)
+        FreeIntMtx(ctx->commonIP);
+    ctx->commonIP = NULL;
+    if (ctx->commonJP)
+        FreeIntMtx(ctx->commonJP);
+    ctx->commonJP = NULL;
 
     //	free( commonanc );
     //	commonsextet_p( NULL, NULL );
@@ -4129,8 +4129,8 @@ compacttree_memsaveselectable(Context* ctx, int nseq, double** partmtx, int* nea
             resetnearestfunc = kmerresetnearestthread;
         }
     }
-    distarrarg = calloc(MAX(nthreadpair, 1), sizeof(compactdistarrthread_arg_t));
-    resetarg = calloc(MAX(nthreadpair, 1), sizeof(resetnearestthread_arg_t));
+    distarrarg = calloc(MAX(ctx->nthreadpair, 1), sizeof(compactdistarrthread_arg_t));
+    resetarg = calloc(MAX(ctx->nthreadpair, 1), sizeof(resetnearestthread_arg_t));
     joblist = calloc(ctx->njob, sizeof(int));
     if (howcompact != 2)
         result = calloc(ctx->njob, sizeof(double));
@@ -9270,12 +9270,12 @@ makedynamicmtx(Context* ctx, double** out, double** in, double offset) {
     }
 }
 void
-FreeCommonIP() {
-    if (commonIP)
-        FreeIntMtx(commonIP);
-    commonIP = NULL;
-    commonAlloc1 = 0;
-    commonAlloc2 = 0;
+FreeCommonIP(Context* ctx) {
+    if (ctx->commonIP)
+        FreeIntMtx(ctx->commonIP);
+    ctx->commonIP = NULL;
+    ctx->commonAlloc1 = 0;
+    ctx->commonAlloc2 = 0;
 }
 
 void
@@ -10140,7 +10140,7 @@ fillimp_file(Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int
 	else
 #endif
     {
-        nth = MIN(nthreadreadlh, nfiles);
+        nth = MIN(ctx->nthreadreadlh, nfiles);
         subid = 0;
 
         //		reporterr( "nthreadlh=%d, nth=%d\n", nthreadreadlh, nth );

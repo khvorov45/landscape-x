@@ -270,33 +270,33 @@ genL__align11(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int
     mseq1[0] = mseq[0];
     mseq2[0] = mseq[1];
 
-    if (orlgth1 > commonAlloc1 || orlgth2 > commonAlloc2) {
+    if (orlgth1 > ctx->commonAlloc1 || orlgth2 > ctx->commonAlloc2) {
         int ll1, ll2;
 
-        if (commonAlloc1 && commonAlloc2) {
-            FreeIntMtx(commonIP);
-            FreeIntMtx(commonJP);
+        if (ctx->commonAlloc1 && ctx->commonAlloc2) {
+            FreeIntMtx(ctx->commonIP);
+            FreeIntMtx(ctx->commonJP);
         }
 
-        ll1 = MAX(orlgth1, commonAlloc1);
-        ll2 = MAX(orlgth2, commonAlloc2);
+        ll1 = MAX(orlgth1, ctx->commonAlloc1);
+        ll2 = MAX(orlgth2, ctx->commonAlloc2);
 
 #if DEBUG
         fprintf(stderr, "\n\ntrying to allocate %dx%d matrices ... ", ll1 + 1, ll2 + 1);
 #endif
 
-        commonIP = AllocateIntMtx(ll1 + 10, ll2 + 10);
-        commonJP = AllocateIntMtx(ll1 + 10, ll2 + 10);
+        ctx->commonIP = AllocateIntMtx(ll1 + 10, ll2 + 10);
+        ctx->commonJP = AllocateIntMtx(ll1 + 10, ll2 + 10);
 
 #if DEBUG
         fprintf(stderr, "succeeded\n\n");
 #endif
 
-        commonAlloc1 = ll1;
-        commonAlloc2 = ll2;
+        ctx->commonAlloc1 = ll1;
+        ctx->commonAlloc2 = ll2;
     }
-    ijpi = commonIP;
-    ijpj = commonJP;
+    ijpi = ctx->commonIP;
+    ijpj = ctx->commonJP;
 
 #if 0
 	for( i=0; i<lgth1; i++ ) 

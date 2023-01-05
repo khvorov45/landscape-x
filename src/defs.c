@@ -1,14 +1,5 @@
 #include "mltaln.h"
 
-int   commonAlloc1 = 0;
-int   commonAlloc2 = 0;
-int** commonIP = NULL;
-int** commonJP = NULL;
-int   nthread = 1;
-int   nthreadpair = 1;
-int   randomseed = 0;
-int   parallelizationstrategy = BAATARI1;
-
 int    scoreout = 0;
 int    spscoreout = 0;
 int    outnumber = 0;

@@ -282,17 +282,16 @@ typedef struct Context {
     char**   res_g;
     int      rnakozo;
     char     rnaprediction;
+    int      commonAlloc1;
+    int      commonAlloc2;
+    int**    commonIP;
+    int**    commonJP;
+    int      nthread;
+    int      nthreadreadlh;
+    int      nthreadpair;
+    int      randomseed;
+    int      parallelizationstrategy;
 } Context;
-
-extern int   commonAlloc1;
-extern int   commonAlloc2;
-extern int** commonIP;
-extern int** commonJP;
-extern int   nthread;
-extern int   nthreadreadlh;
-extern int   nthreadpair;
-extern int   randomseed;
-extern int   parallelizationstrategy;
 
 extern int scoreout;
 extern int spscoreout;
@@ -659,7 +658,7 @@ extern double             dist2offset(double dist);
 extern void               reporterr(const char* str, ...);
 extern void               freeconstants(Context* ctx);
 extern void               closeFiles(Context* ctx);
-extern void               FreeCommonIP();
+extern void               FreeCommonIP(Context* ctx);
 extern void               makeskiptable(int n, int** skip, char** seq);
 extern int                generatesubalignmentstable(int nseq, int*** tablept, int* nsubpt, int* maxmempt, int*** topol, double** len, double threshold);
 extern double             sumofpairsscore(Context* ctx, int nseq, char** seq);

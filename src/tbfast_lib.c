@@ -46,9 +46,9 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
     int c;
     int i;
 
-    nthread = 1;
+    ctx->nthread = 1;
     opts->nthreadtb = 1;
-    nthreadpair = 1;
+    ctx->nthreadpair = 1;
     outnumber = 0;
     scoreout = 0;
     spscoreout = 0;
@@ -217,9 +217,9 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
                     --argc;
                     goto nextoption;
                 case 'C':
-                    nthreadpair = nthread = myatoi(*++argv);
+                    ctx->nthreadpair = ctx->nthread = myatoi(*++argv);
                     --argc;
-                    nthread = 0;
+                    ctx->nthread = 0;
                     goto nextoption;
                 case 's':
                     specificityconsideration = (double)myatof(*++argv);
@@ -463,7 +463,7 @@ msacompactdisthalfmtxthread(msacompactdistmtxthread_arg_t* targ) {
         }
 
         if (i % 100 == 0) {
-            if (nthreadpair)
+            if (ctx->nthreadpair)
                 fprintf(stderr, "\r% 5d / %d (thread %4d)", i, njob, thread_no);
             else
                 fprintf(stderr, "\r% 5d / %d", i, njob);
@@ -731,11 +731,11 @@ treebase(Context* ctx, TbfastOpts* opts, int* nlen, char** aseq, int nadd, char*
         if (!ctx->nevermemsave && (ctx->constraint != 2 && ctx->alg != 'M' && (len1 > 30000 || len2 > 30000))) {
             fprintf(stderr, "\nlen1=%d, len2=%d, Switching to the memsave mode.\n", len1, len2);
             ctx->alg = 'M';
-            if (commonIP)
-                FreeIntMtx(commonIP);
-            commonIP = NULL;
-            commonAlloc1 = 0;
-            commonAlloc2 = 0;
+            if (ctx->commonIP)
+                FreeIntMtx(ctx->commonIP);
+            ctx->commonIP = NULL;
+            ctx->commonAlloc1 = 0;
+            ctx->commonAlloc2 = 0;
         }
 
         if (fftlog[m1] && fftlog[m2])
@@ -909,7 +909,7 @@ treebase(Context* ctx, TbfastOpts* opts, int* nlen, char** aseq, int nadd, char*
     A__align(ctx, NULL, 0, 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
     imp_match_init_strictD(ctx, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
     imp_match_init_strict(ctx, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
-    FreeCommonIP();
+    FreeCommonIP(ctx);
 }
 
 static void
@@ -996,6 +996,9 @@ tbfast_main(int argc, char* argv[]) {
     ctx->addprofile = 1;
     ctx->consweight_multi = 1.0;
     ctx->RNAscoremtx = 'n';
+    ctx->nthread = 1;
+    ctx->nthreadpair = 1;
+    ctx->parallelizationstrategy = BAATARI1;
 
     TbfastOpts opts_ = {};
     TbfastOpts* opts = &opts_;
@@ -1436,15 +1439,15 @@ tbfast_main(int argc, char* argv[]) {
     constants(ctx, ctx->njob, seq);
 
     if (sueff_global < 0.0001 || compacttree == 3) {
-        nthreadreadlh = nthread;
-        if (nthreadreadlh == 0)
-            nthreadreadlh = 1;
+        ctx->nthreadreadlh = ctx->nthread;
+        if (ctx->nthreadreadlh == 0)
+            ctx->nthreadreadlh = 1;
 
         opts->nthreadtb = 0;
-        nthread = 0;
+        ctx->nthread = 0;
     } else {
-        nthreadreadlh = 1;
-        opts->nthreadtb = nthread;
+        ctx->nthreadreadlh = 1;
+        opts->nthreadtb = ctx->nthread;
     }
 
     initSignalSM(ctx);
@@ -1676,7 +1679,7 @@ tbfast_main(int argc, char* argv[]) {
             }
         } else if (ctx->tbutree == 0 && compacttree)  // tbutree != 0 no toki (aln->mtx) ha, 6merdistance -> disttbfast.c; dp distance -> muzukashii
         {
-            reporterr("Constructing a tree ... nthread=%d", nthread);
+            reporterr("Constructing a tree ... nthread=%d", ctx->nthread);
             compacttree_memsaveselectable(ctx, ctx->njob, partmtx, mindistfrom, mindist, NULL, selfscore, seq, skiptable, topol, len, name, NULL, dep, opts->treeout, compacttree, 1);
 
             if (mindistfrom)
@@ -2075,7 +2078,7 @@ tbfast_main(int argc, char* argv[]) {
 
     if (spscoreout)
         reporterr("Unweighted sum-of-pairs score = %10.5f\n", sumofpairsscore(ctx, ctx->njob, bseq));
-    nthread = MAX(opts->nthreadtb, nthreadreadlh);  // toriaezu
+    ctx->nthread = MAX(opts->nthreadtb, ctx->nthreadreadlh);  // toriaezu
     if (opts->ndeleted > 0) {
         reporterr("\nTo keep the alignment length, %d letters were DELETED.\n", opts->ndeleted);
         if (opts->mapout)
@@ -2200,6 +2203,6 @@ chudan:
 
     freeconstants(ctx);
     closeFiles(ctx);
-    FreeCommonIP();
+    FreeCommonIP(ctx);
     return (0);
 }

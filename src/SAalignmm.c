@@ -229,26 +229,26 @@ Aalign(Context* ctx, char** seq1, char** seq2, double* eff1, double* eff2, int i
     for (j = 0; j < jcyc; j++)
         mseq2[j] = mseq[icyc + j];
 
-    if (orlgth1 > commonAlloc1 || orlgth2 > commonAlloc2) {
+    if (orlgth1 > ctx->commonAlloc1 || orlgth2 > ctx->commonAlloc2) {
         int ll1, ll2;
 
-        if (commonAlloc1 && commonAlloc2) {
-            FreeIntMtx(commonIP);
+        if (ctx->commonAlloc1 && ctx->commonAlloc2) {
+            FreeIntMtx(ctx->commonIP);
         }
 
-        ll1 = MAX(orlgth1, commonAlloc1);
-        ll2 = MAX(orlgth2, commonAlloc2);
+        ll1 = MAX(orlgth1, ctx->commonAlloc1);
+        ll2 = MAX(orlgth2, ctx->commonAlloc2);
 
         fprintf(stderr, "\n\ntrying to allocate %dx%d matrices ... ", ll1 + 1, ll2 + 1);
 
-        commonIP = AllocateIntMtx(ll1 + 10, ll2 + 10);
+        ctx->commonIP = AllocateIntMtx(ll1 + 10, ll2 + 10);
 
         fprintf(stderr, "succeeded\n\n");
 
-        commonAlloc1 = ll1;
-        commonAlloc2 = ll2;
+        ctx->commonAlloc1 = ll1;
+        ctx->commonAlloc2 = ll2;
     }
-    ijp = commonIP;
+    ijp = ctx->commonIP;
 
     cpmx_calc(ctx, seq1, cpmx1, eff1, strlen(seq1[0]), icyc);
     cpmx_calc(ctx, seq2, cpmx2, eff2, strlen(seq2[0]), jcyc);

@@ -1316,7 +1316,7 @@ static void
 arguments(Context* ctx, int argc, char* argv[]) {
     int c;
 
-    nthread = 1;
+    ctx->nthread = 1;
     laste = 5000;
     lastm = 3;
     nadd = 0;
@@ -1458,12 +1458,9 @@ arguments(Context* ctx, int argc, char* argv[]) {
                     --argc;
                     goto nextoption;
                 case 'C':
-                    nthread = myatoi(*++argv);
-                    //					fprintf( stderr, "nthread = %d\n", nthread );
+                    ctx->nthread = myatoi(*++argv);
                     --argc;
-#ifndef enablemultithread
-                    nthread = 0;
-#endif
+                    ctx->nthread = 0;
                     goto nextoption;
                 case 'I':
                     nadd = myatoi(*++argv);
@@ -2361,10 +2358,10 @@ pairlocalalign(Context* ctx, int ngui, char** namegui, char** seqgui, double** d
     fprintf(stderr, "OSHIMAI\n");
 #endif
 
-    if (stdout_dist && nthread > 1) {
+    if (stdout_dist && ctx->nthread > 1) {
         fprintf(stderr, "\nThe order of distances is not identical to that in the input file, because of the parallel calculation.  Reorder them by yourself, using sort -n -k 2 | sort -n -k 1 -s\n");
     }
-    if (stdout_align && nthread > 1) {
+    if (stdout_align && ctx->nthread > 1) {
         fprintf(stderr, "\nThe order of pairwise alignments is not identical to that in the input file, because of the parallel calculation.  Reorder them by yourself.\n");
     }
 
@@ -2397,7 +2394,7 @@ pairlocalalign(Context* ctx, int ngui, char** namegui, char** seqgui, double** d
     freeconstants(ctx);
 
     if (!ngui) {
-        FreeCommonIP();
+        FreeCommonIP(ctx);
     }
     Falign(ctx, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, NULL);
     G__align11(ctx, NULL, NULL, NULL, 0, 0, 0);  // 20130603

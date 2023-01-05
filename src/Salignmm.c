@@ -1251,32 +1251,32 @@ A__align(Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_l, c
         seq2[j][lgth2] = 0;
     }
 
-    if (orlgth1 > commonAlloc1 || orlgth2 > commonAlloc2) {
+    if (orlgth1 > ctx->commonAlloc1 || orlgth2 > ctx->commonAlloc2) {
         int ll1, ll2;
 
-        if (commonAlloc1 && commonAlloc2) {
-            FreeIntMtx(commonIP);
+        if (ctx->commonAlloc1 && ctx->commonAlloc2) {
+            FreeIntMtx(ctx->commonIP);
         }
 
-        ll1 = MAX(orlgth1, commonAlloc1);
-        ll2 = MAX(orlgth2, commonAlloc2);
+        ll1 = MAX(orlgth1, ctx->commonAlloc1);
+        ll2 = MAX(orlgth2, ctx->commonAlloc2);
 
 #if DEBUG
         fprintf(stderr, "\n\ntrying to allocate %dx%d matrices ... ", ll1 + 1, ll2 + 1);
 #endif
 
-        commonIP = AllocateIntMtx(ll1 + 10, ll2 + 10);
+        ctx->commonIP = AllocateIntMtx(ll1 + 10, ll2 + 10);
 
 #if DEBUG
         fprintf(stderr, "succeeded\n\n");
 #endif
 
-        commonAlloc1 = ll1;
-        commonAlloc2 = ll2;
+        ctx->commonAlloc1 = ll1;
+        ctx->commonAlloc2 = ll2;
     }
-    ijp = commonIP;
+    ijp = ctx->commonIP;
 
-    if (calledbyfulltreebase == 1 && previouscall && firstmem >= 0 && firstmem == previousfirstmem && lgth1 == previousfirstlen && nthread == 0 && icyc == previousicyc + 1)  // mouhitotsu jouken ga iru. firstmem >= 0 && firstmem == previousfirstmem && calledbytreebase && prevcalledbytreebase
+    if (calledbyfulltreebase == 1 && previouscall && firstmem >= 0 && firstmem == previousfirstmem && lgth1 == previousfirstlen && ctx->nthread == 0 && icyc == previousicyc + 1)  // mouhitotsu jouken ga iru. firstmem >= 0 && firstmem == previousfirstmem && calledbytreebase && prevcalledbytreebase
         reuseprofiles = 1;
     else
         reuseprofiles = 0;
@@ -2284,30 +2284,30 @@ A__align_variousdist(Context* ctx, int** which, double*** matrices, int penalty_
         seq2[j][lgth2] = 0;
     }
 
-    if (orlgth1 > commonAlloc1 || orlgth2 > commonAlloc2) {
+    if (orlgth1 > ctx->commonAlloc1 || orlgth2 > ctx->commonAlloc2) {
         int ll1, ll2;
 
-        if (commonAlloc1 && commonAlloc2) {
-            FreeIntMtx(commonIP);
+        if (ctx->commonAlloc1 && ctx->commonAlloc2) {
+            FreeIntMtx(ctx->commonIP);
         }
 
-        ll1 = MAX(orlgth1, commonAlloc1);
-        ll2 = MAX(orlgth2, commonAlloc2);
+        ll1 = MAX(orlgth1, ctx->commonAlloc1);
+        ll2 = MAX(orlgth2, ctx->commonAlloc2);
 
 #if DEBUG
         fprintf(stderr, "\n\ntrying to allocate %dx%d matrices ... ", ll1 + 1, ll2 + 1);
 #endif
 
-        commonIP = AllocateIntMtx(ll1 + 10, ll2 + 10);
+        ctx->commonIP = AllocateIntMtx(ll1 + 10, ll2 + 10);
 
 #if DEBUG
         fprintf(stderr, "succeeded\n\n");
 #endif
 
-        commonAlloc1 = ll1;
-        commonAlloc2 = ll2;
+        ctx->commonAlloc1 = ll1;
+        ctx->commonAlloc2 = ll2;
     }
-    ijp = commonIP;
+    ijp = ctx->commonIP;
 
 #if 0
 	{
