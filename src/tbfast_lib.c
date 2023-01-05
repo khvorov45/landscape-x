@@ -88,7 +88,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
     sueff_global = 0.1;
     contin = 0;
     scoremtx = 1;
-    kobetsubunkatsu = 0;
+    ctx->kobetsubunkatsu = 0;
     ppenalty_dist = NOTSPECIFIED;
     ppenalty = NOTSPECIFIED;
     penalty_shift_factor = 1000.0;

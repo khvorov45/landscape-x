@@ -1356,7 +1356,7 @@ arguments(Context* ctx, int argc, char* argv[]) {
     treemethod = 'x';
     contin = 0;
     scoremtx = 1;
-    kobetsubunkatsu = 0;
+    ctx->kobetsubunkatsu = 0;
     ctx->divpairscore = 0;
     stdout_align = 0;
     stdout_dist = 0;

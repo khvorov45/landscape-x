@@ -255,7 +255,7 @@ Falign(Context* ctx, int** whichmtx, double*** scoringmatrices, double** n_dynam
                 free(gend);
             if (codonscoremtx)
                 FreeDoubleMtx(codonscoremtx);
-            if (!kobetsubunkatsu) {
+            if (!ctx->kobetsubunkatsu) {
                 FreeFukusosuuMtx(seqVector1);
                 FreeFukusosuuMtx(seqVector2);
                 FreeFukusosuuVec(naisekiNoWa);
@@ -453,7 +453,7 @@ Falign(Context* ctx, int** whichmtx, double*** scoringmatrices, double** n_dynam
     if (localalloclen < nlen) {
         if (localalloclen) {
 #if 1
-            if (!kobetsubunkatsu) {
+            if (!ctx->kobetsubunkatsu) {
                 FreeFukusosuuMtx(seqVector1);
                 FreeFukusosuuMtx(seqVector2);
                 FreeFukusosuuVec(naisekiNoWa);
@@ -463,7 +463,7 @@ Falign(Context* ctx, int** whichmtx, double*** scoringmatrices, double** n_dynam
 #endif
         }
 
-        if (!kobetsubunkatsu) {
+        if (!ctx->kobetsubunkatsu) {
             naisekiNoWa = AllocateFukusosuuVec(nlen);
             naiseki = AllocateFukusosuuMtx(n20or4or2, nlen);
             seqVector1 = AllocateFukusosuuMtx(n20or4or2 + 1, nlen + 1);
@@ -490,7 +490,7 @@ for( i=0; i<clus2; i++ )
 fclose( fftfp );
 system( "less input_of_Falign < /dev/tty > /dev/tty" );
 #endif
-    if (!kobetsubunkatsu) {
+    if (!ctx->kobetsubunkatsu) {
         if (fftkeika)
             fprintf(stderr, " FFT ... ");
 
@@ -661,7 +661,7 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
     fftfp = fopen("cand", "w");
     fclose(fftfp);
 #endif
-    if (kobetsubunkatsu) {
+    if (ctx->kobetsubunkatsu) {
         maxk = 1;
         kouho[0] = 0;
     } else {
@@ -768,7 +768,7 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
     for (i = 0; i < count; i++)
         sortedseg2[i]->number = i;
 
-    if (kobetsubunkatsu) {
+    if (ctx->kobetsubunkatsu) {
         for (i = 0; i < count; i++) {
             cut1[i + 1] = sortedseg1[i]->center;
             cut2[i + 1] = sortedseg2[i]->center;
@@ -824,7 +824,7 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
         //		if( count-count0 )
         //			fprintf( stderr, "%d unused anchors\n", count0-count );
 
-        if (!kobetsubunkatsu && fftkeika)
+        if (!ctx->kobetsubunkatsu && fftkeika)
             fprintf(stderr, "%d anchors found\n", count);
         if (fftkeika) {
             if (count0 > count) {
@@ -973,14 +973,14 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
             strncpy(tmpres1[j], seq1[j] + cut1[i], cut1[i + 1] - cut1[i]);
             tmpres1[j][cut1[i + 1] - cut1[i]] = 0;
         }
-        if (kobetsubunkatsu && fftkeika)
+        if (ctx->kobetsubunkatsu && fftkeika)
             commongappick(clus1, tmpres1);  //dvtditr に呼ばれたとき fftkeika=1
         //		if( kobetsubunkatsu ) commongappick( clus1, tmpres1 );
         for (j = 0; j < clus2; j++) {
             strncpy(tmpres2[j], seq2[j] + cut2[i], cut2[i + 1] - cut2[i]);
             tmpres2[j][cut2[i + 1] - cut2[i]] = 0;
         }
-        if (kobetsubunkatsu && fftkeika)
+        if (ctx->kobetsubunkatsu && fftkeika)
             commongappick(clus2, tmpres2);
 
         if (ctx->constraint) {
@@ -1206,7 +1206,7 @@ Falign_udpari_long(
             free(segment2);
             free(sortedseg1);
             free(sortedseg2);
-            if (!kobetsubunkatsu) {
+            if (!ctx->kobetsubunkatsu) {
                 FreeFukusosuuMtx(seqVector1);
                 FreeFukusosuuMtx(seqVector2);
                 FreeFukusosuuVec(naisekiNoWa);
@@ -1284,7 +1284,7 @@ Falign_udpari_long(
     if (localalloclen < nlen) {
         if (localalloclen) {
 #if 1
-            if (!kobetsubunkatsu) {
+            if (!ctx->kobetsubunkatsu) {
                 FreeFukusosuuMtx(seqVector1);
                 FreeFukusosuuMtx(seqVector2);
                 FreeFukusosuuVec(naisekiNoWa);
@@ -1294,7 +1294,7 @@ Falign_udpari_long(
 #endif
         }
 
-        if (!kobetsubunkatsu) {
+        if (!ctx->kobetsubunkatsu) {
             naisekiNoWa = AllocateFukusosuuVec(nlen);
             naiseki = AllocateFukusosuuMtx(n20or4or2, nlen);
             seqVector1 = AllocateFukusosuuMtx(n20or4or2, nlen + 1);
@@ -1309,7 +1309,7 @@ Falign_udpari_long(
     for (j = 0; j < clus2; j++)
         strcpy(tmpseq2[j], seq2[j]);
 
-    if (!kobetsubunkatsu) {
+    if (!ctx->kobetsubunkatsu) {
         if (fftkeika)
             fprintf(stderr, " FFT ... ");
 
@@ -1442,7 +1442,7 @@ system( "less seqVec < /dev/tty > /dev/tty" );
     fftfp = fopen("cand", "w");
     fclose(fftfp);
 #endif
-    if (kobetsubunkatsu) {
+    if (ctx->kobetsubunkatsu) {
         maxk = 1;
         kouho[0] = 0;
     } else {
@@ -1520,7 +1520,7 @@ system( "less seqVec < /dev/tty > /dev/tty" );
         }
     }
 #if 1
-    if (!kobetsubunkatsu)
+    if (!ctx->kobetsubunkatsu)
         if (fftkeika)
             fprintf(stderr, "done. (%d anchors) ", count);
 #endif
@@ -1553,7 +1553,7 @@ system( "less seqVec < /dev/tty > /dev/tty" );
     for (i = 0; i < count; i++)
         sortedseg2[i]->number = i;
 
-    if (kobetsubunkatsu) {
+    if (ctx->kobetsubunkatsu) {
         for (i = 0; i < count; i++) {
             cut1[i + 1] = sortedseg1[i]->center;
             cut2[i + 1] = sortedseg2[i]->center;
@@ -1613,7 +1613,7 @@ system( "less seqVec < /dev/tty > /dev/tty" );
             //			if( count-count0 )
             //				fprintf( stderr, "%d unused anchors\n", count0-count );
 
-            if (!kobetsubunkatsu && fftkeika)
+            if (!ctx->kobetsubunkatsu && fftkeika)
                 fprintf(stderr, "%d anchors found\n", count);
             if (fftkeika) {
                 if (count0 > count) {
@@ -1770,7 +1770,7 @@ system( "less seqVec < /dev/tty > /dev/tty" );
             strncpy(tmpres1[j], seq1[j] + cut1[i], cut1[i + 1] - cut1[i]);
             tmpres1[j][cut1[i + 1] - cut1[i]] = 0;
         }
-        if (kobetsubunkatsu && fftkeika)
+        if (ctx->kobetsubunkatsu && fftkeika)
             commongappick(clus1, tmpres1);  //dvtditr に呼ばれたとき fftkeika=1
         //		if( kobetsubunkatsu ) commongappick( clus1, tmpres1 );
         for (j = 0; j < clus2; j++) {
@@ -1780,7 +1780,7 @@ system( "less seqVec < /dev/tty > /dev/tty" );
             strncpy(tmpres2[j], seq2[j] + cut2[i], cut2[i + 1] - cut2[i]);
             tmpres2[j][cut2[i + 1] - cut2[i]] = 0;
         }
-        if (kobetsubunkatsu && fftkeika)
+        if (ctx->kobetsubunkatsu && fftkeika)
             commongappick(clus2, tmpres2);  //dvtditr に呼ばれたとき fftkeika=1
         //		if( kobetsubunkatsu ) commongappick( clus2, tmpres2 );
 

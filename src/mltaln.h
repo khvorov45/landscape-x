@@ -210,9 +210,9 @@ typedef struct Context {
     int      divpairscore;
     int      fmodel;
     int      nblosum;
+    int      kobetsubunkatsu;
 } Context;
 
-extern int    kobetsubunkatsu;
 extern int    bunkatsu;
 extern int    dorp;
 extern int    niter;

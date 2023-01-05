@@ -9,7 +9,6 @@ int   nthreadpair = 1;
 int   randomseed = 0;
 int   parallelizationstrategy = BAATARI1;
 
-int    kobetsubunkatsu;
 int    bunkatsu;
 int    dorp = NOTSPECIFIED;  // arguments de shitei suruto, tbfast -> pairlocalalign no yobidashi de futsugou
 int    niter;
