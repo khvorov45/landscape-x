@@ -74,8 +74,6 @@
 #endif
 // clang-format on
 
-#define END_OF_VEC -1
-
 #define NKOUHO 20
 #define NKOUHO_LONG 500
 
@@ -697,7 +695,6 @@ extern void   stringshuffle(int* ary, int size);
 extern void   topolorder(int* order, int* posinorder, int*** topol, Treedep* dep, int pos, int child);
 extern int*   topolorderz(int* order, int*** topol, Treedep* dep, int pos, int nchild);
 extern int*   topolordery(int* order, int*** topol, Treedep* dep, int pos, int nchild);
-extern int    commonsextet_p(Context* ctx, int* table, int* pointt);
 extern void   compacttree_memsaveselectable(Context* ctx, int nseq, double** partmtx, int* nearest, double* mindist, int** pointt, int* selfscore, char** seq, int** skiptable, int*** topol, double** len, char** name, int* nlen, Treedep* dep, int treeout, int howcompact, int memsave);
 extern void   compacttreedpdist(Context* ctx, int njob, char** seq, char** dseq, double* selfscore, int*** topol, double** len, char** name, Treedep* dep, int treeout, int alloclen, int* uselh, int* nfilesfornode, int treegiven);
 extern double distcompact(Context* ctx, int len1, int len2, int* table1, int* point2, int ss1, int ss2);

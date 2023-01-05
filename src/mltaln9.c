@@ -129,6 +129,56 @@ display(Context* ctx, char** seq, int nseq) {
     }
 }
 
+#define END_OF_VEC -1
+
+static int
+commonsextet_p(Context* ctx, int* table, int* pointt) {
+    int         value = 0;
+    int         tmp;
+    int         point;
+    static int* memo = NULL;
+    static int* ct = NULL;
+    static int* cp;
+
+    if (table == NULL) {
+        if (memo)
+            free(memo);
+        if (ct)
+            free(ct);
+        memo = NULL;
+        ct = NULL;
+        return (0);
+    }
+
+    if (*pointt == -1)
+        return (0);
+
+    if (!memo) {
+        memo = (int*)calloc(ctx->tsize, sizeof(int));
+        if (!memo)
+            ErrorExit("Cannot allocate memo\n");
+        ct = (int*)calloc(MIN(ctx->maxl, ctx->tsize) + 1, sizeof(int));  // chuui!!
+        if (!ct)
+            ErrorExit("Cannot allocate ct\n");
+    }
+
+    cp = ct;
+    while ((point = *pointt++) != END_OF_VEC) {
+        tmp = memo[point]++;
+        if (tmp < table[point])
+            value++;
+        if (tmp == 0)
+            *cp++ = point;
+    }
+    *cp = END_OF_VEC;
+
+    cp = ct;
+    while (*cp != END_OF_VEC)
+        memo[*cp++] = 0;
+
+    return (value);
+}
+
 #define BLOCKSIZE 100
 #define LARGEBLOCKSIZE 100
 
@@ -1659,7 +1709,7 @@ fixed_supg_double_realloc_nobk_halfmtx_treeout_constrained(Context* ctx, int nse
     free(warned);
 }
 
-void
+static void
 makecompositiontable_global(int* table, int* pointt) {
     int point;
 
@@ -7381,54 +7431,6 @@ sumofpairsscore(Context* ctx, int nseq, char** seq) {
     }
     //	v /= ( (nseq-1) * nseq ) / 2;
     return (v);
-}
-
-int
-commonsextet_p(Context* ctx, int* table, int* pointt) {
-    int         value = 0;
-    int         tmp;
-    int         point;
-    static int* memo = NULL;
-    static int* ct = NULL;
-    static int* cp;
-
-    if (table == NULL) {
-        if (memo)
-            free(memo);
-        if (ct)
-            free(ct);
-        memo = NULL;
-        ct = NULL;
-        return (0);
-    }
-
-    if (*pointt == -1)
-        return (0);
-
-    if (!memo) {
-        memo = (int*)calloc(ctx->tsize, sizeof(int));
-        if (!memo)
-            ErrorExit("Cannot allocate memo\n");
-        ct = (int*)calloc(MIN(ctx->maxl, ctx->tsize) + 1, sizeof(int));  // chuui!!
-        if (!ct)
-            ErrorExit("Cannot allocate ct\n");
-    }
-
-    cp = ct;
-    while ((point = *pointt++) != END_OF_VEC) {
-        tmp = memo[point]++;
-        if (tmp < table[point])
-            value++;
-        if (tmp == 0)
-            *cp++ = point;
-    }
-    *cp = END_OF_VEC;
-
-    cp = ct;
-    while (*cp != END_OF_VEC)
-        memo[*cp++] = 0;
-
-    return (value);
 }
 
 double
