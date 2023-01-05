@@ -9,19 +9,13 @@
 #include <math.h>
 #include <ctype.h>
 #include <limits.h>
-
-#ifndef _MSC_VER
 #include <unistd.h>
-#endif
 
-#if !defined(mingw) && !defined(_MSC_VER)
 #include <sys/resource.h>  // for setstacksize, 2016/Jun
 #include <sys/shm.h>  // shared memory
 #include <sys/mman.h>  // shm_open
-#endif
 
 // clang-format off
-
 // Taken from portable snippets
 // https://github.com/nemequ/portable-snippets/blob/master/debug-trap/debug-trap.h
 #if defined(__has_builtin) && !defined(__ibmxl__)
@@ -79,9 +73,6 @@
 #define assert(condition) do { if (condition) {} else { assertAction(); } } while (0)
 #endif
 // clang-format on
-
-
-#define VERSION "7.510"
 
 #define PI 3.14159265358979323846
 #define END_OF_VEC -1

@@ -280,17 +280,6 @@ rnaalifoldcall(Context* ctx, char** seq, int nseq, RNApair** pairprob) {
         }
     }
 
-#if 0
-	for( i=0; i<lgth; i++ ) // atode kesu
-		if( pairprob[i][0].bestscore > -1 ) pairprob[i][0].bestscore = 1.0; // atode kesu
-#endif
-
-    //	fprintf( stderr, "after taikakuka in rnaalifoldcall\n" );
-    //	for( i=0; i<lgth; i++ )
-    //	{
-    //		fprintf( stderr, "pair of %d = %d (%f) %c:%c\n", i, pairprob[i][0].bestpos, pairprob[i][0].bestscore, seq[0][i], seq[0][pairprob[i][0].bestpos] );
-    //	}
-
     free(pairnum);
 }
 
