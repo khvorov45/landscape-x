@@ -140,28 +140,6 @@ cpmx_ribosum(Context* ctx, char** seq, char** seqr, char* dir, double** cpmx, do
     }
 }
 
-void
-mseqcat(char** seq1, char** seq2, double** eff, double* effarr1, double* effarr2, char name1[M][B], char name2[M][B], int clus1, int clus2) {
-    int i, j;
-    for (i = 0; i < clus2; i++)
-        seq1[clus1 + i] = seq2[i];
-    for (i = 0; i < clus2; i++)
-        strcpy(name1[clus1 + i], name2[i]);
-
-    for (i = 0; i < clus1; i++)
-        for (j = 0; j < clus1; j++)
-            eff[i][j] = effarr1[i] * effarr1[j];
-    for (i = 0; i < clus1; i++)
-        for (j = clus1; j < clus1 + clus2; j++)
-            eff[i][j] = effarr1[i] * effarr2[j - clus1];
-    for (i = clus1; i < clus1 + clus2; i++)
-        for (j = 0; j < clus1; j++)
-            eff[i][j] = effarr2[i - clus1] * effarr1[j];
-    for (i = clus1; i < clus1 + clus2; i++)
-        for (j = clus1; j < clus1 + clus2; j++)
-            eff[i][j] = effarr2[i - clus1] * effarr2[j - clus1];
-}
-
 int
 conjuctionforgaln(int s0, int s1, char** seq, char** aseq, double* peff, double* eff, char* d) {
     int    m, k;

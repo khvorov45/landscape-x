@@ -129,83 +129,6 @@ display(Context* ctx, char** seq, int nseq) {
     }
 }
 
-void
-upg2(Context* ctx, int nseq, double** eff, int*** topol, double** len) {
-    int    i, j, k;
-    double tmplen[M];
-
-    static char** pair = NULL;
-
-    if (!pair) {
-        pair = AllocateCharMtx(ctx->njob, ctx->njob);
-    }
-
-    for (i = 0; i < nseq; i++)
-        tmplen[i] = 0.0;
-    for (i = 0; i < nseq; i++)
-        for (j = 0; j < nseq; j++)
-            pair[i][j] = 0;
-    for (i = 0; i < nseq; i++)
-        pair[i][i] = 1;
-
-    for (k = 0; k < nseq - 1; k++) {
-        double minscore = 9999.0;
-        int    im = -1, jm = -1;
-        int    count;
-
-        for (i = 0; i < nseq - 1; i++)
-            for (j = i + 1; j < nseq; j++) {
-                if (eff[i][j] < minscore) {
-                    minscore = eff[i][j];
-                    im = i;
-                    jm = j;
-                }
-            }
-        for (i = 0, count = 0; i < nseq; i++)
-            if (pair[im][i] > 0) {
-                topol[k][0][count] = i;
-                count++;
-            }
-        topol[k][0][count] = -1;
-        for (i = 0, count = 0; i < nseq; i++)
-            if (pair[jm][i] > 0) {
-                topol[k][1][count] = i;
-                count++;
-            }
-        topol[k][1][count] = -1;
-
-        len[k][0] = minscore / 2.0 - tmplen[im];
-        len[k][1] = minscore / 2.0 - tmplen[jm];
-
-        tmplen[im] = minscore / 2.0;
-
-        for (i = 0; i < nseq; i++)
-            pair[im][i] += (pair[jm][i] > 0);
-        for (i = 0; i < nseq; i++)
-            pair[jm][i] = 0;
-
-        for (i = 0; i < nseq; i++) {
-            if (i != im && i != jm) {
-                eff[MIN(i, im)][MAX(i, im)] =
-                    (eff[MIN(i, im)][MAX(i, im)] + eff[MIN(i, jm)][MAX(i, jm)]) / 2.0;
-                eff[MIN(i, jm)][MAX(i, jm)] = 9999.0;
-            }
-            eff[im][jm] = 9999.0;
-        }
-#if DEBUG
-        printf("STEP-%03d:\n", k + 1);
-        printf("len0 = %f\n", len[k][0]);
-        for (i = 0; topol[k][0][i] > -1; i++)
-            printf(" %03d", topol[k][0][i]);
-        printf("\n");
-        printf("len1 = %f\n", len[k][1]);
-        for (i = 0; topol[k][1][i] > -1; i++)
-            printf(" %03d", topol[k][1][i]);
-        printf("\n");
-#endif
-    }
-}
-
 #define BLOCKSIZE 100
 #define LARGEBLOCKSIZE 100
 
@@ -4976,149 +4899,6 @@ ipower(double x, int n) /* n > 0  */
 }
 
 void
-countnode(int nseq, int*** topol, double** node) /* node[j][i] != node[i][j] */
-{
-    int           i, j, k, s1, s2;
-    static double rootnode[M];
-
-    if (nseq - 2 < 0) {
-        reporterr("Too few sequence for countnode: nseq = %d\n", nseq);
-        exit(1);
-    }
-
-    for (i = 0; i < nseq; i++)
-        rootnode[i] = 0;
-    for (i = 0; i < nseq - 2; i++) {
-        for (j = 0; topol[i][0][j] > -1; j++)
-            rootnode[topol[i][0][j]]++;
-        for (j = 0; topol[i][1][j] > -1; j++)
-            rootnode[topol[i][1][j]]++;
-        for (j = 0; topol[i][0][j] > -1; j++) {
-            s1 = topol[i][0][j];
-            for (k = 0; topol[i][1][k] > -1; k++) {
-                s2 = topol[i][1][k];
-                node[MIN(s1, s2)][MAX(s1, s2)] = rootnode[s1] + rootnode[s2] - 1;
-            }
-        }
-    }
-    for (j = 0; topol[nseq - 2][0][j] > -1; j++) {
-        s1 = topol[nseq - 2][0][j];
-        for (k = 0; topol[nseq - 2][1][k] > -1; k++) {
-            s2 = topol[nseq - 2][1][k];
-            node[MIN(s1, s2)][MAX(s1, s2)] = rootnode[s1] + rootnode[s2];
-        }
-    }
-}
-
-void
-countnode_int(int nseq, int*** topol, int** node) /* node[i][j] == node[j][i] */
-{
-    int i, j, k, s1, s2;
-    int rootnode[M];
-
-    for (i = 0; i < nseq; i++)
-        rootnode[i] = 0;
-    for (i = 0; i < nseq - 2; i++) {
-        for (j = 0; topol[i][0][j] > -1; j++)
-            rootnode[topol[i][0][j]]++;
-        for (j = 0; topol[i][1][j] > -1; j++)
-            rootnode[topol[i][1][j]]++;
-        for (j = 0; topol[i][0][j] > -1; j++) {
-            s1 = topol[i][0][j];
-            for (k = 0; topol[i][1][k] > -1; k++) {
-                s2 = topol[i][1][k];
-                node[MIN(s1, s2)][MAX(s1, s2)] = rootnode[s1] + rootnode[s2] - 1;
-            }
-        }
-    }
-    for (j = 0; topol[nseq - 2][0][j] > -1; j++) {
-        s1 = topol[nseq - 2][0][j];
-        for (k = 0; topol[nseq - 2][1][k] > -1; k++) {
-            s2 = topol[nseq - 2][1][k];
-            node[MIN(s1, s2)][MAX(s1, s2)] = rootnode[s1] + rootnode[s2];
-        }
-    }
-    for (i = 0; i < nseq - 1; i++)
-        for (j = i + 1; j < nseq; j++)
-            node[j][i] = node[i][j];
-#if DEBUG
-    reporterr("node[][] in countnode_int");
-    for (i = 0; i < nseq; i++) {
-        for (j = 0; j < nseq; j++) {
-            reporterr("%#3d", node[i][j]);
-        }
-        reporterr("\n");
-    }
-#endif
-}
-
-void
-counteff_simple_double(int nseq, int*** topol, double** len, double* node) {
-    int           i, j, s1, s2;
-    double        total;
-    static double rootnode[M];
-    static double eff[M];
-
-#if DEBUG
-    for (i = 0; i < nseq; i++) {
-        reporterr("len0 = %f\n", len[i][0]);
-        reporterr("len1 = %f\n", len[i][1]);
-    }
-#endif
-    for (i = 0; i < nseq; i++) {
-        rootnode[i] = 0.0;
-        eff[i] = 1.0;
-        /*
-		rootnode[i] = 1.0;
-*/
-    }
-    for (i = 0; i < nseq - 1; i++) {
-        for (j = 0; (s1 = topol[i][0][j]) > -1; j++) {
-            rootnode[s1] += (double)len[i][0] * eff[s1];
-            eff[s1] *= 0.5;
-            /*
-           	rootnode[s1] *= 0.5;
-*/
-        }
-        for (j = 0; (s2 = topol[i][1][j]) > -1; j++) {
-            rootnode[s2] += (double)len[i][1] * eff[s2];
-            eff[s2] *= 0.5;
-            /*
-           	rootnode[s2] *= 0.5;
-*/
-        }
-    }
-    for (i = 0; i < nseq; i++) {
-#if 1 /* 97.9.29 */
-        rootnode[i] += GETA3;
-#endif
-#if 0
-		reporterr(       "### rootnode for %d = %f\n", i, rootnode[i] );
-#endif
-    }
-#if 1
-    total = 0.0;
-    for (i = 0; i < nseq; i++) {
-        total += rootnode[i];
-    }
-#else
-    total = 1.0;
-#endif
-
-    for (i = 0; i < nseq; i++) {
-        node[i] = rootnode[i] / total;
-    }
-
-#if 0
-	reporterr(       "weight array in counteff_simple\n" );
-	for( i=0; i<nseq; i++ )
-		reporterr(       "%f\n", node[i] );
-	printf( "\n" );
-	exit( 1 );
-#endif
-}
-
-void
 counteff_simple_double_nostatic_memsave(int nseq, int*** topol, double** len, Treedep* dep, double* node) {
     int     i, j, s1, s2;
     double  total;
@@ -5357,15 +5137,11 @@ void
 counteff_simple(int nseq, int*** topol, double** len, double* node) {
     int    i, j, s1, s2;
     double total;
-#if 0
-	static double rootnode[M];
-	static double eff[M];
-#else
+
     double* rootnode;
     double* eff;
     rootnode = AllocateDoubleVec(nseq);
     eff = AllocateDoubleVec(nseq);
-#endif
 
 #if DEBUG
     for (i = 0; i < nseq; i++) {

@@ -2219,6 +2219,8 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
 
 int
 pairlocalalign(Context* ctx, int ngui, char** namegui, char** seqgui, double** distancemtx, LocalHom** localhomtable, int argc, char** argv, double** expdist) {
+    assert(ngui >= 2);
+
     int *      nlen, *thereisxineachseq;
     char **    name, **seq;
     char **    mseq1, **mseq2;
@@ -2226,39 +2228,11 @@ pairlocalalign(Context* ctx, int ngui, char** namegui, char** seqgui, double** d
     char**     bseq;
     char**     dseq;
     int        i, j, k;
-    FILE*      infp;
     char       c;
     int        alloclen;
     Lastresx** lastresx;
 
     arguments(ctx, argc, argv);
-
-    if (!ngui) {
-        if (ctx->inputfile) {
-            infp = fopen(ctx->inputfile, "r");
-            if (!infp) {
-                fprintf(stderr, "Cannot open %s\n", ctx->inputfile);
-                exit(1);
-            }
-        } else
-            infp = stdin;
-
-        getnumlen(ctx, infp);
-        rewind(infp);
-
-        if (ctx->njob < 2) {
-            fprintf(stderr,
-                    "At least 2 sequences should be input!\n"
-                    "Only %d sequence found.\n",
-                    ctx->njob);
-            exit(1);
-        }
-        if (ctx->njob > M) {
-            fprintf(stderr, "The number of sequences must be < %d\n", M);
-            fprintf(stderr, "Please try --6merpair --addfragments for such large data.\n");
-            exit(1);
-        }
-    }
 
     if ((ctx->alg == 'r' || ctx->alg == 'R') && ctx->dorp == 'p') {
         fprintf(stderr, "Not yet supported\n");
@@ -2311,11 +2285,6 @@ pairlocalalign(Context* ctx, int ngui, char** namegui, char** seqgui, double** d
         lastresx[ctx->njob - ctx->nadd] = NULL;
     } else
         lastresx = NULL;
-
-    if (!ngui) {
-        readData_pointer(ctx, infp, name, nlen, seq);
-        fclose(infp);
-    }
 
     constants(ctx, ctx->njob, seq);
     initSignalSM(ctx);
@@ -2392,9 +2361,6 @@ pairlocalalign(Context* ctx, int ngui, char** namegui, char** seqgui, double** d
     free(thereisxineachseq);
     freeconstants(ctx);
 
-    if (!ngui) {
-        FreeCommonIP(ctx);
-    }
     Falign(ctx, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, NULL);
     G__align11(ctx, NULL, NULL, NULL, 0, 0, 0);  // 20130603
     G__align11_noalign(ctx, NULL, 0, 0, NULL, NULL);

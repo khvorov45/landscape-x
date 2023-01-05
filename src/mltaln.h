@@ -20,6 +20,17 @@
 #include <sys/mman.h>  // shm_open
 #endif
 
+// clang-format off
+#ifndef assertAction
+#define assertAction() do {_exit(1);} while (0)
+#endif
+
+#ifndef assert
+#define assert(condition) do { if (condition) {} else { assertAction(); } } while (0)
+#endif
+// clang-format on
+
+
 #define VERSION "7.510"
 
 #define PI 3.14159265358979323846
@@ -389,15 +400,11 @@ extern int          intlen(int* num);
 extern void         exitall(char arr[]);
 extern void         display(Context* ctx, char** seq, int nseq);
 extern void         intergroup_score_new(char** seq1, char** seq2, double* eff1, double* eff2, int clus1, int clus2, int len, double* value);
-extern void         upg2(Context* ctx, int nseq, double** eff, int*** topol, double** len);
 extern void         veryfastsupg_int_realloc_nobk(int njob, int** mtx, int*** topol, double** len);
 extern void         veryfastsupg_double(int nseq, double** oeff, int*** topol, double** len);
 extern void         veryfastsupg_int(int nseq, int** oeff, int*** topol, double** len);
 extern double       ipower(double x, int n);
-extern void         countnode(int nseq, int*** topol, double** node);
-extern void         countnode_int(int nseq, int*** topol, int** node);
 extern void         counteff_simple(int nseq, int*** topol, double** len, double* node);
-extern void         counteff_simple_double(int nseq, int*** topol, double** len, double* node);
 extern void         counteff_simple_double_nostatic(int nseq, int*** topol, double** len, double* node);
 extern void         counteff_simple_double_nostatic_memsave(int nseq, int*** topol, double** len, Treedep* dep, double* node);
 extern void         gappick_samestring(char* aseq);
@@ -421,7 +428,6 @@ extern void         extendlocalhom(int nseq, LocalHom** localhom);
 extern void         cpmx_calc_new(Context* ctx, char** seq, double** cpmx, double* eff, int lgth, int clus);
 extern void         cpmx_calc_add(Context* ctx, char** seq, double** cpmx, double* eff, int lgth, int clus);
 extern void         MScpmx_calc_new(Context* ctx, char** seq, double** cpmx, double* eff, int lgth, int clus);
-extern void         mseqcat(char** seq1, char** seq2, double** eff, double* effarr1, double* effarr2, char name1[M][B], char name2[M][B], int clus1, int clus2);
 extern void         strnbcat(char* s1, char* s2, int m);
 extern int          conjuctionforgaln(int s0, int s1, char** seq, char** aseq, double* peff, double* eff, char* d);
 extern int          fastconjuction(int* memlist, char** seq, char** aseq, double* peff, double* eff, char* d);
@@ -519,26 +525,12 @@ extern void         readhat2_int(FILE* fp, int nseq, int** mtx);
 extern void         readhat2_pointer(FILE* fp, int nseq, double** mtx);
 extern void         readhat2(FILE* fp, int nseq, double** mtx);
 extern void         WriteFloatHat2_pointer_halfmtx(Context* ctx, FILE* hat2p, int locnjob, char** name, double** mtx);
-extern void         WriteFloatHat2(FILE* hat2p, int locnjob, char name[M][B], double** mtx);
-extern void         WriteHat2_int(FILE* hat2p, int locnjob, char name[M][B], int** mtx);
-extern void         WriteHat2(FILE* hat2p, int locnjob, char name[M][B], double** mtx);
 extern void         WriteHat2_pointer(FILE* hat2p, int locnjob, char** name, double** mtx);
 extern void         WriteHat2_part_pointer(FILE* hat2p, int locnjob, int nadd, char** name, double** mtx);
-extern int          ReadFasta_sub(FILE* fp, double* dis, int nseq, char name[M][B]);
-extern int          ReadSsearch(FILE* fp, double* dis, int nseq);
 extern int          ReadBlastm7_scoreonly(FILE* fp, double* dis, int nin);
 extern int          ReadBlastm7_avscore(FILE* fp, double* dis, int nin);
-extern int          ReadFasta34noalign(FILE* fp, double* dis);
-extern int          ReadFasta34m10_scoreonly_nuc(FILE* fp, double* dis, int nin);
-extern int          ReadFasta34m10_scoreonly(FILE* fp, double* dis, int nin);
-extern int          ReadFasta34(FILE* fp, double* dis, LocalHom* localhomlist);
-extern int          ReadFasta3(FILE* fp, double* dis);
-extern int          ReadFasta(FILE* fp, double* dis, int nseq);
-extern int          ReadOpt(FILE* fp, int opt[M], int nseq);
-extern int          ReadOpt2(FILE* fp, int opt[M], int nseq);
 extern void         initSignalSM(Context* ctx);
 extern void         initFiles(Context* ctx);
-extern void         WriteForFasta(FILE* fp, int locnjob, char** name, char** aseq);
 extern void         readlocalhomtable(FILE* fp, int njob, LocalHom** localhomtable, char* kozoarivec);
 extern void         readlocalhomtable_half(FILE* fp, int njob, LocalHom** localhomtable, char* kozoarivec);
 extern void         readlocalhomtable_target(FILE* fp, int nt, int njob, LocalHom** localhomtable, char* kozoarivec, int* targetmap);

@@ -332,7 +332,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
                 case 'N':
                     ctx->nevermemsave = 1;
                     break;
-                case 'B':  // hitsuyou! memopt -M -B no tame
+                case 'B':
                     break;
                 case 'F':
                     ctx->use_fft = 1;
