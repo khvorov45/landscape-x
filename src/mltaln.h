@@ -15,6 +15,8 @@
 #include <sys/shm.h>  // shared memory
 #include <sys/mman.h>  // shm_open
 
+#include "align.h"
+
 // clang-format off
 // Taken from portable snippets
 // https://github.com/nemequ/portable-snippets/blob/master/debug-trap/debug-trap.h

@@ -1,5 +1,7 @@
 #include <stdint.h>
 
+#define aln_unused(x) ((x) = (x))
+
 typedef enum aln_Status {
     aln_Failure,
     aln_Success,

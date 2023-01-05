@@ -982,7 +982,12 @@ WriteOptions(Context* ctx, FILE* fp) {
 }
 
 int
-tbfast_main(int argc, char* argv[]) {
+tbfast_main(aln_String* strings, int32_t stringsCount, void* out, int32_t outBytes, int argc, char* argv[]) {
+    aln_unused(strings);
+    aln_unused(stringsCount);
+    aln_unused(out);
+    aln_unused(outBytes);
+
     Context* ctx = calloc(sizeof(Context), 1);
     ctx->dorp = NOTSPECIFIED;
     ctx->penalty_shift_factor = 100.0;
