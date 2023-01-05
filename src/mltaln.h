@@ -212,14 +212,9 @@ typedef struct Context {
     int      nblosum;
     int      kobetsubunkatsu;
     int      dorp;
+    int      weight;
 } Context;
 
-extern int    niter;
-extern int    contin;
-extern int    calledByXced;
-extern int    devide;
-extern int    scmtd;
-extern int    weight;
 extern int    utree;
 extern int    tbutree;
 extern int    refine;
@@ -405,8 +400,6 @@ extern void         counteff_simple(int nseq, int*** topol, double** len, double
 extern void         counteff_simple_double(int nseq, int*** topol, double** len, double* node);
 extern void         counteff_simple_double_nostatic(int nseq, int*** topol, double** len, double* node);
 extern void         counteff_simple_double_nostatic_memsave(int nseq, int*** topol, double** len, Treedep* dep, double* node);
-extern void         counteff(int nseq, int*** topol, double** len, double** node);
-extern void         FreeTmpSeqs(char** mseq2, char* mseq1);
 extern void         gappick_samestring(char* aseq);
 extern void         gappick0(char* aseq, char* seq);
 extern void         gappick(int nseq, int s, char** aseq, char** mseq2, double** eff, double* effarr);

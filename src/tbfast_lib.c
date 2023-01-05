@@ -62,14 +62,12 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
     ctx->constraint = 0;
     ctx->nblosum = 62;
     ctx->fmodel = 0;
-    calledByXced = 0;
-    devide = 0;
     use_fft = 0;  // chuui
     force_fft = 0;
     fftscore = 1;
     fftRepeatStop = 0;
     fftNoAnchStop = 0;
-    weight = 3;
+    ctx->weight = 3;
     utree = 1;
     tbutree = 1;
     refine = 0;
@@ -80,13 +78,11 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
     alg = 'A';
     mix = 0;
     tbitr = 0;
-    scmtd = 5;
     tbweight = 0;
     tbrweight = 3;
     checkC = 0;
     treemethod = 'X';
     sueff_global = 0.1;
-    contin = 0;
     scoremtx = 1;
     ctx->kobetsubunkatsu = 0;
     ppenalty_dist = NOTSPECIFIED;
@@ -354,7 +350,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
                     break;
                 case 'u':
                     tbrweight = 0;
-                    weight = 0;
+                    ctx->weight = 0;
                     break;
                 case 'v':
                     tbrweight = 3;
@@ -1729,7 +1725,7 @@ tbfast_main(int argc, char* argv[]) {
     }
 
     if (tbrweight) {
-        weight = 3;
+        ctx->weight = 3;
         counteff_simple_double_nostatic_memsave(ctx->njob, topol, len, dep, eff);
         for (i = ctx->njob - nadd; i < ctx->njob; i++)
             eff[i] /= (double)100;

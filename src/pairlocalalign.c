@@ -1332,13 +1332,11 @@ arguments(Context* ctx, int argc, char* argv[]) {
     ctx->constraint = 0;
     ctx->nblosum = 62;
     ctx->fmodel = 0;
-    calledByXced = 0;
-    devide = 0;
     use_fft = 0;
     fftscore = 1;
     fftRepeatStop = 0;
     fftNoAnchStop = 0;
-    weight = 3;
+    ctx->weight = 3;
     utree = 1;
     tbutree = 1;
     refine = 0;
@@ -1349,12 +1347,10 @@ arguments(Context* ctx, int argc, char* argv[]) {
     alg = 'A';
     mix = 0;
     tbitr = 0;
-    scmtd = 5;
     tbweight = 0;
     tbrweight = 3;
     checkC = 0;
     treemethod = 'x';
-    contin = 0;
     scoremtx = 1;
     ctx->kobetsubunkatsu = 0;
     ctx->divpairscore = 0;
