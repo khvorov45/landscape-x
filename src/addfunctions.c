@@ -227,7 +227,7 @@ plus2gapchar(char* s, char gapchar) {
 }
 
 void
-findnewgaps(int rep, char** seq, int* gaplen) {
+findnewgaps(Context* ctx, int rep, char** seq, int* gaplen) {
     int i, pos, len, len1;
 
     len = strlen(seq[0]);
@@ -239,7 +239,7 @@ findnewgaps(int rep, char** seq, int* gaplen) {
     pos = 0;
     for (i = 0; i < len; i++) {
         if (seq[rep][i] == '=') {
-            if (disp)
+            if (ctx->disp)
                 fprintf(stderr, "Newgap! pos = %d\n", pos);
             gaplen[pos]++;
         } else

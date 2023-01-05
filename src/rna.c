@@ -405,13 +405,13 @@ foldrna(Context* ctx, int nseq1, int nseq2, char** seq1, char** seq2, double* ef
     Lalignmm_hmout(ctx, oseq1, oseq2, eff1, eff2, nseq1, nseq2, NULL, NULL, NULL, map);
 
     if (1) {
-        if (RNAscoremtx == 'n') {
+        if (ctx->RNAscoremtx == 'n') {
             for (i = 0; i < lgth1; i++)
                 for (j = 0; j < lgth2; j++) {
                     //				impmtx2[i][j] = osoiaveragescore( nseq1, nseq2, oseq1, oseq2, eff1, eff2, i, j ) * consweight_multi;
                     impmtx2[i][j] = 0.0;
                 }
-        } else if (RNAscoremtx == 'r') {
+        } else if (ctx->RNAscoremtx == 'r') {
             fprintf(stderr, "Unexpected error.  Please contact katoh@ifrec.osaka-u.ac.jp\n");
         }
 
@@ -442,7 +442,7 @@ foldrna(Context* ctx, int nseq1, int nseq2, char** seq1, char** seq2, double* ef
                         //				if( uido > -1 && ujdo > -1 )
                         if (uido > -1 && ujdo > -1 && ((i > uido && j > ujdo) || (i < uido && j < ujdo))) {
                             {
-                                impmtx2[i][j] += MAX(0, map[uido][ujdo]) * consweight_rna * 600 * prob;  // osoi
+                                impmtx2[i][j] += MAX(0, map[uido][ujdo]) * ctx->consweight_rna * 600 * prob;  // osoi
                             }
                         }
                     }

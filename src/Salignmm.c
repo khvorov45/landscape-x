@@ -375,7 +375,7 @@ match_calc(double** n_dynamicmtx, double* match, double** cpmx1, double** cpmx2,
 }
 
 static void
-Atracking_localhom(double* impwmpt, double* lasthorizontalw, double* lastverticalw, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int icyc, int jcyc, int* warpis, int* warpjs, int warpbase, int* ngap1, int* ngap2, int reuseprofiles, char** gt1, char** gt2) {
+Atracking_localhom(Context* ctx, double* impwmpt, double* lasthorizontalw, double* lastverticalw, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int icyc, int jcyc, int* warpis, int* warpjs, int warpbase, int* ngap1, int* ngap2, int reuseprofiles, char** gt1, char** gt2) {
     int    i, j, l, iin, jin, ifi, jfi, lgth1, lgth2, k, limk;
     double wm;
     char * gaptable1, *gt1bk;
@@ -391,14 +391,7 @@ Atracking_localhom(double* impwmpt, double* lasthorizontalw, double* lastvertica
         gt2bk = *gt2;
     }
 
-#if 0
-	for( i=0; i<lgth1; i++ ) 
-	{
-		fprintf( stderr, "lastverticalw[%d] = %f\n", i, lastverticalw[i] );
-	}
-#endif
-
-    if (outgap == 1)
+    if (ctx->outgap == 1)
         ;
     else {
         wm = lastverticalw[0];
@@ -1829,7 +1822,7 @@ A__align(Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_l, c
     gt2 = gt2bk = AllocateCharVec(lgth1 + lgth2 + 1);
 
     if (constraint) {
-        Atracking_localhom(impmatch, currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, warpis, warpjs, warpbase, &ngap1, &ngap2, reuseprofiles, &gt1, &gt2);
+        Atracking_localhom(ctx, impmatch, currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, warpis, warpjs, warpbase, &ngap1, &ngap2, reuseprofiles, &gt1, &gt2);
     } else {
         //		wmo = Atracking( currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, tailgp, warpis, warpjs, warpbase, &ngap1, &ngap2, reuseprofiles, eff1, eff2, cpmxresult, cpmx1pt, cpmx2pt, gapfreq1pt, gapfreq2pt, ogcp1opt, ogcp2opt, fgcp1opt, fgcp2opt, orieff1, orieff2, (cpmx1pt!=cpmx1), (cpmx2pt!=cpmx2) );
         wmo = Atracking(currentw, lastverticalw, fpenalty, fpenalty_ex, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, tailgp, warpis, warpjs, warpbase, &ngap1, &ngap2, reuseprofiles, &gt1, &gt2);
@@ -2776,17 +2769,8 @@ A__align_variousdist(Context* ctx, int** which, double*** matrices, int penalty_
     }
 #endif
 
-    /*
-	fprintf( stderr, "\n" );
-	for( i=0; i<icyc; i++ ) fprintf( stderr,"%s\n", seq1[i] );
-	fprintf( stderr, "#####\n" );
-	for( j=0; j<jcyc; j++ ) fprintf( stderr,"%s\n", seq2[j] );
-	fprintf( stderr, "====>" );
-	for( i=0; i<icyc; i++ ) strcpy( mseq1[i], seq1[i] );
-	for( j=0; j<jcyc; j++ ) strcpy( mseq2[j], seq2[j] );
-	*/
     if (constraint) {
-        Atracking_localhom(impmatch, currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, warpis, warpjs, warpbase, &ngap1, &ngap2, 0, NULL, NULL);
+        Atracking_localhom(ctx, impmatch, currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, warpis, warpjs, warpbase, &ngap1, &ngap2, 0, NULL, NULL);
     } else {
         //		Atracking( currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, tailgp, warpis, warpjs, warpbase, &ngap1, &ngap2, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0.0, 0.0, 1, 1 ); // NULL x 11 ha atode awaseru.
         wmo = Atracking(currentw, lastverticalw, fpenalty, fpenalty_ex, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, tailgp, warpis, warpjs, warpbase, &ngap1, &ngap2, 0, NULL, NULL);

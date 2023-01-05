@@ -54,49 +54,49 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
     spscoreout = 0;
     rnaprediction = 'm';
     rnakozo = 0;
-    nevermemsave = 0;
-    inputfile = NULL;
-    addfile = NULL;
-    addprofile = 1;
-    fftkeika = 0;
+    ctx->nevermemsave = 0;
+    ctx->inputfile = NULL;
+    ctx->addfile = NULL;
+    ctx->addprofile = 1;
+    ctx->fftkeika = 0;
     ctx->constraint = 0;
     ctx->nblosum = 62;
     ctx->fmodel = 0;
-    use_fft = 0;  // chuui
-    force_fft = 0;
-    fftscore = 1;
-    fftRepeatStop = 0;
-    fftNoAnchStop = 0;
+    ctx->use_fft = 0;  // chuui
+    ctx->force_fft = 0;
+    ctx->fftscore = 1;
+    ctx->fftRepeatStop = 0;
+    ctx->fftNoAnchStop = 0;
     ctx->weight = 3;
     ctx->tbutree = 1;
-    disp = 0;
-    outgap = 1;
-    alg = 'A';
-    mix = 0;
-    tbitr = 0;
-    tbweight = 0;
-    tbrweight = 3;
-    checkC = 0;
-    treemethod = 'X';
+    ctx->disp = 0;
+    ctx->outgap = 1;
+    ctx->alg = 'A';
+    ctx->mix = 0;
+    ctx->tbitr = 0;
+    ctx->tbweight = 0;
+    ctx->tbrweight = 3;
+    ctx->checkC = 0;
+    ctx->treemethod = 'X';
     sueff_global = 0.1;
-    scoremtx = 1;
+    ctx->scoremtx = 1;
     ctx->kobetsubunkatsu = 0;
     ctx->ppenalty_dist = NOTSPECIFIED;
     ctx->ppenalty = NOTSPECIFIED;
     ctx->penalty_shift_factor = 1000.0;
     ctx->ppenalty_ex = NOTSPECIFIED;
     ctx->poffset = NOTSPECIFIED;
-    kimuraR = NOTSPECIFIED;
-    pamN = NOTSPECIFIED;
-    geta2 = GETA2;
-    fftWinSize = NOTSPECIFIED;
-    fftThreshold = NOTSPECIFIED;
+    ctx->kimuraR = NOTSPECIFIED;
+    ctx->pamN = NOTSPECIFIED;
+    ctx->geta2 = GETA2;
+    ctx->fftWinSize = NOTSPECIFIED;
+    ctx->fftThreshold = NOTSPECIFIED;
     ctx->RNAppenalty = NOTSPECIFIED;
     ctx->RNAppenalty_ex = NOTSPECIFIED;
     ctx->RNApthr = NOTSPECIFIED;
-    TMorJTT = JTT;
-    consweight_multi = 1.0;
-    consweight_rna = 0.0;
+    ctx->TMorJTT = JTT;
+    ctx->consweight_multi = 1.0;
+    ctx->consweight_rna = 0.0;
     legacygapcost = 0;
     specificityconsideration = 0.0;
     specifictarget = 0;
@@ -141,7 +141,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
         while ((c = *++argv[0])) {
             switch (c) {
                 case 'i':
-                    inputfile = *++argv;
+                    ctx->inputfile = *++argv;
                     --argc;
                     goto nextoption;
                 case 'I':
@@ -178,27 +178,27 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
                     --argc;
                     goto nextoption;
                 case 'k':
-                    kimuraR = myatoi(*++argv);
+                    ctx->kimuraR = myatoi(*++argv);
                     //					fprintf( stderr, "kappa = %d\n", kimuraR );
                     --argc;
                     goto nextoption;
                 case 'b':
                     ctx->nblosum = myatoi(*++argv);
-                    scoremtx = 1;
+                    ctx->scoremtx = 1;
                     //					fprintf( stderr, "blosum %d / kimura 200\n", nblosum );
                     --argc;
                     goto nextoption;
                 case 'j':
-                    pamN = myatoi(*++argv);
-                    scoremtx = 0;
-                    TMorJTT = JTT;
+                    ctx->pamN = myatoi(*++argv);
+                    ctx->scoremtx = 0;
+                    ctx->TMorJTT = JTT;
                     //					fprintf( stderr, "jtt/kimura %d\n", pamN );
                     --argc;
                     goto nextoption;
                 case 'm':
-                    pamN = myatoi(*++argv);
-                    scoremtx = 0;
-                    TMorJTT = TM;
+                    ctx->pamN = myatoi(*++argv);
+                    ctx->scoremtx = 0;
+                    ctx->TMorJTT = TM;
                     //					fprintf( stderr, "tm %d\n", pamN );
                     --argc;
                     goto nextoption;
@@ -208,12 +208,12 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
                     --argc;
                     goto nextoption;
                 case 'r':
-                    consweight_rna = atof(*++argv);
+                    ctx->consweight_rna = atof(*++argv);
                     rnakozo = 1;
                     --argc;
                     goto nextoption;
                 case 'c':
-                    consweight_multi = atof(*++argv);
+                    ctx->consweight_multi = atof(*++argv);
                     --argc;
                     goto nextoption;
                 case 'C':
@@ -234,7 +234,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
                     break;
 #endif
                 case 'K':
-                    addprofile = 0;
+                    ctx->addprofile = 0;
                     break;
                 case 'y':
                     opts->distout = 1;
@@ -259,7 +259,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
                     break;
 #if 1
                 case 'O':
-                    outgap = 0;
+                    ctx->outgap = 0;
                     break;
 #else
                 case 'O':
@@ -295,16 +295,16 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
 					break;
 #endif
                 case 'X':
-                    treemethod = 'X';
+                    ctx->treemethod = 'X';
                     sueff_global = atof(*++argv);
                     //					fprintf( stderr, "sueff_global = %f\n", sueff_global );
                     --argc;
                     goto nextoption;
                 case 'E':
-                    treemethod = 'E';
+                    ctx->treemethod = 'E';
                     break;
                 case 'q':
-                    treemethod = 'q';
+                    ctx->treemethod = 'q';
                     break;
                 case 'n':
                     outnumber = 1;
@@ -321,35 +321,35 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
 					break;
 #endif
                 case '@':
-                    alg = 'd';
+                    ctx->alg = 'd';
                     break;
                 case 'A':
-                    alg = 'A';
+                    ctx->alg = 'A';
                     break;
                 case 'M':
-                    alg = 'M';
+                    ctx->alg = 'M';
                     break;
                 case 'N':
-                    nevermemsave = 1;
+                    ctx->nevermemsave = 1;
                     break;
                 case 'B':  // hitsuyou! memopt -M -B no tame
                     break;
                 case 'F':
-                    use_fft = 1;
+                    ctx->use_fft = 1;
                     break;
                 case 'G':
-                    force_fft = 1;
-                    use_fft = 1;
+                    ctx->force_fft = 1;
+                    ctx->use_fft = 1;
                     break;
                 case 'U':
                     opts->treein = 1;
                     break;
                 case 'u':
-                    tbrweight = 0;
+                    ctx->tbrweight = 0;
                     ctx->weight = 0;
                     break;
                 case 'v':
-                    tbrweight = 3;
+                    ctx->tbrweight = 3;
                     break;
                 case 'd':
                     opts->multidist = 1;
@@ -371,7 +371,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
 					goto nextoption;
 #endif
                 case 'w':
-                    fftWinSize = myatoi(*++argv);
+                    ctx->fftWinSize = myatoi(*++argv);
                     --argc;
                     goto nextoption;
                 case 'W':
@@ -420,11 +420,11 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
         fprintf(stderr, "argc=%d, tbfast options: Check source file !\n", argc);
         exit(1);
     }
-    if (tbitr == 1 && outgap == 0) {
+    if (ctx->tbitr == 1 && ctx->outgap == 0) {
         fprintf(stderr, "conflicting options : o, m or u\n");
         exit(1);
     }
-    if (alg == 'C' && outgap == 0) {
+    if (ctx->alg == 'C' && ctx->outgap == 0) {
         fprintf(stderr, "conflicting options : C, o\n");
         exit(1);
     }
@@ -728,9 +728,9 @@ treebase(Context* ctx, TbfastOpts* opts, int* nlen, char** aseq, int nadd, char*
             makegrouprna(grouprna2, singlerna, localmem[1]);
         }
 
-        if (!nevermemsave && (ctx->constraint != 2 && alg != 'M' && (len1 > 30000 || len2 > 30000))) {
+        if (!ctx->nevermemsave && (ctx->constraint != 2 && ctx->alg != 'M' && (len1 > 30000 || len2 > 30000))) {
             fprintf(stderr, "\nlen1=%d, len2=%d, Switching to the memsave mode.\n", len1, len2);
-            alg = 'M';
+            ctx->alg = 'M';
             if (commonIP)
                 FreeIntMtx(commonIP);
             commonIP = NULL;
@@ -743,32 +743,31 @@ treebase(Context* ctx, TbfastOpts* opts, int* nlen, char** aseq, int nadd, char*
         else
             ffttry = 0;
         if (ctx->constraint == 2) {
-            if (alg == 'M') {
+            if (ctx->alg == 'M') {
                 fprintf(stderr, "\n\nMemory saving mode is not supported.\n\n");
                 exit(1);
             }
-            //			fprintf( stderr, "c" );
-            if (alg == 'A') {
+            if (ctx->alg == 'A') {
                 imp_match_init_strict(ctx, clus1, clus2, strlen(mseq1[0]), strlen(mseq2[0]), mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, localmem[0], localmem[1], uselh, seedinlh1, seedinlh2, (compacttree == 3) ? l : -1, nfiles);
                 if (rnakozo)
                     imp_rna(ctx, clus1, clus2, mseq1, mseq2, effarr1, effarr2, grouprna1, grouprna2);
 #if REPORTCOSTS
 //				reporterr(       "\n\n %d - %d (%d x %d) : \n", topol[l][0][0], topol[l][1][0], clus1, clus2 );
 #endif
-                pscore = A__align(ctx, dynamicmtx, ctx->penalty, ctx->penalty_ex, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, ctx->constraint, &dumdb, NULL, NULL, NULL, NULL, outgap, outgap, localmem[0][0], 1, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
+                pscore = A__align(ctx, dynamicmtx, ctx->penalty, ctx->penalty_ex, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, ctx->constraint, &dumdb, NULL, NULL, NULL, NULL, ctx->outgap, ctx->outgap, localmem[0][0], 1, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
             }
-            if (alg == 'd') {
+            if (ctx->alg == 'd') {
                 imp_match_init_strictD(ctx, clus1, clus2, strlen(mseq1[0]), strlen(mseq2[0]), mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, localmem[0], localmem[1], uselh, seedinlh1, seedinlh2, (compacttree == 3) ? l : -1, nfiles);
                 if (rnakozo)
                     imp_rnaD(ctx, clus1, clus2, mseq1, mseq2, effarr1, effarr2, grouprna1, grouprna2);
-                pscore = D__align(ctx, dynamicmtx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, ctx->constraint, &dumdb, outgap, outgap);
-            } else if (alg == 'Q') {
+                pscore = D__align(ctx, dynamicmtx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, ctx->constraint, &dumdb, ctx->outgap, ctx->outgap);
+            } else if (ctx->alg == 'Q') {
                 fprintf(stderr, "Not supported\n");
                 exit(1);
             }
-        } else if (force_fft || (use_fft && ffttry)) {
+        } else if (ctx->force_fft || (ctx->use_fft && ffttry)) {
             fprintf(stderr, " f\b\b");
-            if (alg == 'M') {
+            if (ctx->alg == 'M') {
                 fprintf(stderr, "m");
                 pscore = Falign_udpari_long(ctx, NULL, dynamicmtx, mseq1, mseq2, effarr1, effarr2, NULL, NULL, clus1, clus2, *alloclen, fftlog + m1);
             } else
@@ -776,19 +775,19 @@ treebase(Context* ctx, TbfastOpts* opts, int* nlen, char** aseq, int nadd, char*
         } else {
             fprintf(stderr, " d\b\b");
             fftlog[m1] = 0;
-            switch (alg) {
+            switch (ctx->alg) {
                 case ('a'):
                     pscore = Aalign(ctx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen);
                     break;
                 case ('M'):
                     fprintf(stderr, "m");
-                    pscore = MSalignmm(ctx, dynamicmtx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, NULL, NULL, NULL, NULL, outgap, outgap, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
+                    pscore = MSalignmm(ctx, dynamicmtx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, NULL, NULL, NULL, NULL, ctx->outgap, ctx->outgap, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
                     break;
                 case ('A'):
-                    pscore = A__align(ctx, dynamicmtx, ctx->penalty, ctx->penalty_ex, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, 0, &dumdb, NULL, NULL, NULL, NULL, outgap, outgap, localmem[0][0], 1, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
+                    pscore = A__align(ctx, dynamicmtx, ctx->penalty, ctx->penalty_ex, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, 0, &dumdb, NULL, NULL, NULL, NULL, ctx->outgap, ctx->outgap, localmem[0][0], 1, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
                     break;
                 case ('d'):
-                    pscore = D__align(ctx, dynamicmtx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, 0, &dumdb, outgap, outgap);
+                    pscore = D__align(ctx, dynamicmtx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, 0, &dumdb, ctx->outgap, ctx->outgap);
                     break;
                 default:
                     ErrorExit("ERROR IN SOURCE FILE");
@@ -802,8 +801,8 @@ treebase(Context* ctx, TbfastOpts* opts, int* nlen, char** aseq, int nadd, char*
 #endif
         tscore += pscore;
 
-        if (disp)
-            display(aseq, ctx->njob);
+        if (ctx->disp)
+            display(ctx, aseq, ctx->njob);
 
         if (mergeoralign[l] == '1') {
             reporterr("Check source!!\n");
@@ -814,12 +813,12 @@ treebase(Context* ctx, TbfastOpts* opts, int* nlen, char** aseq, int nadd, char*
             adjustgapmap(gapmaplen, gapmap, mseq1[0]);
             if (opts->smoothing) {
                 restorecommongapssmoothly(ctx->njob, ctx->njob - (clus1 + clus2), aseq, localmem[0], localmem[1], gapmap, *alloclen, '-');
-                findnewgaps(0, mseq1, gaplen);
-                insertnewgaps_bothorders(ctx, ctx->njob, alreadyaligned, aseq, localmem[0], localmem[1], gaplen, gapmap, gapmaplen, *alloclen, alg, '-');
+                findnewgaps(ctx, 0, mseq1, gaplen);
+                insertnewgaps_bothorders(ctx, ctx->njob, alreadyaligned, aseq, localmem[0], localmem[1], gaplen, gapmap, gapmaplen, *alloclen, ctx->alg, '-');
             } else {
                 restorecommongaps(ctx->njob, ctx->njob - (clus1 + clus2), aseq, localmem[0], localmem[1], gapmap, *alloclen, '-');
-                findnewgaps(0, mseq1, gaplen);
-                insertnewgaps(ctx, ctx->njob, alreadyaligned, aseq, localmem[0], localmem[1], gaplen, gapmap, *alloclen, alg, '-');
+                findnewgaps(ctx, 0, mseq1, gaplen);
+                insertnewgaps(ctx, ctx->njob, alreadyaligned, aseq, localmem[0], localmem[1], gaplen, gapmap, *alloclen, ctx->alg, '-');
             }
             eq2dashmatometehayaku(mseq1, clus1);
             eq2dashmatometehayaku(mseq2, clus2);
@@ -918,65 +917,65 @@ WriteOptions(Context* ctx, FILE* fp) {
     if (ctx->dorp == 'd')
         fprintf(fp, "DNA\n");
     else {
-        if (scoremtx == 0)
-            fprintf(fp, "JTT %dPAM\n", pamN);
-        else if (scoremtx == 1)
+        if (ctx->scoremtx == 0)
+            fprintf(fp, "JTT %dPAM\n", ctx->pamN);
+        else if (ctx->scoremtx == 1)
             fprintf(fp, "BLOSUM %d\n", ctx->nblosum);
-        else if (scoremtx == 2)
+        else if (ctx->scoremtx == 2)
             fprintf(fp, "M-Y\n");
     }
     fprintf(stderr, "Gap Penalty = %+5.2f, %+5.2f, %+5.2f\n", (double)ctx->ppenalty / 1000, (double)ctx->ppenalty_ex / 1000, (double)ctx->poffset / 1000);
-    if (use_fft)
+    if (ctx->use_fft)
         fprintf(fp, "FFT on\n");
 
     fprintf(fp, "tree-base method\n");
-    if (tbrweight == 0)
+    if (ctx->tbrweight == 0)
         fprintf(fp, "unweighted\n");
-    else if (tbrweight == 3)
+    else if (ctx->tbrweight == 3)
         fprintf(fp, "clustalw-like weighting\n");
-    if (tbitr || tbweight) {
+    if (ctx->tbitr || ctx->tbweight) {
         fprintf(fp, "iterate at each step\n");
-        if (tbitr && tbrweight == 0)
+        if (ctx->tbitr && ctx->tbrweight == 0)
             fprintf(fp, "  unweighted\n");
-        if (tbitr && tbrweight == 3)
+        if (ctx->tbitr && ctx->tbrweight == 3)
             fprintf(fp, "  reversely weighted\n");
-        if (tbweight)
+        if (ctx->tbweight)
             fprintf(fp, "  weighted\n");
         fprintf(fp, "\n");
     }
 
     fprintf(fp, "Gap Penalty = %+5.2f, %+5.2f, %+5.2f\n", (double)ctx->ppenalty / 1000, (double)ctx->ppenalty_ex / 1000, (double)ctx->poffset / 1000);
 
-    if (alg == 'a')
+    if (ctx->alg == 'a')
         fprintf(fp, "Algorithm A\n");
-    else if (alg == 'A')
+    else if (ctx->alg == 'A')
         fprintf(fp, "Algorithm A+\n");
-    else if (alg == 'C')
+    else if (ctx->alg == 'C')
         fprintf(fp, "Apgorithm A+/C\n");
     else
         fprintf(fp, "Unknown algorithm\n");
 
-    if (treemethod == 'X')
+    if (ctx->treemethod == 'X')
         fprintf(fp, "Tree = UPGMA (mix).\n");
-    else if (treemethod == 'E')
+    else if (ctx->treemethod == 'E')
         fprintf(fp, "Tree = UPGMA (average).\n");
-    else if (treemethod == 'q')
+    else if (ctx->treemethod == 'q')
         fprintf(fp, "Tree = Minimum linkage.\n");
     else
         fprintf(fp, "Unknown tree.\n");
 
-    if (use_fft) {
+    if (ctx->use_fft) {
         fprintf(fp, "FFT on\n");
         if (ctx->dorp == 'd')
             fprintf(fp, "Basis : 4 nucleotides\n");
         else {
-            if (fftscore)
+            if (ctx->fftscore)
                 fprintf(fp, "Basis : Polarity and Volume\n");
             else
                 fprintf(fp, "Basis : 20 amino acids\n");
         }
-        fprintf(fp, "Threshold   of anchors = %d%%\n", fftThreshold);
-        fprintf(fp, "window size of anchors = %dsites\n", fftWinSize);
+        fprintf(fp, "Threshold   of anchors = %d%%\n", ctx->fftThreshold);
+        fprintf(fp, "window size of anchors = %dsites\n", ctx->fftWinSize);
     } else
         fprintf(fp, "FFT off\n");
     fflush(fp);
@@ -993,6 +992,10 @@ tbfast_main(int argc, char* argv[]) {
     Context* ctx = calloc(sizeof(Context), 1);
     ctx->dorp = NOTSPECIFIED;
     ctx->penalty_shift_factor = 100.0;
+    ctx->outgap = 1;
+    ctx->addprofile = 1;
+    ctx->consweight_multi = 1.0;
+    ctx->RNAscoremtx = 'n';
 
     TbfastOpts opts_ = {};
     TbfastOpts* opts = &opts_;
@@ -1066,11 +1069,11 @@ tbfast_main(int argc, char* argv[]) {
         if (opts->treein == 'C') {
             compacttree = 2;
             opts->treein = 0;
-            use_fft = 0;
+            ctx->use_fft = 0;
         } else if (opts->treein == 'n') {
             compacttree = 3;
             opts->treein = 0;
-            use_fft = 0;
+            ctx->use_fft = 0;
         }
     }
 
@@ -1080,10 +1083,10 @@ tbfast_main(int argc, char* argv[]) {
     if (ctx->fastathreshold < 0.0001)
         ctx->constraint = 0;
 
-    if (inputfile) {
-        infp = fopen(inputfile, "rb");
+    if (ctx->inputfile) {
+        infp = fopen(ctx->inputfile, "rb");
         if (!infp) {
-            fprintf(stderr, "Cannot open %s\n", inputfile);
+            fprintf(stderr, "Cannot open %s\n", ctx->inputfile);
             exit(1);
         }
     } else
@@ -1341,7 +1344,7 @@ tbfast_main(int argc, char* argv[]) {
             if (ctx->fastathreshold < 0.0001)
                 ctx->constraint = 0;
             fprintf(stderr, "blosum %d / kimura 200\n", ctx->nblosum);
-            fprintf(stderr, "scoremtx=%d\n", scoremtx);
+            fprintf(stderr, "scoremtx=%d\n", ctx->scoremtx);
             fprintf(stderr, "fastathreshold=%f\n", ctx->fastathreshold);
         }
         if (opts->distout || opts->outputhat23) {
@@ -1720,7 +1723,7 @@ tbfast_main(int argc, char* argv[]) {
         goto chudan;  // 2016Jul31
     }
 
-    if (tbrweight) {
+    if (ctx->tbrweight) {
         ctx->weight = 3;
         counteff_simple_double_nostatic_memsave(ctx->njob, topol, len, dep, eff);
         for (i = ctx->njob - nadd; i < ctx->njob; i++)
@@ -1778,7 +1781,7 @@ tbfast_main(int argc, char* argv[]) {
                 exit(1);
             }
         }
-        if (addprofile) {
+        if (ctx->addprofile) {
             alignmentlength = strlen(seq[ctx->njob - nadd]);
             for (i = ctx->njob - nadd; i < ctx->njob; i++) {
                 if (alignmentlength != strlen(seq[i])) {

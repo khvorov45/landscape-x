@@ -394,7 +394,7 @@ match_calc(double** n_dynamicmtx, double* match, double** cpmx1, double** cpmx2,
 }
 
 static void
-Atracking_localhom(double* impwmpt, double* lasthorizontalw, double* lastverticalw, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int icyc, int jcyc, int* warpis, int* warpjs, int warpbase) {
+Atracking_localhom(Context* ctx, double* impwmpt, double* lasthorizontalw, double* lastverticalw, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int icyc, int jcyc, int* warpis, int* warpjs, int warpbase) {
     int    i, j, l, iin, jin, ifi, jfi, lgth1, lgth2, k, limk;
     double wm;
     char * gaptable1, *gt1bk;
@@ -411,7 +411,7 @@ Atracking_localhom(double* impwmpt, double* lasthorizontalw, double* lastvertica
 	}
 #endif
 
-    if (outgap == 1)
+    if (ctx->outgap == 1)
         ;
     else {
         wm = lastverticalw[0];
@@ -3690,17 +3690,8 @@ D__align(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* 
     }
 #endif
 
-    /*
-	fprintf( stderr, "\n" );
-	for( i=0; i<icyc; i++ ) fprintf( stderr,"%s\n", seq1[i] );
-	fprintf( stderr, "#####\n" );
-	for( j=0; j<jcyc; j++ ) fprintf( stderr,"%s\n", seq2[j] );
-	fprintf( stderr, "====>" );
-	for( i=0; i<icyc; i++ ) strcpy( mseq1[i], seq1[i] );
-	for( j=0; j<jcyc; j++ ) strcpy( mseq2[j], seq2[j] );
-	*/
     if (constraint) {
-        Atracking_localhom(impmatch, currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, warpis, warpjs, warpbase);
+        Atracking_localhom(ctx, impmatch, currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, warpis, warpjs, warpbase);
     } else
         Atracking(currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, tailgp, warpis, warpjs, warpbase);
 
@@ -5371,17 +5362,8 @@ D__align_variousdist(Context* ctx, int** which, double*** matrices, char** seq1,
     }
 #endif
 
-    /*
-	fprintf( stderr, "\n" );
-	for( i=0; i<icyc; i++ ) fprintf( stderr,"%s\n", seq1[i] );
-	fprintf( stderr, "#####\n" );
-	for( j=0; j<jcyc; j++ ) fprintf( stderr,"%s\n", seq2[j] );
-	fprintf( stderr, "====>" );
-	for( i=0; i<icyc; i++ ) strcpy( mseq1[i], seq1[i] );
-	for( j=0; j<jcyc; j++ ) strcpy( mseq2[j], seq2[j] );
-	*/
     if (constraint) {
-        Atracking_localhom(impmatch, currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, warpis, warpjs, warpbase);
+        Atracking_localhom(ctx, impmatch, currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, warpis, warpjs, warpbase);
     } else
         Atracking(currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, tailgp, warpis, warpjs, warpbase);
 

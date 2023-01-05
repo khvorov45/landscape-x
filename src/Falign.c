@@ -318,9 +318,9 @@ Falign(Context* ctx, int** whichmtx, double*** scoringmatrices, double** n_dynam
         if (!(segment && segment1 && segment2 && sortedseg1 && sortedseg2))
             ErrorExit("Allocation error\n");
 
-        if (scoremtx == -1)
+        if (ctx->scoremtx == -1)
             n20or4or2 = 1;
-        else if (fftscore)
+        else if (ctx->fftscore)
             n20or4or2 = 1;
         else
             n20or4or2 = 20;
@@ -491,12 +491,12 @@ fclose( fftfp );
 system( "less input_of_Falign < /dev/tty > /dev/tty" );
 #endif
     if (!ctx->kobetsubunkatsu) {
-        if (fftkeika)
+        if (ctx->fftkeika)
             fprintf(stderr, " FFT ... ");
 
         for (j = 0; j < n20or4or2; j++)
             vec_init(seqVector1[j], nlen);
-        if (fftscore && scoremtx != -1) {
+        if (ctx->fftscore && ctx->scoremtx != -1) {
             for (i = 0; i < clus1; i++) {
 #if 1
                 seq_vec_5(ctx, seqVector1[0], ctx->polarity, ctx->volume, eff1[i], tmpseq1[i]);
@@ -535,7 +535,7 @@ system( "less seqVec < /dev/tty > /dev/tty" );
 
         for (j = 0; j < n20or4or2; j++)
             vec_init(seqVector2[j], nlen);
-        if (fftscore && scoremtx != -1) {
+        if (ctx->fftscore && ctx->scoremtx != -1) {
             for (i = 0; i < clus2; i++) {
 #if 1
                 seq_vec_5(ctx, seqVector2[0], ctx->polarity, ctx->volume, eff2[i], tmpseq2[i]);
@@ -735,7 +735,7 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
 	if( !kobetsubunkatsu && fftkeika )
 		fprintf( stderr, "%d anchors found\r", count );
 #endif
-    if (!count && fftNoAnchStop)
+    if (!count && ctx->fftNoAnchStop)
         ErrorExit("Cannot detect anchor!");
 #if 0
 	fprintf( stderr, "RESULT before sort:\n" );
@@ -782,7 +782,7 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
         if (crossscoresize < count + 2) {
             crossscoresize = count + 2;
 #if 1
-            if (fftkeika)
+            if (ctx->fftkeika)
                 fprintf(stderr, "######allocating crossscore, size = %d\n", crossscoresize);
 #endif
             if (crossscore)
@@ -821,16 +821,16 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
 
         blockAlign2(ctx, cut1, cut2, sortedseg1, sortedseg2, crossscore, &count);
 
-        if (!ctx->kobetsubunkatsu && fftkeika)
+        if (!ctx->kobetsubunkatsu && ctx->fftkeika)
             fprintf(stderr, "%d anchors found\n", count);
-        if (fftkeika) {
+        if (ctx->fftkeika) {
             if (count0 > count) {
 #if 0
 				fprintf( stderr, "\7 REPEAT!? \n" );
 #else
                 fprintf(stderr, "REPEAT!? \n");
 #endif
-                if (fftRepeatStop)
+                if (ctx->fftRepeatStop)
                     exit(1);
             }
 #if KEIKA
@@ -874,11 +874,11 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
     for (i = 0; i < count - 1; i++) {
         *fftlog += 1;
         if (i == 0)
-            headgp = outgap;
+            headgp = ctx->outgap;
         else
             headgp = 1;
         if (i == count - 2)
-            tailgp = outgap;
+            tailgp = ctx->outgap;
         else
             tailgp = 1;
 
@@ -970,14 +970,14 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
             strncpy(tmpres1[j], seq1[j] + cut1[i], cut1[i + 1] - cut1[i]);
             tmpres1[j][cut1[i + 1] - cut1[i]] = 0;
         }
-        if (ctx->kobetsubunkatsu && fftkeika)
+        if (ctx->kobetsubunkatsu && ctx->fftkeika)
             commongappick(clus1, tmpres1);  //dvtditr に呼ばれたとき fftkeika=1
         //		if( kobetsubunkatsu ) commongappick( clus1, tmpres1 );
         for (j = 0; j < clus2; j++) {
             strncpy(tmpres2[j], seq2[j] + cut2[i], cut2[i + 1] - cut2[i]);
             tmpres2[j][cut2[i + 1] - cut2[i]] = 0;
         }
-        if (ctx->kobetsubunkatsu && fftkeika)
+        if (ctx->kobetsubunkatsu && ctx->fftkeika)
             commongappick(clus2, tmpres2);
 
         if (ctx->constraint) {
@@ -985,7 +985,7 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
             exit(1);
         }
 
-        switch (alg) {
+        switch (ctx->alg) {
             case ('a'):
                 totalscore += Aalign(ctx, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen);
                 break;
@@ -1025,7 +1025,7 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
                 }
                 break;
             default:
-                fprintf(stderr, "alg = %c\n", alg);
+                fprintf(stderr, "alg = %c\n", ctx->alg);
                 ErrorExit("ERROR IN SOURCE FILE Falign.c");
                 break;
         }
@@ -1270,9 +1270,9 @@ Falign_udpari_long(
         if (!(segment && segment1 && segment2 && sortedseg1 && sortedseg2))
             ErrorExit("Allocation error\n");
 
-        if (scoremtx == -1)
+        if (ctx->scoremtx == -1)
             n20or4or2 = 1;
-        else if (fftscore)
+        else if (ctx->fftscore)
             n20or4or2 = 1;
         else
             n20or4or2 = 20;
@@ -1307,15 +1307,15 @@ Falign_udpari_long(
         strcpy(tmpseq2[j], seq2[j]);
 
     if (!ctx->kobetsubunkatsu) {
-        if (fftkeika)
+        if (ctx->fftkeika)
             fprintf(stderr, " FFT ... ");
 
         for (j = 0; j < n20or4or2; j++)
             vec_init(seqVector1[j], nlen);
-        if (scoremtx == -1) {
+        if (ctx->scoremtx == -1) {
             for (i = 0; i < clus1; i++)
                 seq_vec_4(seqVector1[0], eff1[i], tmpseq1[i]);
-        } else if (fftscore) {
+        } else if (ctx->fftscore) {
             for (i = 0; i < clus1; i++) {
 
                 seq_vec_5(ctx, seqVector1[0], ctx->polarity, ctx->volume, eff1[i], tmpseq1[i]);
@@ -1345,10 +1345,10 @@ system( "less seqVec < /dev/tty > /dev/tty" );
 
         for (j = 0; j < n20or4or2; j++)
             vec_init(seqVector2[j], nlen);
-        if (scoremtx == -1) {
+        if (ctx->scoremtx == -1) {
             for (i = 0; i < clus2; i++)
                 seq_vec_4(seqVector2[0], eff2[i], tmpseq2[i]);
-        } else if (fftscore) {
+        } else if (ctx->fftscore) {
             for (i = 0; i < clus2; i++) {
                 seq_vec_5(ctx, seqVector2[0], ctx->polarity, ctx->volume, eff2[i], tmpseq2[i]);
             }
@@ -1518,10 +1518,10 @@ system( "less seqVec < /dev/tty > /dev/tty" );
     }
 #if 1
     if (!ctx->kobetsubunkatsu)
-        if (fftkeika)
+        if (ctx->fftkeika)
             fprintf(stderr, "done. (%d anchors) ", count);
 #endif
-    if (!count && fftNoAnchStop)
+    if (!count && ctx->fftNoAnchStop)
         ErrorExit("Cannot detect anchor!");
 #if 0
 	fprintf( stderr, "RESULT before sort:\n" );
@@ -1567,7 +1567,7 @@ system( "less seqVec < /dev/tty > /dev/tty" );
             if (crossscoresize < count + 2) {
                 crossscoresize = count + 2;
 #if 1
-                if (fftkeika)
+                if (ctx->fftkeika)
                     fprintf(stderr, "######allocating crossscore, size = %d\n", crossscoresize);
 #endif
                 if (crossscore)
@@ -1606,16 +1606,16 @@ system( "less seqVec < /dev/tty > /dev/tty" );
 
             blockAlign2(ctx, cut1, cut2, sortedseg1, sortedseg2, crossscore, &count);
 
-            if (!ctx->kobetsubunkatsu && fftkeika)
+            if (!ctx->kobetsubunkatsu && ctx->fftkeika)
                 fprintf(stderr, "%d anchors found\n", count);
-            if (fftkeika) {
+            if (ctx->fftkeika) {
                 if (count0 > count) {
 #if 0
 					fprintf( stderr, "\7 REPEAT!? \n" );
 #else
                     fprintf(stderr, "REPEAT!? \n");
 #endif
-                    if (fftRepeatStop)
+                    if (ctx->fftRepeatStop)
                         exit(1);
                 }
 #if KEIKA
@@ -1696,11 +1696,11 @@ system( "less seqVec < /dev/tty > /dev/tty" );
     for (i = 0; i < count - 1; i++) {
         *fftlog += 1;
         if (i == 0)
-            headgp = outgap;
+            headgp = ctx->outgap;
         else
             headgp = 1;
         if (i == count - 2)
-            tailgp = outgap;
+            tailgp = ctx->outgap;
         else
             tailgp = 1;
 
@@ -1755,7 +1755,7 @@ system( "less seqVec < /dev/tty > /dev/tty" );
         fprintf(stderr, "DP %03d / %03d %4d to ", i + 1, count - 1, totallen);
 #else
 #if 1
-        if (1 || fftkeika)
+        if (1 || ctx->fftkeika)
             fprintf(stderr, "DP %05d / %05d \b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b", i + 1, count - 1);
 #endif
 #endif
@@ -1763,7 +1763,7 @@ system( "less seqVec < /dev/tty > /dev/tty" );
             strncpy(tmpres1[j], seq1[j] + cut1[i], cut1[i + 1] - cut1[i]);
             tmpres1[j][cut1[i + 1] - cut1[i]] = 0;
         }
-        if (ctx->kobetsubunkatsu && fftkeika)
+        if (ctx->kobetsubunkatsu && ctx->fftkeika)
             commongappick(clus1, tmpres1);  //dvtditr に呼ばれたとき fftkeika=1
         //		if( kobetsubunkatsu ) commongappick( clus1, tmpres1 );
         for (j = 0; j < clus2; j++) {
@@ -1773,7 +1773,7 @@ system( "less seqVec < /dev/tty > /dev/tty" );
             strncpy(tmpres2[j], seq2[j] + cut2[i], cut2[i + 1] - cut2[i]);
             tmpres2[j][cut2[i + 1] - cut2[i]] = 0;
         }
-        if (ctx->kobetsubunkatsu && fftkeika)
+        if (ctx->kobetsubunkatsu && ctx->fftkeika)
             commongappick(clus2, tmpres2);  //dvtditr に呼ばれたとき fftkeika=1
         //		if( kobetsubunkatsu ) commongappick( clus2, tmpres2 );
 
@@ -1810,7 +1810,7 @@ system( "less seqVec < /dev/tty > /dev/tty" );
 		}
 		fflush( stdout );
 #endif
-        switch (alg) {
+        switch (ctx->alg) {
             case ('M'):
                 if (scoringmatrices)  // called by tditeration.c
                     totalscore += MSalignmm_variousdist(ctx, scoringmatrices, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, headgp, tailgp);
@@ -1818,7 +1818,7 @@ system( "less seqVec < /dev/tty > /dev/tty" );
                     totalscore += MSalignmm(ctx, n_dynamicmtx, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, headgp, tailgp, NULL, NULL, NULL, 0.0, 0.0);
                 break;
             default:
-                fprintf(stderr, "alg = %c\n", alg);
+                fprintf(stderr, "alg = %c\n", ctx->alg);
                 ErrorExit("ERROR IN SOURCE FILE Falign.c");
                 break;
         }

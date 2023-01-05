@@ -1533,7 +1533,7 @@ constants(Context* ctx, int nseq, char** seq) {
         ctx->n_dis = AllocateIntMtx(nalphabets, nalphabets);
         ctx->n_disLN = AllocateDoubleMtx(nalphabets, nalphabets);
 
-        scoremtx = -1;
+        ctx->scoremtx = -1;
         if (ctx->RNAppenalty == NOTSPECIFIED)
             ctx->RNAppenalty = DEFAULTRNAGOP_N;
         if (ctx->RNAppenalty_ex == NOTSPECIFIED)
@@ -1552,10 +1552,10 @@ constants(Context* ctx, int nseq, char** seq) {
             ctx->poffset = DEFAULTOFS_N;
         if (ctx->RNApthr == NOTSPECIFIED)
             ctx->RNApthr = DEFAULTRNATHR_N;
-        if (pamN == NOTSPECIFIED)
-            pamN = DEFAULTPAMN;
-        if (kimuraR == NOTSPECIFIED)
-            kimuraR = 2;
+        if (ctx->pamN == NOTSPECIFIED)
+            ctx->pamN = DEFAULTPAMN;
+        if (ctx->kimuraR == NOTSPECIFIED)
+            ctx->kimuraR = 2;
 
         ctx->RNApenalty = (int)(3 * 600.0 / 1000.0 * ctx->RNAppenalty + 0.5);
         ctx->RNApenalty_ex = (int)(3 * 600.0 / 1000.0 * ctx->RNAppenalty_ex + 0.5);
@@ -1581,7 +1581,7 @@ constants(Context* ctx, int nseq, char** seq) {
         else
             sprintf(shiftmodel, "noshift");
 
-        sprintf(ctx->modelname, "%s%d (%d), %4.2f (%4.2f), %4.2f (%4.2f), %s", rnakozo ? "RNA" : "DNA", pamN, kimuraR, -(double)ctx->ppenalty * 0.001, -(double)ctx->ppenalty * 0.003, -(double)ctx->poffset * 0.001, -(double)ctx->poffset * 0.003, shiftmodel);
+        sprintf(ctx->modelname, "%s%d (%d), %4.2f (%4.2f), %4.2f (%4.2f), %s", rnakozo ? "RNA" : "DNA", ctx->pamN, ctx->kimuraR, -(double)ctx->ppenalty * 0.001, -(double)ctx->ppenalty * 0.003, -(double)ctx->poffset * 0.001, -(double)ctx->poffset * 0.003, shiftmodel);
 
         for (i = 0; i < 26; i++)
             ctx->amino[i] = locaminon[i];
@@ -1602,7 +1602,7 @@ constants(Context* ctx, int nseq, char** seq) {
             freq[3] = 0.25;
         }
 
-        if (kimuraR == 9999) {
+        if (ctx->kimuraR == 9999) {
             for (i = 0; i < 4; i++)
                 for (j = 0; j < 4; j++)
                     pamx[i][j] = (double)locn_disn[i][j];
@@ -1613,7 +1613,7 @@ constants(Context* ctx, int nseq, char** seq) {
                     average += pamx[i][j];
             average /= 16.0;
 
-            if (disp)
+            if (ctx->disp)
                 reporterr("average = %f\n", average);
 
             for (i = 0; i < 4; i++)
@@ -1638,12 +1638,12 @@ constants(Context* ctx, int nseq, char** seq) {
 				pam1[2][0] = v; pam1[2][1] = v; pam1[2][2] = f; pam1[2][3] = s;
 				pam1[3][0] = v; pam1[3][1] = v; pam1[3][2] = s; pam1[3][3] = f;
 #else
-            generatenuc1pam(pam1, kimuraR, freq);
+            generatenuc1pam(pam1, ctx->kimuraR, freq);
 #endif
 
-            reporterr("generating a scoring matrix for nucleotide (dist=%d) ... ", pamN);
+            reporterr("generating a scoring matrix for nucleotide (dist=%d) ... ", ctx->pamN);
 
-            if (disp) {
+            if (ctx->disp) {
                 reporterr(" TPM \n");
                 for (i = 0; i < 4; i++) {
                     for (j = 0; j < 4; j++)
@@ -1654,10 +1654,10 @@ constants(Context* ctx, int nseq, char** seq) {
             }
 
             MtxuntDouble(pamx, 4);
-            for (x = 0; x < pamN; x++)
+            for (x = 0; x < ctx->pamN; x++)
                 MtxmltDouble(pamx, pam1, 4);
 
-            if (disp) {
+            if (ctx->disp) {
                 reporterr(" TPM \n");
                 for (i = 0; i < 4; i++) {
                     for (j = 0; j < 4; j++)
@@ -1681,7 +1681,7 @@ constants(Context* ctx, int nseq, char** seq) {
                     pamx[i][j] = log10(pamx[i][j]) * 1000.0;
                 }
 
-            if (disp) {
+            if (ctx->disp) {
                 reporterr(" after log\n");
                 for (i = 0; i < 4; i++) {
                     for (j = 0; j < 4; j++)
@@ -1717,7 +1717,7 @@ constants(Context* ctx, int nseq, char** seq) {
                 for (j = 0; j < 4; j++)
                     pamx[i][j] = shishagonyuu(pamx[i][j]);
 
-            if (disp) {
+            if (ctx->disp) {
                 reporterr(" after shishagonyuu\n");
                 for (i = 0; i < 4; i++) {
                     for (j = 0; j < 4; j++)
@@ -1739,7 +1739,7 @@ constants(Context* ctx, int nseq, char** seq) {
                 pamx[i][j] = pamx[i - 5][j - 5];
             }
 
-        if (disp) {
+        if (ctx->disp) {
             reporterr(" before dis\n");
             for (i = 0; i < 4; i++) {
                 for (j = 0; j < 4; j++)
@@ -1749,7 +1749,7 @@ constants(Context* ctx, int nseq, char** seq) {
             reporterr("\n");
         }
 
-        if (disp) {
+        if (ctx->disp) {
             reporterr(" score matrix  \n");
             for (i = 0; i < 4; i++) {
                 for (j = 0; j < 4; j++)
@@ -1775,7 +1775,7 @@ constants(Context* ctx, int nseq, char** seq) {
         if (nwildcard)
             nscore(ctx->amino_n, ctx->n_dis);
 
-        if (disp) {
+        if (ctx->disp) {
             reporterr(" score matrix  \n");
             for (i = 0; i < 26; i++) {
                 for (j = 0; j < 26; j++)
@@ -1844,7 +1844,7 @@ constants(Context* ctx, int nseq, char** seq) {
             for (j = 0; j < 16; j++)
                 ribosum16[i][j] = shishagonyuu(ribosum16[i][j]);
 
-        if (disp) {
+        if (ctx->disp) {
             reporterr("ribosum after shishagonyuu\n");
             for (i = 0; i < 4; i++) {
                 for (j = 0; j < 4; j++)
@@ -1890,7 +1890,7 @@ constants(Context* ctx, int nseq, char** seq) {
                         ribosumdis[m * 4 + i][k * 4 + j] = n_dis[i][j];  // loop-loop
 #endif
 
-        if (disp) {
+        if (ctx->disp) {
             reporterr("ribosumdis\n");
             for (i = 0; i < 37; i++) {
                 for (j = 0; j < 37; j++)
@@ -1906,7 +1906,7 @@ constants(Context* ctx, int nseq, char** seq) {
         FreeDoubleMtx(pamx);
         free(freq);
 
-    } else if (ctx->dorp == 'p' && scoremtx == 1 && ctx->nblosum == -2) /* extended */
+    } else if (ctx->dorp == 'p' && ctx->scoremtx == 1 && ctx->nblosum == -2) /* extended */
     {
         double* freq;
         double* freq1;
@@ -1940,10 +1940,10 @@ constants(Context* ctx, int nseq, char** seq) {
             ctx->ppenalty_EX = DEFAULTGEP_B;
         if (ctx->poffset == NOTSPECIFIED)
             ctx->poffset = DEFAULTOFS_B;
-        if (pamN == NOTSPECIFIED)
-            pamN = 0;
-        if (kimuraR == NOTSPECIFIED)
-            kimuraR = 1;
+        if (ctx->pamN == NOTSPECIFIED)
+            ctx->pamN = 0;
+        if (ctx->kimuraR == NOTSPECIFIED)
+            ctx->kimuraR = 1;
         ctx->penalty = (int)(600.0 / 1000.0 * ctx->ppenalty + 0.5);
         ctx->penalty_dist = (int)(600.0 / 1000.0 * ctx->ppenalty_dist + 0.5);
         ctx->penalty_shift = (int)(ctx->penalty_shift_factor * ctx->penalty);
@@ -2081,7 +2081,7 @@ constants(Context* ctx, int nseq, char** seq) {
             for (j = 0; j < nalphabets; j++)
                 n_distmp[i][j] = shishagonyuu(n_distmp[i][j]);
 
-        if (disp) {
+        if (ctx->disp) {
             fprintf(stdout, "freq = \n");
             for (i = 0; i < nalphabets; i++)
                 fprintf(stdout, "%c %f\n", ctx->amino[i], freq1[i]);
@@ -2124,7 +2124,7 @@ constants(Context* ctx, int nseq, char** seq) {
         FreeDoubleMtx(n_distmp);
         FreeDoubleVec(datafreq);
         FreeDoubleVec(freq);
-    } else if (ctx->dorp == 'p' && scoremtx == 1) {
+    } else if (ctx->dorp == 'p' && ctx->scoremtx == 1) {
         double* freq;
         double* freq1;
         double* datafreq;
@@ -2160,10 +2160,10 @@ constants(Context* ctx, int nseq, char** seq) {
             ctx->ppenalty_EX = DEFAULTGEP_B;
         if (ctx->poffset == NOTSPECIFIED)
             ctx->poffset = DEFAULTOFS_B;
-        if (pamN == NOTSPECIFIED)
-            pamN = 0;
-        if (kimuraR == NOTSPECIFIED)
-            kimuraR = 1;
+        if (ctx->pamN == NOTSPECIFIED)
+            ctx->pamN = 0;
+        if (ctx->kimuraR == NOTSPECIFIED)
+            ctx->kimuraR = 1;
         ctx->penalty = (int)(600.0 / 1000.0 * ctx->ppenalty + 0.5);
         ctx->penalty_dist = (int)(600.0 / 1000.0 * ctx->ppenalty_dist + 0.5);
         ctx->penalty_shift = (int)(ctx->penalty_shift_factor * ctx->penalty);
@@ -2289,7 +2289,7 @@ constants(Context* ctx, int nseq, char** seq) {
             for (j = 0; j < 20; j++)
                 n_distmp[i][j] = shishagonyuu(n_distmp[i][j]);
 
-        if (disp) {
+        if (ctx->disp) {
             fprintf(stderr, " scoring matrix  \n");
             for (i = 0; i < 20; i++) {
                 fprintf(stderr, "%c    ", ctx->amino[i]);
@@ -2329,7 +2329,7 @@ constants(Context* ctx, int nseq, char** seq) {
 
         //		reporterr(       "done.\n" );
 
-    } else if (ctx->dorp == 'p' && scoremtx == 2) /* Miyata-Yasunaga */
+    } else if (ctx->dorp == 'p' && ctx->scoremtx == 2) /* Miyata-Yasunaga */
     {
         reporterr("Not supported\n");
         exit(1);
@@ -2373,17 +2373,17 @@ constants(Context* ctx, int nseq, char** seq) {
             ctx->ppenalty_EX = DEFAULTGEP_J;
         if (ctx->poffset == NOTSPECIFIED)
             ctx->poffset = DEFAULTOFS_J;
-        if (pamN == NOTSPECIFIED)
-            pamN = DEFAULTPAMN;
-        if (kimuraR == NOTSPECIFIED)
-            kimuraR = 1;
+        if (ctx->pamN == NOTSPECIFIED)
+            ctx->pamN = DEFAULTPAMN;
+        if (ctx->kimuraR == NOTSPECIFIED)
+            ctx->kimuraR = 1;
 
-        if (pamN == 0) {
-            reporterr("pamN=%d??\n", pamN);
+        if (ctx->pamN == 0) {
+            reporterr("pamN=%d??\n", ctx->pamN);
             exit(1);
         }
-        if (pamN < 0) {
-            pamN *= -1;
+        if (ctx->pamN < 0) {
+            ctx->pamN *= -1;
             makeaverage0 = 0;
         } else {
             makeaverage0 = 1;
@@ -2406,9 +2406,9 @@ constants(Context* ctx, int nseq, char** seq) {
         else
             sprintf(shiftmodel, "noshift");
 
-        sprintf(ctx->modelname, "%s %dPAM, %4.2f, %4.2f, %s", (TMorJTT == TM) ? "Transmembrane" : "JTT", pamN, -(double)ctx->ppenalty / 1000, -(double)ctx->poffset / 1000, shiftmodel);
+        sprintf(ctx->modelname, "%s %dPAM, %4.2f, %4.2f, %s", (ctx->TMorJTT == TM) ? "Transmembrane" : "JTT", ctx->pamN, -(double)ctx->ppenalty / 1000, -(double)ctx->poffset / 1000, shiftmodel);
 
-        JTTmtx(rsr, freq, ctx->amino, ctx->amino_grp, (int)(TMorJTT == TM));
+        JTTmtx(rsr, freq, ctx->amino, ctx->amino_grp, (int)(ctx->TMorJTT == TM));
 
         for (i = 0; i < 0x80; i++)
             ctx->amino_n[i] = -1;
@@ -2430,7 +2430,7 @@ constants(Context* ctx, int nseq, char** seq) {
         }
 #endif
 
-        reporterr("generating %dPAM %s scoring matrix for amino acids ... ", pamN, (TMorJTT == TM) ? "Transmembrane" : "JTT");
+        reporterr("generating %dPAM %s scoring matrix for amino acids ... ", ctx->pamN, (ctx->TMorJTT == TM) ? "Transmembrane" : "JTT");
 
         tmp = 0.0;
         for (i = 0; i < 20; i++) {
@@ -2456,7 +2456,7 @@ constants(Context* ctx, int nseq, char** seq) {
             }
         }
 
-        if (disp) {
+        if (ctx->disp) {
             fprintf(stdout, "pam1 = \n");
             for (i = 0; i < 20; i++) {
                 for (j = 0; j < 20; j++) {
@@ -2467,7 +2467,7 @@ constants(Context* ctx, int nseq, char** seq) {
         }
 
         MtxuntDouble(pamx, 20);
-        for (x = 0; x < pamN; x++)
+        for (x = 0; x < ctx->pamN; x++)
             MtxmltDouble(pamx, pam1, 20);
 
         for (i = 0; i < 20; i++)
@@ -2604,7 +2604,7 @@ constants(Context* ctx, int nseq, char** seq) {
                 pamx[i][j] = shishagonyuu(pamx[i][j]);
             }
 #endif
-        if (disp) {
+        if (ctx->disp) {
             fprintf(stdout, " scoring matrix  \n");
             for (i = 0; i < 20; i++) {
                 fprintf(stdout, "%c    ", ctx->amino[i]);
@@ -2674,8 +2674,8 @@ constants(Context* ctx, int nseq, char** seq) {
     for (i = 0; i < nalphabets; i++)
         for (j = 0; j < nalphabets; j++) {
             ctx->amino_dis[(int)ctx->amino[i]][(int)ctx->amino[j]] = ctx->n_dis[i][j];
-            ctx->n_dis_consweight_multi[i][j] = (double)ctx->n_dis[i][j] * consweight_multi;
-            ctx->amino_dis_consweight_multi[(int)ctx->amino[i]][(int)ctx->amino[j]] = (double)ctx->n_dis[i][j] * consweight_multi;
+            ctx->n_dis_consweight_multi[i][j] = (double)ctx->n_dis[i][j] * ctx->consweight_multi;
+            ctx->amino_dis_consweight_multi[(int)ctx->amino[i]][(int)ctx->amino[j]] = (double)ctx->n_dis[i][j] * ctx->consweight_multi;
         }
 
     if (ctx->dorp == 'd') {
@@ -2696,17 +2696,17 @@ constants(Context* ctx, int nseq, char** seq) {
 
     ctx->ppid = 0;
 
-    if (fftThreshold == NOTSPECIFIED) {
-        fftThreshold = FFT_THRESHOLD;
+    if (ctx->fftThreshold == NOTSPECIFIED) {
+        ctx->fftThreshold = FFT_THRESHOLD;
     }
-    if (fftWinSize == NOTSPECIFIED) {
+    if (ctx->fftWinSize == NOTSPECIFIED) {
         if (ctx->dorp == 'd')
-            fftWinSize = FFT_WINSIZE_D;
+            ctx->fftWinSize = FFT_WINSIZE_D;
         else
-            fftWinSize = FFT_WINSIZE_P;
+            ctx->fftWinSize = FFT_WINSIZE_P;
     }
 
-    if (fftscore) {
+    if (ctx->fftscore) {
         double av, sd;
 
         for (i = 0; i < 20; i++)

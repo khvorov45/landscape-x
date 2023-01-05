@@ -136,11 +136,11 @@ exitall(char arr[]) {
 }
 
 void
-display(char** seq, int nseq) {
+display(Context* ctx, char** seq, int nseq) {
     int  i, imax;
     char b[121];
 
-    if (!disp)
+    if (!ctx->disp)
         return;
     if (nseq > DISPSEQF)
         imax = DISPSEQF;
@@ -2032,14 +2032,14 @@ fixed_supg_double_realloc_nobk_halfmtx_treeout_constrained(Context* ctx, int nse
 
     sueff1 = 1 - (double)sueff_global;
     sueff05 = (double)sueff_global * 0.5;
-    if (treemethod == 'X')
+    if (ctx->treemethod == 'X')
         clusterfuncpt[0] = cluster_mix_double;
-    else if (treemethod == 'E')
+    else if (ctx->treemethod == 'E')
         clusterfuncpt[0] = cluster_average_double;
-    else if (treemethod == 'q')
+    else if (ctx->treemethod == 'q')
         clusterfuncpt[0] = cluster_minimum_double;
     else {
-        reporterr("Unknown treemethod, %c\n", treemethod);
+        reporterr("Unknown treemethod, %c\n", ctx->treemethod);
         exit(1);
     }
 
@@ -3290,11 +3290,11 @@ calcnearestthread(calcnearestthread_arg_t* targ) {
     int    progress;
     int    neighbor, i;
     double (*distfunc)(Context*, char*, char*, double, double, int);
-    if (alg == 'A')
+    if (ctx->alg == 'A')
         distfunc = distdp_noalign;
-    else if (alg == 'L')
+    else if (ctx->alg == 'L')
         distfunc = distdpL_noalign;
-    else if (alg == 'N')
+    else if (ctx->alg == 'N')
         distfunc = distdpN_noalign;
 
     while (1) {
@@ -3418,14 +3418,14 @@ recalcpairs4thread(recalcpairs4thread_arg_t* targ) {
     double**           dynamicmtx = NULL;
     double**           mtxptr;
     double (*distfunc)(Context*, double**, char*, char*, LocalHom*, double, double, int);
-    if (alg == 'A')
+    if (ctx->alg == 'A')
         distfunc = distdp;
-    else if (alg == 'L')
+    else if (ctx->alg == 'L')
         distfunc = distdpL;
-    else if (alg == 'N')
+    else if (ctx->alg == 'N')
         distfunc = distdpN;
     else {
-        reporterr("alg %c is not yet supported\n", alg);
+        reporterr("alg %c is not yet supported\n", ctx->alg);
         exit(1);
     }
 #if EXACTLYSAMEASPAIRLOCALALIGN
@@ -3701,7 +3701,7 @@ recalcpairs_para4(Context* ctx, int njob, int*** topol, Treedep* dep, char** bse
         addmem[nadd] = -1;
         for (i = 0; i < njob - 1; i++)
             mergeoralign[i] = 'n';
-        if (addprofile) {
+        if (ctx->addprofile) {
             reporterr("--addprofile is not yet supported\n");
             exit(1);
         }
@@ -4103,10 +4103,10 @@ compacttree_memsaveselectable(Context* ctx, int nseq, double** partmtx, int* nea
 
     sueff1 = 1 - (double)sueff_global;
     sueff05 = (double)sueff_global * 0.5;
-    if (treemethod == 'X')
+    if (ctx->treemethod == 'X')
         clusterfuncpt[0] = cluster_mix_double;
     else {
-        reporterr("Unknown treemethod, %c\n", treemethod);
+        reporterr("Unknown treemethod, %c\n", ctx->treemethod);
         exit(1);
     }
 
@@ -4589,14 +4589,14 @@ fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(Context* ctx, int n
 
     sueff1 = 1 - (double)sueff_global;
     sueff05 = (double)sueff_global * 0.5;
-    if (treemethod == 'X')
+    if (ctx->treemethod == 'X')
         clusterfuncpt[0] = cluster_mix_double;
-    else if (treemethod == 'E')
+    else if (ctx->treemethod == 'E')
         clusterfuncpt[0] = cluster_average_double;
-    else if (treemethod == 'q')
+    else if (ctx->treemethod == 'q')
         clusterfuncpt[0] = cluster_minimum_double;
     else {
-        reporterr("Unknown treemethod, %c\n", treemethod);
+        reporterr("Unknown treemethod, %c\n", ctx->treemethod);
         exit(1);
     }
 
@@ -4961,14 +4961,14 @@ fixed_musclesupg_double_realloc_nobk_halfmtx_treeout(Context* ctx, int nseq, dou
 
     sueff1 = 1 - (double)sueff_global;
     sueff05 = (double)sueff_global * 0.5;
-    if (treemethod == 'X')
+    if (ctx->treemethod == 'X')
         clusterfuncpt[0] = cluster_mix_double;
-    else if (treemethod == 'E')
+    else if (ctx->treemethod == 'E')
         clusterfuncpt[0] = cluster_average_double;
-    else if (treemethod == 'q')
+    else if (ctx->treemethod == 'q')
         clusterfuncpt[0] = cluster_minimum_double;
     else {
-        reporterr("Unknown treemethod, %c\n", treemethod);
+        reporterr("Unknown treemethod, %c\n", ctx->treemethod);
         exit(1);
     }
 
@@ -5262,14 +5262,14 @@ fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(Context* ctx, int nseq, dou
 
     sueff1 = 1 - (double)sueff_global;
     sueff05 = (double)sueff_global * 0.5;
-    if (treemethod == 'X')
+    if (ctx->treemethod == 'X')
         clusterfuncpt[0] = cluster_mix_double;
-    else if (treemethod == 'E')
+    else if (ctx->treemethod == 'E')
         clusterfuncpt[0] = cluster_average_double;
-    else if (treemethod == 'q')
+    else if (ctx->treemethod == 'q')
         clusterfuncpt[0] = cluster_minimum_double;
     else {
-        reporterr("Unknown treemethod, %c\n", treemethod);
+        reporterr("Unknown treemethod, %c\n", ctx->treemethod);
         exit(1);
     }
 
@@ -5516,14 +5516,14 @@ fixed_musclesupg_double_realloc_nobk_halfmtx(Context* ctx, int nseq, double** ef
 
     sueff1 = 1 - (double)sueff_global;
     sueff05 = (double)sueff_global * 0.5;
-    if (treemethod == 'X')
+    if (ctx->treemethod == 'X')
         clusterfuncpt[0] = cluster_mix_double;
-    else if (treemethod == 'E')
+    else if (ctx->treemethod == 'E')
         clusterfuncpt[0] = cluster_average_double;
-    else if (treemethod == 'q')
+    else if (ctx->treemethod == 'q')
         clusterfuncpt[0] = cluster_minimum_double;
     else {
-        reporterr("Unknown treemethod, %c\n", treemethod);
+        reporterr("Unknown treemethod, %c\n", ctx->treemethod);
         exit(1);
     }
 

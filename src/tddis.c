@@ -595,20 +595,6 @@ makeEffMtx(int nseq, double** mtx, double* vec) {
             mtx[i][j] = vec[i] * vec[j];
 }
 
-void
-node_eff(int nseq, double* eff, int* node) {
-    int           i;
-    extern double ipower(double, int);
-    for (i = 0; i < nseq; i++)
-        eff[i] = ipower(0.5, node[i]) + geta2;
-        /*
-		eff[i] = ipower( 0.5, node[i] ) + 0;
-	*/
-#if DEBUG
-    for (i = 0; i < nseq; i++)
-#endif
-}
-
 int
 msshrinklocalhom_fast_target(int* memlist1, int* memlist2, LocalHom** localhom, LocalHom*** localhomshrink, char* swaplist, int* targetmap) {
     int m1, k1, m2, k2, t1, i2;

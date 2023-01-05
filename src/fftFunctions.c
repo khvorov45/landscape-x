@@ -208,12 +208,12 @@ alignableReagion(Context* ctx, int clus1, int clus2, char** seq1, char** seq2, d
     }
 
     len = MIN(strlen(seq1[0]), strlen(seq2[0]));
-    maxlen = MAX(strlen(seq1[0]), strlen(seq2[0])) + fftWinSize;
+    maxlen = MAX(strlen(seq1[0]), strlen(seq2[0])) + ctx->fftWinSize;
     if (alloclen < maxlen) {
         if (alloclen) {
             FreeDoubleVec(stra);
         } else {
-            threshold = (int)fftThreshold / 100.0 * 600.0 * fftWinSize;
+            threshold = (int)ctx->fftThreshold / 100.0 * 600.0 * ctx->fftWinSize;
         }
         stra = AllocateDoubleVec(maxlen);
         alloclen = maxlen;
@@ -262,11 +262,11 @@ alignableReagion(Context* ctx, int clus1, int clus2, char** seq1, char** seq2, d
     status = 0;
     cumscore = 0.0;
     score = 0.0;
-    for (j = 0; j < fftWinSize; j++)
+    for (j = 0; j < ctx->fftWinSize; j++)
         score += stra[j];
 
-    for (i = 1; i < len - fftWinSize; i++) {
-        score = score - stra[i - 1] + stra[i + fftWinSize - 1];
+    for (i = 1; i < len - ctx->fftWinSize; i++) {
+        score = score - stra[i - 1] + stra[i + ctx->fftWinSize - 1];
 #if TMPTMPTMP
         fprintf(stderr, "%d %10.0f   ? %10.0f\n", i, score, threshold);
 #endif
@@ -283,10 +283,10 @@ alignableReagion(Context* ctx, int clus1, int clus2, char** seq1, char** seq2, d
         }
         if (score <= threshold || length > SEGMENTSIZE) {
             if (status) {
-                if (length > fftWinSize) {
+                if (length > ctx->fftWinSize) {
                     seg->start = starttmp;
                     seg->end = i;
-                    seg->center = (seg->start + seg->end + fftWinSize) / 2;
+                    seg->center = (seg->start + seg->end + ctx->fftWinSize) / 2;
                     seg->score = cumscore;
 #if 0
 					fprintf( stderr, "%d-%d length = %d, score = %f, value = %d\n", seg->start, seg->end, length, cumscore, value );
@@ -310,10 +310,10 @@ alignableReagion(Context* ctx, int clus1, int clus2, char** seq1, char** seq2, d
             }
         }
     }
-    if (status && length > fftWinSize) {
+    if (status && length > ctx->fftWinSize) {
         seg->end = i;
         seg->start = starttmp;
-        seg->center = (starttmp + i + fftWinSize) / 2;
+        seg->center = (starttmp + i + ctx->fftWinSize) / 2;
         seg->score = cumscore;
 #if 0
 fprintf( stderr, "%d-%d length = %d\n", seg->start, seg->end, length );
@@ -386,7 +386,7 @@ blockAlign2(Context* ctx, int* cut1, int* cut2, Segment** seg1, Segment** seg2, 
 
     if (crossscoresize < *ncut + 2) {
         crossscoresize = *ncut + 2;
-        if (fftkeika)
+        if (ctx->fftkeika)
             fprintf(stderr, "allocating crossscore and track, size = %d\n", crossscoresize);
         if (track)
             FreeIntMtx(track);
@@ -453,189 +453,6 @@ blockAlign2(Context* ctx, int* cut1, int* cut2, Segment** seg1, Segment** seg2, 
             }
 
             crossscore[i][j] += maximum;
-        }
-    }
-#if 0
-	for( i=0; i<*ncut; i++ ) 
-	{
-		for( j=0; j<*ncut; j++ )
-			fprintf( stderr, "%3d ", track[i][j] );
-		fprintf( stderr, "\n" );
-	}
-#endif
-
-    result1[MAXSEG - 1] = *ncut - 1;
-    result2[MAXSEG - 1] = *ncut - 1;
-
-    for (i = MAXSEG - 1; i >= 1; i--) {
-        cur1 = result1[i];
-        cur2 = result2[i];
-        if (cur1 == 0 || cur2 == 0)
-            break;
-        shift = track[cur1][cur2];
-        if (shift == 0) {
-            result1[i - 1] = cur1 - 1;
-            result2[i - 1] = cur2 - 1;
-            continue;
-        } else if (shift > 0) {
-            result1[i - 1] = cur1 - 1;
-            result2[i - 1] = cur2 - shift;
-        } else if (shift < 0) {
-            result1[i - 1] = cur1 + shift;
-            result2[i - 1] = cur2 - 1;
-        }
-    }
-
-    count = 0;
-    for (j = i; j < MAXSEG; j++) {
-        if (ocrossscore[result1[j]][result2[j]] == 0.0)
-            continue;
-
-        if (result1[j] == result1[j - 1] || result2[j] == result2[j - 1])
-            if (ocrossscore[result1[j]][result2[j]] > ocrossscore[result1[j - 1]][result2[j - 1]])
-                count--;
-
-        cut1[count] = ocut1[result1[j]];
-        cut2[count] = ocut2[result2[j]];
-
-        count++;
-    }
-
-    *ncut = count;
-#if 0
-	for( i=0; i<*ncut; i++ )
-		fprintf( stderr, "i=%d, cut1 = %d, cut2 = %d\n", i, cut1[i], cut2[i] );
-#endif
-}
-
-void
-blockAlign3(int* cut1, int* cut2, Segment** seg1, Segment** seg2, double** ocrossscore, int* ncut)
-// memory complexity = O(n^3), time complexity = O(n^2)
-{
-    int             i, j, shift, cur1, cur2, count;
-    static int      crossscoresize = 0;
-    static int      jumpposi, *jumppos;
-    static double   jumpscorei, *jumpscore;
-    static int*     result1 = NULL;
-    static int*     result2 = NULL;
-    static int*     ocut1 = NULL;
-    static int*     ocut2 = NULL;
-    double          maximum;
-    static double** crossscore = NULL;
-    static int**    track = NULL;
-
-    if (result1 == NULL) {
-        result1 = AllocateIntVec(MAXSEG);
-        result2 = AllocateIntVec(MAXSEG);
-        ocut1 = AllocateIntVec(MAXSEG);
-        ocut2 = AllocateIntVec(MAXSEG);
-    }
-    if (crossscoresize < *ncut + 2) {
-        crossscoresize = *ncut + 2;
-        if (fftkeika)
-            fprintf(stderr, "allocating crossscore and track, size = %d\n", crossscoresize);
-        if (track)
-            FreeIntMtx(track);
-        if (crossscore)
-            FreeDoubleMtx(crossscore);
-        if (jumppos)
-            FreeIntVec(jumppos);
-        if (jumpscore)
-            FreeDoubleVec(jumpscore);
-        track = AllocateIntMtx(crossscoresize, crossscoresize);
-        crossscore = AllocateDoubleMtx(crossscoresize, crossscoresize);
-        jumppos = AllocateIntVec(crossscoresize);
-        jumpscore = AllocateDoubleVec(crossscoresize);
-    }
-
-#if 0
-	for( i=0; i<*ncut-2; i++ )
-		fprintf( stderr, "%d.start = %d, score = %f\n", i, seg1[i]->start, seg1[i]->score );
-
-	for( i=0; i<*ncut; i++ )
-		fprintf( stderr, "i=%d, cut1 = %d, cut2 = %d\n", i, cut1[i], cut2[i] );
-	for( i=0; i<*ncut; i++ ) 
-	{
-		for( j=0; j<*ncut; j++ )
-			fprintf( stderr, "%#4.0f ", ocrossscore[i][j] );
-		fprintf( stderr, "\n" );
-	}
-#endif
-
-    for (i = 0; i < *ncut; i++)
-        for (j = 0; j < *ncut; j++) /* mudadanaa */
-            crossscore[i][j] = ocrossscore[i][j];
-    for (i = 0; i < *ncut; i++) {
-        ocut1[i] = cut1[i];
-        ocut2[i] = cut2[i];
-    }
-    for (j = 0; j < *ncut; j++) {
-        jumpscore[j] = -999.999;
-        jumppos[j] = -1;
-    }
-
-    for (i = 1; i < *ncut; i++) {
-        jumpscorei = -999.999;
-        jumpposi = -1;
-
-        for (j = 1; j < *ncut; j++) {
-#if 1
-            fprintf(stderr, "in blockalign3, ### i=%d, j=%d\n", i, j);
-#endif
-
-#if 0
-			for( k=0; k<j-2; k++ )
-			{
-/*
-				fprintf( stderr, "k=%d, i=%d\n", k, i );
-*/
-				if( k && k<*ncut-1 && j<*ncut-1 && !permit( seg1[k-1], seg1[j-1] ) ) continue;
-				if( crossscore[i-1][k] > maxj )
-				{
-					pointi = k;
-					maxi = crossscore[i-1][k];
-				}
-			}
-
-			pointj = 0; maxj = 0.0;
-			for( k=0; k<i-2; k++ )
-			{
-				if( k && k<*ncut-1 && i<*ncut-1 && !permit( seg2[k-1], seg2[i-1] ) ) continue;
-				if( crossscore[k][j-1] > maxj )
-				{
-					pointj = k;
-					maxj = crossscore[k][j-1];
-				}
-			}	
-
-
-			maxi += penalty;
-			maxj += penalty;
-#endif
-            maximum = crossscore[i - 1][j - 1];
-            track[i][j] = 0;
-
-            if (maximum < jumpscorei && permit(seg1[jumpposi], seg1[i])) {
-                maximum = jumpscorei;
-                track[i][j] = j - jumpposi;
-            }
-
-            if (maximum < jumpscore[j] && permit(seg2[jumppos[j]], seg2[j])) {
-                maximum = jumpscore[j];
-                track[i][j] = jumpscore[j] - i;
-            }
-
-            crossscore[i][j] += maximum;
-
-            if (jumpscorei < crossscore[i - 1][j]) {
-                jumpscorei = crossscore[i - 1][j];
-                jumpposi = j;
-            }
-
-            if (jumpscore[j] < crossscore[i][j - 1]) {
-                jumpscore[j] = crossscore[i][j - 1];
-                jumppos[j] = i;
-            }
         }
     }
 #if 0

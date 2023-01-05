@@ -40,7 +40,7 @@ match_calc(Context* ctx, double* match, double** cpmx1, double** cpmx2, int i1, 
 }
 
 static double
-Atracking(double* lasthorizontalw, double* lastverticalw, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int icyc, int jcyc) {
+Atracking(Context* ctx, double* lasthorizontalw, double* lastverticalw, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int icyc, int jcyc) {
     int i, j, k, l, iin, jin, ifi, jfi, lgth1, lgth2;
     //	char gap[] = "-";
     char*  gap;
@@ -55,7 +55,7 @@ Atracking(double* lasthorizontalw, double* lastverticalw, char** seq1, char** se
     }
 #endif
 
-    if (outgap == 1)
+    if (ctx->outgap == 1)
         ;
     else {
         wm = lastverticalw[0];
@@ -256,7 +256,7 @@ Aalign(Context* ctx, char** seq1, char** seq2, double* eff1, double* eff2, int i
     match_calc(ctx, initverticalw, cpmx2, cpmx1, 0, lgth1, doublework, intwork, 1);
     match_calc(ctx, currentw, cpmx1, cpmx2, 0, lgth2, doublework, intwork, 1);
 
-    if (outgap == 1) {
+    if (ctx->outgap == 1) {
         for (i = 1; i < lgth1 + 1; i++) {
             initverticalw[i] += ctx->penalty * 0.5;
         }
@@ -272,7 +272,7 @@ Aalign(Context* ctx, char** seq1, char** seq2, double* eff1, double* eff2, int i
 
     lastverticalw[0] = currentw[lgth2 - 1];
 
-    if (outgap)
+    if (ctx->outgap)
         lasti = lgth1 + 1;
     else
         lasti = lgth1;
@@ -320,7 +320,7 @@ Aalign(Context* ctx, char** seq1, char** seq2, double* eff1, double* eff2, int i
         lastverticalw[i] = currentw[lgth2 - 1];
     }
 
-    Atracking(currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc);
+    Atracking(ctx, currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc);
 
     resultlen = strlen(mseq1[0]);
     if (alloclen < resultlen || resultlen > N) {
