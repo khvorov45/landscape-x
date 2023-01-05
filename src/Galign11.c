@@ -101,7 +101,7 @@ Atracking(Context* ctx, double* lasthorizontalw, double* lastverticalw, char** s
     lgth2 = strlen(seq2[0]);
     double wm, g;
     double fpenalty = (double)ctx->penalty;
-    double fpenalty_ex = (double)penalty_ex;
+    double fpenalty_ex = (double)ctx->penalty_ex;
 
 #if 0
 	for( i=0; i<lgth1; i++ ) 
@@ -247,10 +247,10 @@ G__align11psg(Context* ctx, double** codonmtx, double** n_dynamicmtx, char** seq
     double       g;
     double *     currentw, *previousw;
     double       fpenalty = (double)ctx->penalty;
-    double       fpenalty_shift = (double)penalty_shift;
+    double       fpenalty_shift = (double)ctx->penalty_shift;
     double       fpenalty_tmp;
 #if USE_PENALTY_EX
-    double fpenalty_ex = (double)penalty_ex;
+    double fpenalty_ex = (double)ctx->penalty_ex;
     double fpenalty_ex_i;
 #endif
 #if 1
@@ -871,10 +871,10 @@ G__align11(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int al
     double       g;
     double *     currentw, *previousw;
     double       fpenalty = (double)ctx->penalty;
-    double       fpenalty_shift = (double)penalty_shift;
+    double       fpenalty_shift = (double)ctx->penalty_shift;
     double       fpenalty_tmp;
 #if USE_PENALTY_EX
-    double fpenalty_ex = (double)penalty_ex;
+    double fpenalty_ex = (double)ctx->penalty_ex;
     double fpenalty_ex_i;
 #endif
 #if 1

@@ -1104,7 +1104,7 @@ Lalignmm_hmout(Context* ctx, char** seq1, char** seq2, double* eff1, double* eff
     double** cpmx2;
     double** gapinfo;
     //	double fpenalty;
-    double fpenalty = (double)RNApenalty;
+    double fpenalty = (double)ctx->RNApenalty;
 
 #if 0
 	fprintf( stderr, "eff in SA+++align\n" );

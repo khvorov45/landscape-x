@@ -122,7 +122,7 @@ profilealignment(Context* ctx, int n0, int n1, int n2, char** aln0, char** aln1,
     if (alg == 'M')
         MSalignmm(ctx, ctx->n_dis_consweight_multi, aln0, aln2, effarr0, effarr2, n0, n2, alloclen, NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, NULL, 0.0, 0.0);  //outgap=1, 2014/Dec/1
     else
-        A__align(ctx, ctx->n_dis_consweight_multi, ctx->penalty, penalty_ex, aln0, aln2, effarr0, effarr2, n0, n2, alloclen, 0, &dumdb, NULL, NULL, NULL, NULL, 1, 1, -1, -1, NULL, NULL, NULL, 0.0, 0.0);  //outgap=1, 2014/Dec/1
+        A__align(ctx, ctx->n_dis_consweight_multi, ctx->penalty, ctx->penalty_ex, aln0, aln2, effarr0, effarr2, n0, n2, alloclen, 0, &dumdb, NULL, NULL, NULL, NULL, 1, 1, -1, -1, NULL, NULL, NULL, 0.0, 0.0);  //outgap=1, 2014/Dec/1
 
     newlen = strlen(aln0[0]);
 

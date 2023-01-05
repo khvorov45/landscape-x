@@ -1019,9 +1019,9 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
                     }
                     if (scoringmatrices)  // called by tditeration.c
                     {
-                        totalscore += A__align_variousdist(ctx, whichmtx, scoringmatrices, ctx->penalty, penalty_ex, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, 0, &dumdb, sgap1, sgap2, egap1, egap2, headgp, tailgp);
+                        totalscore += A__align_variousdist(ctx, whichmtx, scoringmatrices, ctx->penalty, ctx->penalty_ex, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, 0, &dumdb, sgap1, sgap2, egap1, egap2, headgp, tailgp);
                     } else
-                        totalscore += A__align(ctx, n_dynamicmtx, ctx->penalty, penalty_ex, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, 0, &dumdb, sgap1, sgap2, egap1, egap2, headgp, tailgp, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
+                        totalscore += A__align(ctx, n_dynamicmtx, ctx->penalty, ctx->penalty_ex, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, 0, &dumdb, sgap1, sgap2, egap1, egap2, headgp, tailgp, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
                 }
                 break;
             default:

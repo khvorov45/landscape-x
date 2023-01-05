@@ -2333,7 +2333,7 @@ D__align(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* 
     static Gaplen***  gaplen1jbest = NULL;
     static Gaplen***  gaplen2jbest = NULL;
     double            fpenalty = (double)ctx->penalty;
-    double            fpenalty_shift = (double)penalty_shift;
+    double            fpenalty_shift = (double)ctx->penalty_shift;
     static Gaplen**** gaplens = NULL;
 
     Gaplen*** gaplentmp = NULL;
@@ -3896,7 +3896,7 @@ D__align_variousdist(Context* ctx, int** which, double*** matrices, char** seq1,
     static Gaplen***  gaplen1jbest = NULL;
     static Gaplen***  gaplen2jbest = NULL;
     double            fpenalty = (double)ctx->penalty;
-    double            fpenalty_shift = (double)penalty_shift;
+    double            fpenalty_shift = (double)ctx->penalty_shift;
     static Gaplen**** gaplens = NULL;
 
     Gaplen*** gaplentmp = NULL;

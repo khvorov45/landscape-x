@@ -3161,7 +3161,7 @@ distdp(Context* ctx, double** scoringmtx, char* s1, char* s2, LocalHom* lh, doub
 double
 distdp_noalign(Context* ctx, char* s1, char* s2, double selfscore1, double selfscore2, int alloclen) {
     (void)alloclen;
-    double v = G__align11_noalign(ctx, ctx->n_dis_consweight_multi, ctx->penalty, penalty_ex, &s1, &s2);
+    double v = G__align11_noalign(ctx, ctx->n_dis_consweight_multi, ctx->penalty, ctx->penalty_ex, &s1, &s2);
     return (score2dist(v, selfscore1, selfscore2));
 }
 

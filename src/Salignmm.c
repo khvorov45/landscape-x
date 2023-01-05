@@ -1029,7 +1029,7 @@ A__align(Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_l, c
     static double*  gapfreq2;
     double*         gapfreq2pt;
     double          fpenalty = (double)penalty_l;
-    double          fpenalty_shift = (double)penalty_shift;
+    double          fpenalty_shift = (double)ctx->penalty_shift;
     double*         fgcp2pt;
     double*         ogcp2pt;
     double          fgcp1va;
@@ -2036,7 +2036,7 @@ A__align_variousdist(Context* ctx, int** which, double*** matrices, int penalty_
     static double*   gapfreq1;
     static double*   gapfreq2;
     double           fpenalty = (double)penalty_l;
-    double           fpenalty_shift = (double)penalty_shift;
+    double           fpenalty_shift = (double)ctx->penalty_shift;
     double*          fgcp2pt;
     double*          ogcp2pt;
     double           fgcp1va;

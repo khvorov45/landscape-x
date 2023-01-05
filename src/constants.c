@@ -1513,7 +1513,7 @@ constants(Context* ctx, int nseq, char** seq) {
     if (ctx->nblosum < 0)
         ctx->dorp = 'p';
 
-    if (penalty_shift_factor >= 10)
+    if (ctx->penalty_shift_factor >= 10)
         ctx->trywarp = 0;
     else
         ctx->trywarp = 1;
@@ -1534,20 +1534,20 @@ constants(Context* ctx, int nseq, char** seq) {
         ctx->n_disLN = AllocateDoubleMtx(nalphabets, nalphabets);
 
         scoremtx = -1;
-        if (RNAppenalty == NOTSPECIFIED)
-            RNAppenalty = DEFAULTRNAGOP_N;
-        if (RNAppenalty_ex == NOTSPECIFIED)
-            RNAppenalty_ex = DEFAULTRNAGEP_N;
+        if (ctx->RNAppenalty == NOTSPECIFIED)
+            ctx->RNAppenalty = DEFAULTRNAGOP_N;
+        if (ctx->RNAppenalty_ex == NOTSPECIFIED)
+            ctx->RNAppenalty_ex = DEFAULTRNAGEP_N;
         if (ctx->ppenalty == NOTSPECIFIED)
             ctx->ppenalty = DEFAULTGOP_N;
         if (ctx->ppenalty_dist == NOTSPECIFIED)
             ctx->ppenalty_dist = ctx->ppenalty;
-        if (ppenalty_OP == NOTSPECIFIED)
-            ppenalty_OP = DEFAULTGOP_N;
-        if (ppenalty_ex == NOTSPECIFIED)
-            ppenalty_ex = DEFAULTGEP_N;
-        if (ppenalty_EX == NOTSPECIFIED)
-            ppenalty_EX = DEFAULTGEP_N;
+        if (ctx->ppenalty_OP == NOTSPECIFIED)
+            ctx->ppenalty_OP = DEFAULTGOP_N;
+        if (ctx->ppenalty_ex == NOTSPECIFIED)
+            ctx->ppenalty_ex = DEFAULTGEP_N;
+        if (ctx->ppenalty_EX == NOTSPECIFIED)
+            ctx->ppenalty_EX = DEFAULTGEP_N;
         if (poffset == NOTSPECIFIED)
             poffset = DEFAULTOFS_N;
         if (RNApthr == NOTSPECIFIED)
@@ -1557,8 +1557,8 @@ constants(Context* ctx, int nseq, char** seq) {
         if (kimuraR == NOTSPECIFIED)
             kimuraR = 2;
 
-        RNApenalty = (int)(3 * 600.0 / 1000.0 * RNAppenalty + 0.5);
-        RNApenalty_ex = (int)(3 * 600.0 / 1000.0 * RNAppenalty_ex + 0.5);
+        ctx->RNApenalty = (int)(3 * 600.0 / 1000.0 * ctx->RNAppenalty + 0.5);
+        ctx->RNApenalty_ex = (int)(3 * 600.0 / 1000.0 * ctx->RNAppenalty_ex + 0.5);
         //		reporterr(       "DEFAULTRNAGOP_N = %d\n", DEFAULTRNAGOP_N );
         //		reporterr(       "RNAppenalty = %d\n", RNAppenalty );
         //		reporterr(       "RNApenalty = %d\n", RNApenalty );
@@ -1566,18 +1566,18 @@ constants(Context* ctx, int nseq, char** seq) {
         RNAthr = (int)(3 * 600.0 / 1000.0 * RNApthr + 0.5);
         ctx->penalty = (int)(3 * 600.0 / 1000.0 * ctx->ppenalty + 0.5);
         ctx->penalty_dist = (int)(3 * 600.0 / 1000.0 * ctx->ppenalty_dist + 0.5);
-        penalty_shift = (int)(penalty_shift_factor * ctx->penalty);
-        penalty_OP = (int)(3 * 600.0 / 1000.0 * ppenalty_OP + 0.5);
-        penalty_ex = (int)(3 * 600.0 / 1000.0 * ppenalty_ex + 0.5);
-        penalty_EX = (int)(3 * 600.0 / 1000.0 * ppenalty_EX + 0.5);
+        ctx->penalty_shift = (int)(ctx->penalty_shift_factor * ctx->penalty);
+        ctx->penalty_OP = (int)(3 * 600.0 / 1000.0 * ctx->ppenalty_OP + 0.5);
+        ctx->penalty_ex = (int)(3 * 600.0 / 1000.0 * ctx->ppenalty_ex + 0.5);
+        ctx->penalty_EX = (int)(3 * 600.0 / 1000.0 * ctx->ppenalty_EX + 0.5);
         offset = (int)(1 * 600.0 / 1000.0 * poffset + 0.5);
         offsetFFT = (int)(1 * 600.0 / 1000.0 * (-0) + 0.5);
         offsetLN = (int)(1 * 600.0 / 1000.0 * 100 + 0.5);
         ctx->penaltyLN = (int)(3 * 600.0 / 1000.0 * -2000 + 0.5);
-        penalty_exLN = (int)(3 * 600.0 / 1000.0 * -100 + 0.5);
+        ctx->penalty_exLN = (int)(3 * 600.0 / 1000.0 * -100 + 0.5);
 
         if (ctx->trywarp)
-            sprintf(shiftmodel, "%4.2f (%4.2f)", -(double)penalty_shift / 1800, -(double)penalty_shift / 600);
+            sprintf(shiftmodel, "%4.2f (%4.2f)", -(double)ctx->penalty_shift / 1800, -(double)ctx->penalty_shift / 600);
         else
             sprintf(shiftmodel, "noshift");
 
@@ -1783,7 +1783,7 @@ constants(Context* ctx, int nseq, char** seq) {
                 reporterr("\n");
             }
             reporterr("\n");
-            reporterr("penalty = %d, penalty_ex = %d\n", ctx->penalty, penalty_ex);
+            reporterr("penalty = %d, penalty_ex = %d\n", ctx->penalty, ctx->penalty_ex);
             //exit( 1 );
         }
 
@@ -1932,12 +1932,12 @@ constants(Context* ctx, int nseq, char** seq) {
             ctx->ppenalty = DEFAULTGOP_B;
         if (ctx->ppenalty_dist == NOTSPECIFIED)
             ctx->ppenalty_dist = ctx->ppenalty;
-        if (ppenalty_OP == NOTSPECIFIED)
-            ppenalty_OP = DEFAULTGOP_B;
-        if (ppenalty_ex == NOTSPECIFIED)
-            ppenalty_ex = DEFAULTGEP_B;
-        if (ppenalty_EX == NOTSPECIFIED)
-            ppenalty_EX = DEFAULTGEP_B;
+        if (ctx->ppenalty_OP == NOTSPECIFIED)
+            ctx->ppenalty_OP = DEFAULTGOP_B;
+        if (ctx->ppenalty_ex == NOTSPECIFIED)
+            ctx->ppenalty_ex = DEFAULTGEP_B;
+        if (ctx->ppenalty_EX == NOTSPECIFIED)
+            ctx->ppenalty_EX = DEFAULTGEP_B;
         if (poffset == NOTSPECIFIED)
             poffset = DEFAULTOFS_B;
         if (pamN == NOTSPECIFIED)
@@ -1946,24 +1946,24 @@ constants(Context* ctx, int nseq, char** seq) {
             kimuraR = 1;
         ctx->penalty = (int)(600.0 / 1000.0 * ctx->ppenalty + 0.5);
         ctx->penalty_dist = (int)(600.0 / 1000.0 * ctx->ppenalty_dist + 0.5);
-        penalty_shift = (int)(penalty_shift_factor * ctx->penalty);
-        penalty_OP = (int)(600.0 / 1000.0 * ppenalty_OP + 0.5);
-        penalty_ex = (int)(600.0 / 1000.0 * ppenalty_ex + 0.5);
-        penalty_EX = (int)(600.0 / 1000.0 * ppenalty_EX + 0.5);
+        ctx->penalty_shift = (int)(ctx->penalty_shift_factor * ctx->penalty);
+        ctx->penalty_OP = (int)(600.0 / 1000.0 * ctx->ppenalty_OP + 0.5);
+        ctx->penalty_ex = (int)(600.0 / 1000.0 * ctx->ppenalty_ex + 0.5);
+        ctx->penalty_EX = (int)(600.0 / 1000.0 * ctx->ppenalty_EX + 0.5);
         offset = (int)(600.0 / 1000.0 * poffset + 0.5);
         offsetFFT = (int)(600.0 / 1000.0 * (-0) + 0.5);
         offsetLN = (int)(600.0 / 1000.0 * 100 + 0.5);
         ctx->penaltyLN = (int)(600.0 / 1000.0 * -2000 + 0.5);
-        penalty_exLN = (int)(600.0 / 1000.0 * -100 + 0.5);
+        ctx->penalty_exLN = (int)(600.0 / 1000.0 * -100 + 0.5);
 
         userdefined = extendedmtx(n_distmp, freq, ctx->amino, ctx->amino_grp);
 
         if (ctx->trywarp)
-            sprintf(shiftmodel, "%4.2f", -(double)penalty_shift / 600);
+            sprintf(shiftmodel, "%4.2f", -(double)ctx->penalty_shift / 600);
         else
             sprintf(shiftmodel, "noshift");
 
-        sprintf(ctx->modelname, "Extended, %4.2f, %+4.2f, %+4.2f, %s", -(double)ctx->ppenalty / 1000, -(double)poffset / 1000, -(double)ppenalty_ex / 1000, shiftmodel);
+        sprintf(ctx->modelname, "Extended, %4.2f, %+4.2f, %+4.2f, %s", -(double)ctx->ppenalty / 1000, -(double)poffset / 1000, -(double)ctx->ppenalty_ex / 1000, shiftmodel);
 
         for (i = 0; i < 0x100; i++)
             ctx->amino_n[i] = -1;
@@ -2106,7 +2106,7 @@ constants(Context* ctx, int nseq, char** seq) {
             for (i = 0; i < nalphabets; i++)
                 average += n_distmp[i][i] * freq1[i];
             fprintf(stdout, "itch average = %f\n", average);
-            reporterr("parameters: %d, %d, %d\n", ctx->penalty, penalty_ex, offset);
+            reporterr("parameters: %d, %d, %d\n", ctx->penalty, ctx->penalty_ex, offset);
 
             exit(1);
         }
@@ -2152,12 +2152,12 @@ constants(Context* ctx, int nseq, char** seq) {
             ctx->ppenalty = DEFAULTGOP_B;
         if (ctx->ppenalty_dist == NOTSPECIFIED)
             ctx->ppenalty_dist = ctx->ppenalty;
-        if (ppenalty_OP == NOTSPECIFIED)
-            ppenalty_OP = DEFAULTGOP_B;
-        if (ppenalty_ex == NOTSPECIFIED)
-            ppenalty_ex = DEFAULTGEP_B;
-        if (ppenalty_EX == NOTSPECIFIED)
-            ppenalty_EX = DEFAULTGEP_B;
+        if (ctx->ppenalty_OP == NOTSPECIFIED)
+            ctx->ppenalty_OP = DEFAULTGOP_B;
+        if (ctx->ppenalty_ex == NOTSPECIFIED)
+            ctx->ppenalty_ex = DEFAULTGEP_B;
+        if (ctx->ppenalty_EX == NOTSPECIFIED)
+            ctx->ppenalty_EX = DEFAULTGEP_B;
         if (poffset == NOTSPECIFIED)
             poffset = DEFAULTOFS_B;
         if (pamN == NOTSPECIFIED)
@@ -2166,29 +2166,29 @@ constants(Context* ctx, int nseq, char** seq) {
             kimuraR = 1;
         ctx->penalty = (int)(600.0 / 1000.0 * ctx->ppenalty + 0.5);
         ctx->penalty_dist = (int)(600.0 / 1000.0 * ctx->ppenalty_dist + 0.5);
-        penalty_shift = (int)(penalty_shift_factor * ctx->penalty);
-        penalty_OP = (int)(600.0 / 1000.0 * ppenalty_OP + 0.5);
-        penalty_ex = (int)(600.0 / 1000.0 * ppenalty_ex + 0.5);
-        penalty_EX = (int)(600.0 / 1000.0 * ppenalty_EX + 0.5);
+        ctx->penalty_shift = (int)(ctx->penalty_shift_factor * ctx->penalty);
+        ctx->penalty_OP = (int)(600.0 / 1000.0 * ctx->ppenalty_OP + 0.5);
+        ctx->penalty_ex = (int)(600.0 / 1000.0 * ctx->ppenalty_ex + 0.5);
+        ctx->penalty_EX = (int)(600.0 / 1000.0 * ctx->ppenalty_EX + 0.5);
         offset = (int)(600.0 / 1000.0 * poffset + 0.5);
         offsetFFT = (int)(600.0 / 1000.0 * (-0) + 0.5);
         offsetLN = (int)(600.0 / 1000.0 * 100 + 0.5);
         ctx->penaltyLN = (int)(600.0 / 1000.0 * -2000 + 0.5);
-        penalty_exLN = (int)(600.0 / 1000.0 * -100 + 0.5);
+        ctx->penalty_exLN = (int)(600.0 / 1000.0 * -100 + 0.5);
 
         BLOSUMmtx(ctx, ctx->nblosum, n_distmp, freq, ctx->amino, ctx->amino_grp, &rescale);
 
         reporterr("rescale = %d\n", rescale);
 
         if (ctx->trywarp)
-            sprintf(shiftmodel, "%4.2f", -(double)penalty_shift / 600);
+            sprintf(shiftmodel, "%4.2f", -(double)ctx->penalty_shift / 600);
         else
             sprintf(shiftmodel, "noshift");
 
         if (ctx->nblosum == -1)
-            sprintf(ctx->modelname, "User-defined, %4.2f, %+4.2f, %+4.2f, %s", -(double)ctx->ppenalty / 1000, -(double)poffset / 1000, -(double)ppenalty_ex / 1000, shiftmodel);
+            sprintf(ctx->modelname, "User-defined, %4.2f, %+4.2f, %+4.2f, %s", -(double)ctx->ppenalty / 1000, -(double)poffset / 1000, -(double)ctx->ppenalty_ex / 1000, shiftmodel);
         else
-            sprintf(ctx->modelname, "BLOSUM%d, %4.2f, %+4.2f, %+4.2f, %s", ctx->nblosum, -(double)ctx->ppenalty / 1000, -(double)poffset / 1000, -(double)ppenalty_ex / 1000, shiftmodel);
+            sprintf(ctx->modelname, "BLOSUM%d, %4.2f, %+4.2f, %+4.2f, %s", ctx->nblosum, -(double)ctx->ppenalty / 1000, -(double)poffset / 1000, -(double)ctx->ppenalty_ex / 1000, shiftmodel);
 
         for (i = 0; i < 0x80; i++)
             ctx->amino_n[i] = -1;
@@ -2311,7 +2311,7 @@ constants(Context* ctx, int nseq, char** seq) {
             for (i = 0; i < 20; i++)
                 iaverage += n_distmp[i][i] * freq1[i];
             fprintf(stderr, "itch average = %f, E=%f\n", iaverage, average / iaverage);
-            reporterr("parameters: %d, %d, %d\n", ctx->penalty, penalty_ex, offset);
+            reporterr("parameters: %d, %d, %d\n", ctx->penalty, ctx->penalty_ex, offset);
 
             exit(1);
         }
@@ -2365,12 +2365,12 @@ constants(Context* ctx, int nseq, char** seq) {
             ctx->ppenalty = DEFAULTGOP_J;
         if (ctx->ppenalty_dist == NOTSPECIFIED)
             ctx->ppenalty_dist = ctx->ppenalty;
-        if (ppenalty_OP == NOTSPECIFIED)
-            ppenalty_OP = DEFAULTGOP_J;
-        if (ppenalty_ex == NOTSPECIFIED)
-            ppenalty_ex = DEFAULTGEP_J;
-        if (ppenalty_EX == NOTSPECIFIED)
-            ppenalty_EX = DEFAULTGEP_J;
+        if (ctx->ppenalty_OP == NOTSPECIFIED)
+            ctx->ppenalty_OP = DEFAULTGOP_J;
+        if (ctx->ppenalty_ex == NOTSPECIFIED)
+            ctx->ppenalty_ex = DEFAULTGEP_J;
+        if (ctx->ppenalty_EX == NOTSPECIFIED)
+            ctx->ppenalty_EX = DEFAULTGEP_J;
         if (poffset == NOTSPECIFIED)
             poffset = DEFAULTOFS_J;
         if (pamN == NOTSPECIFIED)
@@ -2391,18 +2391,18 @@ constants(Context* ctx, int nseq, char** seq) {
 
         ctx->penalty = (int)(600.0 / 1000.0 * ctx->ppenalty + 0.5);
         ctx->penalty_dist = (int)(600.0 / 1000.0 * ctx->ppenalty_dist + 0.5);
-        penalty_shift = (int)(penalty_shift_factor * ctx->penalty);
-        penalty_OP = (int)(600.0 / 1000.0 * ppenalty_OP + 0.5);
-        penalty_ex = (int)(600.0 / 1000.0 * ppenalty_ex + 0.5);
-        penalty_EX = (int)(600.0 / 1000.0 * ppenalty_EX + 0.5);
+        ctx->penalty_shift = (int)(ctx->penalty_shift_factor * ctx->penalty);
+        ctx->penalty_OP = (int)(600.0 / 1000.0 * ctx->ppenalty_OP + 0.5);
+        ctx->penalty_ex = (int)(600.0 / 1000.0 * ctx->ppenalty_ex + 0.5);
+        ctx->penalty_EX = (int)(600.0 / 1000.0 * ctx->ppenalty_EX + 0.5);
         offset = (int)(600.0 / 1000.0 * poffset + 0.5);
         offsetFFT = (int)(600.0 / 1000.0 * (-0) + 0.5);
         offsetLN = (int)(600.0 / 1000.0 * 100 + 0.5);
         ctx->penaltyLN = (int)(600.0 / 1000.0 * -2000 + 0.5);
-        penalty_exLN = (int)(600.0 / 1000.0 * -100 + 0.5);
+        ctx->penalty_exLN = (int)(600.0 / 1000.0 * -100 + 0.5);
 
         if (ctx->trywarp)
-            sprintf(shiftmodel, "%4.2f", -(double)penalty_shift / 600);
+            sprintf(shiftmodel, "%4.2f", -(double)ctx->penalty_shift / 600);
         else
             sprintf(shiftmodel, "noshift");
 
@@ -2626,7 +2626,7 @@ constants(Context* ctx, int nseq, char** seq) {
             for (i = 0; i < 20; i++)
                 iaverage += pamx[i][i] * freq1[i];
             fprintf(stdout, "itch average = %f, E=%f\n", average, average / iaverage);
-            reporterr("parameters: %d, %d, %d\n", ctx->penalty, penalty_ex, offset);
+            reporterr("parameters: %d, %d, %d\n", ctx->penalty, ctx->penalty_ex, offset);
 
             exit(1);
         }

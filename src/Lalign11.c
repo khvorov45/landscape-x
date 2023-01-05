@@ -230,8 +230,8 @@ L__align11(Context* ctx, double** n_dynamicmtx, double scoreoffset, char** seq1,
     //	double localthr = -offset;
     //	double localthr2 = -offset;
     double fpenalty = (double)ctx->penalty;
-    double fpenalty_ex = (double)penalty_ex;
-    double fpenalty_shift = (double)penalty_shift;
+    double fpenalty_ex = (double)ctx->penalty_ex;
+    double fpenalty_shift = (double)ctx->penalty_shift;
     double fpenalty_tmp;  // atode kesu
 
     int*    warpis = NULL;
@@ -728,7 +728,7 @@ L__align11_noalign(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2
     //	double localthr = 100;
     //	double localthr2 = 100;
     double fpenalty = (double)ctx->penalty;
-    double fpenalty_ex = (double)penalty_ex;
+    double fpenalty_ex = (double)ctx->penalty_ex;
 
     if (seq1 == NULL) {
         if (orlgth1 > 0 && orlgth2 > 0) {
