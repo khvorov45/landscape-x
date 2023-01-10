@@ -809,7 +809,7 @@ topolorder_mudaari(int* n1, int* n2, int* order1, int* order2, int*** topol, Tre
 #endif
 
 void
-loadtree(Context* ctx, int nseq, int*** topol, double** len, char** name, Treedep* dep, int treeout) {
+loadtree(Context* ctx, int nseq, int*** topol, double** len, const char** name, Treedep* dep, int treeout) {
     int     i, j, k;
     int *   intpt, *intpt2;
     int*    hist = NULL;
@@ -1273,7 +1273,7 @@ increaseintergroupdistanceshalfmtx(double** eff, int ngroup, int** groups, int n
 }
 
 void
-fixed_supg_double_realloc_nobk_halfmtx_treeout_constrained(Context* ctx, int nseq, double** eff, int*** topol, double** len, char** name, Treedep* dep, int ngroup, int** groups, int efffree) {
+fixed_supg_double_realloc_nobk_halfmtx_treeout_constrained(Context* ctx, int nseq, double** eff, int*** topol, double** len, const char** name, Treedep* dep, int ngroup, int** groups, int efffree) {
     int     i, j, k, miniim, maxiim, minijm, maxijm;
     int *   intpt, *intpt2;
     double  tmpdouble;
@@ -3313,7 +3313,7 @@ compacttreedpdist(Context* ctx, int njob, char** bseq, char** dseq, double* self
 }
 
 void
-compacttree_memsaveselectable(Context* ctx, int nseq, double** partmtx, int* nearest, double* mindist, int** pointt, int* tselfscore, char** seq, int** skiptable, int*** topol, double** len, char** name, int* nlen, Treedep* dep, int treeout, int howcompact, int memsave) {
+compacttree_memsaveselectable(Context* ctx, int nseq, double** partmtx, int* nearest, double* mindist, int** pointt, int* tselfscore, char** seq, int** skiptable, int*** topol, double** len, const char** name, int* nlen, Treedep* dep, int treeout, int howcompact, int memsave) {
     int i, j, k;
     //	int miniim, maxiim, minijm, maxijm;
     int *intpt, *intpt2;
@@ -3769,7 +3769,7 @@ compacttree_memsaveselectable(Context* ctx, int nseq, double** partmtx, int* nea
 }
 
 void
-fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(Context* ctx, int nseq, double** eff, int*** topol, double** len, char** name, Treedep* dep, int efffree, int treeout) {
+fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(Context* ctx, int nseq, double** eff, int*** topol, double** len, const char** name, Treedep* dep, int efffree, int treeout) {
     int     i, j, k, miniim, maxiim, minijm, maxijm;
     int*    intpt;
     double  tmpdouble;
@@ -5257,7 +5257,7 @@ counteff_simple(int nseq, int*** topol, double** len, double* node) {
 }
 
 void
-gappick0(char* aseq, char* seq) {
+gappick0(char* aseq, const char* seq) {
     for (; *seq != 0; seq++) {
         if (*seq != '-')
             *aseq++ = *seq;
@@ -6811,24 +6811,11 @@ minimum(int i1, int i2) {
 }
 
 static void
-commongappickpairfast(char* r1, char* r2, char* i1, char* i2, int* skip1, int* skip2) {
-    //	char *i1bk = i1;
+commongappickpairfast(char* r1, char* r2, const char* i1, const char* i2, int* skip1, int* skip2) {
     int skip, skipped1, skipped2;
-    //	int skip, skipped1, skipped2, scand1, scand2;
     skipped1 = skipped2 = 0;
-    //	reporterr("\n");
-    //	while( *i1 )
     while (1) {
-//		fprintf( stderr, "i1 pos =%d\n", (int)(i1- i1bk) );
-//		reporterr( "\nSkip cand %d-%d\n", *skip1-skipped1, *skip2-skipped2 );
-#if 0
-		scand1 = *skip1-skipped1;
-		scand2 = *skip2-skipped2;
-		skip = MIN( scand1, scand2 );
-#else
         skip = minimum(*skip1 - skipped1, *skip2 - skipped2);
-#endif
-        //		reporterr( "Skip %d\n", skip );
         i1 += skip;
         i2 += skip;
         skipped1 += skip;
@@ -6864,10 +6851,7 @@ commongappickpairfast(char* r1, char* r2, char* i1, char* i2, int* skip1, int* s
 }
 
 static void
-commongappickpair(char* r1, char* r2, char* i1, char* i2) {
-    //	strcpy( r1, i1 );
-    //	strcpy( r2, i2 );
-    //	return; // not SP
+commongappickpair(char* r1, char* r2, const char* i1, const char* i2) {
     while (*i1) {
         if (*i1 == '-' && *i2 == '-') {
             i1++;
@@ -6882,7 +6866,7 @@ commongappickpair(char* r1, char* r2, char* i1, char* i2) {
 }
 
 double
-naivepairscorefast(Context* ctx, char* seq1, char* seq2, int* skip1, int* skip2, int penal) {
+naivepairscorefast(Context* ctx, const char* seq1, const char* seq2, int* skip1, int* skip2, int penal) {
     double vali;
     int    len = strlen(seq1);
     char * s1, *s2;
@@ -6893,13 +6877,6 @@ naivepairscorefast(Context* ctx, char* seq1, char* seq2, int* skip1, int* skip2,
     {
         vali = 0.0;
         commongappickpairfast(s1, s2, seq1, seq2, skip1, skip2);
-        //		commongappickpair( s1, s2, seq1, seq2 );
-        //		printf(       "\n###s1 = %s\n", seq1 );
-        //		printf(       "###s2 = %s\n", seq2 );
-        //		printf(       "\n###i1 = %s\n", s1 );
-        //		printf(       "###i2 = %s\n", s2 );
-        //		printf( "allocated size, len+1 = %d\n", len+1 );
-        //		printf(       "###penal = %d\n", penal );
 
         p1 = s1;
         p2 = s2;
@@ -6989,7 +6966,7 @@ naivepairscore11_dynmtx(Context* ctx, double** mtx, char* seq1, char* seq2, int 
 }
 
 double
-naivepairscore11(Context* ctx, char* seq1, char* seq2, int penal) {
+naivepairscore11(Context* ctx, const char* seq1, const char* seq2, int penal) {
     double vali;
     int    len = strlen(seq1);
     char * s1, *s2, *p1, *p2;
@@ -7434,7 +7411,7 @@ sumofpairsscore(Context* ctx, int nseq, char** seq) {
 }
 
 double
-distcompact_msa(Context* ctx, char* seq1, char* seq2, int* skiptable1, int* skiptable2, int ss1, int ss2)  // osoi!
+distcompact_msa(Context* ctx, const char* seq1, const char* seq2, int* skiptable1, int* skiptable2, int ss1, int ss2)  // osoi!
 {
     int    bunbo = MIN(ss1, ss2);
     double value;

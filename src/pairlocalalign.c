@@ -74,8 +74,8 @@ typedef struct _thread_arg {
 typedef struct lastcallthread_arg_t {
     Context*   ctx;
     int        nq, nd;
-    char**     dseq;
-    char**     qseq;
+    const char**     dseq;
+    const char**     qseq;
     Lastresx** lastresx;
 } lastcallthread_arg_t;
 
@@ -648,8 +648,8 @@ lastcallthread(lastcallthread_arg_t* targ) {
     int* kshare = targ->kshare;
 #endif
     Lastresx** lastresx = targ->lastresx;
-    char**     dseq = targ->dseq;
-    char**     qseq = targ->qseq;
+    const char**     dseq = targ->dseq;
+    const char**     qseq = targ->qseq;
     char       command[5000];
     FILE*      lfp;
     int        msize;
@@ -658,19 +658,6 @@ lastcallthread(lastcallthread_arg_t* targ) {
 
     k = -1;
     while (1) {
-#ifdef enablemultithread
-        if (nthread) {
-            pthread_mutex_lock(targ->mutex);
-            k = *kshare;
-            if (k == nq) {
-                pthread_mutex_unlock(targ->mutex);
-                break;
-            }
-            fprintf(stderr, "\r%d / %d (thread %d)                    \r", k, nq, thread_no);
-            ++(*kshare);
-            pthread_mutex_unlock(targ->mutex);
-        } else
-#endif
         {
             k++;
             if (k == nq)
@@ -746,7 +733,7 @@ lastcallthread(lastcallthread_arg_t* targ) {
 }
 
 static void
-calllast_fast(Context* ctx, int nd, char** dseq, int nq, char** qseq, Lastresx** lastresx) {
+calllast_fast(Context* ctx, int nd, const char** dseq, int nq, const char** qseq, Lastresx** lastresx) {
     int   i, j;
     FILE* lfp;
     char  command[1000];
@@ -818,7 +805,7 @@ calllast_fast(Context* ctx, int nd, char** dseq, int nq, char** qseq, Lastresx**
 }
 
 static void
-calllast_once(Context* ctx, int nd, char** dseq, int nq, char** qseq, Lastresx** lastresx) {
+calllast_once(Context* ctx, int nd, const char** dseq, int nq, const char** qseq, Lastresx** lastresx) {
     int   i, j;
     char  command[5000];
     FILE* lfp;
@@ -923,14 +910,15 @@ calllast_once(Context* ctx, int nd, char** dseq, int nq, char** qseq, Lastresx**
 }
 
 static void
-callfoldalign(int nseq, char** mseq) {
+callfoldalign(int nseq, const char** mseq) {
+    aln_assert(!"shouldn't be called");
     FILE*       fp;
     int         i;
     int         res;
     static char com[10000];
 
-    for (i = 0; i < nseq; i++)
-        t2u(mseq[i]);
+    // for (i = 0; i < nseq; i++)
+    //     t2u(mseq[i]);
 
     fp = fopen("_foldalignin", "w");
     if (!fp) {
@@ -952,7 +940,7 @@ callfoldalign(int nseq, char** mseq) {
 }
 
 static void
-calllara(int nseq, char** mseq, char* laraarg) {
+calllara(int nseq, const char** mseq, char* laraarg) {
     FILE*       fp;
     int         i;
     int         res;
@@ -1671,7 +1659,7 @@ score2dist(double pscore, double selfscore1, double selfscore2) {
 }
 
 static void
-pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* thereisxineachseq, char** mseq1, char** mseq2, int alloclen, Lastresx** lastresx, double** distancemtx, LocalHom** localhomtable, double** expdist, int ngui) {
+pairalign(Context* ctx, const char** name, const char** seq, char** aseq, char** dseq, int* thereisxineachseq, char** mseq1, char** mseq2, int alloclen, Lastresx** lastresx, double** distancemtx, LocalHom** localhomtable, double** expdist, int ngui) {
     int    i, j, ilim, jst, jj;
     int    off1, off2, dum1, dum2, thereisx;
     double pscore = 0.0;  // by D.Mathog
@@ -1680,7 +1668,7 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
     double* selfscore;
     double* effarr1;
     double* effarr2;
-    char*   pt;
+    const char*   pt;
     char*   hat2file = "hat2";
     //	LocalHom **localhomtable = NULL,
     LocalHom* tmpptr;
@@ -2218,11 +2206,10 @@ pairalign(Context* ctx, char** name, char** seq, char** aseq, char** dseq, int* 
 }
 
 int
-pairlocalalign(Context* ctx, int ngui, char** namegui, char** seqgui, double** distancemtx, LocalHom** localhomtable, int argc, char** argv, double** expdist) {
-    assert(ngui >= 2);
+pairlocalalign(Context* ctx, int ngui, const char** namegui, char** seqgui, double** distancemtx, LocalHom** localhomtable, int argc, char** argv, double** expdist) {
+    aln_assert(ngui >= 2);
 
     int *      nlen, *thereisxineachseq;
-    char **    name, **seq;
     char **    mseq1, **mseq2;
     char**     aseq;
     char**     bseq;
@@ -2240,13 +2227,9 @@ pairlocalalign(Context* ctx, int ngui, char** namegui, char** seqgui, double** d
     }
 
     alloclen = ctx->nlenmax * 2;
-    if (ngui) {
-        seq = seqgui;
-        name = namegui;
-    } else {
-        seq = AllocateCharMtx(ctx->njob, alloclen + 10);
-        name = AllocateCharMtx(ctx->njob, B);
-    }
+    aln_assert(ngui);
+    char** seq = seqgui;
+    const char** name = namegui;
 
     aseq = AllocateCharMtx(2, alloclen + 10);
     bseq = AllocateCharMtx(ctx->njob, alloclen + 10);
@@ -2313,7 +2296,7 @@ pairlocalalign(Context* ctx, int ngui, char** namegui, char** seqgui, double** d
         }
     }
 
-    pairalign(ctx, name, bseq, aseq, dseq, thereisxineachseq, mseq1, mseq2, alloclen, lastresx, distancemtx, localhomtable, expdist, ngui);
+    pairalign(ctx, name, (const char**)bseq, aseq, dseq, thereisxineachseq, mseq1, mseq2, alloclen, lastresx, distancemtx, localhomtable, expdist, ngui);
 
     fprintf(ctx->trap_g, "done.\n");
 #if DEBUG
@@ -2348,10 +2331,6 @@ pairlocalalign(Context* ctx, int ngui, char** namegui, char** seqgui, double** d
         free(lastresx);
     }
 #endif
-    if (ngui == 0) {
-        FreeCharMtx(seq);
-        FreeCharMtx(name);
-    }
     FreeCharMtx(aseq);
     FreeCharMtx(bseq);
     FreeCharMtx(dseq);

@@ -15,66 +15,15 @@
 #include <sys/shm.h>  // shared memory
 #include <sys/mman.h>  // shm_open
 
+// TODO(sen) Figure out asserts in this context
+// #define aln_assertAction() \
+//     do { \
+//         reporterr("assertion failure at %s:%d\n", __FILE__, __LINE__); \
+//         aln_debugbreak(); \
+//         _exit(1); \
+//     } while (0)
+
 #include "align.h"
-
-// clang-format off
-// Taken from portable snippets
-// https://github.com/nemequ/portable-snippets/blob/master/debug-trap/debug-trap.h
-#if defined(__has_builtin) && !defined(__ibmxl__)
-#if __has_builtin(__builtin_debugtrap)
-#define debugbreak() __builtin_debugtrap()
-#elif __has_builtin(__debugbreak)
-#define debugbreak() __debugbreak()
-#endif
-#endif
-#if !defined(debugbreak)
-#if defined(_MSC_VER) || defined(__INTEL_COMPILER)
-#define debugbreak() __debugbreak()
-#elif defined(__ARMCC_VERSION)
-#define debugbreak() __breakpoint(42)
-#elif defined(__ibmxl__) || defined(__xlC__)
-#include <builtins.h>
-#define debugbreak() __trap(42)
-#elif defined(__DMC__) && defined(_M_IX86)
-#define debugbreak() __asm int 3h;
-#elif defined(__i386__) || defined(__x86_64__)
-#define debugbreak() __asm__ __volatile__("int3")
-#elif defined(__thumb__)
-#define debugbreak() __asm__ __volatile__(".inst 0xde01")
-#elif defined(__aarch64__)
-#define debugbreak() __asm__ __volatile__(".inst 0xd4200000")
-#elif defined(__arm__)
-#define debugbreak() __asm__ __volatile__(".inst 0xe7f001f0")
-#elif defined (__alpha__) && !defined(__osf__)
-#define debugbreak() __asm__ __volatile__("bpt")
-#elif defined(_54_)
-#define debugbreak() __asm__ __volatile__("ESTOP")
-#elif defined(_55_)
-#define debugbreak() __asm__ __volatile__(";\n .if (.MNEMONIC)\n ESTOP_1\n .else\n ESTOP_1()\n .endif\n NOP")
-#elif defined(_64P_)
-#define debugbreak() __asm__ __volatile__("SWBP 0")
-#elif defined(_6x_)
-#define debugbreak() __asm__ __volatile__("NOP\n .word 0x10000000")
-#elif defined(__STDC_HOSTED__) && (__STDC_HOSTED__ == 0) && defined(__GNUC__)
-#define debugbreak() __builtin_trap()
-#else
-#include <signal.h>
-#if defined(SIGTRAP)
-#define debugbreak() raise(SIGTRAP)
-#else
-#define debugbreak() raise(SIGABRT)
-#endif
-#endif
-#endif
-
-#ifndef assertAction
-#define assertAction() do {reporterr("assertion failure at %s:%d\n", __FILE__, __LINE__); debugbreak(); _exit(1);} while (0)
-#endif
-
-#ifndef assert
-#define assert(condition) do { if (condition) {} else { assertAction(); } } while (0)
-#endif
-// clang-format on
 
 #define NKOUHO 20
 #define NKOUHO_LONG 500
@@ -447,7 +396,7 @@ extern void         counteff_simple(int nseq, int*** topol, double** len, double
 extern void         counteff_simple_double_nostatic(int nseq, int*** topol, double** len, double* node);
 extern void         counteff_simple_double_nostatic_memsave(int nseq, int*** topol, double** len, Treedep* dep, double* node);
 extern void         gappick_samestring(char* aseq);
-extern void         gappick0(char* aseq, char* seq);
+extern void         gappick0(char* aseq, const char* seq);
 extern void         gappick(int nseq, int s, char** aseq, char** mseq2, double** eff, double* effarr);
 extern void         commongappick_record(int nseq, char** seq, int* map);
 extern void         commongappick(int nseq, char** seq);
@@ -553,18 +502,18 @@ extern int          myfgets(char s[], int l, FILE* fp);
 extern double       input_new(FILE* fp, int d);
 extern int          allSpace(char* str);
 extern void         kake2hiku(char* str);
-extern void         readData_pointer(Context* ctx, FILE* fp, char** name, int* nlen, char** seq);
+extern void         readData_pointer(const Context* ctx, FILE* fp, char** name, int* nlen, char** seq);
 extern int          countATGC(char* s, int* total);
 extern void         writeDataforgaln(FILE* fp, int locnjob, char** name, char** aseq);
-extern void         writeData_pointer(Context* ctx, FILE* fp, int locnjob, char** name, char** aseq);
+extern void         writeData_pointer(Context* ctx, FILE* fp, int locnjob, const char** name, char** aseq);
 extern void         readhat2_doublehalf_pointer(FILE* fp, int nseq, double** mtx);
 extern void         readhat2_double(FILE* fp, int nseq, double** mtx);
 extern void         readhat2_int(FILE* fp, int nseq, int** mtx);
 extern void         readhat2_pointer(FILE* fp, int nseq, double** mtx);
 extern void         readhat2(FILE* fp, int nseq, double** mtx);
-extern void         WriteFloatHat2_pointer_halfmtx(Context* ctx, FILE* hat2p, int locnjob, char** name, double** mtx);
+extern void         WriteFloatHat2_pointer_halfmtx(Context* ctx, FILE* hat2p, int locnjob, const char** name, double** mtx);
 extern void         WriteHat2_pointer(FILE* hat2p, int locnjob, char** name, double** mtx);
-extern void         WriteHat2_part_pointer(FILE* hat2p, int locnjob, int nadd, char** name, double** mtx);
+extern void         WriteHat2_part_pointer(FILE* hat2p, int locnjob, int nadd, const char** name, double** mtx);
 extern int          ReadBlastm7_scoreonly(FILE* fp, double* dis, int nin);
 extern int          ReadBlastm7_avscore(FILE* fp, double* dis, int nin);
 extern void         initSignalSM(Context* ctx);
@@ -593,7 +542,7 @@ extern void         phylipout_pointer(FILE* fp, int nseq, int maxlen, char** seq
 extern void         writeData_reorder(FILE* fp, int locnjob, char name[][B], char** aseq, int* order);
 
 extern int                load1SeqWithoutName_new(Context* ctx, FILE* fpp, char* cbuf);
-extern char*              load1SeqWithoutName_realloc(Context* ctx, FILE* fpp);
+extern char*              load1SeqWithoutName_realloc(const Context* ctx, FILE* fpp);
 extern char*              load1SeqWithoutName_realloc_casepreserve(FILE* fpp);
 extern void               searchKUorWA(FILE* fp);
 extern void               gapireru(Context* ctx, char* res, char* ori, char* gt);
@@ -619,9 +568,9 @@ extern void               getdigapfreq_st(double* freq, int clus, char** seq, do
 extern void               st_getGapPattern(Gappat** gpat, int clus, char** seq, double* eff, int len);
 extern void               getkyokaigap(char* g, char** s, int pos, int n);
 extern double*            loadaamtx(Context* ctx, int* rescalept);
-extern double             naivepairscore11(Context* ctx, char* seq1, char* seq2, int penal);
+extern double             naivepairscore11(Context* ctx, const char* seq1, const char* seq2, int penal);
 extern double             naivepairscore11_dynmtx(Context* ctx, double**, char* seq1, char* seq2, int penal);
-extern double             naivepairscorefast(Context* ctx, char* seq1, char* seq2, int* skip1, int* skip2, int penal);
+extern double             naivepairscorefast(Context* ctx, const char* seq1, const char* seq2, int* skip1, int* skip2, int penal);
 extern void               foldrna(Context* ctx, int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* eff2, RNApair*** gr1, RNApair*** gr2, double** impmtx);
 extern void               foldrna_gappick(int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* eff2, RNApair*** gr1, RNApair*** gr2, double** impmtx, int* gapmap1, int* gapmap2, RNApair* pair);
 extern void               imp_rna(Context* ctx, int nseq1, int nseq2, char** seq1, char** seq2, double* eff1, double* eff2, RNApair*** gr1, RNApair*** gr2);
@@ -632,11 +581,11 @@ void                      makegrouprna(RNApair*** group, RNApair*** all, int* me
 void                      makegrouprnait(RNApair*** group, RNApair*** all, char* pair, int s);
 extern void               fixed_musclesupg_double_realloc_nobk_halfmtx(Context* ctx, int nseq, double** eff, int*** topol, double** len, Treedep*, int progressout, int efffree);
 extern void               fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(Context* ctx, int nseq, double** eff, int*** topol, double** len, Treedep*, int progressout, int efffree);
-extern void               loadtree(Context* ctx, int nseq, int*** topol, double** len, char** name, Treedep*, int treeout);
+extern void               loadtree(Context* ctx, int nseq, int*** topol, double** len, const char** name, Treedep*, int treeout);
 extern int                check_guidetreefile(int* seed, int* npick, double* limitram);
 extern void               fixed_musclesupg_double_realloc_nobk_halfmtx_treeout(Context* ctx, int nseq, double** eff, int*** topol, double** len, char** name, Treedep*, int efffree);  // KESU
-extern void               fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(Context* ctx, int nseq, double** eff, int*** topol, double** len, char** name, Treedep*, int efffree, int treeout);
-extern void               fixed_supg_double_realloc_nobk_halfmtx_treeout_constrained(Context* ctx, int nseq, double** eff, int*** topol, double** len, char** name, Treedep*, int ncons, int** constraints, int efffree);
+extern void               fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(Context* ctx, int nseq, double** eff, int*** topol, double** len, const char** name, Treedep*, int efffree, int treeout);
+extern void               fixed_supg_double_realloc_nobk_halfmtx_treeout_constrained(Context* ctx, int nseq, double** eff, int*** topol, double** len, const char** name, Treedep*, int ncons, int** constraints, int efffree);
 extern void               imp_match_init_strict(Context* ctx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1kozo, double* eff2kozo, LocalHom*** localhom, char* swaplist, int* memlist1, int* memlist2, int* uselh, int* seedinlh1, int* seedinlh2, int nodeid, int nfiles);
 extern void               miyataout_reorder_pointer(FILE* fp, int locnjob, int nlenmax, char** name, int* nlen, char** aseq, int* order);
 extern void               cpmx_ribosum(Context* ctx, char** seq, char** seqr, char* dir, double** cpmx, double* eff, int lgth, int clus);
@@ -687,21 +636,21 @@ extern int    deletenewinsertions_whole_eq(int on, int an, char** oseq, char** a
 extern int    deletenewinsertions_difflist(int on, int an, char** oseq, char** aseq, GapPos** difflist);
 extern int    recordoriginalgaps(char* originallygapped, int n, char** s);
 extern void   restoreoriginalgaps(int n, char** seq, char* originalgaps);
-extern void   reconstructdeletemap(Context* ctx, int nadd, char** addbk, GapPos** deletelist, char** realn, FILE* fp, char** name);
-extern void   reconstructdeletemap_compact(Context* ctx, int nadd, char** addbk, GapPos** deletelist, char** realn, FILE* fp, char** name);
+extern void   reconstructdeletemap(Context* ctx, int nadd, char** addbk, GapPos** deletelist, char** realn, FILE* fp, const char** name);
+extern void   reconstructdeletemap_compact(Context* ctx, int nadd, char** addbk, GapPos** deletelist, char** realn, FILE* fp, const char** name);
 extern double D__align(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int headgp, int tailgp);
 extern double D__align_variousdist(Context* ctx, int** whichmtx, double*** matrices, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int headgp, int tailgp);
 extern void   stringshuffle(int* ary, int size);
 extern void   topolorder(int* order, int* posinorder, int*** topol, Treedep* dep, int pos, int child);
 extern int*   topolorderz(int* order, int*** topol, Treedep* dep, int pos, int nchild);
 extern int*   topolordery(int* order, int*** topol, Treedep* dep, int pos, int nchild);
-extern void   compacttree_memsaveselectable(Context* ctx, int nseq, double** partmtx, int* nearest, double* mindist, int** pointt, int* selfscore, char** seq, int** skiptable, int*** topol, double** len, char** name, int* nlen, Treedep* dep, int treeout, int howcompact, int memsave);
+extern void   compacttree_memsaveselectable(Context* ctx, int nseq, double** partmtx, int* nearest, double* mindist, int** pointt, int* selfscore, char** seq, int** skiptable, int*** topol, double** len, const char** name, int* nlen, Treedep* dep, int treeout, int howcompact, int memsave);
 extern void   compacttreedpdist(Context* ctx, int njob, char** seq, char** dseq, double* selfscore, int*** topol, double** len, char** name, Treedep* dep, int treeout, int alloclen, int* uselh, int* nfilesfornode, int treegiven);
 extern double distcompact(Context* ctx, int len1, int len2, int* table1, int* point2, int ss1, int ss2);
-extern double distcompact_msa(Context* ctx, char* seq1, char* seq2, int* skiptable1, int* skiptable2, int ss1, int ss2);
+extern double distcompact_msa(Context* ctx, const char* seq1, const char* seq2, int* skiptable1, int* skiptable2, int ss1, int ss2);
 extern void   fillimp(Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2);
 extern void   fillimp_file(Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, int* orinum1, int* orinum2, int* uselh, int* seedinlh1, int* seedinlh2, int nodeid, int nfiles);
-extern int    pairlocalalign(Context* ctx, int ngui, char** namegui, char** seqgui, double** distancemtx, LocalHom** localhomtable, int argc, char** argv, double** expdist);
+extern int    pairlocalalign(Context* ctx, int ngui, const char** namegui, char** seqgui, double** distancemtx, LocalHom** localhomtable, int argc, char** argv, double** expdist);
 extern char   creverse(char f);
 extern void   setstacksize(rlim_t);
 extern void   use_getrusage(void);

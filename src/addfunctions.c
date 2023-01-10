@@ -1569,9 +1569,10 @@ restoreoriginalgaps(int n, char** seq, char* originalgaps) {
 }
 
 void
-reconstructdeletemap(Context* ctx, int nadd, char** addbk, GapPos** deletelist, char** realn, FILE* fp, char** name) {
+reconstructdeletemap(Context* ctx, int nadd, char** addbk, GapPos** deletelist, char** realn, FILE* fp, const char** name) {
     int   i, j, p, len, gaplen;
-    char *gapped, *nameptr, *tmpptr;
+    char *gapped, *tmpptr;
+    const char* nameptr;
 
     for (i = 0; i < nadd; i++) {
         len = strlen(addbk[i]);
@@ -1624,19 +1625,13 @@ reconstructdeletemap(Context* ctx, int nadd, char** addbk, GapPos** deletelist, 
     }
 }
 
-#define MODIFYNAME 1  // MODIFYNAME mo --anysymbol to ryouritsu, 7.502-
-
 void
-reconstructdeletemap_compact(Context* ctx, int nadd, char** addbk, GapPos** deletelist, char** realn, FILE* fp, char** name) {
-    int   i, j, p, len, nins, gaplen;
-    char *gapped, *nameptr, *tmpptr;
+reconstructdeletemap_compact(Context* ctx, int nadd, char** addbk, GapPos** deletelist, char** realn, FILE* fp, const char** name) {
+    int   i, j, p, len, gaplen;
+    char *gapped, *tmpptr;
     int   status = 0;
+    const char* nameptr;
 
-#if MODIFYNAME
-    char *newname, *insstr;
-    newname = calloc(B + 100, sizeof(char));
-    insstr = calloc(1000, sizeof(char));
-#endif
     fprintf(fp, "# Insertion in added sequence > Position in reference\n");
     for (i = 0; i < nadd; i++) {
         len = strlen(addbk[i]);
@@ -1654,27 +1649,12 @@ reconstructdeletemap_compact(Context* ctx, int nadd, char** addbk, GapPos** dele
 
         status = 0;
 
-#if 0
-//		reporterr( "addbk[%d] = %s\n", i, addbk[i] );
-		for( j=0; (p=deletelist[i][j])!=-1; j++ )
-		{
-//			reporterr( "deleting %d, %c\n", p, addbk[i][p] );
-			gapped[p] = '-';
-			status = 1;
-		}
-#else
-        //		reporterr( "addbk[%d] = %s\n", i, addbk[i] );
         for (j = 0; (p = deletelist[i][j].pos) != -1; j++) {
-            //			reporterr( "deleting %d-%d, %c\n", p, p+deletelist[i][j].len, addbk[i][p] );
             gaplen = deletelist[i][j].len;
             while (gaplen--)
                 gapped[p++] = '-';  // origin??????????? 2022/Jan
             status = 1;
         }
-#endif
-
-        //		reporterr( "addbk  = %s\n", addbk[i] );
-        //		reporterr( "gapped = %s\n", gapped );
 
         if (status == 0) {
             free(gapped);
@@ -1684,10 +1664,7 @@ reconstructdeletemap_compact(Context* ctx, int nadd, char** addbk, GapPos** dele
         fprintf(fp, ">%s\n", nameptr);
 
         status = -1;
-#if MODIFYNAME
-        insstr[0] = 0;
-        nins = 0;
-#endif
+
         for (j = 0, p = 0; j < len; j++) {
             while (realn[i][p] == '-')
                 p++;
@@ -1696,47 +1673,18 @@ reconstructdeletemap_compact(Context* ctx, int nadd, char** addbk, GapPos** dele
                 if (status != 1) {
                     status = 1;
                     fprintf(fp, "%d%c - ", j + 1, addbk[i][j]);  // 1origin
-#if MODIFYNAME
-                    if (nins == 0)
-                        sprintf(insstr, "%d%c-", j + 1, addbk[i][j]);
-                    else if (nins == 1)
-                        sprintf(insstr + strlen(insstr), "etc,");
-                    nins++;
-#endif
                 }
-                //				fprintf( fp, "%c, %d, -\n", addbk[i][j], j+1 ); // 1origin
             } else {
                 if (status == 1) {
                     fprintf(fp, "%d%c > %dv%d\n", j, addbk[i][j - 1], p, p + 1);  // 1origin
-#if MODIFYNAME
-                    if (nins == 1)
-                        sprintf(insstr + strlen(insstr), "%d%c,", j, addbk[i][j - 1]);
-#endif
                 }
                 status = 0;
-                //				fprintf( fp, "%c, %d, %d\n", addbk[i][j], j+1, p+1 ); // 1origin
                 p++;
             }
         }
         if (status == 1) {
             fprintf(fp, "%d%c > %dv%d\n", j, addbk[i][j - 1], p, p + 1);  // 1origin
-#if MODIFYNAME
-            if (nins == 1)
-                sprintf(insstr + strlen(insstr), "%d%c,", j, addbk[i][j - 1]);
-#endif
         }
         free(gapped);
-
-#if MODIFYNAME
-        insstr[strlen(insstr) - 1] = 0;
-        strcpy(newname, name[i]);
-        sprintf(newname + (nameptr - name[i]), "%dins:%s|%s", nins, insstr, nameptr);
-        newname[B] = 0;
-        strcpy(name[i], newname);
-#endif
     }
-#if MODIFYNAME
-    free(newname);
-    free(insstr);
-#endif
 }

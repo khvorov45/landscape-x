@@ -1,6 +1,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 
+#define aln_IMPLEMENTATION
 #include "mltaln.h"
 
 #define DEBUG 0
@@ -493,7 +494,7 @@ msacompactdisthalfmtxthread(msacompactdistmtxthread_arg_t* targ) {
     }
 }
 
-void
+static void
 treebase(Context* ctx, TbfastOpts* opts, int* nlen, char** aseq, int nadd, char* mergeoralign, char** mseq1, char** mseq2, int*** topol, Treedep* dep, double* effarr, int* alloclen, LocalHom** localhomtable, RNApair*** singlerna, double* effarr_kozo, int* targetmap, int* targetmapr, int ntarget, int* uselh, int nseed, int* nfilesfornode) {
     int             i, l, m;
     int             len1nocommongap;
@@ -982,11 +983,15 @@ WriteOptions(Context* ctx, FILE* fp) {
 }
 
 int
-tbfast_main(aln_String* strings, int32_t stringsCount, void* out, int32_t outBytes, int argc, char* argv[]) {
-    aln_unused(out);
-    aln_unused(outBytes);
+tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes, int argc, char* argv[]) {
+    aln_Arena permArena_ = {.base = out, .size = outBytes / 4};
+    aln_Arena tempArena_ = {.base = (uint8_t*)out + permArena_.size, .size = outBytes - permArena_.size};
 
-    Context* ctx = calloc(sizeof(Context), 1);
+    aln_Arena* permArena = &permArena_;
+    aln_unused(permArena);
+    aln_Arena* tempArena = &tempArena_;
+
+    Context* ctx = aln_arenaAllocStruct(tempArena, Context);
 
     // TODO(sen) This is 'dna or protein'. Figure out what to do with this
     // and why this even matters
@@ -1013,19 +1018,33 @@ tbfast_main(aln_String* strings, int32_t stringsCount, void* out, int32_t outByt
     ctx->LineLengthInFASTA = -1;
     ctx->njob = stringsCount;
 
-    // NOTE(khvorov) Max input length
+    // TODO(sen) Do the strings have to be null-terminated?
+    // TODO(sen) What do we need the name array for?
+    // TODO(sen) Can we use the strings directly as aos?
+    // NOTE(sen) Process input
+    const char** name = aln_arenaAllocArray(tempArena, const char*, stringsCount);
+    int*   nlen = aln_arenaAllocArray(tempArena, int, stringsCount);
     for (int32_t strIndex = 0; strIndex < stringsCount; strIndex++) {
-        aln_String str = strings[strIndex];
-        ctx->nlenmax = MAX(ctx->nlenmax, str.len);
+        aln_Str str = strings[strIndex];
+        ctx->nlenmax = aln_max(ctx->nlenmax, str.len);
+        name[strIndex] = "name";
+        nlen[strIndex] = str.len;
+    }
+
+    // TODO(sen) Use arena
+    char** seq = AllocateCharMtx(ctx->njob, ctx->nlenmax + 1);
+    for (int32_t strIndex = 0; strIndex < stringsCount; strIndex++) {
+        aln_Str str = strings[strIndex];
+        for (int32_t ind = 0; ind < str.len; ind++) {
+            seq[strIndex][ind] = str.ptr[ind];
+        }
     }
 
     TbfastOpts  opts_ = {};
     TbfastOpts* opts = &opts_;
 
-    int*     nlen = NULL;
     int*     selfscore = NULL;
     int      nogaplen;
-    char **  name = NULL, **seq = NULL;
     char **  mseq1 = NULL, **mseq2 = NULL;
     char**   bseq = NULL;
     double **iscore = NULL, **iscore_kozo = NULL;
@@ -1126,11 +1145,9 @@ tbfast_main(aln_String* strings, int32_t stringsCount, void* out, int32_t outByt
         readsubalignmentstable(ctx->njob, subtable, preservegaps, NULL, NULL);
     }
 
-    seq = AllocateCharMtx(ctx->njob, ctx->nlenmax + 1);
     mseq1 = AllocateCharMtx(ctx->njob, 0);
     mseq2 = AllocateCharMtx(ctx->njob, 0);
 
-    name = AllocateCharMtx(ctx->njob, B + 1);
     nlen = AllocateIntVec(ctx->njob);
     selfscore = AllocateIntVec(ctx->njob);
 
@@ -1158,15 +1175,6 @@ tbfast_main(aln_String* strings, int32_t stringsCount, void* out, int32_t outByt
         iscore = AllocateFloatHalfMtx(ctx->njob);
 
     opts->ndeleted = 0;
-
-    // TODO(sen) Get rid of input file entirely
-    {
-        assert(ctx->inputfile);
-        FILE* infp = fopen(ctx->inputfile, "rb");
-        assert(infp);
-        readData_pointer(ctx, infp, name, nlen, seq);
-        fclose(infp);
-    }
 
     if (opts->treein) {
         loadtree(ctx, ctx->njob, topol, len, name, dep, opts->treeout);
@@ -2106,8 +2114,6 @@ tbfast_main(aln_String* strings, int32_t stringsCount, void* out, int32_t outByt
     free(mseq1);
     free(mseq2);
 
-    FreeCharMtx(name);
-    free(nlen);
     free(selfscore);
 
     FreeIntCub(topol);
@@ -2138,12 +2144,6 @@ chudan:
         free(mseq2);
     mseq2 = NULL;
 
-    if (name)
-        FreeCharMtx(name);
-    name = NULL;
-    if (nlen)
-        free(nlen);
-    nlen = NULL;
     if (selfscore)
         free(selfscore);
     selfscore = NULL;

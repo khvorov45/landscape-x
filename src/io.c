@@ -1,7 +1,5 @@
 #include "mltaln.h"
 
-static int upperCase = 0;
-
 #define DEBUG 0
 #define IODEBUG 0
 
@@ -898,7 +896,7 @@ load1SeqWithoutName_realloc_casepreserve(FILE* fpp) {
 }
 
 char*
-load1SeqWithoutName_realloc(Context* ctx, FILE* fpp) {
+load1SeqWithoutName_realloc(const Context* ctx, FILE* fpp) {
     int   c, b;
     char* cbuf;
     int   size = N;
@@ -960,7 +958,7 @@ load1SeqWithoutName_new(Context* ctx, FILE* fpp, char* cbuf) {
 }
 
 void
-readData_pointer(Context* ctx, FILE* fp, char** name, int* nlen, char** seq) {
+readData_pointer(const Context* ctx, FILE* fp, char** name, int* nlen, char** seq) {
     int          i;
     static char* tmpseq = NULL;
 
@@ -975,26 +973,6 @@ readData_pointer(Context* ctx, FILE* fp, char** name, int* nlen, char** seq) {
         strcpy(seq[i], tmpseq);
         free(tmpseq);
         nlen[i] = strlen(seq[i]);
-    }
-
-    if (ctx->dorp == 'd' && upperCase != -1)
-        seqLower(ctx->njob, seq);
-
-    if (ctx->outnumber) {
-        char* namebuf;
-        char* cptr;
-        namebuf = calloc(B + 100, sizeof(char));
-        for (i = 0; i < ctx->njob; i++) {
-            namebuf[0] = '=';
-            cptr = strstr(name[i], "_numo_e_");
-            if (cptr)
-                sprintf(namebuf + 1, "_numo_s_%08d_numo_e_%s", i + 1, cptr + 8);
-            else
-                sprintf(namebuf + 1, "_numo_s_%08d_numo_e_%s", i + 1, name[i] + 1);
-            strncpy(name[i], namebuf, B);
-            name[i][B - 1] = 0;
-        }
-        free(namebuf);
     }
 }
 
@@ -1091,7 +1069,7 @@ countnormalletters(char* seq, char* ref) {
 }
 
 void
-writeData_pointer(Context* ctx, FILE* fp, int locnjob, char** name, char** aseq) {
+writeData_pointer(Context* ctx, FILE* fp, int locnjob, const char** name, char** aseq) {
     int i, j;
     int nalen;
 
@@ -1297,7 +1275,7 @@ readhat2(FILE* fp, int nseq, double** mtx) {
 }
 
 void
-WriteFloatHat2_pointer_halfmtx(Context* ctx, FILE* hat2p, int locnjob, char** name, double** mtx) {
+WriteFloatHat2_pointer_halfmtx(Context* ctx, FILE* hat2p, int locnjob, const char** name, double** mtx) {
     int    i, j, ijsa;
     double max = 0.0;
     for (i = 0; i < locnjob - 1; i++)
@@ -1322,7 +1300,7 @@ WriteFloatHat2_pointer_halfmtx(Context* ctx, FILE* hat2p, int locnjob, char** na
 }
 
 void
-WriteHat2_part_pointer(FILE* hat2p, int locnjob, int nadd, char** name, double** mtx) {
+WriteHat2_part_pointer(FILE* hat2p, int locnjob, int nadd, const char** name, double** mtx) {
     int    i, j;
     int    norg = locnjob - nadd;
     double max = 0.0;
