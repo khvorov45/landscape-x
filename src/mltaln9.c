@@ -7928,10 +7928,6 @@ fillimp_file(Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int
     //	char *fn;
     //	int subid, res;
     void (*movefunc)(char*, char*, LocalHom*, int*, int*, int*, int*);
-    readloopthread_arg_t* targ;
-    double***           localimpmtx;
-    int                 nth;
-    unsigned long long* localndone;
     unsigned long long  ndone;
     int                 subid;
 
@@ -8058,78 +8054,25 @@ fillimp_file(Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int
     }
 
     {
-        nth = MIN(ctx->nthreadreadlh, nfiles);
         subid = 0;
+        ndone = 0;
 
-        if (nth > 1) {
-            localndone = calloc(sizeof(unsigned long long), nth);
-            localimpmtx = calloc(sizeof(double**), nth);
-            for (i = 0; i < nth; i++)
-                localimpmtx[i] = AllocateDoubleMtx(lgth1, lgth2);
-#ifdef enablemultithread
-            pthread_mutex_init(&mutex, NULL);
-            handle = calloc(nth, sizeof(pthread_t));
-#endif
-        } else
-            ndone = 0;
-
-        targ = calloc(nth, sizeof(readloopthread_arg_t));
-        for (i = 0; i < nth; i++) {
-            targ[i].ctx = ctx;
-            targ[i].nodeid = nodeid;
-            targ[i].seq1 = seq1;
-            targ[i].seq2 = seq2;
-            targ[i].orinum1 = orinum1;
-            targ[i].orinum2 = orinum2;
-            targ[i].eff1 = eff1;
-            targ[i].eff2 = eff2;
-            targ[i].subidpt = &subid;
-            targ[i].nfiles = nfiles;
-            if (nth > 1) {
-                targ[i].ndone = localndone + i;
-                targ[i].impmtx = localimpmtx[i];
-#ifdef enablemultithread
-                targ[i].mutex = &mutex;
-                pthread_create(handle + i, NULL, readloopthread, (void*)(targ + i));
-#else
-                readloopthread((void*)(targ + i));
-#endif
-            } else {
-                targ[i].ndone = &ndone;
-                targ[i].impmtx = impmtx;
-#ifdef enablemultithread
-                targ[i].mutex = NULL;
-#endif
-                readloopthread(targ + i);
-            }
-        }
-
-#ifdef enablemultithread
-        if (nth > 1) {
-            for (j = 0; j < nth; j++)
-                pthread_join(handle[j], NULL);
-            pthread_mutex_destroy(&mutex);
-            free(handle);
-        }
-#endif
-        free(targ);
-
-#if REPORTCOSTS
-//		reporterr( "read %d file(s) using %d thread(s)\n", subid-nth, nth );
-#endif
-        if (nth > 1) {
-            for (i = 0; i < nth; i++) {
-                for (k1 = 0; k1 < lgth1; k1++)
-                    for (k2 = 0; k2 < lgth2; k2++)
-                        impmtx[k1][k2] += localimpmtx[i][k1][k2];
-                FreeDoubleMtx(localimpmtx[i]);
-            }
-            free(localimpmtx);
-            for (i = 0; i < nth; i++)
-                npairs -= localndone[i];
-            free(localndone);
-        } else
-            npairs -= ndone;
+        readloopthread_arg_t targ = {
+            .ctx = ctx,
+            .nodeid = nodeid,
+            .seq1 = seq1,
+            .seq2 = seq2,
+            .orinum1 = orinum1,
+            .orinum2 = orinum2,
+            .eff1 = eff1,
+            .eff2 = eff2,
+            .subidpt = &subid,
+            .nfiles = nfiles,
+            .ndone = &ndone,
+            .impmtx = impmtx,
+        }; 
+        readloopthread(&targ);
+        npairs -= ndone;
     }
 
     if (npairs != 0) {

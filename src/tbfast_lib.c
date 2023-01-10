@@ -939,7 +939,6 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     ctx->ndistclass = 10;
     ctx->maxdistclass = -1;
     ctx->lhlimit = INT_MAX;
-    ctx->nthreadreadlh = 1;
     ctx->LineLengthInFASTA = -1;
     ctx->njob = stringsCount;
     ctx->rnaprediction = 'm';
@@ -1413,12 +1412,6 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     free(pav);
     constants(ctx, ctx->njob, seq);
 
-    if (ctx->sueff_global < 0.0001 || ctx->compacttree == 3) {
-        if (ctx->nthreadreadlh == 0)
-            ctx->nthreadreadlh = 1;
-    } else {
-        ctx->nthreadreadlh = 1;
-    }
     tempOpts->nthreadtb = 0;
 
     initSignalSM(ctx);
