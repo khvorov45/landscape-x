@@ -346,8 +346,7 @@ arguments(Context* ctx, TbfastOpts* tempOpts, int argc, char* argv[], int* pac, 
                     --argc;
                     goto nextoption;
                 case 'W':
-                    ctx->minimumweight = atof(*++argv);
-                    //					fprintf( stderr, "minimumweight = %f\n", minimumweight );
+                    ++argv;
                     --argc;
                     goto nextoption;
                 case 'Y':
@@ -647,8 +646,8 @@ treebase(Context* ctx, TbfastOpts* tempOpts, int* nlen, char** aseq, int nadd, c
             clus1 = fastconjuction_noname_kozo(localmem[0], aseq, mseq1, effarr1, effarr, effarr1_kozo, effarr_kozo, indication1);
             clus2 = fastconjuction_noname_kozo(localmem[1], aseq, mseq2, effarr2, effarr, effarr2_kozo, effarr_kozo, indication2);
         } else {
-            clus1 = fastconjuction_noname(localmem[0], aseq, mseq1, effarr1, effarr, indication1, ctx->minimumweight, &orieff1);  // orieff tsukau!
-            clus2 = fastconjuction_noname(localmem[1], aseq, mseq2, effarr2, effarr, indication2, ctx->minimumweight, &orieff2);  // orieff tsukau!
+            clus1 = fastconjuction_noname(localmem[0], aseq, mseq1, effarr1, effarr, indication1, ctx->opts.minimumweight, &orieff1);  // orieff tsukau!
+            clus2 = fastconjuction_noname(localmem[1], aseq, mseq2, effarr2, effarr, indication2, ctx->opts.minimumweight, &orieff2);  // orieff tsukau!
         }
 
         if (mergeoralign[l] == '1' || mergeoralign[l] == '2') {
@@ -961,6 +960,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     aln_Arena* tempArena = &tempArena_;
 
     Context* ctx = aln_arenaAllocStruct(tempArena, Context);
+    ctx->opts = opts;
 
     // TODO(sen) This is 'dna or protein'. Figure out what to do with this
     // and why this even matters
@@ -968,7 +968,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
 
     ctx->RNAscoremtx = 'n';
     ctx->parallelizationstrategy = BAATARI1;
-    ctx->minimumweight = 0.0005;
+    ctx->opts.minimumweight = 0.0005;
     ctx->newgapstr = "-";
     ctx->nalphabets = 26;
     ctx->nscoredalphabets = 20;

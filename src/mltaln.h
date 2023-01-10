@@ -187,6 +187,7 @@ typedef struct GapPos {
 } GapPos;
 
 typedef struct Context {
+    aln_Opts opts;
     char     modelname[500];
     int      njob;
     int      maxInputSeqLen;
@@ -293,7 +294,6 @@ typedef struct Context {
     int      spscoreout;
     int      outnumber;
     int      legacygapcost;
-    double   minimumweight;
     int      nwildcard;
     char*    newgapstr;
     int      nalphabets;
