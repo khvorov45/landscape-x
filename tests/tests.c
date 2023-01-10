@@ -197,7 +197,7 @@ main() {
     prb_assert(prb_clearDir(arena, tempDir));
     prb_Str cwd = prb_getWorkingDir(arena);
     prb_assert(prb_setWorkingDir(arena, tempDir));
-    const char** tbfastArgs = prb_getArgArrayFromStr(arena, prb_fmt(arena, "/home/khvorova/Projects/sequencebox/build-debug/mafft/exes/tbfast _ -u 0.0 -l 2.7 -C 0 -b 62 -g -0.10 -f -2.00 -Q 100.0 -h 0.1 -A _ -+ 16 -W 0.00001 -V -1.53 -s 0.0 -C 0 -b 62 -f -1.53 -Q 100.0 -h 0 -F -l 2.7 -X 0.1 -i %.*s", prb_LIT(fastaOutputPath)));
+    const char** tbfastArgs = prb_getArgArrayFromStr(arena, prb_STR("/home/khvorova/Projects/sequencebox/build-debug/mafft/exes/tbfast _ -u 0.0 -l 2.7 -C 0 -b 62 -g -0.10 -f -2.00 -Q 100.0 -h 0.1 -A _ -+ 16 -W 0.00001 -V -1.53 -s 0.0 -C 0 -b 62 -f -1.53 -Q 100.0 -h 0 -F -l 2.7 -X 0.1"));
     int32_t      outBytes = 50 * prb_MEGABYTE;
     void*        outBuf = prb_arenaAllocAndZero(arena, outBytes, 1);
     tbfast_main((aln_Str*)genSeq.seqs, genSeq.seqCount, outBuf, outBytes, arrlen(tbfastArgs), (char**)tbfastArgs);

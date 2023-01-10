@@ -56,7 +56,6 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
     ctx->rnaprediction = 'm';
     ctx->rnakozo = 0;
     ctx->nevermemsave = 0;
-    ctx->inputfile = NULL;
     ctx->addfile = NULL;
     ctx->addprofile = 1;
     ctx->fftkeika = 0;
@@ -142,7 +141,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
         while ((c = *++argv[0])) {
             switch (c) {
                 case 'i':
-                    ctx->inputfile = *++argv;
+                    ++argv;
                     --argc;
                     goto nextoption;
                 case 'I':

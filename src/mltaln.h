@@ -268,7 +268,6 @@ typedef struct Context {
     char*    swopt;
     int      fftkeika;
     int      score_check;
-    char*    inputfile;
     char*    addfile;
     int      addprofile;
     double   consweight_multi;

@@ -1307,7 +1307,6 @@ arguments(Context* ctx, int argc, char* argv[]) {
     lastonce = 0;
     foldalignopt[0] = 0;
     laraparams = NULL;
-    ctx->inputfile = NULL;
     ctx->fftkeika = 0;
     ctx->pslocal = -1000.0;
     ctx->constraint = 0;
@@ -1362,8 +1361,7 @@ arguments(Context* ctx, int argc, char* argv[]) {
         while ((c = *++argv[0])) {
             switch (c) {
                 case 'i':
-                    ctx->inputfile = *++argv;
-                    //					fprintf( stderr, "inputfile = %s\n", inputfile );
+                    ++argv;
                     --argc;
                     goto nextoption;
                 case 'f':
