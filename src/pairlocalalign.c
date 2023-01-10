@@ -2221,7 +2221,7 @@ pairlocalalign(Context* ctx, int ngui, const char* const* namegui, char** seqgui
         exit(1);
     }
 
-    alloclen = ctx->nlenmax * 2;
+    alloclen = ctx->maxInputSeqLen * 2;
     aln_assert(ngui);
     char** seq = seqgui;
     const char* const* name = namegui;

@@ -1018,7 +1018,6 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     ctx->LineLengthInFASTA = -1;
     ctx->njob = stringsCount;
 
-    // TODO(sen) Do the strings have to be null-terminated?
     // TODO(sen) What do we need the name array for?
     // TODO(sen) Can we use the strings directly as aos?
     // NOTE(sen) Process input
@@ -1026,18 +1025,21 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     int*   nlen = aln_arenaAllocArray(tempArena, int, stringsCount);
     for (int32_t strIndex = 0; strIndex < stringsCount; strIndex++) {
         aln_Str str = strings[strIndex];
-        ctx->nlenmax = aln_max(ctx->nlenmax, str.len);
+        ctx->maxInputSeqLen = aln_max(ctx->maxInputSeqLen, str.len);
         ((const char**)name)[strIndex] = "name";
         nlen[strIndex] = str.len;
     }
 
-    // TODO(sen) Use arena
-    char** seq = AllocateCharMtx(ctx->njob, ctx->nlenmax + 1);
+    // TODO(sen) Remove the requirement for null-terminated array
+    char** seq = aln_arenaAllocArray(tempArena, char*, stringsCount + 1);
     for (int32_t strIndex = 0; strIndex < stringsCount; strIndex++) {
         aln_Str str = strings[strIndex];
-        for (int32_t ind = 0; ind < str.len; ind++) {
-            seq[strIndex][ind] = str.ptr[ind];
+        // TODO(sen) Remove the requirement for null-terminated str
+        char* thisSeq = aln_arenaAllocArray(tempArena, char, ctx->maxInputSeqLen + 1);
+        for (int32_t charInd = 0; charInd < str.len; charInd++) {
+            thisSeq[charInd] = str.ptr[charInd];
         }
+        seq[strIndex] = thisSeq;
     }
 
     TbfastOpts  opts_ = {};
@@ -1488,7 +1490,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     }
 
     if (ctx->nadd && opts->keeplength) {
-        originalgaps = (char*)calloc(ctx->nlenmax + 1, sizeof(char));
+        originalgaps = (char*)calloc(ctx->maxInputSeqLen + 1, sizeof(char));
         recordoriginalgaps(originalgaps, ctx->njob - ctx->nadd, seq);
 
         if (opts->mapout) {
@@ -1791,7 +1793,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     eff_kozo = NULL;
     FreeFloatMtx(len);
 
-    alloclen = ctx->nlenmax * 2 + 1;  //chuui!
+    alloclen = ctx->maxInputSeqLen * 2 + 1;  //chuui!
     bseq = AllocateCharMtx(ctx->njob, alloclen);
 
     if (ctx->nadd) {
@@ -2109,7 +2111,6 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     }
 
     free(kozoarivec);
-    FreeCharMtx(seq);
     FreeCharMtx(bseq);
     free(mseq1);
     free(mseq2);
