@@ -27,7 +27,11 @@ typedef struct aln_Str {
     int32_t len;
 } aln_Str;
 
-aln_PUBLICAPI aln_Status aln_alignStrings(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes);
+typedef struct aln_Opts {
+    int32_t outputhat23;
+} aln_Opts;
+
+aln_PUBLICAPI aln_Opts aln_defaultOpts(void);
 
 // TODO(sen) Remove private forward decls once we pull everything into 1 TU
 
@@ -211,14 +215,12 @@ aln_strGetNullTerminated(aln_Arena* arena, aln_Str str) {
     return buf;
 }
 
-aln_PUBLICAPI aln_Status
-aln_alignStrings(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes) {
-    aln_unused(strings);
-    aln_unused(stringsCount);
-    aln_unused(out);
-    aln_unused(outBytes);
-    aln_Status result = aln_Failure;
-    return result;
+aln_PUBLICAPI aln_Opts 
+aln_defaultOpts(void) {
+    aln_Opts opts = {
+        .outputhat23 = 16,
+    };
+    return opts;
 }
 
 #endif  // aln_IMPLEMENTATION

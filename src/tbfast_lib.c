@@ -37,71 +37,21 @@ typedef struct TbfastOpts {
     int32_t mapout;
     int32_t smoothing;
     int32_t callpairlocalalign;
-    int32_t outputhat23;
     int32_t nthreadtb;
 } TbfastOpts;
 
 static void
-arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char** pav, int* tac, char** tav)  // 2 kai yobaremasu.
+arguments(Context* ctx, TbfastOpts* tempOpts, int argc, char* argv[], int* pac, char** pav, int* tac, char** tav)  // 2 kai yobaremasu.
 {
     int c;
     int i;
 
-    ctx->nthread = 1;
-    opts->nthreadtb = 1;
-    ctx->nthreadpair = 1;
-    ctx->outnumber = 0;
-    ctx->scoreout = 0;
-    ctx->spscoreout = 0;
-    ctx->rnaprediction = 'm';
-    ctx->rnakozo = 0;
-    ctx->nevermemsave = 0;
-    ctx->addfile = NULL;
-    ctx->addprofile = 1;
-    ctx->fftkeika = 0;
-    ctx->constraint = 0;
-    ctx->nblosum = 62;
-    ctx->fmodel = 0;
-    ctx->use_fft = 0;  // chuui
-    ctx->force_fft = 0;
-    ctx->fftscore = 1;
-    ctx->fftRepeatStop = 0;
-    ctx->fftNoAnchStop = 0;
-    ctx->weight = 3;
-    ctx->tbutree = 1;
-    ctx->disp = 0;
-    ctx->outgap = 1;
-    ctx->alg = 'A';
-    ctx->mix = 0;
-    ctx->tbitr = 0;
-    ctx->tbweight = 0;
-    ctx->tbrweight = 3;
-    ctx->checkC = 0;
-    ctx->treemethod = 'X';
-    ctx->sueff_global = 0.1;
-    ctx->scoremtx = 1;
-    ctx->kobetsubunkatsu = 0;
-    ctx->ppenalty_dist = NOTSPECIFIED;
-    ctx->ppenalty = NOTSPECIFIED;
-    ctx->penalty_shift_factor = 1000.0;
-    ctx->ppenalty_ex = NOTSPECIFIED;
-    ctx->poffset = NOTSPECIFIED;
-    ctx->kimuraR = NOTSPECIFIED;
-    ctx->pamN = NOTSPECIFIED;
-    ctx->geta2 = GETA2;
-    ctx->fftWinSize = NOTSPECIFIED;
-    ctx->fftThreshold = NOTSPECIFIED;
-    ctx->RNAppenalty = NOTSPECIFIED;
-    ctx->RNAppenalty_ex = NOTSPECIFIED;
-    ctx->RNApthr = NOTSPECIFIED;
-    ctx->TMorJTT = JTT;
-    ctx->consweight_multi = 1.0;
-    ctx->consweight_rna = 0.0;
-    ctx->legacygapcost = 0;
-    ctx->specificityconsideration = 0.0;
-    ctx->specifictarget = 0;
-    ctx->nwildcard = 0;
-    ctx->nadd = 0;
+    reporterr("tbfast_lib args: ");
+    for (int32_t argIndex = 0; argIndex < argc; argIndex++) {
+        char* arg = argv[argIndex];
+        reporterr("%s ", arg);
+    }
+    reporterr("\n");
 
     if (pac) {
         pav[0] = "tbfast-pair";
@@ -111,7 +61,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
 
         for (i = 0; i < argc; i++) {
             if (argv[i][0] == '_') {
-                opts->callpairlocalalign = 1;
+                tempOpts->callpairlocalalign = 1;
 
                 for (i++; i < argc; i++) {
                     if (argv[i][0] == '_') {
@@ -128,14 +78,35 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
 
     pavend:
 
+        reporterr("tbfast_lib pav: ");
+        for (int32_t argIndex = 0; argIndex < *pac; argIndex++) {
+            char* arg = pav[argIndex];
+            reporterr("%s ", arg);
+        }
+        reporterr("\n");
+
         for (i -= 1; i < argc; i++) {
             tav[*tac] = argv[i];
             *tac += 1;
         }
 
+        reporterr("tbfast_lib tav: ");
+        for (int32_t argIndex = 0; argIndex < *tac; argIndex++) {
+            char* arg = tav[argIndex];
+            reporterr("%s ", arg);
+        }
+        reporterr("\n");
+
         argc -= *pac - 1;
         argv += *pac - 1;
     }
+
+    reporterr("tbfast_lib args left: ");
+    for (int32_t argIndex = 0; argIndex < argc; argIndex++) {
+        char* arg = argv[argIndex];
+        reporterr("%s ", arg);
+    }
+    reporterr("\n");
 
     while (--argc > 0 && (*++argv)[0] == '-') {
         while ((c = *++argv[0])) {
@@ -237,16 +208,16 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
                     ctx->addprofile = 0;
                     break;
                 case 'y':
-                    opts->distout = 1;
+                    tempOpts->distout = 1;
                     break;
                 case 't':
-                    opts->treeout = 1;
+                    tempOpts->treeout = 1;
                     break;
                 case '^':
-                    opts->treeout = 2;
+                    tempOpts->treeout = 2;
                     break;
                 case 'T':
-                    opts->noalign = 1;
+                    tempOpts->noalign = 1;
                     break;
                 case 'D':
                     ctx->dorp = 'd';
@@ -276,8 +247,8 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
                     break;
 #endif
                 case 'H':
-                    opts->subalignment = 1;
-                    opts->subalignmentoffset = myatoi(*++argv);
+                    tempOpts->subalignment = 1;
+                    tempOpts->subalignmentoffset = myatoi(*++argv);
                     --argc;
                     goto nextoption;
 #if 0
@@ -342,7 +313,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
                     ctx->use_fft = 1;
                     break;
                 case 'U':
-                    opts->treein = 1;
+                    tempOpts->treein = 1;
                     break;
                 case 'u':
                     ctx->tbrweight = 0;
@@ -352,7 +323,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
                     ctx->tbrweight = 3;
                     break;
                 case 'd':
-                    opts->multidist = 1;
+                    tempOpts->multidist = 1;
                     break;
 #if 0
 				case 'd':
@@ -380,16 +351,16 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
                     --argc;
                     goto nextoption;
                 case 'Y':
-                    opts->keeplength = 1;
+                    tempOpts->keeplength = 1;
                     break;
                 case 'z':
-                    opts->mapout = 2;
+                    tempOpts->mapout = 2;
                     break;
                 case 'Z':
-                    opts->mapout = 1;
+                    tempOpts->mapout = 1;
                     break;
                 case 'p':
-                    opts->smoothing = 1;
+                    tempOpts->smoothing = 1;
                     break;
                 case '=':
                     ctx->specifictarget = 1;
@@ -398,8 +369,7 @@ arguments(Context* ctx, TbfastOpts* opts, int argc, char* argv[], int* pac, char
                     ctx->nwildcard = 1;
                     break;
                 case '+':
-                    opts->outputhat23 = myatoi(*++argv);
-                    reporterr("outputhat23=%d\n", opts->outputhat23);
+                    ++argv;
                     --argc;
                     goto nextoption;
                 default:
@@ -494,7 +464,7 @@ msacompactdisthalfmtxthread(msacompactdistmtxthread_arg_t* targ) {
 }
 
 static void
-treebase(Context* ctx, TbfastOpts* opts, int* nlen, char** aseq, int nadd, char* mergeoralign, char** mseq1, char** mseq2, int*** topol, Treedep* dep, double* effarr, int* alloclen, LocalHom** localhomtable, RNApair*** singlerna, double* effarr_kozo, int* targetmap, int* targetmapr, int ntarget, int* uselh, int nseed, int* nfilesfornode) {
+treebase(Context* ctx, TbfastOpts* tempOpts, int* nlen, char** aseq, int nadd, char* mergeoralign, char** mseq1, char** mseq2, int*** topol, Treedep* dep, double* effarr, int* alloclen, LocalHom** localhomtable, RNApair*** singlerna, double* effarr_kozo, int* targetmap, int* targetmapr, int ntarget, int* uselh, int nseed, int* nfilesfornode) {
     int             i, l, m;
     int             len1nocommongap;
     int             len1, len2;
@@ -811,7 +781,7 @@ treebase(Context* ctx, TbfastOpts* opts, int* nlen, char** aseq, int nadd, char*
         if (mergeoralign[l] == '2') {
             gapmaplen = strlen(mseq1[0]) - len1nocommongap + len1;
             adjustgapmap(gapmaplen, gapmap, mseq1[0]);
-            if (opts->smoothing) {
+            if (tempOpts->smoothing) {
                 restorecommongapssmoothly(ctx->njob, ctx->njob - (clus1 + clus2), aseq, localmem[0], localmem[1], gapmap, *alloclen, '-');
                 findnewgaps(ctx, 0, mseq1, gaplen);
                 insertnewgaps_bothorders(ctx, ctx->njob, alreadyaligned, aseq, localmem[0], localmem[1], gaplen, gapmap, gapmaplen, *alloclen, ctx->alg, '-');
@@ -982,7 +952,7 @@ WriteOptions(Context* ctx, FILE* fp) {
 }
 
 int
-tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes, int argc, char* argv[]) {
+tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes, aln_Opts opts, int argc, char* argv[]) {
     aln_Arena permArena_ = {.base = out, .size = outBytes / 4};
     aln_Arena tempArena_ = {.base = (uint8_t*)out + permArena_.size, .size = outBytes - permArena_.size};
 
@@ -996,26 +966,47 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     // and why this even matters
     ctx->dorp = 'p';
 
-    ctx->penalty_shift_factor = 100.0;
-    ctx->outgap = 1;
-    ctx->addprofile = 1;
-    ctx->consweight_multi = 1.0;
     ctx->RNAscoremtx = 'n';
-    ctx->nthread = 1;
-    ctx->nthreadpair = 1;
     ctx->parallelizationstrategy = BAATARI1;
     ctx->minimumweight = 0.0005;
     ctx->newgapstr = "-";
     ctx->nalphabets = 26;
     ctx->nscoredalphabets = 20;
-    ctx->specificityconsideration = 0.0;
     ctx->ndistclass = 10;
     ctx->maxdistclass = -1;
-    ctx->sueff_global = SUEFF;
     ctx->lhlimit = INT_MAX;
     ctx->nthreadreadlh = 1;
     ctx->LineLengthInFASTA = -1;
     ctx->njob = stringsCount;
+    ctx->nthread = 1;    
+    ctx->nthreadpair = 1;
+    ctx->rnaprediction = 'm';
+    ctx->addprofile = 1;
+    ctx->nblosum = 62;
+    ctx->fftscore = 1;
+    ctx->weight = 3;
+    ctx->tbutree = 1;
+    ctx->outgap = 1;
+    ctx->alg = 'A';
+    ctx->tbrweight = 3;
+    ctx->treemethod = 'X';
+    ctx->sueff_global = 0.1;
+    ctx->scoremtx = 1;
+    ctx->ppenalty_dist = NOTSPECIFIED;
+    ctx->ppenalty = NOTSPECIFIED;
+    ctx->penalty_shift_factor = 1000.0;
+    ctx->ppenalty_ex = NOTSPECIFIED;
+    ctx->poffset = NOTSPECIFIED;
+    ctx->kimuraR = NOTSPECIFIED;
+    ctx->pamN = NOTSPECIFIED;
+    ctx->geta2 = GETA2;
+    ctx->fftWinSize = NOTSPECIFIED;
+    ctx->fftThreshold = NOTSPECIFIED;
+    ctx->RNAppenalty = NOTSPECIFIED;
+    ctx->RNAppenalty_ex = NOTSPECIFIED;
+    ctx->RNApthr = NOTSPECIFIED;
+    ctx->TMorJTT = JTT;
+    ctx->consweight_multi = 1.0;
 
     // TODO(sen) What do we need the name array for?
     // TODO(sen) Can we use the strings directly as aos?
@@ -1041,8 +1032,9 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
         seq[strIndex] = thisSeq;
     }
 
-    TbfastOpts  opts_ = {};
-    TbfastOpts* opts = &opts_;
+    TbfastOpts  tempOpts_ = {};
+    TbfastOpts* tempOpts = &tempOpts_;
+    tempOpts->nthreadtb = 1;
 
     int*     selfscore = NULL;
     int      nogaplen;
@@ -1102,24 +1094,24 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
 
     int pac = 0;
     int tac = 0;
-    arguments(ctx, opts, argc, argv, &pac, pav, &tac, tav);
+    arguments(ctx, tempOpts, argc, argv, &pac, pav, &tac, tav);
 
-    if (opts->treein) {
+    if (tempOpts->treein) {
         int    dumx, dumy;
         double dumz;
-        opts->treein = check_guidetreefile(&dumx, &dumy, &dumz);
-        if (opts->treein == 'C') {
+        tempOpts->treein = check_guidetreefile(&dumx, &dumy, &dumz);
+        if (tempOpts->treein == 'C') {
             ctx->compacttree = 2;
-            opts->treein = 0;
+            tempOpts->treein = 0;
             ctx->use_fft = 0;
-        } else if (opts->treein == 'n') {
+        } else if (tempOpts->treein == 'n') {
             ctx->compacttree = 3;
-            opts->treein = 0;
+            tempOpts->treein = 0;
             ctx->use_fft = 0;
         }
     }
 
-    reporterr("treein = %d\n", opts->treein);
+    reporterr("treein = %d\n", tempOpts->treein);
     reporterr("compacttree = %d\n", ctx->compacttree);
 
     if (ctx->fastathreshold < 0.0001)
@@ -1131,7 +1123,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     setstacksize(200 * ctx->njob);
 #endif
 
-    if (opts->subalignment) {
+    if (tempOpts->subalignment) {
         readsubalignmentstable(ctx->njob, NULL, NULL, &nsubalignments, &maxmem);
         fprintf(stderr, "nsubalignments = %d\n", nsubalignments);
         fprintf(stderr, "maxmem = %d\n", maxmem);
@@ -1175,12 +1167,12 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     if (ctx->tbutree && ctx->compacttree != 3)
         iscore = AllocateFloatHalfMtx(ctx->njob);
 
-    opts->ndeleted = 0;
+    tempOpts->ndeleted = 0;
 
-    if (opts->treein) {
-        loadtree(ctx, ctx->njob, topol, len, name, dep, opts->treeout);
+    if (tempOpts->treein) {
+        loadtree(ctx, ctx->njob, topol, len, name, dep, tempOpts->treeout);
         fprintf(stderr, "\ndone.\n\n");
-        if (opts->callpairlocalalign && ctx->specificityconsideration > 0.0) {
+        if (tempOpts->callpairlocalalign && ctx->specificityconsideration > 0.0) {
             int* mem0 = calloc(sizeof(int), ctx->njob);
             int* mem1 = calloc(sizeof(int), ctx->njob);
             expdist = AllocateDoubleMtx(ctx->njob, ctx->njob);
@@ -1243,10 +1235,10 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
                 ilim--;
         }
 
-        if (opts->callpairlocalalign) {
+        if (tempOpts->callpairlocalalign) {
             pairlocalalign(ctx, ctx->njob, name, seq, iscore, localhomtable, pac, pav, expdist);
-            arguments(ctx, opts, tac, tav, NULL, NULL, NULL, NULL);
-            opts->callpairlocalalign = 1;
+            arguments(ctx, tempOpts, tac, tav, NULL, NULL, NULL, NULL);
+            tempOpts->callpairlocalalign = 1;
             if (expdist)
                 FreeDoubleMtx(expdist);
             expdist = NULL;
@@ -1283,7 +1275,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
                 } else
                     fprintf(stderr, "No hat3.seed. No problem.\n");
 
-                if (opts->outputhat23) {
+                if (opts.outputhat23) {
                     prep = fopen("hat3", "w");
                     if (!prep)
                         ErrorExit("Cannot open hat3 to write.");
@@ -1315,7 +1307,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
                     prep = fopen("hat2", "w");
                     WriteFloatHat2_pointer_halfmtx(ctx, prep, ctx->njob, name, iscore);
                     fclose(prep);
-                } else if (opts->distout) {
+                } else if (tempOpts->distout) {
                     prep = fopen("hat2", "w");
                     WriteFloatHat2_pointer_halfmtx(ctx, prep, ctx->njob, name, iscore);
                     fclose(prep);
@@ -1359,10 +1351,10 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
             eff_kozo_mapped = AllocateDoubleVec(ctx->njob);
         }
     } else if (ctx->compacttree != 3) {
-        if (opts->callpairlocalalign) {
+        if (tempOpts->callpairlocalalign) {
             pairlocalalign(ctx, ctx->njob, name, seq, iscore, NULL, pac, pav, expdist);
-            arguments(ctx, opts, tac, tav, NULL, NULL, NULL, NULL);
-            opts->callpairlocalalign = 1;
+            arguments(ctx, tempOpts, tac, tav, NULL, NULL, NULL, NULL);
+            tempOpts->callpairlocalalign = 1;
             if (expdist)
                 FreeDoubleMtx(expdist);
             expdist = NULL;
@@ -1372,7 +1364,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
             fprintf(stderr, "scoremtx=%d\n", ctx->scoremtx);
             fprintf(stderr, "fastathreshold=%f\n", ctx->fastathreshold);
         }
-        if (opts->distout || opts->outputhat23) {
+        if (tempOpts->distout || opts.outputhat23) {
             reporterr("\nwriting hat2 (1)\n");
             prep = fopen("hat2", "w");
             WriteFloatHat2_pointer_halfmtx(ctx, prep, ctx->njob, name, iscore);
@@ -1465,18 +1457,18 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
         if (ctx->nthreadreadlh == 0)
             ctx->nthreadreadlh = 1;
 
-        opts->nthreadtb = 0;
+        tempOpts->nthreadtb = 0;
         ctx->nthread = 0;
     } else {
         ctx->nthreadreadlh = 1;
-        opts->nthreadtb = ctx->nthread;
+        tempOpts->nthreadtb = ctx->nthread;
     }
 
     initSignalSM(ctx);
     initFiles(ctx);
     WriteOptions(ctx, ctx->trap_g);
 
-    if (opts->distout && !opts->treeout && opts->noalign) {
+    if (tempOpts->distout && !tempOpts->treeout && tempOpts->noalign) {
         writeData_pointer(ctx, ctx->prep_g, ctx->njob, name, seq);
         fprintf(stderr, "\n");
         goto chudan;
@@ -1488,11 +1480,11 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
         exit(1);
     }
 
-    if (ctx->nadd && opts->keeplength) {
+    if (ctx->nadd && tempOpts->keeplength) {
         originalgaps = (char*)calloc(ctx->maxInputSeqLen + 1, sizeof(char));
         recordoriginalgaps(originalgaps, ctx->njob - ctx->nadd, seq);
 
-        if (opts->mapout) {
+        if (tempOpts->mapout) {
             addbk = (char**)calloc(ctx->nadd + 1, sizeof(char*));
             for (i = 0; i < ctx->nadd; i++) {
                 ien = strlen(seq[ctx->njob - ctx->nadd + i]);
@@ -1507,7 +1499,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
         addbk = NULL;
     }
 
-    if (!opts->treein) {
+    if (!tempOpts->treein) {
         reporterr("tbutree = %d, compacttree = %d\n", ctx->tbutree, ctx->compacttree);
         if (ctx->compacttree == 3) {
             iscore = NULL;
@@ -1595,13 +1587,13 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
             reporterr("\rdone.                                           \n");
 
         } else {
-            if (opts->callpairlocalalign) {
-                if (opts->multidist) {
+            if (tempOpts->callpairlocalalign) {
+                if (tempOpts->multidist) {
                     reporterr("Bug in v7.290.  Please email katoh@ifrec.osaka-u.ac.jp\n");
                     exit(1);
                 }
             } else {
-                if (opts->multidist) {
+                if (tempOpts->multidist) {
                     fprintf(stderr, "Loading 'hat2n' (aligned sequences - new sequences) ... ");
                     prep = fopen("hat2n", "r");
                     if (prep == NULL)
@@ -1627,7 +1619,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
                     fprintf(stderr, "done.\n");
                 }
 
-                if (opts->distout) {
+                if (tempOpts->distout) {
                     reporterr("\nwriting hat2 (2)\n");
                     hat2p = fopen("hat2", "w");
                     WriteFloatHat2_pointer_halfmtx(ctx, hat2p, ctx->njob, name, iscore);
@@ -1681,7 +1673,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
             }
         }
 
-        if (opts->subalignment) {
+        if (tempOpts->subalignment) {
             fprintf(stderr, "Constructing a UPGMA tree ... ");
             fixed_supg_double_realloc_nobk_halfmtx_treeout_constrained(ctx, ctx->njob, iscore, topol, len, name, dep, nsubalignments, subtable, 1);
         } else if (ctx->compacttree == 3) {
@@ -1702,7 +1694,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
         } else if (ctx->tbutree == 0 && ctx->compacttree)  // tbutree != 0 no toki (aln->mtx) ha, 6merdistance -> disttbfast.c; dp distance -> muzukashii
         {
             reporterr("Constructing a tree ... nthread=%d", ctx->nthread);
-            compacttree_memsaveselectable(ctx, ctx->njob, partmtx, mindistfrom, mindist, NULL, selfscore, seq, skiptable, topol, len, name, NULL, dep, opts->treeout, ctx->compacttree, 1);
+            compacttree_memsaveselectable(ctx, ctx->njob, partmtx, mindistfrom, mindist, NULL, selfscore, seq, skiptable, topol, len, name, NULL, dep, tempOpts->treeout, ctx->compacttree, 1);
 
             if (mindistfrom)
                 free(mindistfrom);
@@ -1714,9 +1706,9 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
                 FreeIntMtx(skiptable);
             skiptable = NULL;
             free(partmtx);
-        } else if (opts->treeout) {
+        } else if (tempOpts->treeout) {
             fprintf(stderr, "Constructing a UPGMA tree ... ");
-            fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(ctx, ctx->njob, iscore, topol, len, name, dep, 1, opts->treeout);
+            fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(ctx, ctx->njob, iscore, topol, len, name, dep, 1, tempOpts->treeout);
         } else {
             fprintf(stderr, "Constructing a UPGMA tree ... ");
             fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(ctx, ctx->njob, iscore, topol, len, dep, 1, 1);
@@ -1742,7 +1734,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
 
     fclose(orderfp);
 
-    if (opts->treeout && opts->noalign) {
+    if (tempOpts->treeout && tempOpts->noalign) {
         writeData_pointer(ctx, ctx->prep_g, ctx->njob, name, seq);
         fprintf(stderr, "\n");
         goto chudan;  // 2016Jul31
@@ -1880,7 +1872,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
         commongappick(ctx->njob - ctx->nadd, seq);
         for (i = 0; i < ctx->njob - ctx->nadd; i++)
             strcpy(bseq[i], seq[i]);
-    } else if (opts->subalignment) {
+    } else if (tempOpts->subalignment) {
         for (i = 0; i < ctx->njob - 1; i++)
             mergeoralign[i] = 'a';
         for (i = 0; i < nsubalignments; i++) {
@@ -1904,12 +1896,12 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
                     fprintf(stderr, "# %d. %-10.10s -> %d letters (including gaps)\n", subtable[i][j] + 1, name[subtable[i][j]] + 1, (int)strlen(seq[subtable[i][j]]));
                     fprintf(stderr, "#\n");
                     fprintf(stderr, "# See http://mafft.cbrc.jp/alignment/software/merge.html for details.\n");
-                    if (opts->subalignmentoffset) {
+                    if (tempOpts->subalignmentoffset) {
                         fprintf(stderr, "#\n");
-                        fprintf(stderr, "# You specified seed alignment(s) consisting of %d sequences.\n", opts->subalignmentoffset);
+                        fprintf(stderr, "# You specified seed alignment(s) consisting of %d sequences.\n", tempOpts->subalignmentoffset);
                         fprintf(stderr, "# In this case, the rule of numbering is:\n");
-                        fprintf(stderr, "#   The aligned seed sequences are numbered as 1 .. %d\n", opts->subalignmentoffset);
-                        fprintf(stderr, "#   The input sequences to be aligned are numbered as %d .. %d\n", opts->subalignmentoffset + 1, opts->subalignmentoffset + ctx->njob);
+                        fprintf(stderr, "#   The aligned seed sequences are numbered as 1 .. %d\n", tempOpts->subalignmentoffset);
+                        fprintf(stderr, "#   The input sequences to be aligned are numbered as %d .. %d\n", tempOpts->subalignmentoffset + 1, tempOpts->subalignmentoffset + ctx->njob);
                     }
                     fprintf(stderr, "###############################################################################\n");
                     fprintf(stderr, "\n");
@@ -1940,12 +1932,12 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
                 fprintf(stderr, "# If you really want to use this subalignment, pelase give a tree with --treein \n");
                 fprintf(stderr, "# http://mafft.cbrc.jp/alignment/software/treein.html\n");
                 fprintf(stderr, "# http://mafft.cbrc.jp/alignment/software/merge.html\n");
-                if (opts->subalignmentoffset) {
+                if (tempOpts->subalignmentoffset) {
                     fprintf(stderr, "#\n");
-                    fprintf(stderr, "# You specified seed alignment(s) consisting of %d sequences.\n", opts->subalignmentoffset);
+                    fprintf(stderr, "# You specified seed alignment(s) consisting of %d sequences.\n", tempOpts->subalignmentoffset);
                     fprintf(stderr, "# In this case, the rule of numbering is:\n");
-                    fprintf(stderr, "#   The aligned seed sequences are numbered as 1 .. %d\n", opts->subalignmentoffset);
-                    fprintf(stderr, "#   The input sequences to be aligned are numbered as %d .. %d\n", opts->subalignmentoffset + 1, opts->subalignmentoffset + ctx->njob);
+                    fprintf(stderr, "#   The aligned seed sequences are numbered as 1 .. %d\n", tempOpts->subalignmentoffset);
+                    fprintf(stderr, "#   The input sequences to be aligned are numbered as %d .. %d\n", tempOpts->subalignmentoffset + 1, tempOpts->subalignmentoffset + ctx->njob);
                 }
                 fprintf(stderr, "############################################################################### \n");
                 fprintf(stderr, "\n");
@@ -2004,11 +1996,11 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
 
     fprintf(stderr, "Progressive alignment ... \n");
 
-    treebase(ctx, opts, nlen, bseq, ctx->nadd, mergeoralign, mseq1, mseq2, topol, dep, eff, &alloclen, localhomtable, singlerna, eff_kozo_mapped, targetmap, targetmapr, ntarget, uselh, nseed, nfilesfornode);
+    treebase(ctx, tempOpts, nlen, bseq, ctx->nadd, mergeoralign, mseq1, mseq2, topol, dep, eff, &alloclen, localhomtable, singlerna, eff_kozo_mapped, targetmap, targetmapr, ntarget, uselh, nseed, nfilesfornode);
 
     fprintf(stderr, "\ndone.\n");
 
-    if (opts->keeplength) {
+    if (tempOpts->keeplength) {
         dlf = fopen("_deletelist", "w");
         deletelist = (GapPos**)calloc(ctx->nadd + 1, sizeof(GapPos*));
         for (i = 0; i < ctx->nadd; i++) {
@@ -2017,7 +2009,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
             deletelist[i][0].len = 0;
         }
         deletelist[ctx->nadd] = NULL;
-        opts->ndeleted = deletenewinsertions_whole(ctx->njob - ctx->nadd, ctx->nadd, bseq, bseq + ctx->njob - ctx->nadd, deletelist);
+        tempOpts->ndeleted = deletenewinsertions_whole(ctx->njob - ctx->nadd, ctx->nadd, bseq, bseq + ctx->njob - ctx->nadd, deletelist);
 
         for (i = 0; i < ctx->nadd; i++) {
             if (deletelist[i])
@@ -2030,9 +2022,9 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
         free(originalgaps);
         originalgaps = NULL;
 
-        if (opts->mapout) {
+        if (tempOpts->mapout) {
             dlf = fopen("_deletemap", "w");
-            if (opts->mapout == 1)
+            if (tempOpts->mapout == 1)
                 reconstructdeletemap(ctx, ctx->nadd, addbk, deletelist, bseq + ctx->njob - ctx->nadd, dlf, name + ctx->njob - ctx->nadd);
             else
                 reconstructdeletemap_compact(ctx, ctx->nadd, addbk, deletelist, seq + ctx->njob - ctx->nadd, dlf, name + ctx->njob - ctx->nadd);
@@ -2100,10 +2092,10 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
 
     if (ctx->spscoreout)
         reporterr("Unweighted sum-of-pairs score = %10.5f\n", sumofpairsscore(ctx, ctx->njob, bseq));
-    ctx->nthread = MAX(opts->nthreadtb, ctx->nthreadreadlh);  // toriaezu
-    if (opts->ndeleted > 0) {
-        reporterr("\nTo keep the alignment length, %d letters were DELETED.\n", opts->ndeleted);
-        if (opts->mapout)
+    ctx->nthread = MAX(tempOpts->nthreadtb, ctx->nthreadreadlh);  // toriaezu
+    if (tempOpts->ndeleted > 0) {
+        reporterr("\nTo keep the alignment length, %d letters were DELETED.\n", tempOpts->ndeleted);
+        if (tempOpts->mapout)
             reporterr("The deleted letters are shown in the (filename).map file.\n");
         else
             reporterr("To know the positions of deleted letters, rerun the same command with the --mapout option.\n");

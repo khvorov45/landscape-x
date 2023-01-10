@@ -1334,7 +1334,6 @@ arguments(Context* ctx, int argc, char* argv[]) {
     stdout_dist = 0;
     store_dist = 1;
     store_localhom = 1;
-    //	dorp = NOTSPECIFIED;
     ctx->ppenalty = NOTSPECIFIED;
     ctx->ppenalty_OP = NOTSPECIFIED;
     ctx->ppenalty_ex = NOTSPECIFIED;
@@ -1353,11 +1352,7 @@ arguments(Context* ctx, int argc, char* argv[]) {
     ctx->specifictarget = 0;
     ctx->nwildcard = 0;
 
-    //	reporterr( "argc=%d\n", argc );
-    //	reporterr( "*argv=%s\n", *argv );
-    //	reporterr( "(*argv)[0]=%c\n", (*argv)[0] );
     while (--argc > 0 && (*++argv)[0] == '-') {
-        //		reporterr( "(*argv)[0] in while loop = %s\n", (*argv) );
         while ((c = *++argv[0])) {
             switch (c) {
                 case 'i':
@@ -1390,44 +1385,30 @@ arguments(Context* ctx, int argc, char* argv[]) {
                     goto nextoption;
                 case 'k':
                     ctx->kimuraR = myatoi(*++argv);
-                    //					fprintf( stderr, "kimuraR = %d\n", kimuraR );
                     --argc;
                     goto nextoption;
                 case 'b':
                     ctx->nblosum = myatoi(*++argv);
                     ctx->scoremtx = 1;
-                    //					fprintf( stderr, "blosum %d\n", nblosum );
                     --argc;
                     goto nextoption;
                 case 'j':
                     ctx->pamN = myatoi(*++argv);
                     ctx->scoremtx = 0;
                     ctx->TMorJTT = JTT;
-                    //					fprintf( stderr, "jtt %d\n", pamN );
                     --argc;
                     goto nextoption;
                 case 'm':
                     ctx->pamN = myatoi(*++argv);
                     ctx->scoremtx = 0;
                     ctx->TMorJTT = TM;
-                    //					fprintf( stderr, "TM %d\n", pamN );
                     --argc;
                     goto nextoption;
-#if 0
-				case 'l':
-					ppslocal = (int)( atof( *++argv ) * 1000 + 0.5 );
-					pslocal = (int)( 600.0 / 1000.0 * ppslocal + 0.5);
-//					fprintf( stderr, "ppslocal = %d\n", ppslocal );
-//					fprintf( stderr, "pslocal = %d\n", pslocal );
-					--argc;
-					goto nextoption;
-#else
                 case 'l':
                     if (atof(*++argv) < 0.00001)
                         store_localhom = 0;
                     --argc;
                     goto nextoption;
-#endif
                 case 'd':
                     whereispairalign = *++argv;
                     fprintf(stderr, "whereispairalign = %s\n", whereispairalign);
@@ -1438,14 +1419,15 @@ arguments(Context* ctx, int argc, char* argv[]) {
                     fprintf(stderr, "laraparams = %s\n", laraparams);
                     --argc;
                     goto nextoption;
+      
                 case 'C':
                     ctx->nthread = myatoi(*++argv);
                     --argc;
                     ctx->nthread = 0;
                     goto nextoption;
+      
                 case 'I':
                     ctx->nadd = myatoi(*++argv);
-                    //					fprintf( stderr, "nadd = %d\n", nadd );
                     --argc;
                     goto nextoption;
                 case 'w':
@@ -1460,7 +1442,6 @@ arguments(Context* ctx, int argc, char* argv[]) {
                     goto nextoption;
                 case 'u':
                     ctx->specificityconsideration = (double)myatof(*++argv);
-                    //					fprintf( stderr, "specificityconsideration = %f\n", specificityconsideration );
                     --argc;
                     goto nextoption;
                 case 'K':  // Hontou ha iranai. disttbfast.c, tbfast.c to awaserutame.
@@ -1475,44 +1456,19 @@ arguments(Context* ctx, int argc, char* argv[]) {
                     store_localhom = 0;
                     store_dist = 0;
                     break;
-#if 1
+
                 case 'a':
                     ctx->fmodel = 1;
                     break;
-#endif
-#if 0
-				case 'r':
-					fmodel = -1;
-					break;
-#endif
+
                 case 'D':
                     ctx->dorp = 'd';
                     break;
+
                 case 'P':
                     ctx->dorp = 'p';
                     break;
-#if 0
-				case 'e':
-					fftscore = 0;
-					break;
-				case 'O':
-					fftNoAnchStop = 1;
-					break;
-#endif
-#if 0
-				case 'Q':
-					calledByXced = 1;
-					break;
-				case 'x':
-					disp = 1;
-					break;
-				case 'a':
-					alg = 'a';
-					break;
-				case 'S':
-					alg = 'S';
-					break;
-#endif
+
                 case 'U':
                     lastonce = 1;
                     break;
@@ -1527,7 +1483,7 @@ arguments(Context* ctx, int argc, char* argv[]) {
                     ctx->alg = 'L';
                     break;
                 case 'Y':
-                    ctx->alg = 'Y';  // nadd>0 no toki nomi. moto no hairetsu to atarashii hairetsuno alignmnt -> L;
+                    ctx->alg = 'Y';
                     break;
                 case 'Z':
                     ctx->usenaivescoreinsteadofalignmentscore = 1;
@@ -1580,47 +1536,38 @@ arguments(Context* ctx, int argc, char* argv[]) {
                 case ':':
                     ctx->nwildcard = 1;
                     break;
-                    /* Modified 01/08/27, default: user tree */
+
                 case 'J':
                     ctx->tbutree = 0;
                     break;
-                    /* modification end. */
+
                 case 'o':
-                    //					foldalignopt = *++argv;
                     strcat(foldalignopt, " ");
                     strcat(foldalignopt, *++argv);
                     fprintf(stderr, "foldalignopt = %s\n", foldalignopt);
                     --argc;
                     goto nextoption;
-#if 0
-				case 'z':
-					fftThreshold = myatoi( *++argv );
-					--argc; 
-					goto nextoption;
-				case 'w':
-					fftWinSize = myatoi( *++argv );
-					--argc;
-					goto nextoption;
-				case 'Z':
-					checkC = 1;
-					break;
-#endif
+
                 default:
                     fprintf(stderr, "illegal option %c\n", c);
                     argc = 0;
                     break;
             }
         }
+
     nextoption:
         ;
     }
+
     if (argc == 1) {
         argc--;
     }
+
     if (argc != 0) {
         fprintf(stderr, "pairlocalalign options: Check source file !\n");
         exit(1);
     }
+
     if (ctx->tbitr == 1 && ctx->outgap == 0) {
         fprintf(stderr, "conflicting options : o, m or u\n");
         exit(1);
