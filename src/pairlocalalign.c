@@ -1331,7 +1331,6 @@ arguments(Context* ctx, int argc, char* argv[]) {
     stdout_dist = 0;
     store_dist = 1;
     store_localhom = 1;
-    ctx->ppenalty = NOTSPECIFIED;
     ctx->ppenalty_OP = NOTSPECIFIED;
     ctx->ppenalty_ex = NOTSPECIFIED;
     ctx->ppenalty_EX = NOTSPECIFIED;
@@ -1355,10 +1354,7 @@ arguments(Context* ctx, int argc, char* argv[]) {
                     ++argv;
                     --argc;
                     goto nextoption;
-                case 'f':
-                    ctx->ppenalty = (int)(atof(*++argv) * 1000 - 0.5);
-                    --argc;
-                    goto nextoption;
+
                 case 'g':
                     ctx->ppenalty_ex = (int)(atof(*++argv) * 1000 - 0.5);
                     --argc;
@@ -1570,7 +1566,7 @@ score2dist(double pscore, double selfscore1, double selfscore2) {
 }
 
 static void
-pairalign(Context* ctx, const char* const* name, char** seq, char** aseq, char** dseq, int* thereisxineachseq, char** mseq1, char** mseq2, int alloclen, Lastresx** lastresx, double** distancemtx, LocalHom** localhomtable, double** expdist, int ngui) {
+pairalign(aln_Opts opts, Context* ctx, const char* const* name, char** seq, char** aseq, char** dseq, int* thereisxineachseq, char** mseq1, char** mseq2, int alloclen, Lastresx** lastresx, double** distancemtx, LocalHom** localhomtable, double** expdist, int ngui) {
     int    i, j, ilim, jst, jj;
     int    off1, off2, dum1, dum2, thereisx;
     double pscore = 0.0;  // by D.Mathog
@@ -1731,7 +1727,7 @@ pairalign(Context* ctx, const char* const* name, char** seq, char** aseq, char**
 
     {
         double** dynamicmtx = NULL;
-        if (ctx->opts.specificityconsideration > 0.0)
+        if (opts.specificityconsideration > 0.0)
             dynamicmtx = AllocateDoubleMtx(ctx->nalphabets, ctx->nalphabets);
 
         if (ctx->alg == 'Y' || ctx->alg == 'r')
@@ -1790,7 +1786,7 @@ pairalign(Context* ctx, const char* const* name, char** seq, char** aseq, char**
                 //			for( l=0; l<clus1; l++ ) fprintf( stderr, "## STEP-eff for mseq1-%d %f\n", l, effarr1[l] );
 
                 if (ctx->use_fft) {
-                    pscore = Falign(ctx, NULL, NULL, ctx->n_dis_consweight_multi, mseq1, mseq2, effarr1, effarr2, NULL, NULL, 1, 1, alloclen, &intdum);
+                    pscore = Falign(opts, ctx, NULL, NULL, ctx->n_dis_consweight_multi, mseq1, mseq2, effarr1, effarr2, NULL, NULL, 1, 1, alloclen, &intdum);
                     //					fprintf( stderr, "pscore (fft) = %f\n", pscore );
                     off1 = off2 = 0;
                 } else {
@@ -1809,20 +1805,18 @@ pairalign(Context* ctx, const char* const* name, char** seq, char** aseq, char**
                                     pscore = G__align11(ctx, ctx->n_dis_consweight_multi, mseq1, mseq2, alloclen, ctx->outgap, ctx->outgap);
                                     if (thereisx)
                                         pscore = G__align11_noalign(ctx, ctx->n_dis_consweight_multi, ctx->penalty, ctx->penalty_ex, distseq1, distseq2);
-#if 1
-                                    if (ctx->opts.specificityconsideration > 0.0) {
+                                    if (opts.specificityconsideration > 0.0) {
                                         if (expdist)
                                             dist = expdist[i][j];
                                         else
                                             dist = score2dist(pscore, selfscore[i], selfscore[j]);
-                                        if (dist2offset(ctx, dist) < 0.0) {
-                                            makedynamicmtx(ctx, dynamicmtx, ctx->n_dis_consweight_multi, 0.5 * dist);  // upgma ni awaseru.
+                                        if (dist2offset(opts, dist) < 0.0) {
+                                            makedynamicmtx(opts, ctx, dynamicmtx, ctx->n_dis_consweight_multi, 0.5 * dist);  // upgma ni awaseru.
                                             strcpy(mseq1[0], seq[i]);
                                             strcpy(mseq2[0], seq[j]);
                                             G__align11(ctx, dynamicmtx, mseq1, mseq2, alloclen, ctx->outgap, ctx->outgap);
                                         }
                                     }
-#endif
                                 } else
                                     pscore = G__align11_noalign(ctx, ctx->n_dis_consweight_multi, ctx->penalty, ctx->penalty_ex, distseq1, distseq2);
                             }
@@ -1839,21 +1833,19 @@ pairalign(Context* ctx, const char* const* name, char** seq, char** aseq, char**
                                     strcpy(dumseq2[0], distseq2[0]);
                                     pscore = genL__align11(ctx, ctx->n_dis_consweight_multi, dumseq1, dumseq2, alloclen, &dum1, &dum2);  // uwagaki
                                 }
-#if 1
-                                if (ctx->opts.specificityconsideration > 0.0) {
+                                if (opts.specificityconsideration > 0.0) {
                                     //									fprintf( stderr, "dist = %f\n", score2dist( pscore, selfscore[i], selfscore[j] ) );
                                     if (expdist)
                                         dist = expdist[i][j];
                                     else
                                         dist = score2dist(pscore, selfscore[i], selfscore[j]);
-                                    if (dist2offset(ctx, dist) < 0.0) {
-                                        makedynamicmtx(ctx, dynamicmtx, ctx->n_dis_consweight_multi, 0.5 * dist);  // upgma ni awaseru.
+                                    if (dist2offset(opts, dist) < 0.0) {
+                                        makedynamicmtx(opts, ctx, dynamicmtx, ctx->n_dis_consweight_multi, 0.5 * dist);  // upgma ni awaseru.
                                         strcpy(mseq1[0], seq[i]);
                                         strcpy(mseq2[0], seq[j]);
                                         genL__align11(ctx, dynamicmtx, mseq1, mseq2, alloclen, &off1, &off2);
                                     }
                                 }
-#endif
                             }
                             break;
                         case ('R'):
@@ -1881,20 +1873,18 @@ pairalign(Context* ctx, const char* const* name, char** seq, char** aseq, char**
                                         pscore = L__align11(ctx, ctx->n_dis_consweight_multi, 0.0, mseq1, mseq2, alloclen, &off1, &off2);  // all pair
                                         if (thereisx)
                                             pscore = L__align11_noalign(ctx, ctx->n_dis_consweight_multi, distseq1, distseq2);  // all pair
-#if 1
-                                        if (ctx->opts.specificityconsideration > 0.0) {
+                                        if (opts.specificityconsideration > 0.0) {
                                             if (expdist)
                                                 dist = expdist[i][j];
                                             else
                                                 dist = score2dist(pscore, selfscore[i], selfscore[j]);
-                                            if ((scoreoffset = dist2offset(ctx, dist)) < 0.0) {
-                                                makedynamicmtx(ctx, dynamicmtx, ctx->n_dis_consweight_multi, 0.5 * dist);  // upgma ni awaseru.
+                                            if ((scoreoffset = dist2offset(opts, dist)) < 0.0) {
+                                                makedynamicmtx(opts, ctx, dynamicmtx, ctx->n_dis_consweight_multi, 0.5 * dist);  // upgma ni awaseru.
                                                 strcpy(mseq1[0], seq[i]);
                                                 strcpy(mseq2[0], seq[j]);
                                                 L__align11(ctx, dynamicmtx, scoreoffset, mseq1, mseq2, alloclen, &off1, &off2);
                                             }
                                         }
-#endif
                                     } else
                                         pscore = L__align11_noalign(ctx, ctx->n_dis_consweight_multi, distseq1, distseq2);  // all pair
                                 }
@@ -2117,7 +2107,7 @@ pairalign(Context* ctx, const char* const* name, char** seq, char** aseq, char**
 }
 
 int
-pairlocalalign(Context* ctx, int ngui, const char* const* namegui, char** seqgui, double** distancemtx, LocalHom** localhomtable, int argc, char** argv, double** expdist) {
+pairlocalalign(aln_Opts opts, Context* ctx, int ngui, const char* const* namegui, char** seqgui, double** distancemtx, LocalHom** localhomtable, int argc, char** argv, double** expdist) {
     aln_assert(ngui >= 2);
 
     int *      nlen, *thereisxineachseq;
@@ -2180,7 +2170,7 @@ pairlocalalign(Context* ctx, int ngui, const char* const* namegui, char** seqgui
     } else
         lastresx = NULL;
 
-    constants(ctx, ctx->njob, seq);
+    constants(opts, ctx, ctx->njob, seq);
     initSignalSM(ctx);
     initFiles(ctx);
 
@@ -2192,7 +2182,7 @@ pairlocalalign(Context* ctx, int ngui, const char* const* namegui, char** seqgui
 
     //reporterr( "expdist=%p\n", expdist );
 
-    if (ctx->dorp == 'p' && ctx->opts.scoremtx == 1 && ctx->opts.nblosum > 0)  // protein, not text.  hitsuyou?
+    if (ctx->dorp == 'p' && opts.scoremtx == 1 && opts.nblosum > 0)  // protein, not text.  hitsuyou?
     {
         for (i = 0; i < ctx->njob; i++) {
             gappick0(bseq[i], seq[i]);
@@ -2207,7 +2197,7 @@ pairlocalalign(Context* ctx, int ngui, const char* const* namegui, char** seqgui
         }
     }
 
-    pairalign(ctx, name, bseq, aseq, dseq, thereisxineachseq, mseq1, mseq2, alloclen, lastresx, distancemtx, localhomtable, expdist, ngui);
+    pairalign(opts, ctx, name, bseq, aseq, dseq, thereisxineachseq, mseq1, mseq2, alloclen, lastresx, distancemtx, localhomtable, expdist, ngui);
 
     fprintf(ctx->trap_g, "done.\n");
 #if DEBUG
@@ -2244,7 +2234,7 @@ pairlocalalign(Context* ctx, int ngui, const char* const* namegui, char** seqgui
     free(thereisxineachseq);
     freeconstants(ctx);
 
-    Falign(ctx, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, NULL);
+    Falign(opts, ctx, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, NULL);
     G__align11(ctx, NULL, NULL, NULL, 0, 0, 0);  // 20130603
     G__align11_noalign(ctx, NULL, 0, 0, NULL, NULL);
     L__align11(ctx, NULL, 0.0, NULL, NULL, 0, NULL, NULL);

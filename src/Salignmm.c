@@ -942,7 +942,7 @@ Atracking(Context* ctx, double* lasthorizontalw, double* lastverticalw, double f
 }
 
 double
-A__align(Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_l, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, char* sgap1, char* sgap2, char* egap1, char* egap2, int headgp, int tailgp, int firstmem, int calledbyfulltreebase, double*** cpmxchild0, double*** cpmxchild1, double*** cpmxresult, double orieff1, double orieff2) {
+A__align(aln_Opts opts, Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_l, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, char* sgap1, char* sgap2, char* egap1, char* egap2, int headgp, int tailgp, int firstmem, int calledbyfulltreebase, double*** cpmxchild0, double*** cpmxchild1, double*** cpmxresult, double orieff1, double orieff2) {
     int        reuseprofiles;
     static int previousfirstlen;  // 2016/Feb/1 // MEMBER NO CHECK GA HITSUYOU!!!!
     static int previousicyc;  // 2016/Feb/1 // MEMBER NO CHECK GA HITSUYOU!!!!
@@ -1259,8 +1259,7 @@ A__align(Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_l, c
         exit(1);
     }
 
-    if (cpmxresult && ctx->opts.specificityconsideration == 0.0)  // n_dynamicmtx ga henka suru toki profile ha sairiyou dekinai.
-    {
+    if (cpmxresult && opts.specificityconsideration == 0.0) {
         if (sgap1) {
             reporterr("The combination of sgap1 and cpmxhit is not supported. See Salignmm.c\n");
             exit(1);

@@ -187,7 +187,6 @@ typedef struct GapPos {
 } GapPos;
 
 typedef struct Context {
-    aln_Opts opts;
     char     modelname[500];
     int      njob;
     int      maxInputSeqLen;
@@ -216,7 +215,6 @@ typedef struct Context {
     int      tbutree;
     int      trywarp;
     int      penalty;
-    int      ppenalty;
     int      penaltyLN;
     int      penalty_dist;
     int      RNApenalty;
@@ -352,7 +350,7 @@ short**   AllocateShortMtx(int, int);
 void      FreeShortMtx(short**);
 void      freeintmtx(int**, int);
 
-extern void   constants(Context* ctx, int nseq, char** seq);
+extern void   constants(aln_Opts opts, Context* ctx, int nseq, char** seq);
 extern char** Calignm1(double* wm, char** aseq, char* seq, double* effarr, int icyc, int ex);
 extern char** Dalignm1();
 extern char** align0();
@@ -361,12 +359,12 @@ extern double score_m_1(char**, int, int, double**);
 extern char   seqcheck(Context* ctx, char**);
 extern double ipower(double, int);
 extern double translate_and_Calign(char** mseq1, char** mseq2, double* effarr1, double* effarr2, int clus1, int clus2, int alloclen);
-extern double A__align(Context* ctx, double** scoringmtx, int penalty, int penalty_ex, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, char* gs1, char* gs2, char* ge1, char* ge2, int headgp, int tailgp, int firstmem, int calledby, double*** cpmxchild0, double*** cpmxchild1, double*** cpmxresult, double orieff1, double orieff2);
+extern double A__align(aln_Opts opts, Context* ctx, double** scoringmtx, int penalty, int penalty_ex, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, char* gs1, char* gs2, char* ge1, char* ge2, int headgp, int tailgp, int firstmem, int calledby, double*** cpmxchild0, double*** cpmxchild1, double*** cpmxresult, double orieff1, double orieff2);
 extern double A__align11();
 extern double A__align_gapmap(void);
 extern double L__align11(Context* ctx, double** scoringmtx, double scoreoffset, char** seq1, char** seq2, int alloclen, int* off1pt, int* off2pt);
 extern double G__align11(Context* ctx, double** scoringmtx, char** seq1, char** seq2, int alloclen, int headgp, int tailgp);
-extern double Falign(Context* ctx, int** whichmtx, double*** scoringmatrices, double** scoreingmtx, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int clus1, int clus2, int alloclen, int* fftlog);
+extern double Falign(aln_Opts opts, Context* ctx, int** whichmtx, double*** scoringmatrices, double** scoreingmtx, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int clus1, int clus2, int alloclen, int* fftlog);
 extern double Conalign();
 extern double Aalign(Context* ctx, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen);
 extern double imp_match_out_sc(int, int);
@@ -461,14 +459,14 @@ extern void         blockAlign(int* cut1, int* cut2, double** ocrossscore, int* 
 extern void         blockAlign2(Context* ctx, int* cut1, int* cut2, Segment** seg1, Segment** seg2, double** ocrossscore, int* ncut);
 extern double       imp_match_out_scD(int i1, int j1);
 extern void         imp_match_init_strictD(Context* ctx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1kozo, double* eff2kozo, LocalHom*** localhom, char* swaplist, int* memlist1, int* memlist2, int* uselh, int* seedinlh1, int* seedinlh2, int nodeid, int nfiles);
-extern double       MSalignmm(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, char*, char*, char*, char*, int headgp, int tailgp, double*** cpmxchild0, double*** cpmxchild1, double*** cpmxresult, double orieff1, double orieff2);
+extern double       MSalignmm(aln_Opts opts, Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, char*, char*, char*, char*, int headgp, int tailgp, double*** cpmxchild0, double*** cpmxchild1, double*** cpmxresult, double orieff1, double orieff2);
 extern double       MSalignmm_variousdist(Context* ctx, double*** matrices, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, char*, char*, char*, char*, int headgp, int tailgp);
 extern double       Lalignmm_hmout(Context* ctx, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, char*, char*, char*, double** map);
 extern double       MSalign11(Context* ctx, char** seq1, char** seq2, int alloclen);
 extern double       A__align_variousdist(Context* ctx, int** which, double*** scoringmatrices, int penalty, int penalty_ex, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, char* gs1, char* gs2, char* ge1, char* ge2, int headgp, int tailgp);
 extern double       A__align_gapmap(void);
 extern double       translate_and_Calign(char** mseq1, char** mseq2, double* effarr1, double* effarr2, int clus1, int clus2, int alloclen);
-extern double       Falign_udpari_long(Context* ctx, double*** scoringmatrices, double** scoringmtx, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int clus1, int clus2, int alloclen, int* fftlog);
+extern double       Falign_udpari_long(aln_Opts opts, Context* ctx, double*** scoringmatrices, double** scoringmtx, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int clus1, int clus2, int alloclen, int* fftlog);
 extern void         part_imp_match_init(double* imp, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, LocalHom*** localhom);
 extern double       G__align11psg(Context* ctx, double** codonmtx, double** scoringmtx, char** seq1, char** seq2, int alloclen, int headgp, int tailgp, double* gstart, double* gend);
 extern double       G__align11_noalign(Context* ctx, double** scoringmtx, int penal, int penal_ex, char** seq1, char** seq2);
@@ -494,7 +492,6 @@ extern int          myfgets(char s[], int l, FILE* fp);
 extern double       input_new(FILE* fp, int d);
 extern int          allSpace(char* str);
 extern void         kake2hiku(char* str);
-extern void         readData_pointer(const Context* ctx, FILE* fp, char** name, int* nlen, char** seq);
 extern int          countATGC(char* s, int* total);
 extern void         writeDataforgaln(FILE* fp, int locnjob, char** name, char** aseq);
 extern void         writeData_pointer(Context* ctx, FILE* fp, int locnjob, const char* const* name, char** aseq);
@@ -534,7 +531,6 @@ extern void         phylipout_pointer(FILE* fp, int nseq, int maxlen, char** seq
 extern void         writeData_reorder(FILE* fp, int locnjob, char name[][B], char** aseq, int* order);
 
 extern int                load1SeqWithoutName_new(Context* ctx, FILE* fpp, char* cbuf);
-extern char*              load1SeqWithoutName_realloc(const Context* ctx, FILE* fpp);
 extern char*              load1SeqWithoutName_realloc_casepreserve(FILE* fpp);
 extern void               searchKUorWA(FILE* fp);
 extern void               gapireru(Context* ctx, char* res, char* ori, char* gt);
@@ -591,8 +587,8 @@ extern void               eq2dashmatometehayaku(char** s, int n);
 extern void               findnewgaps(Context* ctx, int rep, char** seq, int* gaplen);
 extern void               findcommongaps(int, char**, int*);
 extern void               adjustgapmap(int, int*, char*);
-extern void               insertnewgaps_bothorders(Context* ctx, int njob, int* alreadyaligned, char** seq, int* ex1, int* ex2, int* gaplen, int* gapmap, int gapmaplen, int alloclen, char alg, char gapchar);
-extern void               insertnewgaps(Context* ctx, int njob, int* alreadyaligned, char** seq, int* ex1, int* ex2, int* gaplen, int* gapmap, int alloclen, char alg, char gapchar);
+extern void               insertnewgaps_bothorders(aln_Opts opts, Context* ctx, int njob, int* alreadyaligned, char** seq, int* ex1, int* ex2, int* gaplen, int* gapmap, int gapmaplen, int alloclen, char alg, char gapchar);
+extern void               insertnewgaps(aln_Opts opts, Context* ctx, int njob, int* alreadyaligned, char** seq, int* ex1, int* ex2, int* gaplen, int* gapmap, int alloclen, char alg, char gapchar);
 extern void               restorecommongaps(int n, int n0, char** seq, int* top0, int* top1, int* gaplen, int alloclen, char gapchar);
 extern void               restorecommongapssmoothly(int n, int n0, char** seq, int* top0, int* top1, int* gaplen, int alloclen, char gapchar);
 extern int                samemember(int* mem, int* cand);
@@ -612,8 +608,8 @@ extern void               gapcount(double* freq, char** seq, int nseq, double* e
 extern void               gapcountf(double* freq, char** seq, int nseq, double* eff, int lgth);
 extern void               gapcountadd(double* freq, char** seq, int nseq, double* eff, int lgth);
 extern void               outgapcount(double* freq, int nseq, char* gappat, double* eff);
-extern void               makedynamicmtx(Context* ctx, double** out, double** in, double offset);
-extern double             dist2offset(Context* ctx, double dist);
+extern void               makedynamicmtx(aln_Opts opts, Context* ctx, double** out, double** in, double offset);
+extern double             dist2offset(aln_Opts opts, double dist);
 extern void               reporterr(const char* str, ...);
 extern void               freeconstants(Context* ctx);
 extern void               closeFiles(Context* ctx);
@@ -637,12 +633,11 @@ extern void   topolorder(int* order, int* posinorder, int*** topol, Treedep* dep
 extern int*   topolorderz(int* order, int*** topol, Treedep* dep, int pos, int nchild);
 extern int*   topolordery(int* order, int*** topol, Treedep* dep, int pos, int nchild);
 extern void   compacttree_memsaveselectable(Context* ctx, int nseq, double** partmtx, int* nearest, double* mindist, int** pointt, int* selfscore, char** seq, int** skiptable, int*** topol, double** len, const char* const* name, int* nlen, Treedep* dep, int treeout, int howcompact, int memsave);
-extern void   compacttreedpdist(Context* ctx, int njob, char** seq, char** dseq, double* selfscore, int*** topol, double** len, char** name, Treedep* dep, int treeout, int alloclen, int* uselh, int* nfilesfornode, int treegiven);
 extern double distcompact(Context* ctx, int len1, int len2, int* table1, int* point2, int ss1, int ss2);
 extern double distcompact_msa(Context* ctx, const char* seq1, const char* seq2, int* skiptable1, int* skiptable2, int ss1, int ss2);
 extern void   fillimp(Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2);
 extern void   fillimp_file(Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, int* orinum1, int* orinum2, int* uselh, int* seedinlh1, int* seedinlh2, int nodeid, int nfiles);
-extern int    pairlocalalign(Context* ctx, int ngui, const char* const* namegui, char** seqgui, double** distancemtx, LocalHom** localhomtable, int argc, char** argv, double** expdist);
+extern int    pairlocalalign(aln_Opts opts, Context* ctx, int ngui, const char* const* namegui, char** seqgui, double** distancemtx, LocalHom** localhomtable, int argc, char** argv, double** expdist);
 extern char   creverse(char f);
 extern void   setstacksize(rlim_t);
 extern void   use_getrusage(void);

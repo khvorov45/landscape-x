@@ -123,10 +123,6 @@ arguments(Context* ctx, TbfastOpts* tempOpts, int argc, char* argv[], int* pac, 
                     --argc;
                     goto nextoption;
 
-                case 'f':
-                    ctx->ppenalty = (int)(atof(*++argv) * 1000 - 0.5);
-                    --argc;
-                    goto nextoption;
                 case 'Q':
                     ctx->penalty_shift_factor = atof(*++argv);
                     --argc;
@@ -408,7 +404,7 @@ msacompactdisthalfmtxthread(msacompactdistmtxthread_arg_t* targ) {
 }
 
 static void
-treebase(Context* ctx, TbfastOpts* tempOpts, int* nlen, char** aseq, int nadd, char* mergeoralign, char** mseq1, char** mseq2, int*** topol, Treedep* dep, double* effarr, int* alloclen, LocalHom** localhomtable, RNApair*** singlerna, double* effarr_kozo, int* targetmap, int* targetmapr, int ntarget, int* uselh, int nseed, int* nfilesfornode) {
+treebase(aln_Opts opts, Context* ctx, TbfastOpts* tempOpts, int* nlen, char** aseq, int nadd, char* mergeoralign, char** mseq1, char** mseq2, int*** topol, Treedep* dep, double* effarr, int* alloclen, LocalHom** localhomtable, RNApair*** singlerna, double* effarr_kozo, int* targetmap, int* targetmapr, int ntarget, int* uselh, int nseed, int* nfilesfornode) {
     int             i, l, m;
     int             len1nocommongap;
     int             len1, len2;
@@ -566,7 +562,7 @@ treebase(Context* ctx, TbfastOpts* tempOpts, int* nlen, char** aseq, int nadd, c
             continue;
         }
 
-        makedynamicmtx(ctx, dynamicmtx, ctx->n_dis_consweight_multi, dep[l].distfromtip);
+        makedynamicmtx(opts, ctx, dynamicmtx, ctx->n_dis_consweight_multi, dep[l].distfromtip);
 
         len1 = strlen(aseq[m1]);
         len2 = strlen(aseq[m2]);
@@ -591,8 +587,8 @@ treebase(Context* ctx, TbfastOpts* tempOpts, int* nlen, char** aseq, int nadd, c
             clus1 = fastconjuction_noname_kozo(localmem[0], aseq, mseq1, effarr1, effarr, effarr1_kozo, effarr_kozo, indication1);
             clus2 = fastconjuction_noname_kozo(localmem[1], aseq, mseq2, effarr2, effarr, effarr2_kozo, effarr_kozo, indication2);
         } else {
-            clus1 = fastconjuction_noname(localmem[0], aseq, mseq1, effarr1, effarr, indication1, ctx->opts.minimumweight, &orieff1);  // orieff tsukau!
-            clus2 = fastconjuction_noname(localmem[1], aseq, mseq2, effarr2, effarr, indication2, ctx->opts.minimumweight, &orieff2);  // orieff tsukau!
+            clus1 = fastconjuction_noname(localmem[0], aseq, mseq1, effarr1, effarr, indication1, opts.minimumweight, &orieff1);  // orieff tsukau!
+            clus2 = fastconjuction_noname(localmem[1], aseq, mseq2, effarr2, effarr, indication2, opts.minimumweight, &orieff2);  // orieff tsukau!
         }
 
         if (mergeoralign[l] == '1' || mergeoralign[l] == '2') {
@@ -668,7 +664,7 @@ treebase(Context* ctx, TbfastOpts* tempOpts, int* nlen, char** aseq, int nadd, c
 #if REPORTCOSTS
 //				reporterr(       "\n\n %d - %d (%d x %d) : \n", topol[l][0][0], topol[l][1][0], clus1, clus2 );
 #endif
-                pscore = A__align(ctx, dynamicmtx, ctx->penalty, ctx->penalty_ex, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, ctx->constraint, &dumdb, NULL, NULL, NULL, NULL, ctx->outgap, ctx->outgap, localmem[0][0], 1, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
+                pscore = A__align(opts, ctx, dynamicmtx, ctx->penalty, ctx->penalty_ex, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, ctx->constraint, &dumdb, NULL, NULL, NULL, NULL, ctx->outgap, ctx->outgap, localmem[0][0], 1, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
             }
             if (ctx->alg == 'd') {
                 imp_match_init_strictD(ctx, clus1, clus2, strlen(mseq1[0]), strlen(mseq2[0]), mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, localmem[0], localmem[1], uselh, seedinlh1, seedinlh2, (ctx->compacttree == 3) ? l : -1, nfiles);
@@ -683,9 +679,9 @@ treebase(Context* ctx, TbfastOpts* tempOpts, int* nlen, char** aseq, int nadd, c
             fprintf(stderr, " f\b\b");
             if (ctx->alg == 'M') {
                 fprintf(stderr, "m");
-                pscore = Falign_udpari_long(ctx, NULL, dynamicmtx, mseq1, mseq2, effarr1, effarr2, NULL, NULL, clus1, clus2, *alloclen, fftlog + m1);
+                pscore = Falign_udpari_long(opts, ctx, NULL, dynamicmtx, mseq1, mseq2, effarr1, effarr2, NULL, NULL, clus1, clus2, *alloclen, fftlog + m1);
             } else
-                pscore = Falign(ctx, NULL, NULL, dynamicmtx, mseq1, mseq2, effarr1, effarr2, NULL, NULL, clus1, clus2, *alloclen, fftlog + m1);
+                pscore = Falign(opts, ctx, NULL, NULL, dynamicmtx, mseq1, mseq2, effarr1, effarr2, NULL, NULL, clus1, clus2, *alloclen, fftlog + m1);
         } else {
             fprintf(stderr, " d\b\b");
             fftlog[m1] = 0;
@@ -695,10 +691,10 @@ treebase(Context* ctx, TbfastOpts* tempOpts, int* nlen, char** aseq, int nadd, c
                     break;
                 case ('M'):
                     fprintf(stderr, "m");
-                    pscore = MSalignmm(ctx, dynamicmtx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, NULL, NULL, NULL, NULL, ctx->outgap, ctx->outgap, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
+                    pscore = MSalignmm(opts, ctx, dynamicmtx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, NULL, NULL, NULL, NULL, ctx->outgap, ctx->outgap, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
                     break;
                 case ('A'):
-                    pscore = A__align(ctx, dynamicmtx, ctx->penalty, ctx->penalty_ex, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, 0, &dumdb, NULL, NULL, NULL, NULL, ctx->outgap, ctx->outgap, localmem[0][0], 1, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
+                    pscore = A__align(opts, ctx, dynamicmtx, ctx->penalty, ctx->penalty_ex, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, 0, &dumdb, NULL, NULL, NULL, NULL, ctx->outgap, ctx->outgap, localmem[0][0], 1, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
                     break;
                 case ('d'):
                     pscore = D__align(ctx, dynamicmtx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, 0, &dumdb, ctx->outgap, ctx->outgap);
@@ -728,11 +724,11 @@ treebase(Context* ctx, TbfastOpts* tempOpts, int* nlen, char** aseq, int nadd, c
             if (tempOpts->smoothing) {
                 restorecommongapssmoothly(ctx->njob, ctx->njob - (clus1 + clus2), aseq, localmem[0], localmem[1], gapmap, *alloclen, '-');
                 findnewgaps(ctx, 0, mseq1, gaplen);
-                insertnewgaps_bothorders(ctx, ctx->njob, alreadyaligned, aseq, localmem[0], localmem[1], gaplen, gapmap, gapmaplen, *alloclen, ctx->alg, '-');
+                insertnewgaps_bothorders(opts, ctx, ctx->njob, alreadyaligned, aseq, localmem[0], localmem[1], gaplen, gapmap, gapmaplen, *alloclen, ctx->alg, '-');
             } else {
                 restorecommongaps(ctx->njob, ctx->njob - (clus1 + clus2), aseq, localmem[0], localmem[1], gapmap, *alloclen, '-');
                 findnewgaps(ctx, 0, mseq1, gaplen);
-                insertnewgaps(ctx, ctx->njob, alreadyaligned, aseq, localmem[0], localmem[1], gaplen, gapmap, *alloclen, ctx->alg, '-');
+                insertnewgaps(opts, ctx, ctx->njob, alreadyaligned, aseq, localmem[0], localmem[1], gaplen, gapmap, *alloclen, ctx->alg, '-');
             }
             eq2dashmatometehayaku(mseq1, clus1);
             eq2dashmatometehayaku(mseq2, clus2);
@@ -817,28 +813,28 @@ treebase(Context* ctx, TbfastOpts* tempOpts, int* nlen, char** aseq, int nadd, c
     free(localmem);
     free(effarr1_kozo);
     free(effarr2_kozo);
-    Falign(ctx, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, NULL);
-    Falign_udpari_long(ctx, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, NULL);
+    Falign(opts, ctx, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, NULL);
+    Falign_udpari_long(opts, ctx, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, NULL);
     D__align(ctx, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0);
-    A__align(ctx, NULL, 0, 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
+    A__align(opts, ctx, NULL, 0, 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
     imp_match_init_strictD(ctx, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
     imp_match_init_strict(ctx, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
     FreeCommonIP(ctx);
 }
 
 static void
-WriteOptions(Context* ctx, FILE* fp) {
+WriteOptions(aln_Opts opts, Context* ctx, FILE* fp) {
     if (ctx->dorp == 'd')
         fprintf(fp, "DNA\n");
     else {
-        if (ctx->opts.scoremtx == 0)
+        if (opts.scoremtx == 0)
             fprintf(fp, "JTT %dPAM\n", ctx->pamN);
-        else if (ctx->opts.scoremtx == 1)
-            fprintf(fp, "BLOSUM %d\n", ctx->opts.nblosum);
-        else if (ctx->opts.scoremtx == 2)
+        else if (opts.scoremtx == 1)
+            fprintf(fp, "BLOSUM %d\n", opts.nblosum);
+        else if (opts.scoremtx == 2)
             fprintf(fp, "M-Y\n");
     }
-    fprintf(stderr, "Gap Penalty = %+5.2f, %+5.2f, %+5.2f\n", (double)ctx->ppenalty / 1000, (double)ctx->ppenalty_ex / 1000, (double)ctx->poffset / 1000);
+    fprintf(stderr, "Gap Penalty = %+5.2f, %+5.2f, %+5.2f\n", (double)opts.ppenalty / 1000, (double)ctx->ppenalty_ex / 1000, (double)ctx->poffset / 1000);
     if (ctx->use_fft)
         fprintf(fp, "FFT on\n");
 
@@ -858,7 +854,7 @@ WriteOptions(Context* ctx, FILE* fp) {
         fprintf(fp, "\n");
     }
 
-    fprintf(fp, "Gap Penalty = %+5.2f, %+5.2f, %+5.2f\n", (double)ctx->ppenalty / 1000, (double)ctx->ppenalty_ex / 1000, (double)ctx->poffset / 1000);
+    fprintf(fp, "Gap Penalty = %+5.2f, %+5.2f, %+5.2f\n", (double)opts.ppenalty / 1000, (double)ctx->ppenalty_ex / 1000, (double)ctx->poffset / 1000);
 
     if (ctx->alg == 'a')
         fprintf(fp, "Algorithm A\n");
@@ -905,7 +901,6 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     aln_Arena* tempArena = &tempArena_;
 
     Context* ctx = aln_arenaAllocStruct(tempArena, Context);
-    ctx->opts = opts;
 
     // TODO(sen) This is 'dna or protein'. Figure out what to do with this
     // and why this even matters
@@ -931,7 +926,6 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     ctx->tbrweight = 3;
     ctx->treemethod = 'X';
     ctx->sueff_global = 0.1;
-    ctx->ppenalty = NOTSPECIFIED;
     ctx->penalty_shift_factor = 1000.0;
     ctx->ppenalty_ex = NOTSPECIFIED;
     ctx->poffset = NOTSPECIFIED;
@@ -1109,7 +1103,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     if (tempOpts->treein) {
         loadtree(ctx, ctx->njob, topol, len, name, dep, tempOpts->treeout);
         fprintf(stderr, "\ndone.\n\n");
-        if (tempOpts->callpairlocalalign && ctx->opts.specificityconsideration > 0.0) {
+        if (tempOpts->callpairlocalalign && opts.specificityconsideration > 0.0) {
             int* mem0 = calloc(sizeof(int), ctx->njob);
             int* mem1 = calloc(sizeof(int), ctx->njob);
             expdist = AllocateDoubleMtx(ctx->njob, ctx->njob);
@@ -1173,7 +1167,9 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
         }
 
         if (tempOpts->callpairlocalalign) {
-            pairlocalalign(ctx, ctx->njob, name, seq, iscore, localhomtable, pac, pav, expdist);
+            aln_Opts pairLocalAlignOpts = opts;
+            pairLocalAlignOpts.ppenalty = -2000;
+            pairlocalalign(pairLocalAlignOpts, ctx, ctx->njob, name, seq, iscore, localhomtable, pac, pav, expdist);
             arguments(ctx, tempOpts, tac, tav, NULL, NULL, NULL, NULL);
             tempOpts->callpairlocalalign = 1;
             if (expdist)
@@ -1289,7 +1285,9 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
         }
     } else if (ctx->compacttree != 3) {
         if (tempOpts->callpairlocalalign) {
-            pairlocalalign(ctx, ctx->njob, name, seq, iscore, NULL, pac, pav, expdist);
+            aln_Opts pairLocalAlignOpts = opts;
+            pairLocalAlignOpts.ppenalty = -2000;
+            pairlocalalign(pairLocalAlignOpts, ctx, ctx->njob, name, seq, iscore, NULL, pac, pav, expdist);
             arguments(ctx, tempOpts, tac, tav, NULL, NULL, NULL, NULL);
             tempOpts->callpairlocalalign = 1;
             if (expdist)
@@ -1297,8 +1295,8 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
             expdist = NULL;
             if (ctx->fastathreshold < 0.0001)
                 ctx->constraint = 0;
-            fprintf(stderr, "blosum %d / kimura 200\n", ctx->opts.nblosum);
-            fprintf(stderr, "scoremtx=%d\n", ctx->opts.scoremtx);
+            fprintf(stderr, "blosum %d / kimura 200\n", opts.nblosum);
+            fprintf(stderr, "scoremtx=%d\n", opts.scoremtx);
             fprintf(stderr, "fastathreshold=%f\n", ctx->fastathreshold);
         }
         if (tempOpts->distout || opts.outputhat23) {
@@ -1387,11 +1385,11 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
 
     free(tav);
     free(pav);
-    constants(ctx, ctx->njob, seq);
+    constants(opts, ctx, ctx->njob, seq);
 
     initSignalSM(ctx);
     initFiles(ctx);
-    WriteOptions(ctx, ctx->trap_g);
+    WriteOptions(opts, ctx, ctx->trap_g);
 
     if (tempOpts->distout && !tempOpts->treeout && tempOpts->noalign) {
         writeData_pointer(ctx, ctx->prep_g, ctx->njob, name, seq);
@@ -1920,7 +1918,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
 
     fprintf(stderr, "Progressive alignment ... \n");
 
-    treebase(ctx, tempOpts, nlen, bseq, ctx->nadd, mergeoralign, mseq1, mseq2, topol, dep, eff, &alloclen, localhomtable, singlerna, eff_kozo_mapped, targetmap, targetmapr, ntarget, uselh, nseed, nfilesfornode);
+    treebase(opts, ctx, tempOpts, nlen, bseq, ctx->nadd, mergeoralign, mseq1, mseq2, topol, dep, eff, &alloclen, localhomtable, singlerna, eff_kozo_mapped, targetmap, targetmapr, ntarget, uselh, nseed, nfilesfornode);
 
     fprintf(stderr, "\ndone.\n");
 

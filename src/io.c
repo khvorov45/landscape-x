@@ -895,47 +895,6 @@ load1SeqWithoutName_realloc_casepreserve(FILE* fpp) {
     return (val);
 }
 
-char*
-load1SeqWithoutName_realloc(const Context* ctx, FILE* fpp) {
-    int   c, b;
-    char* cbuf;
-    int   size = N;
-    char* val;
-
-    val = malloc((size + 1) * sizeof(char));
-    cbuf = val;
-
-    b = '\n';
-    while ((c = getc(fpp)) != EOF && !((c == '>' || c == EOF) && b == '\n')) {
-        *cbuf++ = (char)c; /* Ĺ�����Ƥ⤷��ʤ� */
-        if (cbuf - val == size) {
-            size += N;
-            fprintf(stderr, "reallocating...\n");
-            val = (char*)realloc(val, (size + 1) * sizeof(char));
-            if (!val) {
-                fprintf(stderr, "Allocation error in load1SeqWithoutName_realloc \n");
-                exit(1);
-            }
-            fprintf(stderr, "done.\n");
-            cbuf = val + size - N;
-        }
-        b = c;
-    }
-    ungetc(c, fpp);
-    *cbuf = 0;
-
-    if (ctx->opts.nblosum == -2) {
-        charfilter((unsigned char*)val);
-    } else {
-        if (ctx->dorp == 'd')
-            onlyAlpha_lower(val);
-        else
-            onlyAlpha_upper(val);
-        kake2hiku(val);
-    }
-    return (val);
-}
-
 int
 load1SeqWithoutName_new(Context* ctx, FILE* fpp, char* cbuf) {
     int   c, b;
@@ -955,25 +914,6 @@ load1SeqWithoutName_new(Context* ctx, FILE* fpp, char* cbuf) {
         onlyAlpha_upper(bk);
     kake2hiku(bk);
     return (0);
-}
-
-void
-readData_pointer(const Context* ctx, FILE* fp, char** name, int* nlen, char** seq) {
-    int          i;
-    static char* tmpseq = NULL;
-
-    rewind(fp);
-    searchKUorWA(fp);
-
-    for (i = 0; i < ctx->njob; i++) {
-        name[i][0] = '=';
-        getc(fp);
-        myfgets(name[i] + 1, B - 2, fp);
-        tmpseq = load1SeqWithoutName_realloc(ctx, fp);
-        strcpy(seq[i], tmpseq);
-        free(tmpseq);
-        nlen[i] = strlen(seq[i]);
-    }
 }
 
 int

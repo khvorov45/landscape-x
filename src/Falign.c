@@ -177,7 +177,7 @@ mymergesort(int first, int last, Segment** seg) {
 }
 
 double
-Falign(Context* ctx, int** whichmtx, double*** scoringmatrices, double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int clus1, int clus2, int alloclen, int* fftlog) {
+Falign(aln_Opts opts, Context* ctx, int** whichmtx, double*** scoringmatrices, double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int clus1, int clus2, int alloclen, int* fftlog) {
     int        i, j, k, l, m, maxk;
     int        nlen, nlen2;
     static int crossscoresize = 0;
@@ -230,7 +230,7 @@ Falign(Context* ctx, int** whichmtx, double*** scoringmatrices, double** n_dynam
             mymergesort(0, 0, NULL);
             alignableReagion(ctx, 0, 0, NULL, NULL, NULL, NULL, NULL);
             fft(0, NULL, 1);
-            A__align(ctx, NULL, 0, 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
+            A__align(opts, ctx, NULL, 0, 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
             D__align(ctx, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0);
             A__align_variousdist(ctx, NULL, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0);
             D__align_variousdist(ctx, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0);
@@ -318,7 +318,7 @@ Falign(Context* ctx, int** whichmtx, double*** scoringmatrices, double** n_dynam
         if (!(segment && segment1 && segment2 && sortedseg1 && sortedseg2))
             ErrorExit("Allocation error\n");
 
-        if (ctx->opts.scoremtx == -1)
+        if (opts.scoremtx == -1)
             n20or4or2 = 1;
         else if (ctx->fftscore)
             n20or4or2 = 1;
@@ -496,7 +496,7 @@ system( "less input_of_Falign < /dev/tty > /dev/tty" );
 
         for (j = 0; j < n20or4or2; j++)
             vec_init(seqVector1[j], nlen);
-        if (ctx->fftscore && ctx->opts.scoremtx != -1) {
+        if (ctx->fftscore && opts.scoremtx != -1) {
             for (i = 0; i < clus1; i++) {
 #if 1
                 seq_vec_5(ctx, seqVector1[0], ctx->polarity, ctx->volume, eff1[i], tmpseq1[i]);
@@ -535,7 +535,7 @@ system( "less seqVec < /dev/tty > /dev/tty" );
 
         for (j = 0; j < n20or4or2; j++)
             vec_init(seqVector2[j], nlen);
-        if (ctx->fftscore && ctx->opts.scoremtx != -1) {
+        if (ctx->fftscore && opts.scoremtx != -1) {
             for (i = 0; i < clus2; i++) {
 #if 1
                 seq_vec_5(ctx, seqVector2[0], ctx->polarity, ctx->volume, eff2[i], tmpseq2[i]);
@@ -993,7 +993,7 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
                 if (scoringmatrices)
                     totalscore += MSalignmm_variousdist(ctx, scoringmatrices, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, headgp, tailgp);
                 else
-                    totalscore += MSalignmm(ctx, n_dynamicmtx, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, headgp, tailgp, NULL, NULL, NULL, 0.0, 0.0);
+                    totalscore += MSalignmm(opts, ctx, n_dynamicmtx, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, headgp, tailgp, NULL, NULL, NULL, 0.0, 0.0);
                 break;
             case ('d'):
                 if (clus1 == 1 && clus2 == 1) {
@@ -1021,7 +1021,7 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
                     {
                         totalscore += A__align_variousdist(ctx, whichmtx, scoringmatrices, ctx->penalty, ctx->penalty_ex, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, 0, &dumdb, sgap1, sgap2, egap1, egap2, headgp, tailgp);
                     } else
-                        totalscore += A__align(ctx, n_dynamicmtx, ctx->penalty, ctx->penalty_ex, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, 0, &dumdb, sgap1, sgap2, egap1, egap2, headgp, tailgp, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
+                        totalscore += A__align(opts, ctx, n_dynamicmtx, ctx->penalty, ctx->penalty_ex, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, 0, &dumdb, sgap1, sgap2, egap1, egap2, headgp, tailgp, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
                 }
                 break;
             default:
@@ -1122,6 +1122,7 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
 
 double
 Falign_udpari_long(
+    aln_Opts opts,
     Context*  ctx,
     double*** scoringmatrices,
     double**  n_dynamicmtx,
@@ -1186,7 +1187,7 @@ Falign_udpari_long(
             mymergesort(0, 0, NULL);
             alignableReagion(ctx, 0, 0, NULL, NULL, NULL, NULL, NULL);
             fft(0, NULL, 1);
-            A__align(ctx, NULL, 0, 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
+            A__align(opts, ctx, NULL, 0, 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
             A__align_variousdist(ctx, NULL, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0);
             D__align_variousdist(ctx, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0);
             G__align11(ctx, NULL, NULL, NULL, 0, 0, 0);
@@ -1270,7 +1271,7 @@ Falign_udpari_long(
         if (!(segment && segment1 && segment2 && sortedseg1 && sortedseg2))
             ErrorExit("Allocation error\n");
 
-        if (ctx->opts.scoremtx == -1)
+        if (opts.scoremtx == -1)
             n20or4or2 = 1;
         else if (ctx->fftscore)
             n20or4or2 = 1;
@@ -1312,7 +1313,7 @@ Falign_udpari_long(
 
         for (j = 0; j < n20or4or2; j++)
             vec_init(seqVector1[j], nlen);
-        if (ctx->opts.scoremtx == -1) {
+        if (opts.scoremtx == -1) {
             for (i = 0; i < clus1; i++)
                 seq_vec_4(seqVector1[0], eff1[i], tmpseq1[i]);
         } else if (ctx->fftscore) {
@@ -1345,7 +1346,7 @@ system( "less seqVec < /dev/tty > /dev/tty" );
 
         for (j = 0; j < n20or4or2; j++)
             vec_init(seqVector2[j], nlen);
-        if (ctx->opts.scoremtx == -1) {
+        if (opts.scoremtx == -1) {
             for (i = 0; i < clus2; i++)
                 seq_vec_4(seqVector2[0], eff2[i], tmpseq2[i]);
         } else if (ctx->fftscore) {
@@ -1815,7 +1816,7 @@ system( "less seqVec < /dev/tty > /dev/tty" );
                 if (scoringmatrices)  // called by tditeration.c
                     totalscore += MSalignmm_variousdist(ctx, scoringmatrices, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, headgp, tailgp);
                 else
-                    totalscore += MSalignmm(ctx, n_dynamicmtx, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, headgp, tailgp, NULL, NULL, NULL, 0.0, 0.0);
+                    totalscore += MSalignmm(opts, ctx, n_dynamicmtx, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, headgp, tailgp, NULL, NULL, NULL, 0.0, 0.0);
                 break;
             default:
                 fprintf(stderr, "alg = %c\n", ctx->alg);

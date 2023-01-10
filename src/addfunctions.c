@@ -33,7 +33,7 @@ eqpick(char* aseq, char* seq) {
 }
 
 static void
-profilealignment(Context* ctx, int n0, int n1, int n2, char** aln0, char** aln1, char** aln2, int alloclen, char alg) {
+profilealignment(aln_Opts opts, Context* ctx, int n0, int n1, int n2, char** aln0, char** aln1, char** aln2, int alloclen, char alg) {
     int     i, j, newlen;
     double *effarr0 = NULL, *effarr2 = NULL;
     int *   allgap0 = NULL, *allgap2 = NULL;
@@ -120,9 +120,9 @@ profilealignment(Context* ctx, int n0, int n1, int n2, char** aln0, char** aln1,
 
     ctx->newgapstr = "-";
     if (alg == 'M')
-        MSalignmm(ctx, ctx->n_dis_consweight_multi, aln0, aln2, effarr0, effarr2, n0, n2, alloclen, NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, NULL, 0.0, 0.0);  //outgap=1, 2014/Dec/1
+        MSalignmm(opts, ctx, ctx->n_dis_consweight_multi, aln0, aln2, effarr0, effarr2, n0, n2, alloclen, NULL, NULL, NULL, NULL, 1, 1, NULL, NULL, NULL, 0.0, 0.0);  //outgap=1, 2014/Dec/1
     else
-        A__align(ctx, ctx->n_dis_consweight_multi, ctx->penalty, ctx->penalty_ex, aln0, aln2, effarr0, effarr2, n0, n2, alloclen, 0, &dumdb, NULL, NULL, NULL, NULL, 1, 1, -1, -1, NULL, NULL, NULL, 0.0, 0.0);  //outgap=1, 2014/Dec/1
+        A__align(opts, ctx, ctx->n_dis_consweight_multi, ctx->penalty, ctx->penalty_ex, aln0, aln2, effarr0, effarr2, n0, n2, alloclen, 0, &dumdb, NULL, NULL, NULL, NULL, 1, 1, -1, -1, NULL, NULL, NULL, 0.0, 0.0);  //outgap=1, 2014/Dec/1
 
     newlen = strlen(aln0[0]);
 
@@ -151,19 +151,6 @@ profilealignment(Context* ctx, int n0, int n1, int n2, char** aln0, char** aln1,
                 aln1[i][j] = '=';
         }
     }
-#if 0
-	fprintf( stderr, "in profilealignment, before commongappick\n" );
-	for( i=0; i<n0; i++ ) fprintf( stderr, "\n>aln0[%d] = %s\n", i, aln0[i] );
-	for( i=0; i<n1; i++ ) fprintf( stderr, "\n>aln1[%d] = %s\n", i, aln1[i] );
-	for( i=0; i<n2; i++ ) fprintf( stderr, "\n>aln2[%d] = %s\n", i, aln2[i] );
-#endif
-
-#if 0
-	fprintf( stderr, "in profilealignment, after commongappick\n" );
-	for( i=0; i<n0; i++ ) fprintf( stderr, "\n>aln0[%d] = %s\n", i, aln0[i] );
-	for( i=0; i<n1; i++ ) fprintf( stderr, "\n>aln1[%d] = %s\n", i, aln1[i] );
-	for( i=0; i<n2; i++ ) fprintf( stderr, "\n>aln2[%d] = %s\n", i, aln2[i] );
-#endif
 
     free(effarr0);
     free(effarr2);
@@ -327,7 +314,7 @@ countgapmap(int* gapmap, int* term) {
 }
 
 void
-insertnewgaps(Context* ctx, int njob, int* alreadyaligned, char** seq, int* ex1, int* ex2, int* gaplen, int* gapmap, int alloclen, char alg, char gapchar) {
+insertnewgaps(aln_Opts opts, Context* ctx, int njob, int* alreadyaligned, char** seq, int* ex1, int* ex2, int* gaplen, int* gapmap, int alloclen, char alg, char gapchar) {
     int*   mar;
     char*  gaps;
     char*  cptr;
@@ -461,14 +448,9 @@ insertnewgaps(Context* ctx, int njob, int* alreadyaligned, char** seq, int* ex1,
             mlen0 += gapshift;
             mlen1 += gapshift;
             mlen2 += gapshift;
-#if 0
-			for( i=0; i<ngroup0; i++ ) fprintf( stderr, "### mseq0[%d] = %s\n", i, mseq0[i] );
-			for( i=0; i<ngroup1; i++ ) fprintf( stderr, "### mseq1[%d] = %s\n", i, mseq1[i] );
-			for( i=0; i<ngroup2; i++ ) fprintf( stderr, "### mseq2[%d] = %s\n", i, mseq2[i] );
-#endif
 
             if (gapshift) {
-                profilealignment(ctx, ngroup0, ngroup1, ngroup2, mseq0, mseq1, mseq2, alloclen, alg);
+                profilealignment(opts, ctx, ngroup0, ngroup1, ngroup2, mseq0, mseq1, mseq2, alloclen, alg);
             }
 
             j += gapshift;
@@ -557,7 +539,7 @@ insertnewgaps(Context* ctx, int njob, int* alreadyaligned, char** seq, int* ex1,
 }
 
 void
-insertnewgaps_bothorders(Context* ctx, int njob, int* alreadyaligned, char** seq, int* ex1, int* ex2, int* gaplen, int* gapmap, int gapmaplen, int alloclen, char alg, char gapchar) {
+insertnewgaps_bothorders(aln_Opts opts, Context* ctx, int njob, int* alreadyaligned, char** seq, int* ex1, int* ex2, int* gaplen, int* gapmap, int gapmaplen, int alloclen, char alg, char gapchar) {
     //	int disp = 0;
     int*   mar;
     char*  gaps;
@@ -721,7 +703,7 @@ insertnewgaps_bothorders(Context* ctx, int njob, int* alreadyaligned, char** seq
             }
 
             if (gapshiftb + gapshifta) {
-                profilealignment(ctx, ngroup0, ngroup1, ngroup2, mseq0, mseq1, mseq2, alloclen, alg);
+                profilealignment(opts, ctx, ngroup0, ngroup1, ngroup2, mseq0, mseq1, mseq2, alloclen, alg);
             }
 
             newpos = strlen(aseq[rep]);  // kufuu?
