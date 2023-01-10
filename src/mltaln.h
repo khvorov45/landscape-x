@@ -220,7 +220,6 @@ typedef struct Context {
     int      ppenalty;
     int      penaltyLN;
     int      penalty_dist;
-    int      ppenalty_dist;
     int      RNApenalty;
     int      RNAppenalty;
     int      RNApenalty_ex;

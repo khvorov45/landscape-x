@@ -111,10 +111,6 @@ arguments(Context* ctx, TbfastOpts* tempOpts, int argc, char* argv[], int* pac, 
     while (--argc > 0 && (*++argv)[0] == '-') {
         while ((c = *++argv[0])) {
             switch (c) {
-                case 'i':
-                    ++argv;
-                    --argc;
-                    goto nextoption;
                 case 'I':
                     ctx->nadd = myatoi(*++argv);
                     --argc;
@@ -127,10 +123,7 @@ arguments(Context* ctx, TbfastOpts* tempOpts, int argc, char* argv[], int* pac, 
                     ctx->RNAppenalty = (int)(atof(*++argv) * 1000 - 0.5);
                     --argc;
                     goto nextoption;
-                case 'V':
-                    ctx->ppenalty_dist = (int)(atof(*++argv) * 1000 - 0.5);
-                    --argc;
-                    goto nextoption;
+
                 case 'f':
                     ctx->ppenalty = (int)(atof(*++argv) * 1000 - 0.5);
                     --argc;
@@ -325,30 +318,16 @@ arguments(Context* ctx, TbfastOpts* tempOpts, int argc, char* argv[], int* pac, 
                 case 'd':
                     tempOpts->multidist = 1;
                     break;
-#if 0
-				case 'd':
-					disp = 1;
-					break;
-#endif
-                    /* Modified 01/08/27, default: user tree */
+
                 case 'J':
                     ctx->tbutree = 0;
                     break;
-/* modification end. */
-#if 0
-				case 'z':
-					fftThreshold = myatoi( *++argv );
-					--argc; 
-					goto nextoption;
-#endif
+
                 case 'w':
                     ctx->fftWinSize = myatoi(*++argv);
                     --argc;
                     goto nextoption;
-                case 'W':
-                    ++argv;
-                    --argc;
-                    goto nextoption;
+
                 case 'Y':
                     tempOpts->keeplength = 1;
                     break;
@@ -992,7 +971,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     ctx->treemethod = 'X';
     ctx->sueff_global = 0.1;
     ctx->scoremtx = 1;
-    ctx->ppenalty_dist = NOTSPECIFIED;
+    ctx->opts.ppenalty_dist = NOTSPECIFIED;
     ctx->ppenalty = NOTSPECIFIED;
     ctx->penalty_shift_factor = 1000.0;
     ctx->ppenalty_ex = NOTSPECIFIED;

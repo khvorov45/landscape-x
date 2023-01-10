@@ -1540,8 +1540,8 @@ constants(Context* ctx, int nseq, char** seq) {
             ctx->RNAppenalty_ex = DEFAULTRNAGEP_N;
         if (ctx->ppenalty == NOTSPECIFIED)
             ctx->ppenalty = DEFAULTGOP_N;
-        if (ctx->ppenalty_dist == NOTSPECIFIED)
-            ctx->ppenalty_dist = ctx->ppenalty;
+        if (ctx->opts.ppenalty_dist == NOTSPECIFIED)
+            ctx->opts.ppenalty_dist = ctx->ppenalty;
         if (ctx->ppenalty_OP == NOTSPECIFIED)
             ctx->ppenalty_OP = DEFAULTGOP_N;
         if (ctx->ppenalty_ex == NOTSPECIFIED)
@@ -1565,7 +1565,7 @@ constants(Context* ctx, int nseq, char** seq) {
 
         ctx->RNAthr = (int)(3 * 600.0 / 1000.0 * ctx->RNApthr + 0.5);
         ctx->penalty = (int)(3 * 600.0 / 1000.0 * ctx->ppenalty + 0.5);
-        ctx->penalty_dist = (int)(3 * 600.0 / 1000.0 * ctx->ppenalty_dist + 0.5);
+        ctx->penalty_dist = (int)(3 * 600.0 / 1000.0 * ctx->opts.ppenalty_dist + 0.5);
         ctx->penalty_shift = (int)(ctx->penalty_shift_factor * ctx->penalty);
         ctx->penalty_OP = (int)(3 * 600.0 / 1000.0 * ctx->ppenalty_OP + 0.5);
         ctx->penalty_ex = (int)(3 * 600.0 / 1000.0 * ctx->ppenalty_ex + 0.5);
@@ -1930,8 +1930,8 @@ constants(Context* ctx, int nseq, char** seq) {
 
         if (ctx->ppenalty == NOTSPECIFIED)
             ctx->ppenalty = DEFAULTGOP_B;
-        if (ctx->ppenalty_dist == NOTSPECIFIED)
-            ctx->ppenalty_dist = ctx->ppenalty;
+        if (ctx->opts.ppenalty_dist == NOTSPECIFIED)
+            ctx->opts.ppenalty_dist = ctx->ppenalty;
         if (ctx->ppenalty_OP == NOTSPECIFIED)
             ctx->ppenalty_OP = DEFAULTGOP_B;
         if (ctx->ppenalty_ex == NOTSPECIFIED)
@@ -1945,7 +1945,7 @@ constants(Context* ctx, int nseq, char** seq) {
         if (ctx->kimuraR == NOTSPECIFIED)
             ctx->kimuraR = 1;
         ctx->penalty = (int)(600.0 / 1000.0 * ctx->ppenalty + 0.5);
-        ctx->penalty_dist = (int)(600.0 / 1000.0 * ctx->ppenalty_dist + 0.5);
+        ctx->penalty_dist = (int)(600.0 / 1000.0 * ctx->opts.ppenalty_dist + 0.5);
         ctx->penalty_shift = (int)(ctx->penalty_shift_factor * ctx->penalty);
         ctx->penalty_OP = (int)(600.0 / 1000.0 * ctx->ppenalty_OP + 0.5);
         ctx->penalty_ex = (int)(600.0 / 1000.0 * ctx->ppenalty_ex + 0.5);
@@ -2150,8 +2150,8 @@ constants(Context* ctx, int nseq, char** seq) {
 
         if (ctx->ppenalty == NOTSPECIFIED)
             ctx->ppenalty = DEFAULTGOP_B;
-        if (ctx->ppenalty_dist == NOTSPECIFIED)
-            ctx->ppenalty_dist = ctx->ppenalty;
+        if (ctx->opts.ppenalty_dist == NOTSPECIFIED)
+            ctx->opts.ppenalty_dist = ctx->ppenalty;
         if (ctx->ppenalty_OP == NOTSPECIFIED)
             ctx->ppenalty_OP = DEFAULTGOP_B;
         if (ctx->ppenalty_ex == NOTSPECIFIED)
@@ -2165,7 +2165,7 @@ constants(Context* ctx, int nseq, char** seq) {
         if (ctx->kimuraR == NOTSPECIFIED)
             ctx->kimuraR = 1;
         ctx->penalty = (int)(600.0 / 1000.0 * ctx->ppenalty + 0.5);
-        ctx->penalty_dist = (int)(600.0 / 1000.0 * ctx->ppenalty_dist + 0.5);
+        ctx->penalty_dist = (int)(600.0 / 1000.0 * ctx->opts.ppenalty_dist + 0.5);
         ctx->penalty_shift = (int)(ctx->penalty_shift_factor * ctx->penalty);
         ctx->penalty_OP = (int)(600.0 / 1000.0 * ctx->ppenalty_OP + 0.5);
         ctx->penalty_ex = (int)(600.0 / 1000.0 * ctx->ppenalty_ex + 0.5);
@@ -2363,8 +2363,8 @@ constants(Context* ctx, int nseq, char** seq) {
 
         if (ctx->ppenalty == NOTSPECIFIED)
             ctx->ppenalty = DEFAULTGOP_J;
-        if (ctx->ppenalty_dist == NOTSPECIFIED)
-            ctx->ppenalty_dist = ctx->ppenalty;
+        if (ctx->opts.ppenalty_dist == NOTSPECIFIED)
+            ctx->opts.ppenalty_dist = ctx->ppenalty;
         if (ctx->ppenalty_OP == NOTSPECIFIED)
             ctx->ppenalty_OP = DEFAULTGOP_J;
         if (ctx->ppenalty_ex == NOTSPECIFIED)
@@ -2390,7 +2390,7 @@ constants(Context* ctx, int nseq, char** seq) {
         }
 
         ctx->penalty = (int)(600.0 / 1000.0 * ctx->ppenalty + 0.5);
-        ctx->penalty_dist = (int)(600.0 / 1000.0 * ctx->ppenalty_dist + 0.5);
+        ctx->penalty_dist = (int)(600.0 / 1000.0 * ctx->opts.ppenalty_dist + 0.5);
         ctx->penalty_shift = (int)(ctx->penalty_shift_factor * ctx->penalty);
         ctx->penalty_OP = (int)(600.0 / 1000.0 * ctx->ppenalty_OP + 0.5);
         ctx->penalty_ex = (int)(600.0 / 1000.0 * ctx->ppenalty_ex + 0.5);

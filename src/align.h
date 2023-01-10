@@ -29,6 +29,7 @@ typedef struct aln_Str {
 
 typedef struct aln_Opts {
     int32_t outputhat23;
+    int32_t ppenalty_dist;
     double  minimumweight;
 } aln_Opts;
 
@@ -221,6 +222,7 @@ aln_defaultOpts(void) {
     aln_Opts opts = {
         .outputhat23 = 16,
         .minimumweight = 0.00001,
+        .ppenalty_dist = 1530,
     };
     return opts;
 }
