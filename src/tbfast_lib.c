@@ -37,7 +37,6 @@ typedef struct TbfastOpts {
     int32_t mapout;
     int32_t smoothing;
     int32_t callpairlocalalign;
-    int32_t nthreadtb;
 } TbfastOpts;
 
 static void
@@ -180,13 +179,13 @@ arguments(Context* ctx, TbfastOpts* tempOpts, int argc, char* argv[], int* pac, 
                     ctx->consweight_multi = atof(*++argv);
                     --argc;
                     goto nextoption;
-                
+
                 case 'R':
-                    ctx->rnaprediction = 'r';     
+                    ctx->rnaprediction = 'r';
                 case 'a':
                     ctx->fmodel = 1;
                     break;
-     
+
                 case 'K':
                     ctx->addprofile = 0;
                     break;
@@ -972,7 +971,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     // TODO(sen) Can we use the strings directly as aos?
     // NOTE(sen) Process input
     const char* const* name = aln_arenaAllocArray(tempArena, const char*, stringsCount);
-    int*   nlen = aln_arenaAllocArray(tempArena, int, stringsCount);
+    int*               nlen = aln_arenaAllocArray(tempArena, int, stringsCount);
     for (int32_t strIndex = 0; strIndex < stringsCount; strIndex++) {
         aln_Str str = strings[strIndex];
         ctx->maxInputSeqLen = aln_max(ctx->maxInputSeqLen, str.len);
@@ -994,7 +993,6 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
 
     TbfastOpts  tempOpts_ = {};
     TbfastOpts* tempOpts = &tempOpts_;
-    tempOpts->nthreadtb = 1;
 
     int*     selfscore = NULL;
     int      nogaplen;
@@ -1411,8 +1409,6 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     free(tav);
     free(pav);
     constants(ctx, ctx->njob, seq);
-
-    tempOpts->nthreadtb = 0;
 
     initSignalSM(ctx);
     initFiles(ctx);
@@ -2041,7 +2037,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
 
     if (ctx->spscoreout)
         reporterr("Unweighted sum-of-pairs score = %10.5f\n", sumofpairsscore(ctx, ctx->njob, bseq));
-    
+
     if (tempOpts->ndeleted > 0) {
         reporterr("\nTo keep the alignment length, %d letters were DELETED.\n", tempOpts->ndeleted);
         if (tempOpts->mapout)
