@@ -1022,12 +1022,12 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     // TODO(sen) What do we need the name array for?
     // TODO(sen) Can we use the strings directly as aos?
     // NOTE(sen) Process input
-    const char** name = aln_arenaAllocArray(tempArena, const char*, stringsCount);
+    const char* const* name = aln_arenaAllocArray(tempArena, const char*, stringsCount);
     int*   nlen = aln_arenaAllocArray(tempArena, int, stringsCount);
     for (int32_t strIndex = 0; strIndex < stringsCount; strIndex++) {
         aln_Str str = strings[strIndex];
         ctx->nlenmax = aln_max(ctx->nlenmax, str.len);
-        name[strIndex] = "name";
+        ((const char**)name)[strIndex] = "name";
         nlen[strIndex] = str.len;
     }
 

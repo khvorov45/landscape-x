@@ -1069,7 +1069,7 @@ countnormalletters(char* seq, char* ref) {
 }
 
 void
-writeData_pointer(Context* ctx, FILE* fp, int locnjob, const char** name, char** aseq) {
+writeData_pointer(Context* ctx, FILE* fp, int locnjob, const char* const* name, char** aseq) {
     int i, j;
     int nalen;
 
@@ -1275,7 +1275,7 @@ readhat2(FILE* fp, int nseq, double** mtx) {
 }
 
 void
-WriteFloatHat2_pointer_halfmtx(Context* ctx, FILE* hat2p, int locnjob, const char** name, double** mtx) {
+WriteFloatHat2_pointer_halfmtx(Context* ctx, FILE* hat2p, int locnjob, const char* const* name, double** mtx) {
     int    i, j, ijsa;
     double max = 0.0;
     for (i = 0; i < locnjob - 1; i++)
@@ -1300,7 +1300,7 @@ WriteFloatHat2_pointer_halfmtx(Context* ctx, FILE* hat2p, int locnjob, const cha
 }
 
 void
-WriteHat2_part_pointer(FILE* hat2p, int locnjob, int nadd, const char** name, double** mtx) {
+WriteHat2_part_pointer(FILE* hat2p, int locnjob, int nadd, const char* const* name, double** mtx) {
     int    i, j;
     int    norg = locnjob - nadd;
     double max = 0.0;

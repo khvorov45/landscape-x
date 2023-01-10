@@ -809,7 +809,7 @@ topolorder_mudaari(int* n1, int* n2, int* order1, int* order2, int*** topol, Tre
 #endif
 
 void
-loadtree(Context* ctx, int nseq, int*** topol, double** len, const char** name, Treedep* dep, int treeout) {
+loadtree(Context* ctx, int nseq, int*** topol, double** len, const char* const* name, Treedep* dep, int treeout) {
     int     i, j, k;
     int *   intpt, *intpt2;
     int*    hist = NULL;
@@ -1273,7 +1273,7 @@ increaseintergroupdistanceshalfmtx(double** eff, int ngroup, int** groups, int n
 }
 
 void
-fixed_supg_double_realloc_nobk_halfmtx_treeout_constrained(Context* ctx, int nseq, double** eff, int*** topol, double** len, const char** name, Treedep* dep, int ngroup, int** groups, int efffree) {
+fixed_supg_double_realloc_nobk_halfmtx_treeout_constrained(Context* ctx, int nseq, double** eff, int*** topol, double** len, const char* const* name, Treedep* dep, int ngroup, int** groups, int efffree) {
     int     i, j, k, miniim, maxiim, minijm, maxijm;
     int *   intpt, *intpt2;
     double  tmpdouble;
@@ -3313,7 +3313,7 @@ compacttreedpdist(Context* ctx, int njob, char** bseq, char** dseq, double* self
 }
 
 void
-compacttree_memsaveselectable(Context* ctx, int nseq, double** partmtx, int* nearest, double* mindist, int** pointt, int* tselfscore, char** seq, int** skiptable, int*** topol, double** len, const char** name, int* nlen, Treedep* dep, int treeout, int howcompact, int memsave) {
+compacttree_memsaveselectable(Context* ctx, int nseq, double** partmtx, int* nearest, double* mindist, int** pointt, int* tselfscore, char** seq, int** skiptable, int*** topol, double** len, const char* const* name, int* nlen, Treedep* dep, int treeout, int howcompact, int memsave) {
     int i, j, k;
     //	int miniim, maxiim, minijm, maxijm;
     int *intpt, *intpt2;
@@ -3769,7 +3769,7 @@ compacttree_memsaveselectable(Context* ctx, int nseq, double** partmtx, int* nea
 }
 
 void
-fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(Context* ctx, int nseq, double** eff, int*** topol, double** len, const char** name, Treedep* dep, int efffree, int treeout) {
+fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(Context* ctx, int nseq, double** eff, int*** topol, double** len, const char* const* name, Treedep* dep, int efffree, int treeout) {
     int     i, j, k, miniim, maxiim, minijm, maxijm;
     int*    intpt;
     double  tmpdouble;

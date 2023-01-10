@@ -1569,7 +1569,7 @@ restoreoriginalgaps(int n, char** seq, char* originalgaps) {
 }
 
 void
-reconstructdeletemap(Context* ctx, int nadd, char** addbk, GapPos** deletelist, char** realn, FILE* fp, const char** name) {
+reconstructdeletemap(Context* ctx, int nadd, char** addbk, GapPos** deletelist, char** realn, FILE* fp, const char* const* name) {
     int   i, j, p, len, gaplen;
     char *gapped, *tmpptr;
     const char* nameptr;
@@ -1626,7 +1626,7 @@ reconstructdeletemap(Context* ctx, int nadd, char** addbk, GapPos** deletelist, 
 }
 
 void
-reconstructdeletemap_compact(Context* ctx, int nadd, char** addbk, GapPos** deletelist, char** realn, FILE* fp, const char** name) {
+reconstructdeletemap_compact(Context* ctx, int nadd, char** addbk, GapPos** deletelist, char** realn, FILE* fp, const char* const* name) {
     int   i, j, p, len, gaplen;
     char *gapped, *tmpptr;
     int   status = 0;
