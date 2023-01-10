@@ -1510,7 +1510,7 @@ constants(Context* ctx, int nseq, char** seq) {
     char shiftmodel[100];
     int  charsize;
 
-    if (ctx->nblosum < 0)
+    if (ctx->opts.nblosum < 0)
         ctx->dorp = 'p';
 
     if (ctx->penalty_shift_factor >= 10)
@@ -1526,6 +1526,9 @@ constants(Context* ctx, int nseq, char** seq) {
         double** pam1 = AllocateDoubleMtx(4, 4);
         double*  freq = AllocateDoubleVec(4);
 
+        aln_assert(ctx->opts.scoremtx == -1);
+        aln_assert(ctx->opts.ppenalty_dist != NOTSPECIFIED);
+
         ctx->nalphabets = 26;
         ctx->nscoredalphabets = 10;
         charsize = 0x80;
@@ -1533,15 +1536,13 @@ constants(Context* ctx, int nseq, char** seq) {
         ctx->n_dis = AllocateIntMtx(ctx->nalphabets, ctx->nalphabets);
         ctx->n_disLN = AllocateDoubleMtx(ctx->nalphabets, ctx->nalphabets);
 
-        ctx->scoremtx = -1;
         if (ctx->RNAppenalty == NOTSPECIFIED)
             ctx->RNAppenalty = DEFAULTRNAGOP_N;
         if (ctx->RNAppenalty_ex == NOTSPECIFIED)
             ctx->RNAppenalty_ex = DEFAULTRNAGEP_N;
         if (ctx->ppenalty == NOTSPECIFIED)
             ctx->ppenalty = DEFAULTGOP_N;
-        if (ctx->opts.ppenalty_dist == NOTSPECIFIED)
-            ctx->opts.ppenalty_dist = ctx->ppenalty;
+
         if (ctx->ppenalty_OP == NOTSPECIFIED)
             ctx->ppenalty_OP = DEFAULTGOP_N;
         if (ctx->ppenalty_ex == NOTSPECIFIED)
@@ -1906,7 +1907,7 @@ constants(Context* ctx, int nseq, char** seq) {
         FreeDoubleMtx(pamx);
         free(freq);
 
-    } else if (ctx->dorp == 'p' && ctx->scoremtx == 1 && ctx->nblosum == -2) /* extended */
+    } else if (ctx->dorp == 'p' && ctx->opts.scoremtx == 1 && ctx->opts.nblosum == -2) /* extended */
     {
         double* freq;
         double* freq1;
@@ -1928,10 +1929,11 @@ constants(Context* ctx, int nseq, char** seq) {
         datafreq = AllocateDoubleVec(ctx->nalphabets);
         freq = AllocateDoubleVec(ctx->nalphabets);
 
+        aln_assert(ctx->opts.ppenalty_dist != NOTSPECIFIED);
+
         if (ctx->ppenalty == NOTSPECIFIED)
             ctx->ppenalty = DEFAULTGOP_B;
-        if (ctx->opts.ppenalty_dist == NOTSPECIFIED)
-            ctx->opts.ppenalty_dist = ctx->ppenalty;
+
         if (ctx->ppenalty_OP == NOTSPECIFIED)
             ctx->ppenalty_OP = DEFAULTGOP_B;
         if (ctx->ppenalty_ex == NOTSPECIFIED)
@@ -2124,7 +2126,7 @@ constants(Context* ctx, int nseq, char** seq) {
         FreeDoubleMtx(n_distmp);
         FreeDoubleVec(datafreq);
         FreeDoubleVec(freq);
-    } else if (ctx->dorp == 'p' && ctx->scoremtx == 1) {
+    } else if (ctx->dorp == 'p' && ctx->opts.scoremtx == 1) {
         double* freq;
         double* freq1;
         double* datafreq;
@@ -2133,8 +2135,8 @@ constants(Context* ctx, int nseq, char** seq) {
         double** n_distmp;
         int      rescale = 1;
 
-        if (ctx->nblosum == 0) {
-            reporterr("nblosum=%d??\n", ctx->nblosum);
+        if (ctx->opts.nblosum == 0) {
+            reporterr("nblosum=%d??\n", ctx->opts.nblosum);
             exit(1);
         }
 
@@ -2148,10 +2150,11 @@ constants(Context* ctx, int nseq, char** seq) {
         datafreq = AllocateDoubleVec(20);
         freq = AllocateDoubleVec(20);
 
+        aln_assert(ctx->opts.ppenalty_dist != NOTSPECIFIED);
+
         if (ctx->ppenalty == NOTSPECIFIED)
             ctx->ppenalty = DEFAULTGOP_B;
-        if (ctx->opts.ppenalty_dist == NOTSPECIFIED)
-            ctx->opts.ppenalty_dist = ctx->ppenalty;
+
         if (ctx->ppenalty_OP == NOTSPECIFIED)
             ctx->ppenalty_OP = DEFAULTGOP_B;
         if (ctx->ppenalty_ex == NOTSPECIFIED)
@@ -2176,7 +2179,7 @@ constants(Context* ctx, int nseq, char** seq) {
         ctx->penaltyLN = (int)(600.0 / 1000.0 * -2000 + 0.5);
         ctx->penalty_exLN = (int)(600.0 / 1000.0 * -100 + 0.5);
 
-        BLOSUMmtx(ctx, ctx->nblosum, n_distmp, freq, ctx->amino, ctx->amino_grp, &rescale);
+        BLOSUMmtx(ctx, ctx->opts.nblosum, n_distmp, freq, ctx->amino, ctx->amino_grp, &rescale);
 
         reporterr("rescale = %d\n", rescale);
 
@@ -2185,10 +2188,10 @@ constants(Context* ctx, int nseq, char** seq) {
         else
             sprintf(shiftmodel, "noshift");
 
-        if (ctx->nblosum == -1)
+        if (ctx->opts.nblosum == -1)
             sprintf(ctx->modelname, "User-defined, %4.2f, %+4.2f, %+4.2f, %s", -(double)ctx->ppenalty / 1000, -(double)ctx->poffset / 1000, -(double)ctx->ppenalty_ex / 1000, shiftmodel);
         else
-            sprintf(ctx->modelname, "BLOSUM%d, %4.2f, %+4.2f, %+4.2f, %s", ctx->nblosum, -(double)ctx->ppenalty / 1000, -(double)ctx->poffset / 1000, -(double)ctx->ppenalty_ex / 1000, shiftmodel);
+            sprintf(ctx->modelname, "BLOSUM%d, %4.2f, %+4.2f, %+4.2f, %s", ctx->opts.nblosum, -(double)ctx->ppenalty / 1000, -(double)ctx->poffset / 1000, -(double)ctx->ppenalty_ex / 1000, shiftmodel);
 
         for (i = 0; i < 0x80; i++)
             ctx->amino_n[i] = -1;
@@ -2329,7 +2332,7 @@ constants(Context* ctx, int nseq, char** seq) {
 
         //		reporterr(       "done.\n" );
 
-    } else if (ctx->dorp == 'p' && ctx->scoremtx == 2) /* Miyata-Yasunaga */
+    } else if (ctx->dorp == 'p' && ctx->opts.scoremtx == 2) /* Miyata-Yasunaga */
     {
         reporterr("Not supported\n");
         exit(1);
@@ -2361,10 +2364,11 @@ constants(Context* ctx, int nseq, char** seq) {
         mutab = AllocateDoubleVec(20);
         datafreq = AllocateDoubleVec(20);
 
+        aln_assert(ctx->opts.ppenalty_dist != NOTSPECIFIED);
+
         if (ctx->ppenalty == NOTSPECIFIED)
             ctx->ppenalty = DEFAULTGOP_J;
-        if (ctx->opts.ppenalty_dist == NOTSPECIFIED)
-            ctx->opts.ppenalty_dist = ctx->ppenalty;
+
         if (ctx->ppenalty_OP == NOTSPECIFIED)
             ctx->ppenalty_OP = DEFAULTGOP_J;
         if (ctx->ppenalty_ex == NOTSPECIFIED)

@@ -1309,7 +1309,6 @@ arguments(Context* ctx, int argc, char* argv[]) {
     ctx->fftkeika = 0;
     ctx->pslocal = -1000.0;
     ctx->constraint = 0;
-    ctx->nblosum = 62;
     ctx->fmodel = 0;
     ctx->use_fft = 0;
     ctx->fftscore = 1;
@@ -1326,7 +1325,6 @@ arguments(Context* ctx, int argc, char* argv[]) {
     ctx->tbrweight = 3;
     ctx->checkC = 0;
     ctx->treemethod = 'x';
-    ctx->scoremtx = 1;
     ctx->kobetsubunkatsu = 0;
     ctx->divpairscore = 0;
     stdout_align = 0;
@@ -1346,7 +1344,6 @@ arguments(Context* ctx, int argc, char* argv[]) {
     ctx->fftThreshold = NOTSPECIFIED;
     ctx->RNAppenalty = NOTSPECIFIED;
     ctx->RNApthr = NOTSPECIFIED;
-    ctx->opts.specificityconsideration = 0.0;
     ctx->usenaivescoreinsteadofalignmentscore = 0;
     ctx->specifictarget = 0;
     ctx->nwildcard = 0;
@@ -1386,23 +1383,7 @@ arguments(Context* ctx, int argc, char* argv[]) {
                     ctx->kimuraR = myatoi(*++argv);
                     --argc;
                     goto nextoption;
-                case 'b':
-                    ctx->nblosum = myatoi(*++argv);
-                    ctx->scoremtx = 1;
-                    --argc;
-                    goto nextoption;
-                case 'j':
-                    ctx->pamN = myatoi(*++argv);
-                    ctx->scoremtx = 0;
-                    ctx->TMorJTT = JTT;
-                    --argc;
-                    goto nextoption;
-                case 'm':
-                    ctx->pamN = myatoi(*++argv);
-                    ctx->scoremtx = 0;
-                    ctx->TMorJTT = TM;
-                    --argc;
-                    goto nextoption;
+
                 case 'l':
                     if (atof(*++argv) < 0.00001)
                         store_localhom = 0;
@@ -1433,10 +1414,7 @@ arguments(Context* ctx, int argc, char* argv[]) {
                     fprintf(stderr, "laste = %d\n", laste);
                     --argc;
                     goto nextoption;
-                case 'u':
-                    ctx->opts.specificityconsideration = (double)myatof(*++argv);
-                    --argc;
-                    goto nextoption;
+
                 case 'K':  // Hontou ha iranai. disttbfast.c, tbfast.c to awaserutame.
                     break;
                 case 'c':
@@ -2214,7 +2192,7 @@ pairlocalalign(Context* ctx, int ngui, const char* const* namegui, char** seqgui
 
     //reporterr( "expdist=%p\n", expdist );
 
-    if (ctx->dorp == 'p' && ctx->scoremtx == 1 && ctx->nblosum > 0)  // protein, not text.  hitsuyou?
+    if (ctx->dorp == 'p' && ctx->opts.scoremtx == 1 && ctx->opts.nblosum > 0)  // protein, not text.  hitsuyou?
     {
         for (i = 0; i < ctx->njob; i++) {
             gappick0(bseq[i], seq[i]);

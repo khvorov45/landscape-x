@@ -924,7 +924,7 @@ load1SeqWithoutName_realloc(const Context* ctx, FILE* fpp) {
     ungetc(c, fpp);
     *cbuf = 0;
 
-    if (ctx->nblosum == -2) {
+    if (ctx->opts.nblosum == -2) {
         charfilter((unsigned char*)val);
     } else {
         if (ctx->dorp == 'd')

@@ -209,7 +209,6 @@ typedef struct Context {
     int      constraint;
     int      divpairscore;
     int      fmodel;
-    int      nblosum;
     int      kobetsubunkatsu;
     int      dorp;
     int      weight;
@@ -239,7 +238,6 @@ typedef struct Context {
     int      offsetFFT;
     int      RNAthr;
     int      RNApthr;
-    int      scoremtx;
     int      TMorJTT;
     char     use_fft;
     char     force_fft;

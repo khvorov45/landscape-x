@@ -145,26 +145,7 @@ arguments(Context* ctx, TbfastOpts* tempOpts, int argc, char* argv[], int* pac, 
                     //					fprintf( stderr, "kappa = %d\n", kimuraR );
                     --argc;
                     goto nextoption;
-                case 'b':
-                    ctx->nblosum = myatoi(*++argv);
-                    ctx->scoremtx = 1;
-                    //					fprintf( stderr, "blosum %d / kimura 200\n", nblosum );
-                    --argc;
-                    goto nextoption;
-                case 'j':
-                    ctx->pamN = myatoi(*++argv);
-                    ctx->scoremtx = 0;
-                    ctx->TMorJTT = JTT;
-                    //					fprintf( stderr, "jtt/kimura %d\n", pamN );
-                    --argc;
-                    goto nextoption;
-                case 'm':
-                    ctx->pamN = myatoi(*++argv);
-                    ctx->scoremtx = 0;
-                    ctx->TMorJTT = TM;
-                    //					fprintf( stderr, "tm %d\n", pamN );
-                    --argc;
-                    goto nextoption;
+
                 case 'l':
                     ctx->fastathreshold = atof(*++argv);
                     ctx->constraint = 2;
@@ -850,11 +831,11 @@ WriteOptions(Context* ctx, FILE* fp) {
     if (ctx->dorp == 'd')
         fprintf(fp, "DNA\n");
     else {
-        if (ctx->scoremtx == 0)
+        if (ctx->opts.scoremtx == 0)
             fprintf(fp, "JTT %dPAM\n", ctx->pamN);
-        else if (ctx->scoremtx == 1)
-            fprintf(fp, "BLOSUM %d\n", ctx->nblosum);
-        else if (ctx->scoremtx == 2)
+        else if (ctx->opts.scoremtx == 1)
+            fprintf(fp, "BLOSUM %d\n", ctx->opts.nblosum);
+        else if (ctx->opts.scoremtx == 2)
             fprintf(fp, "M-Y\n");
     }
     fprintf(stderr, "Gap Penalty = %+5.2f, %+5.2f, %+5.2f\n", (double)ctx->ppenalty / 1000, (double)ctx->ppenalty_ex / 1000, (double)ctx->poffset / 1000);
@@ -942,7 +923,6 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     ctx->njob = stringsCount;
     ctx->rnaprediction = 'm';
     ctx->addprofile = 1;
-    ctx->nblosum = 62;
     ctx->fftscore = 1;
     ctx->weight = 3;
     ctx->tbutree = 1;
@@ -951,7 +931,6 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     ctx->tbrweight = 3;
     ctx->treemethod = 'X';
     ctx->sueff_global = 0.1;
-    ctx->scoremtx = 1;
     ctx->ppenalty = NOTSPECIFIED;
     ctx->penalty_shift_factor = 1000.0;
     ctx->ppenalty_ex = NOTSPECIFIED;
@@ -1318,8 +1297,8 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
             expdist = NULL;
             if (ctx->fastathreshold < 0.0001)
                 ctx->constraint = 0;
-            fprintf(stderr, "blosum %d / kimura 200\n", ctx->nblosum);
-            fprintf(stderr, "scoremtx=%d\n", ctx->scoremtx);
+            fprintf(stderr, "blosum %d / kimura 200\n", ctx->opts.nblosum);
+            fprintf(stderr, "scoremtx=%d\n", ctx->opts.scoremtx);
             fprintf(stderr, "fastathreshold=%f\n", ctx->fastathreshold);
         }
         if (tempOpts->distout || opts.outputhat23) {

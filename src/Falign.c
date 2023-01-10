@@ -318,7 +318,7 @@ Falign(Context* ctx, int** whichmtx, double*** scoringmatrices, double** n_dynam
         if (!(segment && segment1 && segment2 && sortedseg1 && sortedseg2))
             ErrorExit("Allocation error\n");
 
-        if (ctx->scoremtx == -1)
+        if (ctx->opts.scoremtx == -1)
             n20or4or2 = 1;
         else if (ctx->fftscore)
             n20or4or2 = 1;
@@ -496,7 +496,7 @@ system( "less input_of_Falign < /dev/tty > /dev/tty" );
 
         for (j = 0; j < n20or4or2; j++)
             vec_init(seqVector1[j], nlen);
-        if (ctx->fftscore && ctx->scoremtx != -1) {
+        if (ctx->fftscore && ctx->opts.scoremtx != -1) {
             for (i = 0; i < clus1; i++) {
 #if 1
                 seq_vec_5(ctx, seqVector1[0], ctx->polarity, ctx->volume, eff1[i], tmpseq1[i]);
@@ -535,7 +535,7 @@ system( "less seqVec < /dev/tty > /dev/tty" );
 
         for (j = 0; j < n20or4or2; j++)
             vec_init(seqVector2[j], nlen);
-        if (ctx->fftscore && ctx->scoremtx != -1) {
+        if (ctx->fftscore && ctx->opts.scoremtx != -1) {
             for (i = 0; i < clus2; i++) {
 #if 1
                 seq_vec_5(ctx, seqVector2[0], ctx->polarity, ctx->volume, eff2[i], tmpseq2[i]);
@@ -1270,7 +1270,7 @@ Falign_udpari_long(
         if (!(segment && segment1 && segment2 && sortedseg1 && sortedseg2))
             ErrorExit("Allocation error\n");
 
-        if (ctx->scoremtx == -1)
+        if (ctx->opts.scoremtx == -1)
             n20or4or2 = 1;
         else if (ctx->fftscore)
             n20or4or2 = 1;
@@ -1312,7 +1312,7 @@ Falign_udpari_long(
 
         for (j = 0; j < n20or4or2; j++)
             vec_init(seqVector1[j], nlen);
-        if (ctx->scoremtx == -1) {
+        if (ctx->opts.scoremtx == -1) {
             for (i = 0; i < clus1; i++)
                 seq_vec_4(seqVector1[0], eff1[i], tmpseq1[i]);
         } else if (ctx->fftscore) {
@@ -1345,7 +1345,7 @@ system( "less seqVec < /dev/tty > /dev/tty" );
 
         for (j = 0; j < n20or4or2; j++)
             vec_init(seqVector2[j], nlen);
-        if (ctx->scoremtx == -1) {
+        if (ctx->opts.scoremtx == -1) {
             for (i = 0; i < clus2; i++)
                 seq_vec_4(seqVector2[0], eff2[i], tmpseq2[i]);
         } else if (ctx->fftscore) {
