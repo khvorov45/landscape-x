@@ -1249,7 +1249,7 @@ A__align(Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_l, c
     }
     ijp = ctx->commonIP;
 
-    if (calledbyfulltreebase == 1 && previouscall && firstmem >= 0 && firstmem == previousfirstmem && lgth1 == previousfirstlen && ctx->nthread == 0 && icyc == previousicyc + 1)  // mouhitotsu jouken ga iru. firstmem >= 0 && firstmem == previousfirstmem && calledbytreebase && prevcalledbytreebase
+    if (calledbyfulltreebase == 1 && previouscall && firstmem >= 0 && firstmem == previousfirstmem && lgth1 == previousfirstlen && icyc == previousicyc + 1)
         reuseprofiles = 1;
     else
         reuseprofiles = 0;

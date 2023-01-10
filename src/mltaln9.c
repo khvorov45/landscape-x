@@ -3375,8 +3375,8 @@ compacttree_memsaveselectable(Context* ctx, int nseq, double** partmtx, int* nea
             resetnearestfunc = kmerresetnearestthread;
         }
     }
-    distarrarg = calloc(MAX(ctx->nthreadpair, 1), sizeof(compactdistarrthread_arg_t));
-    resetarg = calloc(MAX(ctx->nthreadpair, 1), sizeof(resetnearestthread_arg_t));
+    distarrarg = calloc(1, sizeof(compactdistarrthread_arg_t));
+    resetarg = calloc(1, sizeof(resetnearestthread_arg_t));
     joblist = calloc(ctx->njob, sizeof(int));
     if (howcompact != 2)
         result = calloc(ctx->njob, sizeof(double));
@@ -7816,51 +7816,17 @@ readloopthread(void* arg) {
     initlocalhom1(&lhsingle);
     effijx = 1.0 * ctx->fastathreshold;
 
-#if 0
-	int block;
-	if( nfiles > 10*nthreadreadlh ) block=10; else block=1;
-#endif
-
     while (1) {
         if (subid == -1 || whichpair(&i, &j, fp)) {
             while (1) {
                 if (fp)
                     fclose(fp);
-#if 0
-				if( (subid+1)%block==0 )
-				{
-					if( mutex ) pthread_mutex_lock( mutex );
-					subid = (*subidpt);
-					(*subidpt) += block;
-					if( mutex ) pthread_mutex_unlock( mutex );
-				}
-				else
-					subid++;
-#else
-#ifdef enablemultithread
-                if (mutex)
-                    pthread_mutex_lock(mutex);
-#endif
+
                 subid = (*subidpt)++;
-#ifdef enablemultithread
-                if (mutex)
-                    pthread_mutex_unlock(mutex);
-#endif
-#endif
 
                 if (subid >= nfiles) {
-                    //					if( stbuf ) free( stbuf );
-                    //					stbuf = NULL;
                     return (NULL);
                 }
-
-                //				if( !stbuf )
-                //					stbuf = malloc( MYBUFSIZE );
-                //				if( !stbuf )
-                //				{
-                //					reporterr( "Cannot allocate stbuf, size=d\n", MYBUFSIZE );
-                //					exit( 1 );
-                //				}
 
                 fn = calloc(100, sizeof(char));
                 sprintf(fn, "hat3dir/%d-/hat3node-%d-%d", (int)(nodeid / HAT3NODEBLOCK) * HAT3NODEBLOCK, nodeid, subid);
@@ -8091,20 +8057,10 @@ fillimp_file(Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int
         }
     }
 
-#if 0
-	if( 0 || nfiles < 2 )
-	{
-		unsigned long long nread;
-		readloop_serial( nodeid, impmtx, seq1, seq2, orinum1, orinum2, eff1, eff2, &nread );
-		npairs -= nread;
-	}
-	else
-#endif
     {
         nth = MIN(ctx->nthreadreadlh, nfiles);
         subid = 0;
 
-        //		reporterr( "nthreadlh=%d, nth=%d\n", nthreadreadlh, nth );
         if (nth > 1) {
             localndone = calloc(sizeof(unsigned long long), nth);
             localimpmtx = calloc(sizeof(double**), nth);

@@ -284,9 +284,7 @@ typedef struct Context {
     int      commonAlloc2;
     int**    commonIP;
     int**    commonJP;
-    int      nthread;
     int      nthreadreadlh;
-    int      nthreadpair;
     int      randomseed;
     int      parallelizationstrategy;
     int      scoreout;

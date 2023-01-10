@@ -1299,7 +1299,6 @@ static void
 arguments(Context* ctx, int argc, char* argv[]) {
     int c;
 
-    ctx->nthread = 1;
     laste = 5000;
     lastm = 3;
     ctx->nadd = 0;
@@ -1419,13 +1418,7 @@ arguments(Context* ctx, int argc, char* argv[]) {
                     fprintf(stderr, "laraparams = %s\n", laraparams);
                     --argc;
                     goto nextoption;
-      
-                case 'C':
-                    ctx->nthread = myatoi(*++argv);
-                    --argc;
-                    ctx->nthread = 0;
-                    goto nextoption;
-      
+            
                 case 'I':
                     ctx->nadd = myatoi(*++argv);
                     --argc;
@@ -2248,13 +2241,6 @@ pairlocalalign(Context* ctx, int ngui, const char* const* namegui, char** seqgui
 #if IODEBUG
     fprintf(stderr, "OSHIMAI\n");
 #endif
-
-    if (stdout_dist && ctx->nthread > 1) {
-        fprintf(stderr, "\nThe order of distances is not identical to that in the input file, because of the parallel calculation.  Reorder them by yourself, using sort -n -k 2 | sort -n -k 1 -s\n");
-    }
-    if (stdout_align && ctx->nthread > 1) {
-        fprintf(stderr, "\nThe order of pairwise alignments is not identical to that in the input file, because of the parallel calculation.  Reorder them by yourself.\n");
-    }
 
 #if 1
     if (lastresx) {

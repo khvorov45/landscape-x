@@ -180,11 +180,6 @@ arguments(Context* ctx, TbfastOpts* tempOpts, int argc, char* argv[], int* pac, 
                     ctx->consweight_multi = atof(*++argv);
                     --argc;
                     goto nextoption;
-                case 'C':
-                    ctx->nthreadpair = ctx->nthread = myatoi(*++argv);
-                    --argc;
-                    ctx->nthread = 0;
-                    goto nextoption;
                 
                 case 'R':
                     ctx->rnaprediction = 'r';     
@@ -385,7 +380,6 @@ static void*
 msacompactdisthalfmtxthread(msacompactdistmtxthread_arg_t* targ) {
     Context* ctx = targ->ctx;
     int      njob = targ->njob;
-    int      thread_no = targ->thread_no;
     int*     selfscore = targ->selfscore;
     double** partmtx = targ->partmtx;
     char**   seq = targ->seq;
@@ -406,10 +400,7 @@ msacompactdisthalfmtxthread(msacompactdistmtxthread_arg_t* targ) {
         }
 
         if (i % 100 == 0) {
-            if (ctx->nthreadpair)
-                fprintf(stderr, "\r% 5d / %d (thread %4d)", i, njob, thread_no);
-            else
-                fprintf(stderr, "\r% 5d / %d", i, njob);
+            fprintf(stderr, "\r% 5d / %d", i, njob);
         }
 
         for (j = i + 1; j < njob; j++) {
@@ -951,8 +942,6 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     ctx->nthreadreadlh = 1;
     ctx->LineLengthInFASTA = -1;
     ctx->njob = stringsCount;
-    ctx->nthread = 1;    
-    ctx->nthreadpair = 1;
     ctx->rnaprediction = 'm';
     ctx->addprofile = 1;
     ctx->nblosum = 62;
@@ -1425,16 +1414,12 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     constants(ctx, ctx->njob, seq);
 
     if (ctx->sueff_global < 0.0001 || ctx->compacttree == 3) {
-        ctx->nthreadreadlh = ctx->nthread;
         if (ctx->nthreadreadlh == 0)
             ctx->nthreadreadlh = 1;
-
-        tempOpts->nthreadtb = 0;
-        ctx->nthread = 0;
     } else {
         ctx->nthreadreadlh = 1;
-        tempOpts->nthreadtb = ctx->nthread;
     }
+    tempOpts->nthreadtb = 0;
 
     initSignalSM(ctx);
     initFiles(ctx);
@@ -1665,7 +1650,6 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
             }
         } else if (ctx->tbutree == 0 && ctx->compacttree)  // tbutree != 0 no toki (aln->mtx) ha, 6merdistance -> disttbfast.c; dp distance -> muzukashii
         {
-            reporterr("Constructing a tree ... nthread=%d", ctx->nthread);
             compacttree_memsaveselectable(ctx, ctx->njob, partmtx, mindistfrom, mindist, NULL, selfscore, seq, skiptable, topol, len, name, NULL, dep, tempOpts->treeout, ctx->compacttree, 1);
 
             if (mindistfrom)
@@ -2064,7 +2048,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
 
     if (ctx->spscoreout)
         reporterr("Unweighted sum-of-pairs score = %10.5f\n", sumofpairsscore(ctx, ctx->njob, bseq));
-    ctx->nthread = MAX(tempOpts->nthreadtb, ctx->nthreadreadlh);  // toriaezu
+    
     if (tempOpts->ndeleted > 0) {
         reporterr("\nTo keep the alignment length, %d letters were DELETED.\n", tempOpts->ndeleted);
         if (tempOpts->mapout)
