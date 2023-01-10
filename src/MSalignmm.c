@@ -1944,7 +1944,7 @@ MSalignmm(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double*
         }
     }
 
-    if (cpmxresult && ctx->specificityconsideration == 0.0)  // n_dynamicmtx ga henka suru toki profile ha sairiyou dekinai.
+    if (cpmxresult && ctx->opts.specificityconsideration == 0.0)  // n_dynamicmtx ga henka suru toki profile ha sairiyou dekinai.
     {
         if (sgap1) {
             reporterr("The combination of sgap1 and cpmxhit is not supported. See Salignmm.c\n");

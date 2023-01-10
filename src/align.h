@@ -31,6 +31,7 @@ typedef struct aln_Opts {
     int32_t outputhat23;
     int32_t ppenalty_dist;
     double  minimumweight;
+    double  specificityconsideration;
 } aln_Opts;
 
 aln_PUBLICAPI aln_Opts aln_defaultOpts(void);

@@ -1259,7 +1259,7 @@ A__align(Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_l, c
         exit(1);
     }
 
-    if (cpmxresult && ctx->specificityconsideration == 0.0)  // n_dynamicmtx ga henka suru toki profile ha sairiyou dekinai.
+    if (cpmxresult && ctx->opts.specificityconsideration == 0.0)  // n_dynamicmtx ga henka suru toki profile ha sairiyou dekinai.
     {
         if (sgap1) {
             reporterr("The combination of sgap1 and cpmxhit is not supported. See Salignmm.c\n");

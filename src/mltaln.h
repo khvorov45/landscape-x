@@ -297,7 +297,6 @@ typedef struct Context {
     char*    newgapstr;
     int      nalphabets;
     int      nscoredalphabets;
-    double   specificityconsideration;
     int      ndistclass;
     int      maxdistclass;
     double   sueff_global;

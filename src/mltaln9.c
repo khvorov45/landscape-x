@@ -2698,7 +2698,7 @@ recalcpairs4thread(recalcpairs4thread_arg_t* targ) {
 
     localhomtable = (LocalHom*)calloc(1, sizeof(LocalHom));
     freelocalhom1(localhomtable);
-    if (ctx->specificityconsideration > 0.0) {
+    if (ctx->opts.specificityconsideration > 0.0) {
         dynamicmtx = AllocateDoubleMtx(ctx->nalphabets, ctx->nalphabets);
         mtxptr = dynamicmtx;
     } else
@@ -2756,7 +2756,7 @@ recalcpairs4thread(recalcpairs4thread_arg_t* targ) {
 
 #if EXACTLYSAMEASPAIRLOCALALIGN
 #else
-        if (ctx->specificityconsideration > 0.0)
+        if (ctx->opts.specificityconsideration > 0.0)
             makedynamicmtx(ctx, dynamicmtx, ctx->n_dis_consweight_multi, dep[n].distfromtip);
 #endif
 
@@ -7218,7 +7218,7 @@ outgapcount(double* freq, int nseq, char* gappat, double* eff) {
 
 double
 dist2offset(Context* ctx, double dist) {
-    double val = dist * 0.5 - ctx->specificityconsideration;
+    double val = dist * 0.5 - ctx->opts.specificityconsideration;
     if (val > 0.0)
         val = 0.0;
     return val;

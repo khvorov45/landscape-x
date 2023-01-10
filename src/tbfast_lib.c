@@ -185,18 +185,13 @@ arguments(Context* ctx, TbfastOpts* tempOpts, int argc, char* argv[], int* pac, 
                     --argc;
                     ctx->nthread = 0;
                     goto nextoption;
-                case 's':
-                    ctx->specificityconsideration = (double)myatof(*++argv);
-                    //					fprintf( stderr, "specificityconsideration = %f\n", specificityconsideration );
-                    --argc;
-                    goto nextoption;
+                
                 case 'R':
-                    ctx->rnaprediction = 'r';
-#if 1
+                    ctx->rnaprediction = 'r';     
                 case 'a':
                     ctx->fmodel = 1;
                     break;
-#endif
+     
                 case 'K':
                     ctx->addprofile = 0;
                     break;
@@ -947,7 +942,6 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
 
     ctx->RNAscoremtx = 'n';
     ctx->parallelizationstrategy = BAATARI1;
-    ctx->opts.minimumweight = 0.0005;
     ctx->newgapstr = "-";
     ctx->nalphabets = 26;
     ctx->nscoredalphabets = 20;
@@ -971,7 +965,6 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     ctx->treemethod = 'X';
     ctx->sueff_global = 0.1;
     ctx->scoremtx = 1;
-    ctx->opts.ppenalty_dist = NOTSPECIFIED;
     ctx->ppenalty = NOTSPECIFIED;
     ctx->penalty_shift_factor = 1000.0;
     ctx->ppenalty_ex = NOTSPECIFIED;
@@ -1151,7 +1144,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     if (tempOpts->treein) {
         loadtree(ctx, ctx->njob, topol, len, name, dep, tempOpts->treeout);
         fprintf(stderr, "\ndone.\n\n");
-        if (tempOpts->callpairlocalalign && ctx->specificityconsideration > 0.0) {
+        if (tempOpts->callpairlocalalign && ctx->opts.specificityconsideration > 0.0) {
             int* mem0 = calloc(sizeof(int), ctx->njob);
             int* mem1 = calloc(sizeof(int), ctx->njob);
             expdist = AllocateDoubleMtx(ctx->njob, ctx->njob);

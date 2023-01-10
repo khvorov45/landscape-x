@@ -1347,7 +1347,7 @@ arguments(Context* ctx, int argc, char* argv[]) {
     ctx->fftThreshold = NOTSPECIFIED;
     ctx->RNAppenalty = NOTSPECIFIED;
     ctx->RNApthr = NOTSPECIFIED;
-    ctx->specificityconsideration = 0.0;
+    ctx->opts.specificityconsideration = 0.0;
     ctx->usenaivescoreinsteadofalignmentscore = 0;
     ctx->specifictarget = 0;
     ctx->nwildcard = 0;
@@ -1441,7 +1441,7 @@ arguments(Context* ctx, int argc, char* argv[]) {
                     --argc;
                     goto nextoption;
                 case 'u':
-                    ctx->specificityconsideration = (double)myatof(*++argv);
+                    ctx->opts.specificityconsideration = (double)myatof(*++argv);
                     --argc;
                     goto nextoption;
                 case 'K':  // Hontou ha iranai. disttbfast.c, tbfast.c to awaserutame.
@@ -1760,7 +1760,7 @@ pairalign(Context* ctx, const char* const* name, char** seq, char** aseq, char**
 
     {
         double** dynamicmtx = NULL;
-        if (ctx->specificityconsideration > 0.0)
+        if (ctx->opts.specificityconsideration > 0.0)
             dynamicmtx = AllocateDoubleMtx(ctx->nalphabets, ctx->nalphabets);
 
         if (ctx->alg == 'Y' || ctx->alg == 'r')
@@ -1839,7 +1839,7 @@ pairalign(Context* ctx, const char* const* name, char** seq, char** aseq, char**
                                     if (thereisx)
                                         pscore = G__align11_noalign(ctx, ctx->n_dis_consweight_multi, ctx->penalty, ctx->penalty_ex, distseq1, distseq2);
 #if 1
-                                    if (ctx->specificityconsideration > 0.0) {
+                                    if (ctx->opts.specificityconsideration > 0.0) {
                                         if (expdist)
                                             dist = expdist[i][j];
                                         else
@@ -1869,7 +1869,7 @@ pairalign(Context* ctx, const char* const* name, char** seq, char** aseq, char**
                                     pscore = genL__align11(ctx, ctx->n_dis_consweight_multi, dumseq1, dumseq2, alloclen, &dum1, &dum2);  // uwagaki
                                 }
 #if 1
-                                if (ctx->specificityconsideration > 0.0) {
+                                if (ctx->opts.specificityconsideration > 0.0) {
                                     //									fprintf( stderr, "dist = %f\n", score2dist( pscore, selfscore[i], selfscore[j] ) );
                                     if (expdist)
                                         dist = expdist[i][j];
@@ -1911,7 +1911,7 @@ pairalign(Context* ctx, const char* const* name, char** seq, char** aseq, char**
                                         if (thereisx)
                                             pscore = L__align11_noalign(ctx, ctx->n_dis_consweight_multi, distseq1, distseq2);  // all pair
 #if 1
-                                        if (ctx->specificityconsideration > 0.0) {
+                                        if (ctx->opts.specificityconsideration > 0.0) {
                                             if (expdist)
                                                 dist = expdist[i][j];
                                             else
