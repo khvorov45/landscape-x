@@ -1104,7 +1104,6 @@ A__align(aln_Opts opts, Context* ctx, double** n_dynamicmtx, int penalty_l, int 
     warpn = 0;
 
     if (ctx->trywarp) {
-        //		fprintf( stderr, "IN A__align, penalty_shift = %d\n", penalty_shift );
         if (headgp == 0 || tailgp == 0) {
             fprintf(stderr, "At present, headgp and tailgp must be 1 to allow shift.\n");
             exit(1);

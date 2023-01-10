@@ -123,10 +123,6 @@ arguments(Context* ctx, TbfastOpts* tempOpts, int argc, char* argv[], int* pac, 
                     --argc;
                     goto nextoption;
 
-                case 'Q':
-                    ctx->penalty_shift_factor = atof(*++argv);
-                    --argc;
-                    goto nextoption;
                 case 'g':
                     ctx->ppenalty_ex = (int)(atof(*++argv) * 1000 - 0.5);
                     --argc;
@@ -891,6 +887,8 @@ WriteOptions(aln_Opts opts, Context* ctx, FILE* fp) {
     fflush(fp);
 }
 
+// TODO(sen) Get rid of args and arg parsing
+
 int
 tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes, aln_Opts opts, int argc, char* argv[]) {
     aln_Arena permArena_ = {.base = out, .size = outBytes / 4};
@@ -926,7 +924,6 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     ctx->tbrweight = 3;
     ctx->treemethod = 'X';
     ctx->sueff_global = 0.1;
-    ctx->penalty_shift_factor = 1000.0;
     ctx->ppenalty_ex = NOTSPECIFIED;
     ctx->poffset = NOTSPECIFIED;
     ctx->kimuraR = NOTSPECIFIED;

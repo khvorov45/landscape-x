@@ -1334,7 +1334,6 @@ arguments(Context* ctx, int argc, char* argv[]) {
     ctx->ppenalty_OP = NOTSPECIFIED;
     ctx->ppenalty_ex = NOTSPECIFIED;
     ctx->ppenalty_EX = NOTSPECIFIED;
-    ctx->penalty_shift_factor = 1000.0;
     ctx->poffset = NOTSPECIFIED;
     ctx->kimuraR = NOTSPECIFIED;
     ctx->pamN = NOTSPECIFIED;
@@ -1367,10 +1366,7 @@ arguments(Context* ctx, int argc, char* argv[]) {
                     ctx->ppenalty_EX = (int)(atof(*++argv) * 1000 - 0.5);
                     --argc;
                     goto nextoption;
-                case 'Q':
-                    ctx->penalty_shift_factor = atof(*++argv);
-                    --argc;
-                    goto nextoption;
+
                 case 'h':
                     ctx->poffset = (int)(atof(*++argv) * 1000 - 0.5);
                     --argc;

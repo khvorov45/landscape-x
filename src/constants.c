@@ -1513,7 +1513,7 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
     if (opts.nblosum < 0)
         ctx->dorp = 'p';
 
-    if (ctx->penalty_shift_factor >= 10)
+    if (opts.penalty_shift_factor >= 10)
         ctx->trywarp = 0;
     else
         ctx->trywarp = 1;
@@ -1566,7 +1566,7 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
         ctx->RNAthr = (int)(3 * 600.0 / 1000.0 * ctx->RNApthr + 0.5);
         ctx->penalty = (int)(3 * 600.0 / 1000.0 * opts.ppenalty + 0.5);
         ctx->penalty_dist = (int)(3 * 600.0 / 1000.0 * opts.ppenalty_dist + 0.5);
-        ctx->penalty_shift = (int)(ctx->penalty_shift_factor * ctx->penalty);
+        ctx->penalty_shift = (int)(opts.penalty_shift_factor * ctx->penalty);
         ctx->penalty_OP = (int)(3 * 600.0 / 1000.0 * ctx->ppenalty_OP + 0.5);
         ctx->penalty_ex = (int)(3 * 600.0 / 1000.0 * ctx->ppenalty_ex + 0.5);
         ctx->penalty_EX = (int)(3 * 600.0 / 1000.0 * ctx->ppenalty_EX + 0.5);
@@ -1945,7 +1945,7 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
             ctx->kimuraR = 1;
         ctx->penalty = (int)(600.0 / 1000.0 * opts.ppenalty + 0.5);
         ctx->penalty_dist = (int)(600.0 / 1000.0 * opts.ppenalty_dist + 0.5);
-        ctx->penalty_shift = (int)(ctx->penalty_shift_factor * ctx->penalty);
+        ctx->penalty_shift = (int)(opts.penalty_shift_factor * ctx->penalty);
         ctx->penalty_OP = (int)(600.0 / 1000.0 * ctx->ppenalty_OP + 0.5);
         ctx->penalty_ex = (int)(600.0 / 1000.0 * ctx->ppenalty_ex + 0.5);
         ctx->penalty_EX = (int)(600.0 / 1000.0 * ctx->ppenalty_EX + 0.5);
@@ -2164,7 +2164,7 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
             ctx->kimuraR = 1;
         ctx->penalty = (int)(600.0 / 1000.0 * opts.ppenalty + 0.5);
         ctx->penalty_dist = (int)(600.0 / 1000.0 * opts.ppenalty_dist + 0.5);
-        ctx->penalty_shift = (int)(ctx->penalty_shift_factor * ctx->penalty);
+        ctx->penalty_shift = (int)(opts.penalty_shift_factor * ctx->penalty);
         ctx->penalty_OP = (int)(600.0 / 1000.0 * ctx->ppenalty_OP + 0.5);
         ctx->penalty_ex = (int)(600.0 / 1000.0 * ctx->ppenalty_ex + 0.5);
         ctx->penalty_EX = (int)(600.0 / 1000.0 * ctx->ppenalty_EX + 0.5);
@@ -2388,7 +2388,7 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
 
         ctx->penalty = (int)(600.0 / 1000.0 * opts.ppenalty + 0.5);
         ctx->penalty_dist = (int)(600.0 / 1000.0 * opts.ppenalty_dist + 0.5);
-        ctx->penalty_shift = (int)(ctx->penalty_shift_factor * ctx->penalty);
+        ctx->penalty_shift = (int)(opts.penalty_shift_factor * ctx->penalty);
         ctx->penalty_OP = (int)(600.0 / 1000.0 * ctx->ppenalty_OP + 0.5);
         ctx->penalty_ex = (int)(600.0 / 1000.0 * ctx->ppenalty_ex + 0.5);
         ctx->penalty_EX = (int)(600.0 / 1000.0 * ctx->ppenalty_EX + 0.5);

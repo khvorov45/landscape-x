@@ -35,6 +35,7 @@ typedef struct aln_Opts {
     int32_t scoremtx;
     double  minimumweight;
     double  specificityconsideration;
+    double  penalty_shift_factor;
 } aln_Opts;
 
 aln_PUBLICAPI aln_Opts aln_defaultOpts(void);
@@ -230,6 +231,7 @@ aln_defaultOpts(void) {
         .nblosum = 62,
         .scoremtx = 1,
         .minimumweight = 0.00001,
+        .penalty_shift_factor = 100.0
     };
     return opts;
 }

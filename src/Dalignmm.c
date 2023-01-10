@@ -2475,9 +2475,6 @@ D__align(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* 
     warpn = 0;
 
     if (ctx->trywarp) {
-        //		reporterr( "Not supported yet!\n" );
-        //		exit( 1 );
-        //		fprintf( stderr, "IN D__align, penalty_shift = %d\n", penalty_shift );
         if (headgp == 0 || tailgp == 0) {
             fprintf(stderr, "At present, headgp and tailgp must be 1 to allow shift.\n");
             exit(1);
@@ -4052,9 +4049,6 @@ D__align_variousdist(Context* ctx, int** which, double*** matrices, char** seq1,
     warpn = 0;
 
     if (ctx->trywarp) {
-        //		reporterr( "Not supported yet!\n" );
-        //		exit( 1 );
-        //		fprintf( stderr, "IN D__align, penalty_shift = %d\n", penalty_shift );
         if (headgp == 0 || tailgp == 0) {
             fprintf(stderr, "At present, headgp and tailgp must be 1 to allow shift.\n");
             exit(1);
