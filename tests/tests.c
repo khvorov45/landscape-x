@@ -197,7 +197,7 @@ main() {
     prb_assert(prb_clearDir(arena, tempDir));
     prb_Str cwd = prb_getWorkingDir(arena);
     prb_assert(prb_setWorkingDir(arena, tempDir));
-    const char** tbfastArgs = prb_getArgArrayFromStr(arena, prb_STR("tbfast _ -g -0.10 -A _ -X 0.1"));
+    const char** tbfastArgs = prb_getArgArrayFromStr(arena, prb_STR("tbfast _ -g -0.10 -A _ "));
     int32_t      outBytes = 50 * prb_MEGABYTE;
     void*        outBuf = prb_arenaAllocAndZero(arena, outBytes, 1);
     tbfast_main((aln_Str*)genSeq.seqs, genSeq.seqCount, outBuf, outBytes, aln_defaultOpts(), arrlen(tbfastArgs), (char**)tbfastArgs);

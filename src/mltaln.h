@@ -254,7 +254,6 @@ typedef struct Context {
     int      pamN;
     int      checkC;
     double   geta2;
-    int      treemethod;
     int      kimuraR;
     char*    swopt;
     int      fftkeika;
@@ -287,7 +286,6 @@ typedef struct Context {
     int      nscoredalphabets;
     int      ndistclass;
     int      maxdistclass;
-    double   sueff_global;
     double   lenfaca;
     double   lenfacb;
     double   lenfacc;
@@ -562,13 +560,12 @@ extern void               foldalignedrna(int clus1, int clus2, char** mseq1, cha
 void                      readmccaskill(FILE* fp, RNApair** pairprob, int length);
 void                      makegrouprna(RNApair*** group, RNApair*** all, int* memlist);
 void                      makegrouprnait(RNApair*** group, RNApair*** all, char* pair, int s);
-extern void               fixed_musclesupg_double_realloc_nobk_halfmtx(Context* ctx, int nseq, double** eff, int*** topol, double** len, Treedep*, int progressout, int efffree);
-extern void               fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(Context* ctx, int nseq, double** eff, int*** topol, double** len, Treedep*, int progressout, int efffree);
+extern void               fixed_musclesupg_double_realloc_nobk_halfmtx(aln_Opts opts, Context* ctx, int nseq, double** eff, int*** topol, double** len, Treedep*, int progressout, int efffree);
+extern void               fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(aln_Opts opts, Context* ctx, int nseq, double** eff, int*** topol, double** len, Treedep*, int progressout, int efffree);
 extern void               loadtree(Context* ctx, int nseq, int*** topol, double** len, const char* const* name, Treedep*, int treeout);
 extern int                check_guidetreefile(int* seed, int* npick, double* limitram);
-extern void               fixed_musclesupg_double_realloc_nobk_halfmtx_treeout(Context* ctx, int nseq, double** eff, int*** topol, double** len, char** name, Treedep*, int efffree);  // KESU
-extern void               fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(Context* ctx, int nseq, double** eff, int*** topol, double** len, const char* const* name, Treedep*, int efffree, int treeout);
-extern void               fixed_supg_double_realloc_nobk_halfmtx_treeout_constrained(Context* ctx, int nseq, double** eff, int*** topol, double** len, const char* const* name, Treedep*, int ncons, int** constraints, int efffree);
+extern void               fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(aln_Opts opts, Context* ctx, int nseq, double** eff, int*** topol, double** len, const char* const* name, Treedep*, int efffree, int treeout);
+extern void               fixed_supg_double_realloc_nobk_halfmtx_treeout_constrained(aln_Opts opts, Context* ctx, int nseq, double** eff, int*** topol, double** len, const char* const* name, Treedep*, int ncons, int** constraints, int efffree);
 extern void               imp_match_init_strict(aln_Opts opts, Context* ctx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1kozo, double* eff2kozo, LocalHom*** localhom, char* swaplist, int* memlist1, int* memlist2, int* uselh, int* seedinlh1, int* seedinlh2, int nodeid, int nfiles);
 extern void               miyataout_reorder_pointer(FILE* fp, int locnjob, int nlenmax, char** name, int* nlen, char** aseq, int* order);
 extern void               cpmx_ribosum(Context* ctx, char** seq, char** seqr, char* dir, double** cpmx, double* eff, int lgth, int clus);
@@ -627,7 +624,7 @@ extern void   stringshuffle(int* ary, int size);
 extern void   topolorder(int* order, int* posinorder, int*** topol, Treedep* dep, int pos, int child);
 extern int*   topolorderz(int* order, int*** topol, Treedep* dep, int pos, int nchild);
 extern int*   topolordery(int* order, int*** topol, Treedep* dep, int pos, int nchild);
-extern void   compacttree_memsaveselectable(Context* ctx, int nseq, double** partmtx, int* nearest, double* mindist, int** pointt, int* selfscore, char** seq, int** skiptable, int*** topol, double** len, const char* const* name, int* nlen, Treedep* dep, int treeout, int howcompact, int memsave);
+extern void   compacttree_memsaveselectable(aln_Opts opts, Context* ctx, int nseq, double** partmtx, int* nearest, double* mindist, int** pointt, int* selfscore, char** seq, int** skiptable, int*** topol, double** len, const char* const* name, int* nlen, Treedep* dep, int treeout, int howcompact, int memsave);
 extern double distcompact(Context* ctx, int len1, int len2, int* table1, int* point2, int ss1, int ss2);
 extern double distcompact_msa(Context* ctx, const char* seq1, const char* seq2, int* skiptable1, int* skiptable2, int ss1, int ss2);
 extern void   fillimp(aln_Opts opts, double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2);

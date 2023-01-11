@@ -1322,7 +1322,6 @@ arguments(Context* ctx, int argc, char* argv[]) {
     ctx->tbweight = 0;
     ctx->tbrweight = 3;
     ctx->checkC = 0;
-    ctx->treemethod = 'x';
     ctx->kobetsubunkatsu = 0;
     ctx->divpairscore = 0;
     stdout_align = 0;

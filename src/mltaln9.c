@@ -1206,7 +1206,7 @@ increaseintergroupdistanceshalfmtx(double** eff, int ngroup, int** groups, int n
 }
 
 void
-fixed_supg_double_realloc_nobk_halfmtx_treeout_constrained(Context* ctx, int nseq, double** eff, int*** topol, double** len, const char* const* name, Treedep* dep, int ngroup, int** groups, int efffree) {
+fixed_supg_double_realloc_nobk_halfmtx_treeout_constrained(aln_Opts opts, Context* ctx, int nseq, double** eff, int*** topol, double** len, const char* const* name, Treedep* dep, int ngroup, int** groups, int efffree) {
     int     i, j, k, miniim, maxiim, minijm, maxijm;
     int *   intpt, *intpt2;
     double  tmpdouble;
@@ -1240,16 +1240,16 @@ fixed_supg_double_realloc_nobk_halfmtx_treeout_constrained(Context* ctx, int nse
 
     increaseintergroupdistanceshalfmtx(eff, ngroup, groups, nseq);
 
-    sueff1 = 1 - (double)ctx->sueff_global;
-    sueff05 = (double)ctx->sueff_global * 0.5;
-    if (ctx->treemethod == 'X')
+    sueff1 = 1 - (double)opts.sueff_global;
+    sueff05 = (double)opts.sueff_global * 0.5;
+    if (opts.treemethod == 'X')
         clusterfuncpt[0] = cluster_mix_double;
-    else if (ctx->treemethod == 'E')
+    else if (opts.treemethod == 'E')
         clusterfuncpt[0] = cluster_average_double;
-    else if (ctx->treemethod == 'q')
+    else if (opts.treemethod == 'q')
         clusterfuncpt[0] = cluster_minimum_double;
     else {
-        reporterr("Unknown treemethod, %c\n", ctx->treemethod);
+        reporterr("Unknown treemethod, %c\n", opts.treemethod);
         exit(1);
     }
 
@@ -2211,7 +2211,7 @@ distdp_noalign(Context* ctx, char* s1, char* s2, double selfscore1, double selfs
 }
 
 void
-compacttree_memsaveselectable(Context* ctx, int nseq, double** partmtx, int* nearest, double* mindist, int** pointt, int* tselfscore, char** seq, int** skiptable, int*** topol, double** len, const char* const* name, int* nlen, Treedep* dep, int treeout, int howcompact, int memsave) {
+compacttree_memsaveselectable(aln_Opts opts, Context* ctx, int nseq, double** partmtx, int* nearest, double* mindist, int** pointt, int* tselfscore, char** seq, int** skiptable, int*** topol, double** len, const char* const* name, int* nlen, Treedep* dep, int treeout, int howcompact, int memsave) {
     int i, j, k;
     //	int miniim, maxiim, minijm, maxijm;
     int *intpt, *intpt2;
@@ -2245,12 +2245,12 @@ compacttree_memsaveselectable(Context* ctx, int nseq, double** partmtx, int* nea
     int *                       joblist, nactive, posshared;
     double*                     result;
 
-    sueff1 = 1 - (double)ctx->sueff_global;
-    sueff05 = (double)ctx->sueff_global * 0.5;
-    if (ctx->treemethod == 'X')
+    sueff1 = 1 - (double)opts.sueff_global;
+    sueff05 = (double)opts.sueff_global * 0.5;
+    if (opts.treemethod == 'X')
         clusterfuncpt[0] = cluster_mix_double;
     else {
-        reporterr("Unknown treemethod, %c\n", ctx->treemethod);
+        reporterr("Unknown treemethod, %c\n", opts.treemethod);
         exit(1);
     }
 
@@ -2667,7 +2667,7 @@ compacttree_memsaveselectable(Context* ctx, int nseq, double** partmtx, int* nea
 }
 
 void
-fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(Context* ctx, int nseq, double** eff, int*** topol, double** len, const char* const* name, Treedep* dep, int efffree, int treeout) {
+fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(aln_Opts opts, Context* ctx, int nseq, double** eff, int*** topol, double** len, const char* const* name, Treedep* dep, int efffree, int treeout) {
     int     i, j, k, miniim, maxiim, minijm, maxijm;
     int*    intpt;
     double  tmpdouble;
@@ -2693,16 +2693,16 @@ fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(Context* ctx, int n
     char    namec;
     double* density;
 
-    sueff1 = 1 - (double)ctx->sueff_global;
-    sueff05 = (double)ctx->sueff_global * 0.5;
-    if (ctx->treemethod == 'X')
+    sueff1 = 1 - (double)opts.sueff_global;
+    sueff05 = (double)opts.sueff_global * 0.5;
+    if (opts.treemethod == 'X')
         clusterfuncpt[0] = cluster_mix_double;
-    else if (ctx->treemethod == 'E')
+    else if (opts.treemethod == 'E')
         clusterfuncpt[0] = cluster_average_double;
-    else if (ctx->treemethod == 'q')
+    else if (opts.treemethod == 'q')
         clusterfuncpt[0] = cluster_minimum_double;
     else {
-        reporterr("Unknown treemethod, %c\n", ctx->treemethod);
+        reporterr("Unknown treemethod, %c\n", opts.treemethod);
         exit(1);
     }
 
@@ -3040,313 +3040,7 @@ fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(Context* ctx, int n
 }
 
 void
-fixed_musclesupg_double_realloc_nobk_halfmtx_treeout(Context* ctx, int nseq, double** eff, int*** topol, double** len, char** name, Treedep* dep, int efffree) {
-    int     i, j, k, miniim, maxiim, minijm, maxijm;
-    int *   intpt, *intpt2;
-    double  tmpdouble;
-    double  eff1, eff0;
-    double* tmptmplen = NULL;  //static?
-    int*    hist = NULL;  //static?
-    Bchain* ac = NULL;  //static?
-    int     im = -1, jm = -1;
-    Bchain *acjmnext, *acjmprev;
-    int     prevnode;
-    Bchain* acpti;
-    int *   pt1, *pt2, *pt11, *pt22;
-    int*    nmemar;  //static?
-    int     nmemim, nmemjm;
-    double  minscore;
-    int*    nearest = NULL;  // by D.Mathog, a guess
-    double* mindisfrom = NULL;  // by D.Mathog, a guess
-    char**  tree;  //static?
-    char*   treetmp;  //static?
-    char *  nametmp, *nameptr, *tmpptr;  //static?
-    FILE*   fp;
-    double (*clusterfuncpt[1])(double, double);
-    char namec;
-
-    sueff1 = 1 - (double)ctx->sueff_global;
-    sueff05 = (double)ctx->sueff_global * 0.5;
-    if (ctx->treemethod == 'X')
-        clusterfuncpt[0] = cluster_mix_double;
-    else if (ctx->treemethod == 'E')
-        clusterfuncpt[0] = cluster_average_double;
-    else if (ctx->treemethod == 'q')
-        clusterfuncpt[0] = cluster_minimum_double;
-    else {
-        reporterr("Unknown treemethod, %c\n", ctx->treemethod);
-        exit(1);
-    }
-
-    if (!hist) {
-        hist = AllocateIntVec(ctx->njob);
-        tmptmplen = AllocateFloatVec(ctx->njob);
-        ac = (Bchain*)malloc(ctx->njob * sizeof(Bchain));
-        nmemar = AllocateIntVec(ctx->njob);
-        mindisfrom = AllocateFloatVec(ctx->njob);
-        nearest = AllocateIntVec(ctx->njob);
-        treetmp = NULL;  // kentou 2013/06/12
-        nametmp = AllocateCharVec(1000);  // nagasugi
-        tree = AllocateCharMtx(ctx->njob, 0);
-    }
-
-    for (i = 0; i < nseq; i++) {
-        for (j = 0; j < 999; j++)
-            nametmp[j] = 0;
-        for (j = 0; j < 999; j++) {
-            namec = name[i][j];
-            if (namec == 0)
-                break;
-            else if (isalnum(namec) || namec == '/' || namec == '=' || namec == '-' || namec == '{' || namec == '}')
-                nametmp[j] = namec;
-            else
-                nametmp[j] = '_';
-        }
-        nametmp[j] = 0;
-        //		sprintf( tree[i], "%d_l=%d_%.20s", i+1, nlen[i], nametmp+1 );
-        if (ctx->outnumber)
-            nameptr = strstr(nametmp, "_numo_e") + 8;
-        else
-            nameptr = nametmp + 1;
-
-        if ((tmpptr = strstr(nameptr, "_oe_")))
-            nameptr = tmpptr + 4;  // = -> _ no tame
-
-        tree[i] = calloc(strlen(nametmp) + 100, sizeof(char));  // suuji no bun de +100
-        if (tree[i] == NULL) {
-            reporterr("Cannot allocate tree!\n");
-            exit(1);
-        }
-        sprintf(tree[i], "\n%d_%.900s\n", i + 1, nameptr);
-    }
-    for (i = 0; i < nseq; i++) {
-        ac[i].next = ac + i + 1;
-        ac[i].prev = ac + i - 1;
-        ac[i].pos = i;
-    }
-    ac[nseq - 1].next = NULL;
-
-    for (i = 0; i < nseq; i++)
-        setnearest(ac, eff, mindisfrom + i, nearest + i, i);  // muscle
-
-    for (i = 0; i < nseq; i++)
-        tmptmplen[i] = 0.0;
-    for (i = 0; i < nseq; i++) {
-        hist[i] = -1;
-        nmemar[i] = 1;
-    }
-
-    reporterr("\n");
-    for (k = 0; k < nseq - 1; k++) {
-        if (k % 10 == 0)
-            reporterr("\r% 5d / %d", k, nseq);
-
-        minscore = 999.9;
-        for (acpti = ac; acpti->next != NULL; acpti = acpti->next) {
-            i = acpti->pos;
-            //			reporterr(       "k=%d i=%d\n", k, i );
-            if (mindisfrom[i] < minscore)  // muscle
-            {
-                im = i;
-                minscore = mindisfrom[i];
-            }
-        }
-        jm = nearest[im];
-        if (jm < im) {
-            j = jm;
-            jm = im;
-            im = j;
-        }
-
-        prevnode = hist[im];
-        if (dep)
-            dep[k].child0 = prevnode;
-        nmemim = nmemar[im];
-        intpt = topol[k][0] = (int*)realloc(topol[k][0], (nmemim + 1) * sizeof(int));
-        if (prevnode == -1) {
-            *intpt++ = im;
-            *intpt = -1;
-        } else {
-            pt1 = topol[prevnode][0];
-            pt2 = topol[prevnode][1];
-            if (*pt1 > *pt2) {
-                pt11 = pt2;
-                pt22 = pt1;
-            } else {
-                pt11 = pt1;
-                pt22 = pt2;
-            }
-            for (intpt2 = pt11; *intpt2 != -1;)
-                *intpt++ = *intpt2++;
-            for (intpt2 = pt22; *intpt2 != -1;)
-                *intpt++ = *intpt2++;
-            *intpt = -1;
-        }
-
-        prevnode = hist[jm];
-        if (dep)
-            dep[k].child1 = prevnode;
-        nmemjm = nmemar[jm];
-        intpt = topol[k][1] = (int*)realloc(topol[k][1], (nmemjm + 1) * sizeof(int));
-        if (!intpt) {
-            reporterr("Cannot reallocate topol\n");
-            exit(1);
-        }
-        if (prevnode == -1) {
-            *intpt++ = jm;
-            *intpt = -1;
-        } else {
-            pt1 = topol[prevnode][0];
-            pt2 = topol[prevnode][1];
-            if (*pt1 > *pt2) {
-                pt11 = pt2;
-                pt22 = pt1;
-            } else {
-                pt11 = pt1;
-                pt22 = pt2;
-            }
-            for (intpt2 = pt11; *intpt2 != -1;)
-                *intpt++ = *intpt2++;
-            for (intpt2 = pt22; *intpt2 != -1;)
-                *intpt++ = *intpt2++;
-            *intpt = -1;
-        }
-
-        minscore *= 0.5;
-
-        len[k][0] = (minscore - tmptmplen[im]);
-        len[k][1] = (minscore - tmptmplen[jm]);
-
-        if (dep)
-            dep[k].distfromtip = minscore;
-        //		reporterr(       "\n##### dep[%d].distfromtip = %f\n", k, minscore );
-
-        tmptmplen[im] = minscore;
-
-        hist[im] = k;
-        nmemar[im] = nmemim + nmemjm;
-
-        mindisfrom[im] = 999.9;
-        for (acpti = ac; acpti != NULL; acpti = acpti->next) {
-            i = acpti->pos;
-            if (i != im && i != jm) {
-                if (i < im) {
-                    miniim = i;
-                    maxiim = im;
-                    minijm = i;
-                    maxijm = jm;
-                } else if (i < jm) {
-                    miniim = im;
-                    maxiim = i;
-                    minijm = i;
-                    maxijm = jm;
-                } else {
-                    miniim = im;
-                    maxiim = i;
-                    minijm = jm;
-                    maxijm = i;
-                }
-                eff0 = eff[miniim][maxiim - miniim];
-                eff1 = eff[minijm][maxijm - minijm];
-#if 0
-                		tmpdouble = eff[miniim][maxiim-miniim] =
-				MIN( eff0, eff1 ) * sueff1 + ( eff0 + eff1 ) * sueff05;
-#else
-                tmpdouble = eff[miniim][maxiim - miniim] =
-                    (clusterfuncpt[0])(eff0, eff1);
-
-#endif
-                if (tmpdouble < mindisfrom[i]) {
-                    mindisfrom[i] = tmpdouble;
-                    nearest[i] = im;
-                }
-                if (tmpdouble < mindisfrom[im]) {
-                    mindisfrom[im] = tmpdouble;
-                    nearest[im] = i;
-                }
-                if (nearest[i] == jm) {
-                    nearest[i] = im;
-                }
-            }
-        }
-
-        treetmp = realloc(treetmp, strlen(tree[im]) + strlen(tree[jm]) + 100);  // 22 de juubunn (:%7,:%7) %7 ha minus kamo
-        if (!treetmp) {
-            reporterr("Cannot allocate treetmp\n");
-            exit(1);
-        }
-        sprintf(treetmp, "(%s:%7.5f,%s:%7.5f)", tree[im], len[k][0], tree[jm], len[k][1]);
-        free(tree[im]);
-        free(tree[jm]);
-        tree[im] = calloc(strlen(treetmp) + 1, sizeof(char));
-        tree[jm] = NULL;
-        if (tree[im] == NULL) {
-            reporterr("Cannot reallocate tree!\n");
-            exit(1);
-        }
-        strcpy(tree[im], treetmp);
-
-        acjmprev = ac[jm].prev;
-        acjmnext = ac[jm].next;
-        acjmprev->next = acjmnext;
-        if (acjmnext != NULL)
-            acjmnext->prev = acjmprev;
-        if (efffree) {
-            free((void*)eff[jm]);
-            eff[jm] = NULL;
-        }
-
-#if 1  // muscle seems to miss this.
-        for (acpti = ac; acpti != NULL; acpti = acpti->next) {
-            i = acpti->pos;
-            if (nearest[i] == im) {
-                if (i < im) {
-                    miniim = i;
-                    maxiim = im;
-                } else {
-                    miniim = im;
-                    maxiim = i;
-                }
-                if (eff[miniim][maxiim - miniim] > mindisfrom[i])
-                    setnearest(ac, eff, mindisfrom + i, nearest + i, i);
-            }
-        }
-#else
-        reporterr("chuui!\n");
-#endif
-
-#if 0
-        printf(       "\nooSTEP-%03d:\n", k+1 );
-		printf(       "len0 = %f\n", len[k][0] );
-        for( i=0; topol[k][0][i]>-1; i++ ) printf(       " %03d", topol[k][0][i]+1 );
-        printf(       "\n" );
-		printf(       "len1 = %f\n", len[k][1] );
-        for( i=0; topol[k][1][i]>-1; i++ ) printf(       " %03d", topol[k][1][i]+1 );
-        printf(       "\n" );
-#endif
-    }
-    fp = fopen("infile.tree", "w");
-    fprintf(fp, "%s;\n", treetmp);
-    fclose(fp);
-
-    free(tree[0]);
-    free(tree);
-    free(treetmp);
-    free(nametmp);
-    free((void*)tmptmplen);
-    tmptmplen = NULL;
-    free(hist);
-    hist = NULL;
-    free((char*)ac);
-    ac = NULL;
-    free((void*)nmemar);
-    nmemar = NULL;
-    free(mindisfrom);
-    free(nearest);
-}
-
-void
-fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(Context* ctx, int nseq, double** eff, int*** topol, double** len, Treedep* dep, int progressout, int efffree) {
+fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(aln_Opts opts, Context* ctx, int nseq, double** eff, int*** topol, double** len, Treedep* dep, int progressout, int efffree) {
     int     i, j, k, miniim, maxiim, minijm, maxijm;
     int*    intpt;
     double  tmpdouble;
@@ -3366,16 +3060,16 @@ fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(Context* ctx, int nseq, dou
     double* mindisfrom = NULL;  // by Mathog, a guess
     double (*clusterfuncpt[1])(double, double);
 
-    sueff1 = 1 - (double)ctx->sueff_global;
-    sueff05 = (double)ctx->sueff_global * 0.5;
-    if (ctx->treemethod == 'X')
+    sueff1 = 1 - (double)opts.sueff_global;
+    sueff05 = (double)opts.sueff_global * 0.5;
+    if (opts.treemethod == 'X')
         clusterfuncpt[0] = cluster_mix_double;
-    else if (ctx->treemethod == 'E')
+    else if (opts.treemethod == 'E')
         clusterfuncpt[0] = cluster_average_double;
-    else if (ctx->treemethod == 'q')
+    else if (opts.treemethod == 'q')
         clusterfuncpt[0] = cluster_minimum_double;
     else {
-        reporterr("Unknown treemethod, %c\n", ctx->treemethod);
+        reporterr("Unknown treemethod, %c\n", opts.treemethod);
         exit(1);
     }
 
@@ -3600,7 +3294,7 @@ fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(Context* ctx, int nseq, dou
 }
 
 void
-fixed_musclesupg_double_realloc_nobk_halfmtx(Context* ctx, int nseq, double** eff, int*** topol, double** len, Treedep* dep, int progressout, int efffree) {
+fixed_musclesupg_double_realloc_nobk_halfmtx(aln_Opts opts, Context* ctx, int nseq, double** eff, int*** topol, double** len, Treedep* dep, int progressout, int efffree) {
     int     i, j, k, miniim, maxiim, minijm, maxijm;
     int *   intpt, *intpt2;
     double  tmpdouble;
@@ -3620,16 +3314,16 @@ fixed_musclesupg_double_realloc_nobk_halfmtx(Context* ctx, int nseq, double** ef
     double* mindisfrom = NULL;  // by Mathog, a guess
     double (*clusterfuncpt[1])(double, double);
 
-    sueff1 = 1 - (double)ctx->sueff_global;
-    sueff05 = (double)ctx->sueff_global * 0.5;
-    if (ctx->treemethod == 'X')
+    sueff1 = 1 - (double)opts.sueff_global;
+    sueff05 = (double)opts.sueff_global * 0.5;
+    if (opts.treemethod == 'X')
         clusterfuncpt[0] = cluster_mix_double;
-    else if (ctx->treemethod == 'E')
+    else if (opts.treemethod == 'E')
         clusterfuncpt[0] = cluster_average_double;
-    else if (ctx->treemethod == 'q')
+    else if (opts.treemethod == 'q')
         clusterfuncpt[0] = cluster_minimum_double;
     else {
-        reporterr("Unknown treemethod, %c\n", ctx->treemethod);
+        reporterr("Unknown treemethod, %c\n", opts.treemethod);
         exit(1);
     }
 

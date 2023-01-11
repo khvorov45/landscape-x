@@ -211,18 +211,7 @@ arguments(Context* ctx, TbfastOpts* tempOpts, int argc, char* argv[], int* pac, 
 					treemethod = 's';
 					break;
 #endif
-                case 'X':
-                    ctx->treemethod = 'X';
-                    ctx->sueff_global = atof(*++argv);
-                    //					fprintf( stderr, "sueff_global = %f\n", sueff_global );
-                    --argc;
-                    goto nextoption;
-                case 'E':
-                    ctx->treemethod = 'E';
-                    break;
-                case 'q':
-                    ctx->treemethod = 'q';
-                    break;
+
                 case 'n':
                     ctx->outnumber = 1;
                     break;
@@ -845,11 +834,11 @@ WriteOptions(aln_Opts opts, Context* ctx, FILE* fp) {
     else
         fprintf(fp, "Unknown algorithm\n");
 
-    if (ctx->treemethod == 'X')
+    if (opts.treemethod == 'X')
         fprintf(fp, "Tree = UPGMA (mix).\n");
-    else if (ctx->treemethod == 'E')
+    else if (opts.treemethod == 'E')
         fprintf(fp, "Tree = UPGMA (average).\n");
-    else if (ctx->treemethod == 'q')
+    else if (opts.treemethod == 'q')
         fprintf(fp, "Tree = Minimum linkage.\n");
     else
         fprintf(fp, "Unknown tree.\n");
@@ -912,8 +901,6 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     ctx->outgap = 1;
     ctx->alg = 'A';
     ctx->tbrweight = 3;
-    ctx->treemethod = 'X';
-    ctx->sueff_global = 0.1;
     ctx->ppenalty_ex = NOTSPECIFIED;
     ctx->kimuraR = NOTSPECIFIED;
     ctx->pamN = NOTSPECIFIED;
@@ -1557,7 +1544,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
 
         if (tempOpts->subalignment) {
             fprintf(stderr, "Constructing a UPGMA tree ... ");
-            fixed_supg_double_realloc_nobk_halfmtx_treeout_constrained(ctx, ctx->njob, iscore, topol, len, name, dep, nsubalignments, subtable, 1);
+            fixed_supg_double_realloc_nobk_halfmtx_treeout_constrained(opts, ctx, ctx->njob, iscore, topol, len, name, dep, nsubalignments, subtable, 1);
         } else if (ctx->compacttree == 3) {
             fp = fopen("hat3dir/tree", "rb");  // windows no tame rb
             treein_bin(fp, ctx->njob, topol, len, dep, nfilesfornode);
@@ -1575,7 +1562,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
             }
         } else if (ctx->tbutree == 0 && ctx->compacttree)  // tbutree != 0 no toki (aln->mtx) ha, 6merdistance -> disttbfast.c; dp distance -> muzukashii
         {
-            compacttree_memsaveselectable(ctx, ctx->njob, partmtx, mindistfrom, mindist, NULL, selfscore, seq, skiptable, topol, len, name, NULL, dep, tempOpts->treeout, ctx->compacttree, 1);
+            compacttree_memsaveselectable(opts, ctx, ctx->njob, partmtx, mindistfrom, mindist, NULL, selfscore, seq, skiptable, topol, len, name, NULL, dep, tempOpts->treeout, ctx->compacttree, 1);
 
             if (mindistfrom)
                 free(mindistfrom);
@@ -1589,14 +1576,14 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
             free(partmtx);
         } else if (tempOpts->treeout) {
             fprintf(stderr, "Constructing a UPGMA tree ... ");
-            fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(ctx, ctx->njob, iscore, topol, len, name, dep, 1, tempOpts->treeout);
+            fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(opts, ctx, ctx->njob, iscore, topol, len, name, dep, 1, tempOpts->treeout);
         } else {
             fprintf(stderr, "Constructing a UPGMA tree ... ");
-            fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(ctx, ctx->njob, iscore, topol, len, dep, 1, 1);
+            fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(opts, ctx, ctx->njob, iscore, topol, len, dep, 1, 1);
         }
 
         if (nkozo) {
-            fixed_musclesupg_double_realloc_nobk_halfmtx(ctx, nkozo, iscore_kozo, topol_kozo, len_kozo, NULL, 1, 1);
+            fixed_musclesupg_double_realloc_nobk_halfmtx(opts, ctx, nkozo, iscore_kozo, topol_kozo, len_kozo, NULL, 1, 1);
         }
         fprintf(stderr, "\ndone.\n\n");
     }

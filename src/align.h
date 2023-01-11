@@ -40,6 +40,8 @@ typedef struct aln_Opts {
     double  specificityconsideration;
     double  penalty_shift_factor;
     double  fastathreshold;
+    double  sueff_global;
+    char    treemethod;
     bool    use_fft;
 } aln_Opts;
 
@@ -239,6 +241,8 @@ aln_defaultOpts(void) {
         .minimumweight = 0.00001,
         .penalty_shift_factor = 100.0,
         .fastathreshold = 2.7,
+        .sueff_global = 0.1,
+        .treemethod = 'X',
         .use_fft = true,
     };
     return opts;
