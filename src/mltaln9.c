@@ -6447,7 +6447,7 @@ movereg_swap(char* seq1, char* seq2, LocalHom* tmpptr, int* start1pt, int* start
 }
 
 void
-fillimp(Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2) {
+fillimp(aln_Opts opts, double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2) {
     int       i, j, k1, k2, start1, start2, end1, end2;
     double    effij, effijx, effij_kozo;
     char *    pt1, *pt2;
@@ -6457,7 +6457,7 @@ fillimp(Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int lgth
     for (i = 0; i < lgth1; i++)
         for (j = 0; j < lgth2; j++)
             impmtx[i][j] = 0.0;
-    effijx = 1.0 * ctx->fastathreshold;
+    effijx = 1.0 * opts.fastathreshold;
     for (i = 0; i < clus1; i++) {
         if (swaplist && swaplist[i])
             movefunc = movereg_swap;
@@ -6671,7 +6671,7 @@ whichpair(int* ipt, int* jpt, FILE* fp) {
 }
 
 typedef struct _readloopthread_arg {
-    Context* ctx;
+    aln_Opts opts;
     int                 nodeid;
     int                 nfiles;
     double**            impmtx;
@@ -6688,7 +6688,7 @@ typedef struct _readloopthread_arg {
 static void*
 readloopthread(void* arg) {
     readloopthread_arg_t* targ = (readloopthread_arg_t*)arg;
-    Context* ctx = targ->ctx;
+    aln_Opts opts = targ->opts;
     int                   nodeid = targ->nodeid;
     //	int thread_no = targ->thread_no;
     double**            impmtx = targ->impmtx;
@@ -6712,7 +6712,7 @@ readloopthread(void* arg) {
     int       res;
     void (*movefunc)(char*, char*, LocalHom*, int*, int*, int*, int*);
     initlocalhom1(&lhsingle);
-    effijx = 1.0 * ctx->fastathreshold;
+    effijx = 1.0 * opts.fastathreshold;
 
     while (1) {
         if (subid == -1 || whichpair(&i, &j, fp)) {
@@ -6815,7 +6815,7 @@ readloopthread(void* arg) {
 }
 
 void
-fillimp_file(Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, int* orinum1, int* orinum2, int* uselh, int* seedinlh1, int* seedinlh2, int nodeid, int nfiles) {
+fillimp_file(aln_Opts opts, Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, int* orinum1, int* orinum2, int* uselh, int* seedinlh1, int* seedinlh2, int nodeid, int nfiles) {
     int                i, j, k1, k2, start1, start2, end1, end2, m0, m1, m2;
     double             effijx, effij_kozo;
     char *             pt1, *pt2;
@@ -6840,7 +6840,7 @@ fillimp_file(Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int
     for (i = 0; i < lgth1; i++)
         for (j = 0; j < lgth2; j++)
             impmtx[i][j] = 0.0;
-    effijx = 1.0 * ctx->fastathreshold;
+    effijx = 1.0 * opts.fastathreshold;
 
     if (ctx->nadd) {
         npairs = 0;
@@ -6956,7 +6956,7 @@ fillimp_file(Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int
         ndone = 0;
 
         readloopthread_arg_t targ = {
-            .ctx = ctx,
+            .opts = opts,
             .nodeid = nodeid,
             .seq1 = seq1,
             .seq2 = seq2,

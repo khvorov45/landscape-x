@@ -2016,8 +2016,7 @@ readlocalhomtable_two(FILE* fp, int norg, int nadd, LocalHom** localhomtable, Lo
         //		fprintf( stderr, "\n" );
         sscanf(buff, "%d %d %d %lf %d %d %d %d %s", &i, &j, &overlapaa, &opt, &start1, &end1, &start2, &end2, infor);
         if (*infor == 'k') {
-            fprintf(stderr, "Not supported!\n");
-            exit(1);
+            aln_assert(!"not supported");
         }
         j -= norg;
 
@@ -2093,8 +2092,7 @@ readlocalhomtable_one(FILE* fp, int norg, int nadd, LocalHom** localhomtable) {
         //		fprintf( stderr, "\n" );
         sscanf(buff, "%d %d %d %lf %d %d %d %d %s", &i, &j, &overlapaa, &opt, &start1, &end1, &start2, &end2, infor);
         if (*infor == 'k') {
-            fprintf(stderr, "Not supported!\n");
-            exit(1);
+            aln_assert(!"not supported");
         }
         j -= norg;
 

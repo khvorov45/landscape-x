@@ -231,9 +231,9 @@ Falign(aln_Opts opts, Context* ctx, int** whichmtx, double*** scoringmatrices, d
             alignableReagion(ctx, 0, 0, NULL, NULL, NULL, NULL, NULL);
             fft(0, NULL, 1);
             A__align(opts, ctx, NULL, 0, 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
-            D__align(ctx, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0);
-            A__align_variousdist(ctx, NULL, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0);
-            D__align_variousdist(ctx, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0);
+            D__align(opts, ctx, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0);
+            A__align_variousdist(opts, ctx, NULL, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0);
+            D__align_variousdist(opts, ctx, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0);
             G__align11(ctx, NULL, NULL, NULL, 0, 0, 0);
             G__align11psg(ctx, NULL, NULL, NULL, NULL, 0, 0, 0, NULL, NULL);
             blockAlign2(ctx, NULL, NULL, NULL, NULL, NULL, NULL);
@@ -980,9 +980,8 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
         if (ctx->kobetsubunkatsu && ctx->fftkeika)
             commongappick(clus2, tmpres2);
 
-        if (ctx->constraint) {
-            fprintf(stderr, "Not supported\n");
-            exit(1);
+        if (opts.constraint) {
+            aln_assert(!"not supported");
         }
 
         switch (ctx->alg) {
@@ -1001,9 +1000,9 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
                 } else {
                     if (scoringmatrices)  // called by tditeration.c
                     {
-                        totalscore += D__align_variousdist(ctx, whichmtx, scoringmatrices, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, 0, &dumdb, headgp, tailgp);
+                        totalscore += D__align_variousdist(opts, ctx, whichmtx, scoringmatrices, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, 0, &dumdb, headgp, tailgp);
                     } else
-                        totalscore += D__align(ctx, n_dynamicmtx, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, 0, &dumdb, headgp, tailgp);
+                        totalscore += D__align(opts, ctx, n_dynamicmtx, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, 0, &dumdb, headgp, tailgp);
                 }
                 break;
             case ('A'):
@@ -1019,7 +1018,7 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
                     }
                     if (scoringmatrices)  // called by tditeration.c
                     {
-                        totalscore += A__align_variousdist(ctx, whichmtx, scoringmatrices, ctx->penalty, ctx->penalty_ex, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, 0, &dumdb, sgap1, sgap2, egap1, egap2, headgp, tailgp);
+                        totalscore += A__align_variousdist(opts, ctx, whichmtx, scoringmatrices, ctx->penalty, ctx->penalty_ex, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, 0, &dumdb, sgap1, sgap2, egap1, egap2, headgp, tailgp);
                     } else
                         totalscore += A__align(opts, ctx, n_dynamicmtx, ctx->penalty, ctx->penalty_ex, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, 0, &dumdb, sgap1, sgap2, egap1, egap2, headgp, tailgp, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
                 }
@@ -1188,8 +1187,8 @@ Falign_udpari_long(
             alignableReagion(ctx, 0, 0, NULL, NULL, NULL, NULL, NULL);
             fft(0, NULL, 1);
             A__align(opts, ctx, NULL, 0, 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
-            A__align_variousdist(ctx, NULL, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0);
-            D__align_variousdist(ctx, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0);
+            A__align_variousdist(opts, ctx, NULL, NULL, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0);
+            D__align_variousdist(opts, ctx, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0);
             G__align11(ctx, NULL, NULL, NULL, 0, 0, 0);
             blockAlign2(ctx, NULL, NULL, NULL, NULL, NULL, NULL);
             if (crossscore)
@@ -1778,9 +1777,8 @@ system( "less seqVec < /dev/tty > /dev/tty" );
             commongappick(clus2, tmpres2);  //dvtditr に呼ばれたとき fftkeika=1
         //		if( kobetsubunkatsu ) commongappick( clus2, tmpres2 );
 
-        if (ctx->constraint) {
-            fprintf(stderr, "Not supported\n");
-            exit(1);
+        if (opts.constraint) {
+            aln_assert(!"not supported");
         }
 #if 0
 		fprintf( stderr, "i=%d, before alignment", i );

@@ -111,24 +111,12 @@ imp_rnaD(Context* ctx, int nseq1, int nseq2, char** seq1, char** seq2, double* e
 }
 
 void
-imp_match_init_strictD(Context* ctx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2, int* uselh, int* seedinlh1, int* seedinlh2, int nodeid, int nfiles) {
-    //	int i, j, k1, k2, tmpint, start1, start2, end1, end2;
-    //	double effij;
-    //	double effij_kozo;
-    //	double effijx;
-    //	char *pt, *pt1, *pt2;
-    //	static char *nocount1 = NULL;
-    //	static char *nocount2 = NULL;
-    //	LocalHom *tmpptr;
+imp_match_init_strictD(aln_Opts opts, Context* ctx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2, int* uselh, int* seedinlh1, int* seedinlh2, int nodeid, int nfiles) {
 
     if (seq1 == NULL) {
         if (impmtx)
             FreeFloatMtx(impmtx);
         impmtx = NULL;
-        //		if( nocount1 ) free( nocount1 );
-        //		nocount1 = NULL;
-        //		if( nocount2 ) free( nocount2 );
-        //		nocount2 = NULL;
 
         return;
     }
@@ -145,9 +133,9 @@ imp_match_init_strictD(Context* ctx, int clus1, int clus2, int lgth1, int lgth2,
     }
 
     if (nodeid == -1)
-        fillimp(ctx, impmtx, clus1, clus2, lgth1, lgth2, seq1, seq2, eff1, eff2, eff1_kozo, eff2_kozo, localhom, swaplist, orinum1, orinum2);
+        fillimp(opts, impmtx, clus1, clus2, lgth1, lgth2, seq1, seq2, eff1, eff2, eff1_kozo, eff2_kozo, localhom, swaplist, orinum1, orinum2);
     else
-        fillimp_file(ctx, impmtx, clus1, clus2, lgth1, lgth2, seq1, seq2, eff1, eff2, eff1_kozo, eff2_kozo, localhom, orinum1, orinum2, uselh, seedinlh1, seedinlh2, nodeid, nfiles);
+        fillimp_file(opts, ctx, impmtx, clus1, clus2, lgth1, lgth2, seq1, seq2, eff1, eff2, eff1_kozo, eff2_kozo, localhom, orinum1, orinum2, uselh, seedinlh1, seedinlh2, nodeid, nfiles);
 }
 
 static void
@@ -2269,7 +2257,7 @@ freegaplenpartly(Gaplen** mtx, int startpos, int endpos) {
 #endif
 
 double
-D__align(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int headgp, int tailgp) {
+D__align(aln_Opts opts, Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int headgp, int tailgp) {
     //	int k;
     register int i, j;
 
@@ -2362,7 +2350,7 @@ D__align(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* 
             orlgth1 = 0;
             orlgth2 = 0;
 
-            imp_match_init_strictD(ctx, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
+            imp_match_init_strictD(opts, ctx, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
 
             free(mseq1);
             free(mseq2);
@@ -3811,7 +3799,7 @@ D__align(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* 
 }
 
 double
-D__align_variousdist(Context* ctx, int** which, double*** matrices, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int headgp, int tailgp) {
+D__align_variousdist(aln_Opts opts, Context* ctx, int** which, double*** matrices, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, int headgp, int tailgp) {
     //	int k;
     register int i, j, c;
     int          lasti, lastj; /* outgap == 0 -> lgth1, outgap == 1 -> lgth1+1 */
@@ -3891,21 +3879,13 @@ D__align_variousdist(Context* ctx, int** which, double*** matrices, char** seq1,
     int **    masklist1 = NULL, **masklist2 = NULL;
     int*      nmask;
 
-    //	for( i=0; i<icyc; i++ ) fprintf( stderr, "%s, %f\n", seq1[i], eff1[i] );
-    //	for( i=0; i<jcyc; i++ ) fprintf( stderr, "%s, %f\n", seq2[i], eff2[i] );
-
-    //	reporterr( "\nsizeof(gaplen) = %d\n", sizeof( Gaplen ) );
-    //	reporterr( "\nsizeof(int) = %d\n", sizeof( int ) );
-    //	reporterr( "\nsizeof(double) = %d\n", sizeof( double ) );
-    //	reporterr( "\nsizeof(double*) = %d\n", sizeof( double * ) );
-
     if (seq1 == NULL) {
         if (orlgth1) {
             //			fprintf( stderr, "## Freeing local arrays in D__align\n" );
             orlgth1 = 0;
             orlgth2 = 0;
 
-            imp_match_init_strictD(ctx, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
+            imp_match_init_strictD(opts, ctx, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
 
             free(mseq1);
             free(mseq2);

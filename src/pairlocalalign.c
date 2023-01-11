@@ -1308,7 +1308,6 @@ arguments(Context* ctx, int argc, char* argv[]) {
     laraparams = NULL;
     ctx->fftkeika = 0;
     ctx->pslocal = -1000.0;
-    ctx->constraint = 0;
     ctx->fmodel = 0;
     ctx->fftscore = 1;
     ctx->fftRepeatStop = 0;

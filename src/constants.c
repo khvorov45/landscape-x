@@ -1508,7 +1508,7 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
     int i, j, x;
     //	double tmp;
     char shiftmodel[100];
-    int  charsize;
+    int  charsize = 0;
 
     if (opts.nblosum < 0)
         ctx->dorp = 'p';
@@ -2326,8 +2326,7 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
 
     } else if (ctx->dorp == 'p' && opts.scoremtx == 2) /* Miyata-Yasunaga */
     {
-        reporterr("Not supported\n");
-        exit(1);
+        aln_assert(!"not supported");
     } else /* JTT */
     {
         double** rsr;

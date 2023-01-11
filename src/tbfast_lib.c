@@ -134,11 +134,6 @@ arguments(Context* ctx, TbfastOpts* tempOpts, int argc, char* argv[], int* pac, 
                     --argc;
                     goto nextoption;
 
-                case 'l':
-                    ctx->fastathreshold = atof(*++argv);
-                    ctx->constraint = 2;
-                    --argc;
-                    goto nextoption;
                 case 'r':
                     ctx->consweight_rna = atof(*++argv);
                     ctx->rnakozo = 1;
@@ -453,21 +448,21 @@ treebase(aln_Opts opts, Context* ctx, TbfastOpts* tempOpts, int* nlen, char** as
         memhist[i] = NULL;
 
     swaplist = NULL;
-    if (ctx->constraint && ctx->compacttree != 3) {
+    if (opts.constraint && ctx->compacttree != 3) {
         if (ctx->specifictarget)
             swaplist = calloc(ctx->njob, sizeof(char));
         localhomshrink = (LocalHom***)calloc(ctx->njob, sizeof(LocalHom**));
         for (i = 0; i < ctx->njob; i++) {
             localhomshrink[i] = (LocalHom**)calloc(ctx->njob, sizeof(LocalHom*));
         }
-    } else if (ctx->constraint && nseed) {
+    } else if (opts.constraint && nseed) {
         localhomshrink = (LocalHom***)calloc(nseed, sizeof(LocalHom**));
         for (i = 0; i < nseed; i++)
             localhomshrink[i] = (LocalHom**)calloc(nseed, sizeof(LocalHom*));
 
         seedinlh1 = calloc(ctx->njob, sizeof(int));
         seedinlh2 = calloc(ctx->njob, sizeof(int));
-    } else if (ctx->constraint && nseed == 0) {
+    } else if (opts.constraint && nseed == 0) {
         seedinlh1 = NULL;
         seedinlh2 = NULL;
         localhomshrink = NULL;
@@ -488,12 +483,12 @@ treebase(aln_Opts opts, Context* ctx, TbfastOpts* tempOpts, int* nlen, char** as
     for (l = 0; l < ctx->njob; l++)
         fftlog[l] = 1;
 
-    if (ctx->constraint && ctx->compacttree != 3) {
+    if (opts.constraint && ctx->compacttree != 3) {
         if (ctx->specifictarget)
             calcimportance_target(ctx, ctx->njob, ntarget, effarr, aseq, localhomtable, targetmap, targetmapr, *alloclen);
         else
             calcimportance_half(ctx, ctx->njob, effarr, aseq, localhomtable, *alloclen);
-    } else if (ctx->constraint && nseed) {
+    } else if (opts.constraint && nseed) {
         dontcalcimportance_half(ctx, nseed, aseq, localhomtable);
     }
 
@@ -606,12 +601,12 @@ treebase(aln_Opts opts, Context* ctx, TbfastOpts* tempOpts, int* nlen, char** as
             reporterr("\nclus1=%d, clus2=%d\n", clus1, clus2);
 #endif
 
-        if (ctx->constraint && ctx->compacttree != 3) {
+        if (opts.constraint && ctx->compacttree != 3) {
             if (ctx->specifictarget)
                 fastshrinklocalhom_target(localmem[0], localmem[1], localhomtable, localhomshrink, swaplist, targetmap);
             else
                 fastshrinklocalhom_half(localmem[0], localmem[1], localhomtable, localhomshrink);
-        } else if (ctx->constraint && nseed) {
+        } else if (opts.constraint && nseed) {
             fastshrinklocalhom_half_seed(localmem[0], localmem[1], nseed, seedinlh1, seedinlh2, localhomtable, localhomshrink);
             for (i = 0; i < ctx->njob; i++)
                 reporterr("seedinlh1[%d]=%d\n", i, seedinlh1[i]);
@@ -624,7 +619,7 @@ treebase(aln_Opts opts, Context* ctx, TbfastOpts* tempOpts, int* nlen, char** as
             makegrouprna(grouprna2, singlerna, localmem[1]);
         }
 
-        if (!ctx->nevermemsave && (ctx->constraint != 2 && ctx->alg != 'M' && (len1 > 30000 || len2 > 30000))) {
+        if (!ctx->nevermemsave && (opts.constraint != 2 && ctx->alg != 'M' && (len1 > 30000 || len2 > 30000))) {
             fprintf(stderr, "\nlen1=%d, len2=%d, Switching to the memsave mode.\n", len1, len2);
             ctx->alg = 'M';
             if (ctx->commonIP)
@@ -638,28 +633,27 @@ treebase(aln_Opts opts, Context* ctx, TbfastOpts* tempOpts, int* nlen, char** as
             ffttry = (nlen[m1] > clus1 && nlen[m2] > clus2 && clus1 < 1000 && clus2 < 1000);
         else
             ffttry = 0;
-        if (ctx->constraint == 2) {
+        if (opts.constraint == 2) {
             if (ctx->alg == 'M') {
                 fprintf(stderr, "\n\nMemory saving mode is not supported.\n\n");
                 exit(1);
             }
             if (ctx->alg == 'A') {
-                imp_match_init_strict(ctx, clus1, clus2, strlen(mseq1[0]), strlen(mseq2[0]), mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, localmem[0], localmem[1], uselh, seedinlh1, seedinlh2, (ctx->compacttree == 3) ? l : -1, nfiles);
+                imp_match_init_strict(opts, ctx, clus1, clus2, strlen(mseq1[0]), strlen(mseq2[0]), mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, localmem[0], localmem[1], uselh, seedinlh1, seedinlh2, (ctx->compacttree == 3) ? l : -1, nfiles);
                 if (ctx->rnakozo)
                     imp_rna(ctx, clus1, clus2, mseq1, mseq2, effarr1, effarr2, grouprna1, grouprna2);
 #if REPORTCOSTS
 //				reporterr(       "\n\n %d - %d (%d x %d) : \n", topol[l][0][0], topol[l][1][0], clus1, clus2 );
 #endif
-                pscore = A__align(opts, ctx, dynamicmtx, ctx->penalty, ctx->penalty_ex, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, ctx->constraint, &dumdb, NULL, NULL, NULL, NULL, ctx->outgap, ctx->outgap, localmem[0][0], 1, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
+                pscore = A__align(opts, ctx, dynamicmtx, ctx->penalty, ctx->penalty_ex, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, opts.constraint, &dumdb, NULL, NULL, NULL, NULL, ctx->outgap, ctx->outgap, localmem[0][0], 1, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
             }
             if (ctx->alg == 'd') {
-                imp_match_init_strictD(ctx, clus1, clus2, strlen(mseq1[0]), strlen(mseq2[0]), mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, localmem[0], localmem[1], uselh, seedinlh1, seedinlh2, (ctx->compacttree == 3) ? l : -1, nfiles);
+                imp_match_init_strictD(opts, ctx, clus1, clus2, strlen(mseq1[0]), strlen(mseq2[0]), mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, localmem[0], localmem[1], uselh, seedinlh1, seedinlh2, (ctx->compacttree == 3) ? l : -1, nfiles);
                 if (ctx->rnakozo)
                     imp_rnaD(ctx, clus1, clus2, mseq1, mseq2, effarr1, effarr2, grouprna1, grouprna2);
-                pscore = D__align(ctx, dynamicmtx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, ctx->constraint, &dumdb, ctx->outgap, ctx->outgap);
+                pscore = D__align(opts, ctx, dynamicmtx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, opts.constraint, &dumdb, ctx->outgap, ctx->outgap);
             } else if (ctx->alg == 'Q') {
-                fprintf(stderr, "Not supported\n");
-                exit(1);
+                aln_assert(!"not supported");
             }
         } else if (ctx->force_fft || (opts.use_fft && ffttry)) {
             fprintf(stderr, " f\b\b");
@@ -683,7 +677,7 @@ treebase(aln_Opts opts, Context* ctx, TbfastOpts* tempOpts, int* nlen, char** as
                     pscore = A__align(opts, ctx, dynamicmtx, ctx->penalty, ctx->penalty_ex, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, 0, &dumdb, NULL, NULL, NULL, NULL, ctx->outgap, ctx->outgap, localmem[0][0], 1, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
                     break;
                 case ('d'):
-                    pscore = D__align(ctx, dynamicmtx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, 0, &dumdb, ctx->outgap, ctx->outgap);
+                    pscore = D__align(opts, ctx, dynamicmtx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, 0, &dumdb, ctx->outgap, ctx->outgap);
                     break;
                 default:
                     ErrorExit("ERROR IN SOURCE FILE");
@@ -765,7 +759,7 @@ treebase(aln_Opts opts, Context* ctx, TbfastOpts* tempOpts, int* nlen, char** as
         grouprna1 = grouprna2 = NULL;
     }
 
-    if (ctx->constraint) {
+    if (opts.constraint) {
         if (localhomshrink)  // nen no tame
         {
             if (ctx->compacttree == 3)
@@ -801,10 +795,10 @@ treebase(aln_Opts opts, Context* ctx, TbfastOpts* tempOpts, int* nlen, char** as
     free(effarr2_kozo);
     Falign(opts, ctx, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, NULL);
     Falign_udpari_long(opts, ctx, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, NULL);
-    D__align(ctx, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0);
+    D__align(opts, ctx, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0);
     A__align(opts, ctx, NULL, 0, 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
-    imp_match_init_strictD(ctx, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
-    imp_match_init_strict(ctx, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
+    imp_match_init_strictD(opts, ctx, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
+    imp_match_init_strict(opts, ctx, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
     FreeCommonIP(ctx);
 }
 
@@ -887,6 +881,12 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     aln_Arena* permArena = &permArena_;
     aln_unused(permArena);
     aln_Arena* tempArena = &tempArena_;
+
+    aln_Opts pairLocalAlignOpts = opts;
+    pairLocalAlignOpts.ppenalty = -2000;
+    pairLocalAlignOpts.poffset = 100;
+    pairLocalAlignOpts.use_fft = 0;
+    pairLocalAlignOpts.constraint = 0;
 
     Context* ctx = aln_arenaAllocStruct(tempArena, Context);
 
@@ -1013,9 +1013,6 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     int tac = 0;
     arguments(ctx, tempOpts, argc, argv, &pac, pav, &tac, tav);
 
-    if (ctx->fastathreshold < 0.0001)
-        ctx->constraint = 0;
-
     nkozo = 0;
 
 #if !defined(mingw) && !defined(_MSC_VER)
@@ -1111,7 +1108,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
             targetmap[i] = targetmapr[i] = i;
     }
 
-    if (ctx->constraint && ctx->compacttree != 3) {
+    if (opts.constraint && ctx->compacttree != 3) {
         ilim = ctx->njob;
         localhomtable = (LocalHom**)calloc(ntarget, sizeof(LocalHom*));
         for (i = 0; i < ntarget; i++) {
@@ -1135,17 +1132,13 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
         }
 
         if (tempOpts->callpairlocalalign) {
-            aln_Opts pairLocalAlignOpts = opts;
-            pairLocalAlignOpts.ppenalty = -2000;
-            pairLocalAlignOpts.poffset = 100;
             pairlocalalign(pairLocalAlignOpts, ctx, ctx->njob, name, seq, iscore, localhomtable, pac, pav, expdist);
             arguments(ctx, tempOpts, tac, tav, NULL, NULL, NULL, NULL);
             tempOpts->callpairlocalalign = 1;
             if (expdist)
                 FreeDoubleMtx(expdist);
             expdist = NULL;
-            if (ctx->fastathreshold < 0.0001)
-                ctx->constraint = 0;
+
             if (ctx->compacttree != 3) {
                 for (ilim = ctx->njob, i = 0; i < ntarget; i++) {
                     for (j = 0; j < ilim; j++) {
@@ -1254,20 +1247,16 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
         }
     } else if (ctx->compacttree != 3) {
         if (tempOpts->callpairlocalalign) {
-            aln_Opts pairLocalAlignOpts = opts;
-            pairLocalAlignOpts.ppenalty = -2000;
-            pairLocalAlignOpts.poffset = 100;
             pairlocalalign(pairLocalAlignOpts, ctx, ctx->njob, name, seq, iscore, NULL, pac, pav, expdist);
             arguments(ctx, tempOpts, tac, tav, NULL, NULL, NULL, NULL);
             tempOpts->callpairlocalalign = 1;
             if (expdist)
                 FreeDoubleMtx(expdist);
             expdist = NULL;
-            if (ctx->fastathreshold < 0.0001)
-                ctx->constraint = 0;
+
             fprintf(stderr, "blosum %d / kimura 200\n", opts.nblosum);
             fprintf(stderr, "scoremtx=%d\n", opts.scoremtx);
-            fprintf(stderr, "fastathreshold=%f\n", ctx->fastathreshold);
+            fprintf(stderr, "fastathreshold=%f\n", opts.fastathreshold);
         }
         if (tempOpts->distout || opts.outputhat23) {
             reporterr("\nwriting hat2 (1)\n");
@@ -1574,7 +1563,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
             treein_bin(fp, ctx->njob, topol, len, dep, nfilesfornode);
             fclose(fp);
 
-            if (ctx->constraint) {
+            if (opts.constraint) {
                 uselh = AllocateIntVec(ctx->njob);
                 fp = fopen("hat3dir/uselh", "rb");
                 if (uselhin(fp, ctx->njob, uselh)) {
@@ -1964,12 +1953,12 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     fprintf(stderr, "OSHIMAI\n");
 #endif
 
-    if (ctx->constraint && ctx->compacttree != 3) {
+    if (opts.constraint && ctx->compacttree != 3) {
         if (ctx->specifictarget)
             FreeLocalHomTable_part(localhomtable, ntarget, ctx->njob);
         else
             FreeLocalHomTable_half(localhomtable, ctx->njob);
-    } else if (ctx->constraint && nkozo) {
+    } else if (opts.constraint && nkozo) {
         FreeLocalHomTable_half(localhomtable, nkozo);
     }
 
@@ -1978,7 +1967,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
         free(targetmapr);
     }
 
-    if (ctx->constraint && ctx->compacttree == 3 && uselh)
+    if (opts.constraint && ctx->compacttree == 3 && uselh)
         free(uselh);
     uselh = NULL;
 
