@@ -1310,7 +1310,6 @@ arguments(Context* ctx, int argc, char* argv[]) {
     ctx->pslocal = -1000.0;
     ctx->constraint = 0;
     ctx->fmodel = 0;
-    ctx->use_fft = 0;
     ctx->fftscore = 1;
     ctx->fftRepeatStop = 0;
     ctx->fftNoAnchStop = 0;
@@ -1479,9 +1478,7 @@ arguments(Context* ctx, int argc, char* argv[]) {
                 case 'V':
                     ctx->alg = 'V';
                     break;
-                case 'F':
-                    ctx->use_fft = 1;
-                    break;
+
                 case 'v':
                     ctx->tbrweight = 3;
                     break;
@@ -1776,7 +1773,7 @@ pairalign(aln_Opts opts, Context* ctx, const char* const* name, char** seq, char
 #endif
                 //			for( l=0; l<clus1; l++ ) fprintf( stderr, "## STEP-eff for mseq1-%d %f\n", l, effarr1[l] );
 
-                if (ctx->use_fft) {
+                if (opts.use_fft) {
                     pscore = Falign(opts, ctx, NULL, NULL, ctx->n_dis_consweight_multi, mseq1, mseq2, effarr1, effarr2, NULL, NULL, 1, 1, alloclen, &intdum);
                     //					fprintf( stderr, "pscore (fft) = %f\n", pscore );
                     off1 = off2 = 0;

@@ -256,13 +256,7 @@ arguments(Context* ctx, TbfastOpts* tempOpts, int argc, char* argv[], int* pac, 
                     break;
                 case 'B':
                     break;
-                case 'F':
-                    ctx->use_fft = 1;
-                    break;
-                case 'G':
-                    ctx->force_fft = 1;
-                    ctx->use_fft = 1;
-                    break;
+
                 case 'U':
                     tempOpts->treein = 1;
                     break;
@@ -667,7 +661,7 @@ treebase(aln_Opts opts, Context* ctx, TbfastOpts* tempOpts, int* nlen, char** as
                 fprintf(stderr, "Not supported\n");
                 exit(1);
             }
-        } else if (ctx->force_fft || (ctx->use_fft && ffttry)) {
+        } else if (ctx->force_fft || (opts.use_fft && ffttry)) {
             fprintf(stderr, " f\b\b");
             if (ctx->alg == 'M') {
                 fprintf(stderr, "m");
@@ -827,7 +821,7 @@ WriteOptions(aln_Opts opts, Context* ctx, FILE* fp) {
             fprintf(fp, "M-Y\n");
     }
     fprintf(stderr, "Gap Penalty = %+5.2f, %+5.2f, %+5.2f\n", (double)opts.ppenalty / 1000, (double)ctx->ppenalty_ex / 1000, (double)opts.poffset / 1000);
-    if (ctx->use_fft)
+    if (opts.use_fft)
         fprintf(fp, "FFT on\n");
 
     fprintf(fp, "tree-base method\n");
@@ -866,7 +860,7 @@ WriteOptions(aln_Opts opts, Context* ctx, FILE* fp) {
     else
         fprintf(fp, "Unknown tree.\n");
 
-    if (ctx->use_fft) {
+    if (opts.use_fft) {
         fprintf(fp, "FFT on\n");
         if (ctx->dorp == 'd')
             fprintf(fp, "Basis : 4 nucleotides\n");
@@ -1018,24 +1012,6 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     int pac = 0;
     int tac = 0;
     arguments(ctx, tempOpts, argc, argv, &pac, pav, &tac, tav);
-
-    if (tempOpts->treein) {
-        int    dumx, dumy;
-        double dumz;
-        tempOpts->treein = check_guidetreefile(&dumx, &dumy, &dumz);
-        if (tempOpts->treein == 'C') {
-            ctx->compacttree = 2;
-            tempOpts->treein = 0;
-            ctx->use_fft = 0;
-        } else if (tempOpts->treein == 'n') {
-            ctx->compacttree = 3;
-            tempOpts->treein = 0;
-            ctx->use_fft = 0;
-        }
-    }
-
-    reporterr("treein = %d\n", tempOpts->treein);
-    reporterr("compacttree = %d\n", ctx->compacttree);
 
     if (ctx->fastathreshold < 0.0001)
         ctx->constraint = 0;

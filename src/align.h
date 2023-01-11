@@ -11,6 +11,7 @@
 //
 
 #include <stdint.h>
+#include <stdbool.h>
 #include <stdalign.h>
 
 #ifndef aln_PUBLICAPI
@@ -37,6 +38,7 @@ typedef struct aln_Opts {
     double  minimumweight;
     double  specificityconsideration;
     double  penalty_shift_factor;
+    bool    use_fft;
 } aln_Opts;
 
 aln_PUBLICAPI aln_Opts aln_defaultOpts(void);
@@ -233,6 +235,7 @@ aln_defaultOpts(void) {
         .scoremtx = 1,
         .minimumweight = 0.00001,
         .penalty_shift_factor = 100.0,
+        .use_fft = true,
     };
     return opts;
 }

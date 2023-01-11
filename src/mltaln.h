@@ -235,7 +235,6 @@ typedef struct Context {
     int      RNAthr;
     int      RNApthr;
     int      TMorJTT;
-    char     use_fft;
     char     force_fft;
     int      nevermemsave;
     int      fftscore;
