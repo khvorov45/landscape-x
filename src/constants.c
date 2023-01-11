@@ -1529,6 +1529,7 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
         aln_assert(opts.scoremtx == -1);
         aln_assert(opts.ppenalty != NOTSPECIFIED);
         aln_assert(opts.ppenalty_dist != NOTSPECIFIED);
+        aln_assert(opts.poffset != NOTSPECIFIED);
 
         ctx->nalphabets = 26;
         ctx->nscoredalphabets = 10;
@@ -1548,8 +1549,6 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
             ctx->ppenalty_ex = DEFAULTGEP_N;
         if (ctx->ppenalty_EX == NOTSPECIFIED)
             ctx->ppenalty_EX = DEFAULTGEP_N;
-        if (ctx->poffset == NOTSPECIFIED)
-            ctx->poffset = DEFAULTOFS_N;
         if (ctx->RNApthr == NOTSPECIFIED)
             ctx->RNApthr = DEFAULTRNATHR_N;
         if (ctx->pamN == NOTSPECIFIED)
@@ -1570,7 +1569,7 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
         ctx->penalty_OP = (int)(3 * 600.0 / 1000.0 * ctx->ppenalty_OP + 0.5);
         ctx->penalty_ex = (int)(3 * 600.0 / 1000.0 * ctx->ppenalty_ex + 0.5);
         ctx->penalty_EX = (int)(3 * 600.0 / 1000.0 * ctx->ppenalty_EX + 0.5);
-        ctx->offset = (int)(1 * 600.0 / 1000.0 * ctx->poffset + 0.5);
+        ctx->offset = (int)(1 * 600.0 / 1000.0 * opts.poffset + 0.5);
         ctx->offsetFFT = (int)(1 * 600.0 / 1000.0 * (-0) + 0.5);
         ctx->offsetLN = (int)(1 * 600.0 / 1000.0 * 100 + 0.5);
         ctx->penaltyLN = (int)(3 * 600.0 / 1000.0 * -2000 + 0.5);
@@ -1581,7 +1580,7 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
         else
             sprintf(shiftmodel, "noshift");
 
-        sprintf(ctx->modelname, "%s%d (%d), %4.2f (%4.2f), %4.2f (%4.2f), %s", ctx->rnakozo ? "RNA" : "DNA", ctx->pamN, ctx->kimuraR, -(double)opts.ppenalty * 0.001, -(double)opts.ppenalty * 0.003, -(double)ctx->poffset * 0.001, -(double)ctx->poffset * 0.003, shiftmodel);
+        sprintf(ctx->modelname, "%s%d (%d), %4.2f (%4.2f), %4.2f (%4.2f), %s", ctx->rnakozo ? "RNA" : "DNA", ctx->pamN, ctx->kimuraR, -(double)opts.ppenalty * 0.001, -(double)opts.ppenalty * 0.003, -(double)opts.poffset * 0.001, -(double)opts.poffset * 0.003, shiftmodel);
 
         for (i = 0; i < 26; i++)
             ctx->amino[i] = locaminon[i];
@@ -1930,6 +1929,7 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
 
         aln_assert(opts.ppenalty != NOTSPECIFIED);
         aln_assert(opts.ppenalty_dist != NOTSPECIFIED);
+        aln_assert(opts.poffset != NOTSPECIFIED);
 
         if (ctx->ppenalty_OP == NOTSPECIFIED)
             ctx->ppenalty_OP = DEFAULTGOP_B;
@@ -1937,8 +1937,6 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
             ctx->ppenalty_ex = DEFAULTGEP_B;
         if (ctx->ppenalty_EX == NOTSPECIFIED)
             ctx->ppenalty_EX = DEFAULTGEP_B;
-        if (ctx->poffset == NOTSPECIFIED)
-            ctx->poffset = DEFAULTOFS_B;
         if (ctx->pamN == NOTSPECIFIED)
             ctx->pamN = 0;
         if (ctx->kimuraR == NOTSPECIFIED)
@@ -1949,7 +1947,7 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
         ctx->penalty_OP = (int)(600.0 / 1000.0 * ctx->ppenalty_OP + 0.5);
         ctx->penalty_ex = (int)(600.0 / 1000.0 * ctx->ppenalty_ex + 0.5);
         ctx->penalty_EX = (int)(600.0 / 1000.0 * ctx->ppenalty_EX + 0.5);
-        ctx->offset = (int)(600.0 / 1000.0 * ctx->poffset + 0.5);
+        ctx->offset = (int)(600.0 / 1000.0 * opts.poffset + 0.5);
         ctx->offsetFFT = (int)(600.0 / 1000.0 * (-0) + 0.5);
         ctx->offsetLN = (int)(600.0 / 1000.0 * 100 + 0.5);
         ctx->penaltyLN = (int)(600.0 / 1000.0 * -2000 + 0.5);
@@ -1962,7 +1960,7 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
         else
             sprintf(shiftmodel, "noshift");
 
-        sprintf(ctx->modelname, "Extended, %4.2f, %+4.2f, %+4.2f, %s", -(double)opts.ppenalty / 1000, -(double)ctx->poffset / 1000, -(double)ctx->ppenalty_ex / 1000, shiftmodel);
+        sprintf(ctx->modelname, "Extended, %4.2f, %+4.2f, %+4.2f, %s", -(double)opts.ppenalty / 1000, -(double)opts.poffset / 1000, -(double)ctx->ppenalty_ex / 1000, shiftmodel);
 
         for (i = 0; i < 0x100; i++)
             ctx->amino_n[i] = -1;
@@ -2149,6 +2147,7 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
 
         aln_assert(opts.ppenalty != NOTSPECIFIED);
         aln_assert(opts.ppenalty_dist != NOTSPECIFIED);
+        aln_assert(opts.poffset != NOTSPECIFIED);
 
         if (ctx->ppenalty_OP == NOTSPECIFIED)
             ctx->ppenalty_OP = DEFAULTGOP_B;
@@ -2156,8 +2155,6 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
             ctx->ppenalty_ex = DEFAULTGEP_B;
         if (ctx->ppenalty_EX == NOTSPECIFIED)
             ctx->ppenalty_EX = DEFAULTGEP_B;
-        if (ctx->poffset == NOTSPECIFIED)
-            ctx->poffset = DEFAULTOFS_B;
         if (ctx->pamN == NOTSPECIFIED)
             ctx->pamN = 0;
         if (ctx->kimuraR == NOTSPECIFIED)
@@ -2168,7 +2165,7 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
         ctx->penalty_OP = (int)(600.0 / 1000.0 * ctx->ppenalty_OP + 0.5);
         ctx->penalty_ex = (int)(600.0 / 1000.0 * ctx->ppenalty_ex + 0.5);
         ctx->penalty_EX = (int)(600.0 / 1000.0 * ctx->ppenalty_EX + 0.5);
-        ctx->offset = (int)(600.0 / 1000.0 * ctx->poffset + 0.5);
+        ctx->offset = (int)(600.0 / 1000.0 * opts.poffset + 0.5);
         ctx->offsetFFT = (int)(600.0 / 1000.0 * (-0) + 0.5);
         ctx->offsetLN = (int)(600.0 / 1000.0 * 100 + 0.5);
         ctx->penaltyLN = (int)(600.0 / 1000.0 * -2000 + 0.5);
@@ -2184,9 +2181,9 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
             sprintf(shiftmodel, "noshift");
 
         if (opts.nblosum == -1)
-            sprintf(ctx->modelname, "User-defined, %4.2f, %+4.2f, %+4.2f, %s", -(double)opts.ppenalty / 1000, -(double)ctx->poffset / 1000, -(double)ctx->ppenalty_ex / 1000, shiftmodel);
+            sprintf(ctx->modelname, "User-defined, %4.2f, %+4.2f, %+4.2f, %s", -(double)opts.ppenalty / 1000, -(double)opts.poffset / 1000, -(double)ctx->ppenalty_ex / 1000, shiftmodel);
         else
-            sprintf(ctx->modelname, "BLOSUM%d, %4.2f, %+4.2f, %+4.2f, %s", opts.nblosum, -(double)opts.ppenalty / 1000, -(double)ctx->poffset / 1000, -(double)ctx->ppenalty_ex / 1000, shiftmodel);
+            sprintf(ctx->modelname, "BLOSUM%d, %4.2f, %+4.2f, %+4.2f, %s", opts.nblosum, -(double)opts.ppenalty / 1000, -(double)opts.poffset / 1000, -(double)ctx->ppenalty_ex / 1000, shiftmodel);
 
         for (i = 0; i < 0x80; i++)
             ctx->amino_n[i] = -1;
@@ -2361,6 +2358,7 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
 
         aln_assert(opts.ppenalty != NOTSPECIFIED);
         aln_assert(opts.ppenalty_dist != NOTSPECIFIED);
+        aln_assert(opts.poffset != NOTSPECIFIED);
 
         if (ctx->ppenalty_OP == NOTSPECIFIED)
             ctx->ppenalty_OP = DEFAULTGOP_J;
@@ -2368,8 +2366,6 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
             ctx->ppenalty_ex = DEFAULTGEP_J;
         if (ctx->ppenalty_EX == NOTSPECIFIED)
             ctx->ppenalty_EX = DEFAULTGEP_J;
-        if (ctx->poffset == NOTSPECIFIED)
-            ctx->poffset = DEFAULTOFS_J;
         if (ctx->pamN == NOTSPECIFIED)
             ctx->pamN = DEFAULTPAMN;
         if (ctx->kimuraR == NOTSPECIFIED)
@@ -2392,7 +2388,7 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
         ctx->penalty_OP = (int)(600.0 / 1000.0 * ctx->ppenalty_OP + 0.5);
         ctx->penalty_ex = (int)(600.0 / 1000.0 * ctx->ppenalty_ex + 0.5);
         ctx->penalty_EX = (int)(600.0 / 1000.0 * ctx->ppenalty_EX + 0.5);
-        ctx->offset = (int)(600.0 / 1000.0 * ctx->poffset + 0.5);
+        ctx->offset = (int)(600.0 / 1000.0 * opts.poffset + 0.5);
         ctx->offsetFFT = (int)(600.0 / 1000.0 * (-0) + 0.5);
         ctx->offsetLN = (int)(600.0 / 1000.0 * 100 + 0.5);
         ctx->penaltyLN = (int)(600.0 / 1000.0 * -2000 + 0.5);
@@ -2403,7 +2399,7 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
         else
             sprintf(shiftmodel, "noshift");
 
-        sprintf(ctx->modelname, "%s %dPAM, %4.2f, %4.2f, %s", (ctx->TMorJTT == TM) ? "Transmembrane" : "JTT", ctx->pamN, -(double)opts.ppenalty / 1000, -(double)ctx->poffset / 1000, shiftmodel);
+        sprintf(ctx->modelname, "%s %dPAM, %4.2f, %4.2f, %s", (ctx->TMorJTT == TM) ? "Transmembrane" : "JTT", ctx->pamN, -(double)opts.ppenalty / 1000, -(double)opts.poffset / 1000, shiftmodel);
 
         JTTmtx(rsr, freq, ctx->amino, ctx->amino_grp, (int)(ctx->TMorJTT == TM));
 

@@ -230,7 +230,6 @@ typedef struct Context {
     int      ppenalty_OP;
     int      penalty_shift;
     int      offset;
-    int      poffset;
     int      offsetLN;
     int      offsetFFT;
     int      RNAthr;

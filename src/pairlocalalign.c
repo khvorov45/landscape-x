@@ -1334,7 +1334,6 @@ arguments(Context* ctx, int argc, char* argv[]) {
     ctx->ppenalty_OP = NOTSPECIFIED;
     ctx->ppenalty_ex = NOTSPECIFIED;
     ctx->ppenalty_EX = NOTSPECIFIED;
-    ctx->poffset = NOTSPECIFIED;
     ctx->kimuraR = NOTSPECIFIED;
     ctx->pamN = NOTSPECIFIED;
     ctx->geta2 = GETA2;
@@ -1367,10 +1366,6 @@ arguments(Context* ctx, int argc, char* argv[]) {
                     --argc;
                     goto nextoption;
 
-                case 'h':
-                    ctx->poffset = (int)(atof(*++argv) * 1000 - 0.5);
-                    --argc;
-                    goto nextoption;
                 case 'k':
                     ctx->kimuraR = myatoi(*++argv);
                     --argc;

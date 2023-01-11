@@ -127,11 +127,7 @@ arguments(Context* ctx, TbfastOpts* tempOpts, int argc, char* argv[], int* pac, 
                     ctx->ppenalty_ex = (int)(atof(*++argv) * 1000 - 0.5);
                     --argc;
                     goto nextoption;
-                case 'h':
-                    ctx->poffset = (int)(atof(*++argv) * 1000 - 0.5);
-                    //					fprintf( stderr, "poffset = %d\n", poffset );
-                    --argc;
-                    goto nextoption;
+
                 case 'k':
                     ctx->kimuraR = myatoi(*++argv);
                     //					fprintf( stderr, "kappa = %d\n", kimuraR );
@@ -830,7 +826,7 @@ WriteOptions(aln_Opts opts, Context* ctx, FILE* fp) {
         else if (opts.scoremtx == 2)
             fprintf(fp, "M-Y\n");
     }
-    fprintf(stderr, "Gap Penalty = %+5.2f, %+5.2f, %+5.2f\n", (double)opts.ppenalty / 1000, (double)ctx->ppenalty_ex / 1000, (double)ctx->poffset / 1000);
+    fprintf(stderr, "Gap Penalty = %+5.2f, %+5.2f, %+5.2f\n", (double)opts.ppenalty / 1000, (double)ctx->ppenalty_ex / 1000, (double)opts.poffset / 1000);
     if (ctx->use_fft)
         fprintf(fp, "FFT on\n");
 
@@ -850,7 +846,7 @@ WriteOptions(aln_Opts opts, Context* ctx, FILE* fp) {
         fprintf(fp, "\n");
     }
 
-    fprintf(fp, "Gap Penalty = %+5.2f, %+5.2f, %+5.2f\n", (double)opts.ppenalty / 1000, (double)ctx->ppenalty_ex / 1000, (double)ctx->poffset / 1000);
+    fprintf(fp, "Gap Penalty = %+5.2f, %+5.2f, %+5.2f\n", (double)opts.ppenalty / 1000, (double)ctx->ppenalty_ex / 1000, (double)opts.poffset / 1000);
 
     if (ctx->alg == 'a')
         fprintf(fp, "Algorithm A\n");
@@ -925,7 +921,6 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     ctx->treemethod = 'X';
     ctx->sueff_global = 0.1;
     ctx->ppenalty_ex = NOTSPECIFIED;
-    ctx->poffset = NOTSPECIFIED;
     ctx->kimuraR = NOTSPECIFIED;
     ctx->pamN = NOTSPECIFIED;
     ctx->geta2 = GETA2;
@@ -1166,6 +1161,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
         if (tempOpts->callpairlocalalign) {
             aln_Opts pairLocalAlignOpts = opts;
             pairLocalAlignOpts.ppenalty = -2000;
+            pairLocalAlignOpts.poffset = 100;
             pairlocalalign(pairLocalAlignOpts, ctx, ctx->njob, name, seq, iscore, localhomtable, pac, pav, expdist);
             arguments(ctx, tempOpts, tac, tav, NULL, NULL, NULL, NULL);
             tempOpts->callpairlocalalign = 1;
@@ -1284,6 +1280,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
         if (tempOpts->callpairlocalalign) {
             aln_Opts pairLocalAlignOpts = opts;
             pairLocalAlignOpts.ppenalty = -2000;
+            pairLocalAlignOpts.poffset = 100;
             pairlocalalign(pairLocalAlignOpts, ctx, ctx->njob, name, seq, iscore, NULL, pac, pav, expdist);
             arguments(ctx, tempOpts, tac, tav, NULL, NULL, NULL, NULL);
             tempOpts->callpairlocalalign = 1;
