@@ -124,31 +124,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         }
     }
 
-    {
-        FILE* prep = fopen("hat3", "w");
-        aln_assert(prep);
-        int ilim = ctx->njob - 1;
-        for (int i = 0; i < ilim; i++) {
-            int jst = i;
-            int jj = 0;
-            for (int j = jst; j < ctx->njob; j++, jj++) {
-                for (LocalHom* tmpptr = localhomtable[i] + jj; tmpptr; tmpptr = tmpptr->next) {
-                    if (tmpptr->opt == -1.0)
-                        continue;
-                    if (targetmap[j] == -1 || targetmap[i] < targetmap[j])
-                        fprintf(prep, "%d %d %d %7.5f %d %d %d %d %c\n", targetmapr[i], j, tmpptr->overlapaa, tmpptr->opt / 600 * 5.8, tmpptr->start1, tmpptr->end1, tmpptr->start2, tmpptr->end2, tmpptr->korh);
-                }
-            }
-        }
-        fclose(prep);
-    }
-
-    {
-        FILE* prep = fopen("hat2", "w");
-        WriteFloatHat2_pointer_halfmtx(ctx, prep, ctx->njob, name, iscore);
-        fclose(prep);
-    }
-
     constants(opts, ctx, ctx->njob, seq);
 
     initSignalSM(ctx);
