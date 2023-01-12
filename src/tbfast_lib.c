@@ -7,75 +7,6 @@
 #define DEBUG 0
 #define IODEBUG 0
 
-static void
-WriteOptions(aln_Opts opts, Context* ctx, FILE* fp) {
-    if (ctx->dorp == 'd')
-        fprintf(fp, "DNA\n");
-    else {
-        if (opts.scoremtx == 0)
-            fprintf(fp, "JTT %dPAM\n", ctx->pamN);
-        else if (opts.scoremtx == 1)
-            fprintf(fp, "BLOSUM %d\n", opts.nblosum);
-        else if (opts.scoremtx == 2)
-            fprintf(fp, "M-Y\n");
-    }
-    fprintf(stderr, "Gap Penalty = %+5.2f, %+5.2f, %+5.2f\n", (double)opts.ppenalty / 1000, (double)opts.ppenalty_ex / 1000, (double)opts.poffset / 1000);
-    if (opts.use_fft)
-        fprintf(fp, "FFT on\n");
-
-    fprintf(fp, "tree-base method\n");
-    if (ctx->tbrweight == 0)
-        fprintf(fp, "unweighted\n");
-    else if (ctx->tbrweight == 3)
-        fprintf(fp, "clustalw-like weighting\n");
-    if (ctx->tbitr || ctx->tbweight) {
-        fprintf(fp, "iterate at each step\n");
-        if (ctx->tbitr && ctx->tbrweight == 0)
-            fprintf(fp, "  unweighted\n");
-        if (ctx->tbitr && ctx->tbrweight == 3)
-            fprintf(fp, "  reversely weighted\n");
-        if (ctx->tbweight)
-            fprintf(fp, "  weighted\n");
-        fprintf(fp, "\n");
-    }
-
-    fprintf(fp, "Gap Penalty = %+5.2f, %+5.2f, %+5.2f\n", (double)opts.ppenalty / 1000, (double)opts.ppenalty_ex / 1000, (double)opts.poffset / 1000);
-
-    if (opts.alg == 'a')
-        fprintf(fp, "Algorithm A\n");
-    else if (opts.alg == 'A')
-        fprintf(fp, "Algorithm A+\n");
-    else if (opts.alg == 'C')
-        fprintf(fp, "Apgorithm A+/C\n");
-    else
-        fprintf(fp, "Unknown algorithm\n");
-
-    if (opts.treemethod == 'X')
-        fprintf(fp, "Tree = UPGMA (mix).\n");
-    else if (opts.treemethod == 'E')
-        fprintf(fp, "Tree = UPGMA (average).\n");
-    else if (opts.treemethod == 'q')
-        fprintf(fp, "Tree = Minimum linkage.\n");
-    else
-        fprintf(fp, "Unknown tree.\n");
-
-    if (opts.use_fft) {
-        fprintf(fp, "FFT on\n");
-        if (ctx->dorp == 'd')
-            fprintf(fp, "Basis : 4 nucleotides\n");
-        else {
-            if (ctx->fftscore)
-                fprintf(fp, "Basis : Polarity and Volume\n");
-            else
-                fprintf(fp, "Basis : 20 amino acids\n");
-        }
-        fprintf(fp, "Threshold   of anchors = %d%%\n", ctx->fftThreshold);
-        fprintf(fp, "window size of anchors = %dsites\n", ctx->fftWinSize);
-    } else
-        fprintf(fp, "FFT off\n");
-    fflush(fp);
-}
-
 aln_AlignResult
 tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outBytes, aln_Opts opts) {
     aln_Arena permArena_ = {.base = out, .size = outBytes / 4};
@@ -154,11 +85,11 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     FILE*    prep = NULL;
     int**    localmem = NULL;
 
-    int       alloclen = 0;
-    int       ntarget = 0;
-    int*      targetmap = NULL;
-    int*      targetmapr = NULL;
-    int*      uselh = NULL;
+    int  alloclen = 0;
+    int  ntarget = 0;
+    int* targetmap = NULL;
+    int* targetmapr = NULL;
+    int* uselh = NULL;
 
     char**   mseq1 = AllocateCharMtx(ctx->njob, 0);
     char**   mseq2 = AllocateCharMtx(ctx->njob, 0);
@@ -252,7 +183,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
 
     initSignalSM(ctx);
     initFiles(ctx);
-    WriteOptions(opts, ctx, ctx->trap_g);
 
     // TODO(sen) Sequence verification?
 
