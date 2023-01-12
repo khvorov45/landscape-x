@@ -992,7 +992,7 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
                 if (scoringmatrices)
                     totalscore += MSalignmm_variousdist(ctx, scoringmatrices, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, headgp, tailgp);
                 else
-                    totalscore += MSalignmm(opts, ctx, n_dynamicmtx, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, headgp, tailgp, NULL, NULL, NULL, 0.0, 0.0);
+                    totalscore += MSalignmm(ctx, n_dynamicmtx, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, headgp, tailgp, NULL, NULL, NULL, 0.0, 0.0);
                 break;
             case ('d'):
                 if (clus1 == 1 && clus2 == 1) {
@@ -1814,7 +1814,7 @@ system( "less seqVec < /dev/tty > /dev/tty" );
                 if (scoringmatrices)  // called by tditeration.c
                     totalscore += MSalignmm_variousdist(ctx, scoringmatrices, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, headgp, tailgp);
                 else
-                    totalscore += MSalignmm(opts, ctx, n_dynamicmtx, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, headgp, tailgp, NULL, NULL, NULL, 0.0, 0.0);
+                    totalscore += MSalignmm(ctx, n_dynamicmtx, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, headgp, tailgp, NULL, NULL, NULL, 0.0, 0.0);
                 break;
             default:
                 fprintf(stderr, "alg = %c\n", opts.alg);

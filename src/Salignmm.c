@@ -1246,7 +1246,7 @@ A__align(aln_Opts opts, Context* ctx, double** n_dynamicmtx, int penalty_l, int 
         exit(1);
     }
 
-    if (cpmxresult && opts.specificityconsideration == 0.0) {
+    if (cpmxresult) {
         if (sgap1) {
             reporterr("The combination of sgap1 and cpmxhit is not supported. See Salignmm.c\n");
             exit(1);

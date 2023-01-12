@@ -1868,7 +1868,7 @@ freearrays(
 }
 
 double
-MSalignmm(aln_Opts opts, Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, char* sgap1, char* sgap2, char* egap1, char* egap2, int headgp, int tailgp, double*** cpmxchild0, double*** cpmxchild1, double*** cpmxresult, double orieff1, double orieff2) {
+MSalignmm(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, char* sgap1, char* sgap2, char* egap1, char* egap2, int headgp, int tailgp, double*** cpmxchild0, double*** cpmxchild1, double*** cpmxresult, double orieff1, double orieff2) {
     //	int k;
     int      i, j;
     int      ll1, ll2;
@@ -1944,7 +1944,7 @@ MSalignmm(aln_Opts opts, Context* ctx, double** n_dynamicmtx, char** seq1, char*
         }
     }
 
-    if (cpmxresult && opts.specificityconsideration == 0.0) {
+    if (cpmxresult) {
         if (sgap1) {
             reporterr("The combination of sgap1 and cpmxhit is not supported. See Salignmm.c\n");
             exit(1);

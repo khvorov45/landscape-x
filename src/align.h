@@ -38,7 +38,6 @@ typedef struct aln_Opts {
     int32_t constraint;
     int32_t ppenalty_ex;
     double  minimumweight;
-    double  specificityconsideration;
     double  penalty_shift_factor;
     double  fastathreshold;
     double  sueff_global;

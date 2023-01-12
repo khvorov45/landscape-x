@@ -448,7 +448,7 @@ extern void         blockAlign(int* cut1, int* cut2, double** ocrossscore, int* 
 extern void         blockAlign2(Context* ctx, int* cut1, int* cut2, Segment** seg1, Segment** seg2, double** ocrossscore, int* ncut);
 extern double       imp_match_out_scD(int i1, int j1);
 extern void         imp_match_init_strictD(aln_Opts opts, Context* ctx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1kozo, double* eff2kozo, LocalHom*** localhom, char* swaplist, int* memlist1, int* memlist2, int* uselh, int* seedinlh1, int* seedinlh2, int nodeid, int nfiles);
-extern double       MSalignmm(aln_Opts opts, Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, char*, char*, char*, char*, int headgp, int tailgp, double*** cpmxchild0, double*** cpmxchild1, double*** cpmxresult, double orieff1, double orieff2);
+extern double       MSalignmm(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, char*, char*, char*, char*, int headgp, int tailgp, double*** cpmxchild0, double*** cpmxchild1, double*** cpmxresult, double orieff1, double orieff2);
 extern double       MSalignmm_variousdist(Context* ctx, double*** matrices, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, char*, char*, char*, char*, int headgp, int tailgp);
 extern double       Lalignmm_hmout(Context* ctx, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, char*, char*, char*, double** map);
 extern double       MSalign11(Context* ctx, char** seq1, char** seq2, int alloclen);
@@ -593,8 +593,7 @@ extern void               gapcount(double* freq, char** seq, int nseq, double* e
 extern void               gapcountf(double* freq, char** seq, int nseq, double* eff, int lgth);
 extern void               gapcountadd(double* freq, char** seq, int nseq, double* eff, int lgth);
 extern void               outgapcount(double* freq, int nseq, char* gappat, double* eff);
-extern void               makedynamicmtx(aln_Opts opts, Context* ctx, double** out, double** in, double offset);
-extern double             dist2offset(aln_Opts opts, double dist);
+extern void               makedynamicmtx(Context* ctx, double** out, double** in, double offset);
 extern void               reporterr(const char* str, ...);
 extern void               freeconstants(Context* ctx);
 extern void               makeskiptable(int n, int** skip, char** seq);

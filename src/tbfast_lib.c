@@ -247,7 +247,7 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
                 memhist[l][clus1 + clus2] = -1;
             }
 
-            makedynamicmtx(opts, ctx, dynamicmtx, ctx->n_dis_consweight_multi, dep[l].distfromtip);
+            makedynamicmtx(ctx, dynamicmtx, ctx->n_dis_consweight_multi, dep[l].distfromtip);
 
             int len1 = strlen(bseq[m1]);
             int len2 = strlen(bseq[m2]);

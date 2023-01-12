@@ -5779,20 +5779,20 @@ outgapcount(double* freq, int nseq, char* gappat, double* eff) {
     return;
 }
 
-double
-dist2offset(aln_Opts opts, double dist) {
-    double val = dist * 0.5 - opts.specificityconsideration;
+static double
+dist2offset(double dist) {
+    double val = dist * 0.5;
     if (val > 0.0)
         val = 0.0;
     return val;
 }
 
 void
-makedynamicmtx(aln_Opts opts, Context* ctx, double** out, double** in, double offset) {
+makedynamicmtx(Context* ctx, double** out, double** in, double offset) {
     int    i, j, ii, jj;
     double av;
 
-    offset = dist2offset(opts, offset * 2.0);  // offset 0..1 -> 0..2
+    offset = dist2offset(offset * 2.0);  // offset 0..1 -> 0..2
 
     //	if( offset > 0.0 ) offset = 0.0;
     //	reporterr(       "dynamic offset = %f\n", offset );
