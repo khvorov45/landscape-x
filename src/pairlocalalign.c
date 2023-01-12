@@ -42,33 +42,6 @@ typedef struct _lastresx {
     Aln* aln;
 } Lastresx;
 
-#ifdef enablemultithread
-typedef struct _jobtable {
-    int i;
-    int j;
-} Jobtable;
-
-typedef struct _thread_arg {
-    int              thread_no;
-    int              njob;
-    Jobtable*        jobpospt;
-    char**           name;
-    char**           seq;
-    char**           dseq;
-    int*             thereisxineachseq;
-    LocalHom**       localhomtable;
-    double**         distancemtx;
-    double*          selfscore;
-    char***          bpp;
-    Lastresx**       lastresx;
-    int              alloclen;
-    int*             targetmap;
-    double**         expdist;
-    pthread_mutex_t* mutex_counter;
-    pthread_mutex_t* mutex_stdout;
-} thread_arg_t;
-#endif
-
 typedef struct lastcallthread_arg_t {
     aln_Opts   opts;
     Context*   ctx;
@@ -186,7 +159,6 @@ putlocalhom_last(Context* ctx, char* s1, char* s2, LocalHom* localhompt, Lastres
             for (tmppt2 = localhompt0; tmppt2; tmppt2 = tmppt2->next) {
                 tmppt2->overlapaa = sumoverlap;
                 tmppt2->opt = (double)isumscore * 5.8 / (600 * sumoverlap);
-                //				fprintf( stderr, "tmpptr->opt = %f\n", tmppt->opt );
             }
         }
         apt++;
@@ -835,21 +807,6 @@ calllast_once(aln_Opts opts, Context* ctx, int nd, char** dseq, int nq, char** q
             fprintf(lfp, "\n");
         }
         fclose(lfp);
-#if 0
-		sprintf( command, "lastex -s 2 -a %d -b %d -p _scoringmatrixforlast -E 10000 _db.prj _db.prj > _lastex", -penalty, -penalty_ex );
-		system( command );
-		lfp = fopen( "_lastex", "r" );
-		fgets( command, 4999, lfp );
-		fgets( command, 4999, lfp );
-		fgets( command, 4999, lfp );
-		fgets( command, 4999, lfp );
-		laste = atoi( command );
-		fclose( lfp );
-		fprintf( stderr, "laste = %d\n", laste );
-		sleep( 10 );
-#else
-//		laste = 5000;
-#endif
     } else {
         sprintf(command, "%s/lastdb -p _db _db", whereispairalign);
         system(command);
@@ -1810,17 +1767,17 @@ pairalign(aln_Opts opts, Context* ctx, const char* const* name, char** seq, char
 }
 
 int
-pairlocalalign(aln_Opts opts, Context* ctx, int ngui, const char* const* namegui, char** seqgui, double** distancemtx, LocalHom** localhomtable, double** expdist) {
-    aln_assert(ngui >= 2);
+pairlocalalign(
+    aln_Opts           pairLocalAlignOpts,
+    Context*           ctx,
+    const char* const* name,
+    char**             seq,
+    double**           iscore,
+    LocalHom**         localhomtable
+) {
+    aln_assert(ctx->njob >= 2);
 
-    int*       thereisxineachseq;
-    char **    mseq1, **mseq2;
-    char**     aseq;
-    char**     bseq;
-    char**     dseq;
-    int        i, j;
-    int        alloclen;
-    Lastresx** lastresx;
+    int i;
 
     laste = 5000;
     lastm = 3;
@@ -1862,60 +1819,24 @@ pairlocalalign(aln_Opts opts, Context* ctx, int ngui, const char* const* namegui
     ctx->usenaivescoreinsteadofalignmentscore = 0;
     ctx->nwildcard = 0;
 
-    if ((opts.alg == 'r' || opts.alg == 'R') && ctx->dorp == 'p') {
-        fprintf(stderr, "Not yet supported\n");
-        exit(1);
-    }
+    int alloclen = ctx->maxInputSeqLen * 2;
 
-    alloclen = ctx->maxInputSeqLen * 2;
-    aln_assert(ngui);
-    char**             seq = seqgui;
-    const char* const* name = namegui;
+    char** aseq = AllocateCharMtx(2, alloclen + 10);
+    char** bseq = AllocateCharMtx(ctx->njob, alloclen + 10);
+    char** dseq = AllocateCharMtx(ctx->njob, alloclen + 10);
+    char** mseq1 = AllocateCharMtx(ctx->njob, 0);
+    char** mseq2 = AllocateCharMtx(ctx->njob, 0);
+    int*   thereisxineachseq = AllocateIntVec(ctx->njob);
 
-    aseq = AllocateCharMtx(2, alloclen + 10);
-    bseq = AllocateCharMtx(ctx->njob, alloclen + 10);
-    dseq = AllocateCharMtx(ctx->njob, alloclen + 10);
-    mseq1 = AllocateCharMtx(ctx->njob, 0);
-    mseq2 = AllocateCharMtx(ctx->njob, 0);
-    thereisxineachseq = AllocateIntVec(ctx->njob);
+    Lastresx** lastresx = NULL;
 
-    if (opts.alg == 'R') {
-        lastresx = calloc(ctx->njob + 1, sizeof(Lastresx*));
-        for (i = 0; i < ctx->njob; i++) {
-            lastresx[i] = calloc(ctx->njob + 1, sizeof(Lastresx));  // muda
-            for (j = 0; j < ctx->njob; j++) {
-                lastresx[i][j].score = 0;
-                lastresx[i][j].naln = 0;
-                lastresx[i][j].aln = NULL;
-            }
-            lastresx[i][ctx->njob].naln = -1;
-        }
-        lastresx[ctx->njob] = NULL;
-    } else if (opts.alg == 'r') {
-        //		fprintf( stderr, "Allocating lastresx (%d), ctx->njob=%d, nadd=%d\n", ctx->njob-nadd+1, ctx->njob, nadd );
-        lastresx = calloc(ctx->njob - ctx->nadd + 1, sizeof(Lastresx*));
-        for (i = 0; i < ctx->njob - ctx->nadd; i++) {
-            //			fprintf( stderr, "Allocating lastresx[%d]\n", i );
-            lastresx[i] = calloc(ctx->nadd + 1, sizeof(Lastresx));
-            for (j = 0; j < ctx->nadd; j++) {
-                //				fprintf( stderr, "Initializing lastresx[%d][%d]\n", i, j );
-                lastresx[i][j].score = 0;
-                lastresx[i][j].naln = 0;
-                lastresx[i][j].aln = NULL;
-            }
-            lastresx[i][ctx->nadd].naln = -1;
-        }
-        lastresx[ctx->njob - ctx->nadd] = NULL;
-    } else
-        lastresx = NULL;
-
-    constants(opts, ctx, ctx->njob, seq);
+    constants(pairLocalAlignOpts, ctx, ctx->njob, seq);
     initSignalSM(ctx);
     initFiles(ctx);
 
     // TODO(sen) Sequence verification?
 
-    if (ctx->dorp == 'p' && opts.scoremtx == 1 && opts.nblosum > 0) {
+    if (ctx->dorp == 'p' && pairLocalAlignOpts.scoremtx == 1 && pairLocalAlignOpts.nblosum > 0) {
         for (i = 0; i < ctx->njob; i++) {
             copyWithNoGaps(bseq[i], seq[i]);
             thereisxineachseq[i] = removex(dseq[i], bseq[i]);
@@ -1928,7 +1849,23 @@ pairlocalalign(aln_Opts opts, Context* ctx, int ngui, const char* const* namegui
         }
     }
 
-    pairalign(opts, ctx, name, bseq, aseq, dseq, thereisxineachseq, mseq1, mseq2, alloclen, lastresx, distancemtx, localhomtable, expdist, ngui);
+    pairalign(
+        pairLocalAlignOpts,
+        ctx,
+        name,
+        bseq,
+        aseq,
+        dseq,
+        thereisxineachseq,
+        mseq1,
+        mseq2,
+        alloclen,
+        lastresx,
+        iscore,
+        localhomtable,
+        0,
+        ctx->njob
+    );
 
     fprintf(ctx->trap_g, "done.\n");
     fclose(ctx->trap_g);

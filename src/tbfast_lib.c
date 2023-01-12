@@ -4,9 +4,6 @@
 #define aln_IMPLEMENTATION
 #include "mltaln.h"
 
-#define DEBUG 0
-#define IODEBUG 0
-
 aln_AlignResult
 tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outBytes, aln_Opts opts) {
     aln_Arena permArena_ = {.base = out, .size = outBytes / 4};
@@ -14,12 +11,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
 
     aln_Arena* permArena = &permArena_;
     aln_Arena* tempArena = &tempArena_;
-
-    aln_Opts pairLocalAlignOpts = opts;
-    pairLocalAlignOpts.ppenalty = -2000;
-    pairLocalAlignOpts.poffset = 100;
-    pairLocalAlignOpts.use_fft = 0;
-    pairLocalAlignOpts.constraint = 0;
 
     Context* ctx = aln_arenaAllocStruct(tempArena, Context);
 
@@ -108,7 +99,21 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     }
 
     double** iscore = AllocateFloatHalfMtx(ctx->njob);
-    pairlocalalign(pairLocalAlignOpts, ctx, ctx->njob, name, seq, iscore, localhomtable, 0);
+    {
+        aln_Opts pairLocalAlignOpts = opts;
+        pairLocalAlignOpts.ppenalty = -2000;
+        pairLocalAlignOpts.poffset = 100;
+        pairLocalAlignOpts.use_fft = 0;
+        pairLocalAlignOpts.constraint = 0;
+        pairlocalalign(
+            pairLocalAlignOpts,
+            ctx,
+            name,
+            seq,
+            iscore,
+            localhomtable
+        );
+    }
 
     {
         int ilim = ctx->njob;
@@ -250,13 +255,64 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
             // TODO(sen) Out of memory error?
             aln_assert(alloclen >= len1 + len2);
 
-            clus1 = fastconjuction_noname(localmem[0], bseq, mseq1, effarr1, eff, indication1, opts.minimumweight, &orieff1);  // orieff tsukau!
-            clus2 = fastconjuction_noname(localmem[1], bseq, mseq2, effarr2, eff, indication2, opts.minimumweight, &orieff2);  // orieff tsukau!
+            clus1 = fastconjuction_noname(localmem[0], bseq, mseq1, effarr1, eff, indication1, opts.minimumweight, &orieff1);
+            clus2 = fastconjuction_noname(localmem[1], bseq, mseq2, effarr2, eff, indication2, opts.minimumweight, &orieff2);
 
             fastshrinklocalhom_half(localmem[0], localmem[1], localhomtable, localhomshrink);
 
-            imp_match_init_strict(opts, ctx, clus1, clus2, strlen(mseq1[0]), strlen(mseq2[0]), mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, localmem[0], localmem[1], 0, seedinlh1, seedinlh2, (ctx->compacttree == 3) ? l : -1, 0);
-            A__align(opts, ctx, dynamicmtx, ctx->penalty, ctx->penalty_ex, mseq1, mseq2, effarr1, effarr2, clus1, clus2, alloclen, opts.constraint, &dumdb, NULL, NULL, NULL, NULL, ctx->outgap, ctx->outgap, localmem[0][0], 1, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
+            imp_match_init_strict(
+                opts,
+                ctx,
+                clus1,
+                clus2,
+                strlen(mseq1[0]),
+                strlen(mseq2[0]),
+                mseq1,
+                mseq2,
+                effarr1,
+                effarr2,
+                effarr1_kozo,
+                effarr2_kozo,
+                localhomshrink,
+                swaplist,
+                localmem[0],
+                localmem[1],
+                0,
+                seedinlh1,
+                seedinlh2,
+                (ctx->compacttree == 3) ? l : -1,
+                0
+            );
+
+            A__align(
+                opts,
+                ctx,
+                dynamicmtx,
+                ctx->penalty,
+                ctx->penalty_ex,
+                mseq1,
+                mseq2,
+                effarr1,
+                effarr2,
+                clus1,
+                clus2,
+                alloclen,
+                opts.constraint,
+                &dumdb,
+                NULL,
+                NULL,
+                NULL,
+                NULL,
+                ctx->outgap,
+                ctx->outgap,
+                localmem[0][0],
+                1,
+                cpmxchild0,
+                cpmxchild1,
+                cpmxhist + l,
+                orieff1,
+                orieff2
+            );
 
             nlen[m1] = 0.5 * (nlen[m1] + nlen[m2]);
         }
