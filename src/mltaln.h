@@ -378,7 +378,7 @@ extern void         counteff_simple(int nseq, int*** topol, double** len, double
 extern void         counteff_simple_double_nostatic(int nseq, int*** topol, double** len, double* node);
 extern void         counteff_simple_double_nostatic_memsave(int nseq, int*** topol, double** len, Treedep* dep, double* node);
 extern void         gappick_samestring(char* aseq);
-extern void         gappick0(char* aseq, const char* seq);
+extern void         copyWithNoGaps(char* aseq, const char* seq);
 extern void         gappick(int nseq, int s, char** aseq, char** mseq2, double** eff, double* effarr);
 extern void         commongappick_record(int nseq, char** seq, int* map);
 extern void         commongappick(int nseq, char** seq);

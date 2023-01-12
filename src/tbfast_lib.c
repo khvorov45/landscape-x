@@ -655,36 +655,27 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     tempOpts->callpairlocalalign = 1;
 
     int*     selfscore = NULL;
-    int      nogaplen;
     char **  mseq1 = NULL, **mseq2 = NULL;
     char**   bseq = NULL;
     double **iscore = NULL, **iscore_kozo = NULL;
     int**    skiptable;
-    double * eff = NULL, *eff_kozo = NULL, *eff_kozo_mapped = NULL;
+    double * eff = NULL, *eff_kozo_mapped = NULL;
     int      i, j, k, ien, ik, jk;
     int ***  topol = NULL, ***topol_kozo = NULL;
     double** expdist = NULL;
-    int*     addmem;
     Treedep* dep = NULL;
     double **len = NULL, **len_kozo = NULL;
     FILE*    prep = NULL;
     FILE*    orderfp = NULL;
     FILE*    hat2p = NULL;
-    double   unweightedspscore;
-    size_t   alignmentlength;
     char*    mergeoralign = NULL;
-    int      foundthebranch;
     int      nsubalignments, maxmem;
     int**    subtable;
     int*     insubtable;
     int*     preservegaps;
-    char***  subalnpt;
     char*    originalgaps = NULL;
     char**   addbk = NULL;
-    GapPos** deletelist = NULL;
-    FILE*    dlf = NULL;
     int**    localmem = NULL;
-    int      includememberres0, includememberres1;
     int*     mindistfrom = NULL;
     double*  mindist = NULL;
     double** partmtx = NULL;
@@ -693,7 +684,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     int          alloclen = 0;
     LocalHom**   localhomtable = NULL;
     LocalHom*    tmpptr;
-    RNApair***   singlerna = NULL;
     double       ssi, ssj, bunbo;
     static char* kozoarivec = NULL;
     int          nkozo;
@@ -724,7 +714,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         preservegaps = AllocateIntVec(ctx->njob);
         for (i = 0; i < ctx->njob; i++)
             preservegaps[i] = 0;
-        subalnpt = AllocateCharCub(nsubalignments, maxmem, 0);
         readsubalignmentstable(ctx->njob, subtable, preservegaps, NULL, NULL);
     }
 
@@ -742,8 +731,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     mergeoralign = AllocateCharVec(ctx->njob);
 
     dep = (Treedep*)calloc(ctx->njob, sizeof(Treedep));
-    if (ctx->nadd)
-        addmem = AllocateIntVec(ctx->nadd + 1);
     localmem = AllocateIntMtx(2, ctx->njob + 1);
 
     if (ctx->compacttree == 3)
@@ -935,7 +922,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
             topol_kozo = AllocateIntCub(nkozo, 2, 0);
             len_kozo = AllocateFloatMtx(nkozo, 2);
             iscore_kozo = AllocateFloatHalfMtx(nkozo);
-            eff_kozo = AllocateDoubleVec(nkozo);
             eff_kozo_mapped = AllocateDoubleVec(ctx->njob);
         }
     } else if (ctx->compacttree != 3) {
@@ -990,7 +976,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
             topol_kozo = AllocateIntCub(nseed, 2, 0);
             len_kozo = AllocateFloatMtx(nseed, 2);
             iscore_kozo = AllocateFloatHalfMtx(nseed);
-            eff_kozo = AllocateDoubleVec(nseed);
             eff_kozo_mapped = AllocateDoubleVec(ctx->njob);
 
             if (localhomtable) {
@@ -1057,7 +1042,7 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
             for (i = 0; i < ctx->nadd; i++) {
                 ien = strlen(seq[ctx->njob - ctx->nadd + i]);
                 addbk[i] = (char*)calloc(ien + 1, sizeof(char));
-                gappick0(addbk[i], seq[ctx->njob - ctx->nadd + i]);
+                copyWithNoGaps(addbk[i], seq[ctx->njob - ctx->nadd + i]);
             }
             addbk[ctx->nadd] = NULL;
         } else
@@ -1303,336 +1288,29 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
 
     aln_assert(!(tempOpts->treeout && tempOpts->noalign));
 
-    if (ctx->tbrweight) {
-        ctx->weight = 3;
-        counteff_simple_double_nostatic_memsave(ctx->njob, topol, len, dep, eff);
-        for (i = ctx->njob - ctx->nadd; i < ctx->njob; i++)
-            eff[i] /= (double)100;
-        if (nkozo) {
-            for (i = 0, j = 0; i < ctx->njob; i++) {
-                if (kozoarivec[i]) {
-                    eff_kozo_mapped[i] = eff[i];  // single weight
-                    j++;
-                } else
-                    eff_kozo_mapped[i] = 0.0;
-            }
-        }
-    } else {
-        for (i = 0; i < ctx->njob; i++)
-            eff[i] = 1.0;
-        if (nkozo) {
-            for (i = 0; i < ctx->njob; i++) {
-                if (kozoarivec[i])
-                    eff_kozo_mapped[i] = 1.0;
-                else
-                    eff_kozo_mapped[i] = 0.0;
-            }
-        }
+    ctx->weight = 3;
+    counteff_simple_double_nostatic_memsave(ctx->njob, topol, len, dep, eff);
+    for (i = ctx->njob - ctx->nadd; i < ctx->njob; i++) {
+        eff[i] /= (double)100;
     }
 
-    if (iscore)
-        FreeFloatHalfMtx(iscore, ctx->njob);
-    iscore = NULL;
-    if (iscore_kozo)
-        FreeFloatHalfMtx(iscore_kozo, nkozo);
-    iscore = NULL;
-    if (topol_kozo)
-        FreeIntCub(topol_kozo);
-    topol_kozo = NULL;
-    if (len_kozo)
-        FreeFloatMtx(len_kozo);
-    len_kozo = NULL;
-    if (eff_kozo)
-        free(eff_kozo);
-    eff_kozo = NULL;
-    FreeFloatMtx(len);
-
-    alloclen = ctx->maxInputSeqLen * 2 + 1;  //chuui!
+    alloclen = ctx->maxInputSeqLen * 2 + 1;
     bseq = AllocateCharMtx(ctx->njob, alloclen);
 
-    if (ctx->nadd) {
-        alignmentlength = strlen(seq[0]);
-        for (i = 0; i < ctx->njob - ctx->nadd; i++) {
-            if (alignmentlength != strlen(seq[i])) {
-                fprintf(stderr, "#################################################################################\n");
-                fprintf(stderr, "# ERROR!                                                                        #\n");
-                fprintf(stderr, "# The original%4d sequences must be aligned                                    #\n", ctx->njob - ctx->nadd);
-                fprintf(stderr, "#################################################################################\n");
-                exit(1);
-            }
-        }
-        if (ctx->addprofile) {
-            alignmentlength = strlen(seq[ctx->njob - ctx->nadd]);
-            for (i = ctx->njob - ctx->nadd; i < ctx->njob; i++) {
-                if (alignmentlength != strlen(seq[i])) {
-                    fprintf(stderr, "###############################################################################\n");
-                    fprintf(stderr, "# ERROR!                                                                      #\n");
-                    fprintf(stderr, "# The%4d additional sequences must be aligned                                #\n", ctx->nadd);
-                    fprintf(stderr, "# Otherwise, try the '--add' option, instead of '--addprofile' option.        #\n");
-                    fprintf(stderr, "###############################################################################\n");
-                    exit(1);
-                }
-            }
-            for (i = 0; i < ctx->nadd; i++)
-                addmem[i] = ctx->njob - ctx->nadd + i;
-            addmem[ctx->nadd] = -1;
-            foundthebranch = 0;
-            for (i = 0; i < ctx->njob - 1; i++) {
-                localmem[0][0] = -1;
-                topolorderz(localmem[0], topol, dep, i, 0);
-                localmem[1][0] = -1;
-                topolorderz(localmem[1], topol, dep, i, 1);
-
-                if (samemember(localmem[0], addmem)) {
-                    mergeoralign[i] = '1';
-                    foundthebranch = 1;
-                } else if (samemember(localmem[1], addmem)) {
-                    mergeoralign[i] = '2';
-                    foundthebranch = 1;
-                } else {
-                    mergeoralign[i] = 'n';
-                }
-            }
-            if (!foundthebranch) {
-                fprintf(stderr, "###############################################################################\n");
-                fprintf(stderr, "# ERROR!                                                                      #\n");
-                fprintf(stderr, "# There is no appropriate position to add the%4d sequences in the guide tree.#\n", ctx->nadd);
-                fprintf(stderr, "# Check whether the%4d sequences form a monophyletic cluster.                #\n", ctx->nadd);
-                fprintf(stderr, "# If not, try the '--add' option, instead of the '--addprofile' option.       #\n");
-                fprintf(stderr, "############################################################################### \n");
-                exit(1);
-            }
-            commongappick(ctx->nadd, seq + ctx->njob - ctx->nadd);
-            for (i = ctx->njob - ctx->nadd; i < ctx->njob; i++)
-                strcpy(bseq[i], seq[i]);
-        } else {
-            for (i = 0; i < ctx->njob - 1; i++)
-                mergeoralign[i] = 'n';
-            for (i = 0; i < ctx->nadd; i++)
-                addmem[i] = ctx->njob - ctx->nadd + i;
-            addmem[ctx->nadd] = -1;
-            for (i = 0; i < ctx->njob - 1; i++) {
-                localmem[0][0] = -1;
-                topolorderz(localmem[0], topol, dep, i, 0);
-                localmem[1][0] = -1;
-                topolorderz(localmem[1], topol, dep, i, 1);
-
-                includememberres0 = includemember(localmem[0], addmem);
-                includememberres1 = includemember(localmem[1], addmem);
-                if (includememberres0 && includememberres1) {
-                    mergeoralign[i] = 'w';
-                } else if (includememberres0) {
-                    mergeoralign[i] = '1';
-                } else if (includememberres1) {
-                    mergeoralign[i] = '2';
-                }
-            }
-
-            for (i = ctx->njob - ctx->nadd; i < ctx->njob; i++)
-                gappick0(bseq[i], seq[i]);
-        }
-
-        commongappick(ctx->njob - ctx->nadd, seq);
-        for (i = 0; i < ctx->njob - ctx->nadd; i++)
-            strcpy(bseq[i], seq[i]);
-    } else if (tempOpts->subalignment) {
-        for (i = 0; i < ctx->njob - 1; i++)
-            mergeoralign[i] = 'a';
-        for (i = 0; i < nsubalignments; i++) {
-            fprintf(stderr, "Checking subalignment %d:\n", i + 1);
-            alignmentlength = strlen(seq[subtable[i][0]]);
-            //			for( j=0; subtable[i][j]!=-1; j++ )
-            //				fprintf( stderr, " %d. %-30.30s\n", subtable[i][j]+1, name[subtable[i][j]]+1 );
-            for (j = 0; subtable[i][j] != -1; j++) {
-                if (subtable[i][j] >= ctx->njob) {
-                    fprintf(stderr, "No such sequence, %d.\n", subtable[i][j] + 1);
-                    exit(1);
-                }
-                if (alignmentlength != strlen(seq[subtable[i][j]])) {
-                    fprintf(stderr, "\n");
-                    fprintf(stderr, "###############################################################################\n");
-                    fprintf(stderr, "# ERROR!\n");
-                    fprintf(stderr, "# Subalignment %d must be aligned.\n", i + 1);
-                    fprintf(stderr, "# Please check the alignment lengths of following sequences.\n");
-                    fprintf(stderr, "#\n");
-                    fprintf(stderr, "# %d. %-10.10s -> %zu letters (including gaps)\n", subtable[i][0] + 1, name[subtable[i][0]] + 1, alignmentlength);
-                    fprintf(stderr, "# %d. %-10.10s -> %d letters (including gaps)\n", subtable[i][j] + 1, name[subtable[i][j]] + 1, (int)strlen(seq[subtable[i][j]]));
-                    fprintf(stderr, "#\n");
-                    fprintf(stderr, "# See http://mafft.cbrc.jp/alignment/software/merge.html for details.\n");
-                    if (tempOpts->subalignmentoffset) {
-                        fprintf(stderr, "#\n");
-                        fprintf(stderr, "# You specified seed alignment(s) consisting of %d sequences.\n", tempOpts->subalignmentoffset);
-                        fprintf(stderr, "# In this case, the rule of numbering is:\n");
-                        fprintf(stderr, "#   The aligned seed sequences are numbered as 1 .. %d\n", tempOpts->subalignmentoffset);
-                        fprintf(stderr, "#   The input sequences to be aligned are numbered as %d .. %d\n", tempOpts->subalignmentoffset + 1, tempOpts->subalignmentoffset + ctx->njob);
-                    }
-                    fprintf(stderr, "###############################################################################\n");
-                    fprintf(stderr, "\n");
-                    exit(1);
-                }
-                insubtable[subtable[i][j]] = 1;
-            }
-            for (j = 0; j < ctx->njob - 1; j++) {
-                if (includemember(topol[j][0], subtable[i]) && includemember(topol[j][1], subtable[i])) {
-                    mergeoralign[j] = 'n';
-                }
-            }
-            foundthebranch = 0;
-            for (j = 0; j < ctx->njob - 1; j++) {
-                if (samemember(topol[j][0], subtable[i]) || samemember(topol[j][1], subtable[i])) {
-                    foundthebranch = 1;
-                    fprintf(stderr, " -> OK\n");
-                    break;
-                }
-            }
-            if (!foundthebranch) {
-                system("cp infile.tree GuideTree");  // tekitou
-                fprintf(stderr, "\n");
-                fprintf(stderr, "###############################################################################\n");
-                fprintf(stderr, "# ERROR!\n");
-                fprintf(stderr, "# Subalignment %d does not form a monophyletic cluster\n", i + 1);
-                fprintf(stderr, "# in the guide tree ('GuideTree' in this directory) internally computed.\n");
-                fprintf(stderr, "# If you really want to use this subalignment, pelase give a tree with --treein \n");
-                fprintf(stderr, "# http://mafft.cbrc.jp/alignment/software/treein.html\n");
-                fprintf(stderr, "# http://mafft.cbrc.jp/alignment/software/merge.html\n");
-                if (tempOpts->subalignmentoffset) {
-                    fprintf(stderr, "#\n");
-                    fprintf(stderr, "# You specified seed alignment(s) consisting of %d sequences.\n", tempOpts->subalignmentoffset);
-                    fprintf(stderr, "# In this case, the rule of numbering is:\n");
-                    fprintf(stderr, "#   The aligned seed sequences are numbered as 1 .. %d\n", tempOpts->subalignmentoffset);
-                    fprintf(stderr, "#   The input sequences to be aligned are numbered as %d .. %d\n", tempOpts->subalignmentoffset + 1, tempOpts->subalignmentoffset + ctx->njob);
-                }
-                fprintf(stderr, "############################################################################### \n");
-                fprintf(stderr, "\n");
-                exit(1);
-            }
-        }
-
-        for (i = 0; i < ctx->njob; i++) {
-            if (insubtable[i])
-                strcpy(bseq[i], seq[i]);
-            else
-                gappick0(bseq[i], seq[i]);
-        }
-
-        for (i = 0; i < nsubalignments; i++) {
-            for (j = 0; subtable[i][j] != -1; j++)
-                subalnpt[i][j] = bseq[subtable[i][j]];
-            if (!preservegaps[i])
-                commongappick(j, subalnpt[i]);
-        }
-
-        FreeIntMtx(subtable);
-        free(insubtable);
-        for (i = 0; i < nsubalignments; i++)
-            free(subalnpt[i]);
-        free(subalnpt);
-        free(preservegaps);
-    } else {
-        for (i = 0; i < ctx->njob; i++)
-            gappick0(bseq[i], seq[i]);
-        for (i = 0; i < ctx->njob - 1; i++)
-            mergeoralign[i] = 'a';
+    for (i = 0; i < ctx->njob; i++) {
+        copyWithNoGaps(bseq[i], seq[i]);
     }
 
-    if (ctx->rnakozo && ctx->rnaprediction == 'm') {
-        singlerna = (RNApair***)calloc(ctx->njob, sizeof(RNApair**));
-        prep = fopen("hat4", "r");
-        if (prep == NULL)
-            ErrorExit("Make hat4 using mccaskill.");
-        fprintf(stderr, "Loading 'hat4' ... ");
-        for (i = 0; i < ctx->njob; i++) {
-            nogaplen = strlen(bseq[i]);
-            singlerna[i] = (RNApair**)calloc(nogaplen + 1, sizeof(RNApair*));
-            for (j = 0; j < nogaplen; j++) {
-                singlerna[i][j] = (RNApair*)calloc(1, sizeof(RNApair));
-                singlerna[i][j][0].bestpos = -1;
-                singlerna[i][j][0].bestscore = -1.0;
-            }
-            singlerna[i][nogaplen] = NULL;
-            readmccaskill(prep, singlerna[i], nogaplen);
-        }
-        fclose(prep);
-        fprintf(stderr, "\ndone.\n");
-    } else
-        singlerna = NULL;
-
-    fprintf(stderr, "Progressive alignment ... \n");
-
-    treebase(opts, ctx, tempOpts, nlen, bseq, ctx->nadd, mergeoralign, mseq1, mseq2, topol, dep, eff, &alloclen, localhomtable, singlerna, eff_kozo_mapped, targetmap, targetmapr, ntarget, uselh, nseed, nfilesfornode);
-
-    fprintf(stderr, "\ndone.\n");
-
-    if (tempOpts->keeplength) {
-        dlf = fopen("_deletelist", "w");
-        deletelist = (GapPos**)calloc(ctx->nadd + 1, sizeof(GapPos*));
-        for (i = 0; i < ctx->nadd; i++) {
-            deletelist[i] = calloc(1, sizeof(GapPos));
-            deletelist[i][0].pos = -1;
-            deletelist[i][0].len = 0;
-        }
-        deletelist[ctx->nadd] = NULL;
-        tempOpts->ndeleted = deletenewinsertions_whole(ctx->njob - ctx->nadd, ctx->nadd, bseq, bseq + ctx->njob - ctx->nadd, deletelist);
-
-        for (i = 0; i < ctx->nadd; i++) {
-            if (deletelist[i])
-                for (j = 0; deletelist[i][j].pos != -1; j++)
-                    fprintf(dlf, "%d %d %d\n", ctx->njob - ctx->nadd + i, deletelist[i][j].pos, deletelist[i][j].len);  // 0origin
-        }
-        fclose(dlf);
-
-        restoreoriginalgaps(ctx->njob, bseq, originalgaps);
-        free(originalgaps);
-        originalgaps = NULL;
-
-        if (tempOpts->mapout) {
-            dlf = fopen("_deletemap", "w");
-            if (tempOpts->mapout == 1)
-                reconstructdeletemap(ctx, ctx->nadd, addbk, deletelist, bseq + ctx->njob - ctx->nadd, dlf, name + ctx->njob - ctx->nadd);
-            else
-                reconstructdeletemap_compact(ctx, ctx->nadd, addbk, deletelist, seq + ctx->njob - ctx->nadd, dlf, name + ctx->njob - ctx->nadd);
-            FreeCharMtx(addbk);
-            addbk = NULL;
-            fclose(dlf);
-        }
-
-        for (i = 0; deletelist[i] != NULL; i++)
-            free(deletelist[i]);
-        free(deletelist);
-        deletelist = NULL;
+    for (i = 0; i < ctx->njob - 1; i++) {
+        mergeoralign[i] = 'a';
     }
 
-    if (ctx->scoreout) {
-        unweightedspscore = plainscore(ctx, ctx->njob, bseq);
-        fprintf(stderr, "\nSCORE %s = %.0f, ", "(treebase)", unweightedspscore);
-        fprintf(stderr, "SCORE / residue = %f", unweightedspscore / (ctx->njob * strlen(bseq[0])));
-        fprintf(stderr, "\n\n");
-    }
-
-    fprintf(ctx->trap_g, "done.\n");
-    free(mergeoralign);
-    freeconstants(ctx);
-
-    if (ctx->rnakozo && ctx->rnaprediction == 'm') {
-        if (singlerna)  // nen no tame
-        {
-            for (i = 0; i < ctx->njob; i++) {
-                for (j = 0; singlerna[i][j] != NULL; j++) {
-                    if (singlerna[i][j])
-                        free(singlerna[i][j]);
-                }
-                if (singlerna[i])
-                    free(singlerna[i]);
-            }
-            free(singlerna);
-            singlerna = NULL;
-        }
-    }
+    treebase(opts, ctx, tempOpts, nlen, bseq, ctx->nadd, mergeoralign, mseq1, mseq2, topol, dep, eff, &alloclen, localhomtable, NULL, eff_kozo_mapped, targetmap, targetmapr, ntarget, uselh, nseed, nfilesfornode);
 
     aln_Str* alignedSeqs = aln_arenaAllocArray(permArena, aln_Str, stringsCount);
     for (int32_t strIndex = 0; strIndex < stringsCount; strIndex++) {
         aln_Str alignedSeq = {bseq[strIndex], strlen(bseq[strIndex])};
-        char* permCopy = aln_arenaAllocArray(permArena, char, alignedSeq.len);
+        char*   permCopy = aln_arenaAllocArray(permArena, char, alignedSeq.len);
         for (int32_t charIndex = 0; charIndex < alignedSeq.len; charIndex++) {
             permCopy[charIndex] = alignedSeq.ptr[charIndex];
         }

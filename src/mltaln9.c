@@ -3849,7 +3849,7 @@ counteff_simple(int nseq, int*** topol, double** len, double* node) {
 }
 
 void
-gappick0(char* aseq, const char* seq) {
+copyWithNoGaps(char* aseq, const char* seq) {
     for (; *seq != 0; seq++) {
         if (*seq != '-')
             *aseq++ = *seq;
@@ -5891,7 +5891,7 @@ makeskiptable(int n, int** skip, char** seq) {
 
     nogapseq = calloc(strlen(seq[0]) + 1, sizeof(char));
     for (i = 0; i < n; i++) {
-        gappick0(nogapseq, seq[i]);
+        copyWithNoGaps(nogapseq, seq[i]);
         nogaplen = strlen(nogapseq);
         alnlen = strlen(seq[i]);
         skip[i] = calloc(nogaplen + 1, sizeof(int));

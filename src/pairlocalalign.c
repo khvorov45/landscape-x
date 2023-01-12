@@ -994,8 +994,8 @@ recalllara(Context* ctx, char** mseq1, char** mseq2, int alloclen) {
     myfgets(com, 9999, fp);
     strcpy(*mseq2, com);
 
-    gappick0(ungap1, *mseq1);
-    gappick0(ungap2, *mseq2);
+    copyWithNoGaps(ungap1, *mseq1);
+    copyWithNoGaps(ungap2, *mseq2);
     t2u(ungap1);
     t2u(ungap2);
     t2u(ori1);
@@ -1977,13 +1977,13 @@ pairlocalalign(aln_Opts opts, Context* ctx, int ngui, const char* const* namegui
     if (ctx->dorp == 'p' && opts.scoremtx == 1 && opts.nblosum > 0)  // protein, not text.  hitsuyou?
     {
         for (i = 0; i < ctx->njob; i++) {
-            gappick0(bseq[i], seq[i]);
+            copyWithNoGaps(bseq[i], seq[i]);
             thereisxineachseq[i] = removex(dseq[i], bseq[i]);
         }
     } else  // text, dna
     {
         for (i = 0; i < ctx->njob; i++) {
-            gappick0(bseq[i], seq[i]);
+            copyWithNoGaps(bseq[i], seq[i]);
             strcpy(dseq[i], bseq[i]);
             thereisxineachseq[i] = 0;
         }
