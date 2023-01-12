@@ -36,12 +36,14 @@ typedef struct aln_Opts {
     int32_t scoremtx;
     int32_t poffset;
     int32_t constraint;
+    int32_t ppenalty_ex;
     double  minimumweight;
     double  specificityconsideration;
     double  penalty_shift_factor;
     double  fastathreshold;
     double  sueff_global;
     char    treemethod;
+    char    alg;
     bool    use_fft;
 } aln_Opts;
 
@@ -238,11 +240,13 @@ aln_defaultOpts(void) {
         .nblosum = 62,
         .scoremtx = 1,
         .constraint = 2,
+        .ppenalty_ex = -100,
         .minimumweight = 0.00001,
         .penalty_shift_factor = 100.0,
         .fastathreshold = 2.7,
         .sueff_global = 0.1,
         .treemethod = 'X',
+        .alg = 'A',
         .use_fft = true,
     };
     return opts;

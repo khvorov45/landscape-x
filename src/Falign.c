@@ -984,7 +984,7 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
             aln_assert(!"not supported");
         }
 
-        switch (ctx->alg) {
+        switch (opts.alg) {
             case ('a'):
                 totalscore += Aalign(ctx, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen);
                 break;
@@ -1024,7 +1024,7 @@ system( "less seqVec2 < /dev/tty > /dev/tty" );
                 }
                 break;
             default:
-                fprintf(stderr, "alg = %c\n", ctx->alg);
+                fprintf(stderr, "alg = %c\n", opts.alg);
                 ErrorExit("ERROR IN SOURCE FILE Falign.c");
                 break;
         }
@@ -1809,7 +1809,7 @@ system( "less seqVec < /dev/tty > /dev/tty" );
 		}
 		fflush( stdout );
 #endif
-        switch (ctx->alg) {
+        switch (opts.alg) {
             case ('M'):
                 if (scoringmatrices)  // called by tditeration.c
                     totalscore += MSalignmm_variousdist(ctx, scoringmatrices, tmpres1, tmpres2, eff1, eff2, eff1s, eff2s, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, headgp, tailgp);
@@ -1817,7 +1817,7 @@ system( "less seqVec < /dev/tty > /dev/tty" );
                     totalscore += MSalignmm(opts, ctx, n_dynamicmtx, tmpres1, tmpres2, eff1, eff2, clus1, clus2, alloclen, sgap1, sgap2, egap1, egap2, headgp, tailgp, NULL, NULL, NULL, 0.0, 0.0);
                 break;
             default:
-                fprintf(stderr, "alg = %c\n", ctx->alg);
+                fprintf(stderr, "alg = %c\n", opts.alg);
                 ErrorExit("ERROR IN SOURCE FILE Falign.c");
                 break;
         }

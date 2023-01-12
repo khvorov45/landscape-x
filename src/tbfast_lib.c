@@ -123,11 +123,6 @@ arguments(Context* ctx, TbfastOpts* tempOpts, int argc, char* argv[], int* pac, 
                     --argc;
                     goto nextoption;
 
-                case 'g':
-                    ctx->ppenalty_ex = (int)(atof(*++argv) * 1000 - 0.5);
-                    --argc;
-                    goto nextoption;
-
                 case 'k':
                     ctx->kimuraR = myatoi(*++argv);
                     //					fprintf( stderr, "kappa = %d\n", kimuraR );
@@ -215,26 +210,7 @@ arguments(Context* ctx, TbfastOpts* tempOpts, int argc, char* argv[], int* pac, 
                 case 'n':
                     ctx->outnumber = 1;
                     break;
-#if 0
-				case 'a':
-					alg = 'a';
-					break;
-				case 'H':
-					alg = 'H';
-					break;
-				case 'Q':
-					alg = 'Q';
-					break;
-#endif
-                case '@':
-                    ctx->alg = 'd';
-                    break;
-                case 'A':
-                    ctx->alg = 'A';
-                    break;
-                case 'M':
-                    ctx->alg = 'M';
-                    break;
+
                 case 'N':
                     ctx->nevermemsave = 1;
                     break;
@@ -306,10 +282,6 @@ arguments(Context* ctx, TbfastOpts* tempOpts, int argc, char* argv[], int* pac, 
     }
     if (ctx->tbitr == 1 && ctx->outgap == 0) {
         fprintf(stderr, "conflicting options : o, m or u\n");
-        exit(1);
-    }
-    if (ctx->alg == 'C' && ctx->outgap == 0) {
-        fprintf(stderr, "conflicting options : C, o\n");
         exit(1);
     }
 }
@@ -608,14 +580,8 @@ treebase(aln_Opts opts, Context* ctx, TbfastOpts* tempOpts, int* nlen, char** as
             makegrouprna(grouprna2, singlerna, localmem[1]);
         }
 
-        if (!ctx->nevermemsave && (opts.constraint != 2 && ctx->alg != 'M' && (len1 > 30000 || len2 > 30000))) {
-            fprintf(stderr, "\nlen1=%d, len2=%d, Switching to the memsave mode.\n", len1, len2);
-            ctx->alg = 'M';
-            if (ctx->commonIP)
-                FreeIntMtx(ctx->commonIP);
-            ctx->commonIP = NULL;
-            ctx->commonAlloc1 = 0;
-            ctx->commonAlloc2 = 0;
+        if (!ctx->nevermemsave && (opts.constraint != 2 && opts.alg != 'M' && (len1 > 30000 || len2 > 30000))) {
+            aln_assert(!"should not execute");
         }
 
         if (fftlog[m1] && fftlog[m2])
@@ -623,11 +589,11 @@ treebase(aln_Opts opts, Context* ctx, TbfastOpts* tempOpts, int* nlen, char** as
         else
             ffttry = 0;
         if (opts.constraint == 2) {
-            if (ctx->alg == 'M') {
+            if (opts.alg == 'M') {
                 fprintf(stderr, "\n\nMemory saving mode is not supported.\n\n");
                 exit(1);
             }
-            if (ctx->alg == 'A') {
+            if (opts.alg == 'A') {
                 imp_match_init_strict(opts, ctx, clus1, clus2, strlen(mseq1[0]), strlen(mseq2[0]), mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, localmem[0], localmem[1], uselh, seedinlh1, seedinlh2, (ctx->compacttree == 3) ? l : -1, nfiles);
                 if (ctx->rnakozo)
                     imp_rna(ctx, clus1, clus2, mseq1, mseq2, effarr1, effarr2, grouprna1, grouprna2);
@@ -636,17 +602,17 @@ treebase(aln_Opts opts, Context* ctx, TbfastOpts* tempOpts, int* nlen, char** as
 #endif
                 pscore = A__align(opts, ctx, dynamicmtx, ctx->penalty, ctx->penalty_ex, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, opts.constraint, &dumdb, NULL, NULL, NULL, NULL, ctx->outgap, ctx->outgap, localmem[0][0], 1, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
             }
-            if (ctx->alg == 'd') {
+            if (opts.alg == 'd') {
                 imp_match_init_strictD(opts, ctx, clus1, clus2, strlen(mseq1[0]), strlen(mseq2[0]), mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, localmem[0], localmem[1], uselh, seedinlh1, seedinlh2, (ctx->compacttree == 3) ? l : -1, nfiles);
                 if (ctx->rnakozo)
                     imp_rnaD(ctx, clus1, clus2, mseq1, mseq2, effarr1, effarr2, grouprna1, grouprna2);
                 pscore = D__align(opts, ctx, dynamicmtx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen, opts.constraint, &dumdb, ctx->outgap, ctx->outgap);
-            } else if (ctx->alg == 'Q') {
+            } else if (opts.alg == 'Q') {
                 aln_assert(!"not supported");
             }
         } else if (ctx->force_fft || (opts.use_fft && ffttry)) {
             fprintf(stderr, " f\b\b");
-            if (ctx->alg == 'M') {
+            if (opts.alg == 'M') {
                 fprintf(stderr, "m");
                 pscore = Falign_udpari_long(opts, ctx, NULL, dynamicmtx, mseq1, mseq2, effarr1, effarr2, NULL, NULL, clus1, clus2, *alloclen, fftlog + m1);
             } else
@@ -654,7 +620,7 @@ treebase(aln_Opts opts, Context* ctx, TbfastOpts* tempOpts, int* nlen, char** as
         } else {
             fprintf(stderr, " d\b\b");
             fftlog[m1] = 0;
-            switch (ctx->alg) {
+            switch (opts.alg) {
                 case ('a'):
                     pscore = Aalign(ctx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, *alloclen);
                     break;
@@ -693,11 +659,11 @@ treebase(aln_Opts opts, Context* ctx, TbfastOpts* tempOpts, int* nlen, char** as
             if (tempOpts->smoothing) {
                 restorecommongapssmoothly(ctx->njob, ctx->njob - (clus1 + clus2), aseq, localmem[0], localmem[1], gapmap, *alloclen, '-');
                 findnewgaps(ctx, 0, mseq1, gaplen);
-                insertnewgaps_bothorders(opts, ctx, ctx->njob, alreadyaligned, aseq, localmem[0], localmem[1], gaplen, gapmap, gapmaplen, *alloclen, ctx->alg, '-');
+                insertnewgaps_bothorders(opts, ctx, ctx->njob, alreadyaligned, aseq, localmem[0], localmem[1], gaplen, gapmap, gapmaplen, *alloclen, opts.alg, '-');
             } else {
                 restorecommongaps(ctx->njob, ctx->njob - (clus1 + clus2), aseq, localmem[0], localmem[1], gapmap, *alloclen, '-');
                 findnewgaps(ctx, 0, mseq1, gaplen);
-                insertnewgaps(opts, ctx, ctx->njob, alreadyaligned, aseq, localmem[0], localmem[1], gaplen, gapmap, *alloclen, ctx->alg, '-');
+                insertnewgaps(opts, ctx, ctx->njob, alreadyaligned, aseq, localmem[0], localmem[1], gaplen, gapmap, *alloclen, opts.alg, '-');
             }
             eq2dashmatometehayaku(mseq1, clus1);
             eq2dashmatometehayaku(mseq2, clus2);
@@ -803,7 +769,7 @@ WriteOptions(aln_Opts opts, Context* ctx, FILE* fp) {
         else if (opts.scoremtx == 2)
             fprintf(fp, "M-Y\n");
     }
-    fprintf(stderr, "Gap Penalty = %+5.2f, %+5.2f, %+5.2f\n", (double)opts.ppenalty / 1000, (double)ctx->ppenalty_ex / 1000, (double)opts.poffset / 1000);
+    fprintf(stderr, "Gap Penalty = %+5.2f, %+5.2f, %+5.2f\n", (double)opts.ppenalty / 1000, (double)opts.ppenalty_ex / 1000, (double)opts.poffset / 1000);
     if (opts.use_fft)
         fprintf(fp, "FFT on\n");
 
@@ -823,13 +789,13 @@ WriteOptions(aln_Opts opts, Context* ctx, FILE* fp) {
         fprintf(fp, "\n");
     }
 
-    fprintf(fp, "Gap Penalty = %+5.2f, %+5.2f, %+5.2f\n", (double)opts.ppenalty / 1000, (double)ctx->ppenalty_ex / 1000, (double)opts.poffset / 1000);
+    fprintf(fp, "Gap Penalty = %+5.2f, %+5.2f, %+5.2f\n", (double)opts.ppenalty / 1000, (double)opts.ppenalty_ex / 1000, (double)opts.poffset / 1000);
 
-    if (ctx->alg == 'a')
+    if (opts.alg == 'a')
         fprintf(fp, "Algorithm A\n");
-    else if (ctx->alg == 'A')
+    else if (opts.alg == 'A')
         fprintf(fp, "Algorithm A+\n");
-    else if (ctx->alg == 'C')
+    else if (opts.alg == 'C')
         fprintf(fp, "Apgorithm A+/C\n");
     else
         fprintf(fp, "Unknown algorithm\n");
@@ -899,9 +865,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     ctx->weight = 3;
     ctx->tbutree = 1;
     ctx->outgap = 1;
-    ctx->alg = 'A';
     ctx->tbrweight = 3;
-    ctx->ppenalty_ex = NOTSPECIFIED;
     ctx->kimuraR = NOTSPECIFIED;
     ctx->pamN = NOTSPECIFIED;
     ctx->geta2 = GETA2;

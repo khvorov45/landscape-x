@@ -72,6 +72,7 @@ typedef struct _thread_arg {
 #endif
 
 typedef struct lastcallthread_arg_t {
+    aln_Opts opts;
     Context*   ctx;
     int        nq, nd;
     char**     dseq;
@@ -295,7 +296,7 @@ block2reg(char* block, Reg* reg1, Reg* reg2, int start1, int start2) {
 }
 
 static void
-readlastresx_singleq(Context* ctx, FILE* fp, int nameq, Lastresx** lastresx) {
+readlastresx_singleq(aln_Opts opts, Context* ctx, FILE* fp, int nameq, Lastresx** lastresx) {
     char* gett;
     Aln*  tmpaln;
     int   prevnaln, naln, nreg;
@@ -325,7 +326,7 @@ readlastresx_singleq(Context* ctx, FILE* fp, int nameq, Lastresx** lastresx) {
 
         sscanf(gett, "%d %d %d %d %c %d %d %d %d %c %d", &score, &name1, &start1, &alnSize1, &strand1, &seqSize1, &name2, &start2, &alnSize2, &strand2, &seqSize2);
 
-        if (ctx->alg == 'R' && name2 <= name1)
+        if (opts.alg == 'R' && name2 <= name1)
             continue;
         if (name2 != nameq) {
             fprintf(stderr, "BUG!!!\n");
@@ -527,7 +528,7 @@ static void readlastresx_group( FILE *fp, Lastresx **lastresx )
 #endif
 
 static void
-readlastresx(Context* ctx, FILE* fp, Lastresx** lastresx) {
+readlastresx(aln_Opts opts, Context* ctx, FILE* fp, Lastresx** lastresx) {
     char* gett;
     Aln*  tmpaln;
     int   prevnaln, naln, nreg;
@@ -557,7 +558,7 @@ readlastresx(Context* ctx, FILE* fp, Lastresx** lastresx) {
 
         sscanf(gett, "%d %d %d %d %c %d %d %d %d %c %d", &score, &name1, &start1, &alnSize1, &strand1, &seqSize1, &name2, &start2, &alnSize2, &strand2, &seqSize2);
 
-        if (ctx->alg == 'R' && name2 <= name1)
+        if (opts.alg == 'R' && name2 <= name1)
             continue;
 
         //		if( lastresx[name1][name2].score ) continue; // dame!!!!
@@ -640,6 +641,7 @@ readlastresx(Context* ctx, FILE* fp, Lastresx** lastresx) {
 static void*
 lastcallthread(lastcallthread_arg_t* targ) {
     Context* ctx = targ->ctx;
+    aln_Opts opts = targ->opts;
     int      k, i;
     int      nq = targ->nq;
     int      nd = targ->nd;
@@ -661,7 +663,7 @@ lastcallthread(lastcallthread_arg_t* targ) {
             fprintf(stderr, "\r%d / %d                    \r", k, nq);
         }
 
-        if (ctx->alg == 'R') {
+        if (opts.alg == 'R') {
             klim = MIN(k, ctx->njob - ctx->nadd);
             if (klim == k) {
                 sprintf(command, "_db%dd", k);
@@ -683,13 +685,10 @@ lastcallthread(lastcallthread_arg_t* targ) {
                     sprintf(command, "%s/lastdb -p _db%dd _db%dd", whereispairalign, k, k);
                 system(command);
                 sprintf(kd, "%d", k);
-            } else  // calllast_fast de tsukutta nowo riyou
-            {
+            } else {
                 kd[0] = 0;
-                //				fprintf( stderr, "klim=%d, njob=%d, nadd=%d, skip!\n", klim, njob, nadd );
             }
-        } else  // 'r'
-        {
+        } else {
             kd[0] = 0;
         }
 
@@ -704,7 +703,7 @@ lastcallthread(lastcallthread_arg_t* targ) {
 
         //		if( alg == 'R' ) msize = MAX(10,k+nq);
         //			else msize = MAX(10,nd+nq);
-        if (ctx->alg == 'R')
+        if (opts.alg == 'R')
             msize = MAX(10, k * lastm);
         else
             msize = MAX(10, nd * lastm);
@@ -722,14 +721,14 @@ lastcallthread(lastcallthread_arg_t* targ) {
             fprintf(stderr, "Cannot read _lastres%d", k);
             exit(1);
         }
-        readlastresx_singleq(ctx, lfp, k, lastresx);
+        readlastresx_singleq(opts, ctx, lfp, k, lastresx);
         fclose(lfp);
     }
     return (NULL);
 }
 
 static void
-calllast_fast(Context* ctx, int nd, char** dseq, int nq, char** qseq, Lastresx** lastresx) {
+calllast_fast(aln_Opts opts, Context* ctx, int nd, char** dseq, int nq, char** qseq, Lastresx** lastresx) {
     int   i, j;
     FILE* lfp;
     char  command[1000];
@@ -772,7 +771,7 @@ calllast_fast(Context* ctx, int nd, char** dseq, int nq, char** qseq, Lastresx**
             fprintf(stderr, "Cannot open _dbd");
             exit(1);
         }
-        if (ctx->alg == 'R')
+        if (opts.alg == 'R')
             j = ctx->njob - ctx->nadd;
         else
             j = nd;
@@ -801,7 +800,7 @@ calllast_fast(Context* ctx, int nd, char** dseq, int nq, char** qseq, Lastresx**
 }
 
 static void
-calllast_once(Context* ctx, int nd, char** dseq, int nq, char** qseq, Lastresx** lastresx) {
+calllast_once(aln_Opts opts, Context* ctx, int nd, char** dseq, int nq, char** qseq, Lastresx** lastresx) {
     int   i, j;
     char  command[5000];
     FILE* lfp;
@@ -901,7 +900,7 @@ calllast_once(Context* ctx, int nd, char** dseq, int nq, char** qseq, Lastresx**
     }
     //	readlastres( lfp, nd, nq, lastres, dseq, qseq );
     fprintf(stderr, "Reading lastres\n");
-    readlastresx(ctx, lfp, lastresx);
+    readlastresx(opts, ctx, lfp, lastresx);
     fclose(lfp);
 }
 
@@ -1316,7 +1315,6 @@ arguments(Context* ctx, int argc, char* argv[]) {
     ctx->tbutree = 1;
     ctx->disp = 0;
     ctx->outgap = 1;
-    ctx->alg = 'A';
     ctx->mix = 0;
     ctx->tbitr = 0;
     ctx->tbweight = 0;
@@ -1329,7 +1327,6 @@ arguments(Context* ctx, int argc, char* argv[]) {
     store_dist = 1;
     store_localhom = 1;
     ctx->ppenalty_OP = NOTSPECIFIED;
-    ctx->ppenalty_ex = NOTSPECIFIED;
     ctx->ppenalty_EX = NOTSPECIFIED;
     ctx->kimuraR = NOTSPECIFIED;
     ctx->pamN = NOTSPECIFIED;
@@ -1350,10 +1347,6 @@ arguments(Context* ctx, int argc, char* argv[]) {
                     --argc;
                     goto nextoption;
 
-                case 'g':
-                    ctx->ppenalty_ex = (int)(atof(*++argv) * 1000 - 0.5);
-                    --argc;
-                    goto nextoption;
                 case 'O':
                     ctx->ppenalty_OP = (int)(atof(*++argv) * 1000 - 0.5);
                     --argc;
@@ -1430,51 +1423,9 @@ arguments(Context* ctx, int argc, char* argv[]) {
                 case 'S':
                     lastsubopt = 1;
                     break;
-                case 't':
-                    ctx->alg = 't';
-                    store_localhom = 0;
-                    break;
-                case 'L':
-                    ctx->alg = 'L';
-                    break;
-                case 'Y':
-                    ctx->alg = 'Y';
-                    break;
+
                 case 'Z':
                     ctx->usenaivescoreinsteadofalignmentscore = 1;
-                    break;
-                case 's':
-                    ctx->alg = 's';
-                    break;
-                case 'G':
-                    ctx->alg = 'G';
-                    break;
-                case 'B':
-                    ctx->alg = 'B';
-                    break;
-                case 'T':
-                    ctx->alg = 'T';
-                    break;
-                case 'H':
-                    ctx->alg = 'H';
-                    break;
-                case 'M':
-                    ctx->alg = 'M';
-                    break;
-                case 'R':
-                    ctx->alg = 'R';
-                    break;
-                case 'r':
-                    ctx->alg = 'r';  // nadd>0 no toki nomi. moto no hairetsu to atarashii hairetsuno alignmnt -> R, last
-                    break;
-                case 'N':
-                    ctx->alg = 'N';
-                    break;
-                case 'A':
-                    ctx->alg = 'A';
-                    break;
-                case 'V':
-                    ctx->alg = 'V';
                     break;
 
                 case 'v':
@@ -1602,7 +1553,7 @@ pairalign(aln_Opts opts, Context* ctx, const char* const* name, char** seq, char
     }
 
     if (store_localhom && localhomtable == NULL) {
-        if (ctx->alg == 'Y' || ctx->alg == 'r') {
+        if (opts.alg == 'Y' || opts.alg == 'r') {
             ilim = ctx->njob - ctx->nadd;
             jst = ctx->nadd;
         } else {
@@ -1624,14 +1575,14 @@ pairalign(aln_Opts opts, Context* ctx, const char* const* name, char** seq, char
                 localhomtable[i][j].last = localhomtable[i] + j;
                 localhomtable[i][j].korh = 'h';
             }
-            if (!ctx->specifictarget && ctx->alg != 'Y' && ctx->alg != 'r')
+            if (!ctx->specifictarget && opts.alg != 'Y' && opts.alg != 'r')
                 jst--;
         }
     }
 
     if (store_dist) {
         if (ngui == 0) {
-            if (ctx->alg == 'Y' || ctx->alg == 'r')
+            if (opts.alg == 'Y' || opts.alg == 'r')
                 distancemtx = AllocateDoubleMtx(ctx->njob - ctx->nadd, ctx->nadd);  // 2020/Oct/23
             else
                 distancemtx = AllocateDoubleHalfMtx(ctx->njob);
@@ -1639,7 +1590,7 @@ pairalign(aln_Opts opts, Context* ctx, const char* const* name, char** seq, char
     } else
         distancemtx = NULL;
 
-    if (ctx->alg == 'N') {
+    if (opts.alg == 'N') {
         dumseq1 = AllocateCharMtx(1, alloclen + 10);
         dumseq2 = AllocateCharMtx(1, alloclen + 10);
     }
@@ -1651,43 +1602,43 @@ pairalign(aln_Opts opts, Context* ctx, const char* const* name, char** seq, char
     effarr2 = AllocateDoubleVec(ctx->njob);
 
     reporterr("All-to-all alignment.\n");
-    if (ctx->alg == 'R') {
+    if (opts.alg == 'R') {
         fprintf(stderr, "Calling last (http://last.cbrc.jp/)\n");
         if (lastonce)
-            calllast_once(ctx, ctx->njob, seq, ctx->njob, seq, lastresx);
+            calllast_once(opts, ctx, ctx->njob, seq, ctx->njob, seq, lastresx);
         else
-            calllast_fast(ctx, ctx->njob, seq, ctx->njob, seq, lastresx);
+            calllast_fast(opts, ctx, ctx->njob, seq, ctx->njob, seq, lastresx);
         fprintf(stderr, "done.\n");
     }
 
-    if (ctx->alg == 'r') {
+    if (opts.alg == 'r') {
         fprintf(stderr, "Calling last (http://last.cbrc.jp/)\n");
         fprintf(stderr, "nadd=%d\n", ctx->nadd);
         if (lastonce)
-            calllast_once(ctx, ctx->njob - ctx->nadd, seq, ctx->nadd, seq + ctx->njob - ctx->nadd, lastresx);
+            calllast_once(opts, ctx, ctx->njob - ctx->nadd, seq, ctx->nadd, seq + ctx->njob - ctx->nadd, lastresx);
         else
-            calllast_fast(ctx, ctx->njob - ctx->nadd, seq, ctx->nadd, seq + ctx->njob - ctx->nadd, lastresx);
+            calllast_fast(opts, ctx, ctx->njob - ctx->nadd, seq, ctx->nadd, seq + ctx->njob - ctx->nadd, lastresx);
 
         fprintf(stderr, "nadd=%d\n", ctx->nadd);
         fprintf(stderr, "done.\n");
     }
 
-    if (ctx->alg == 'H') {
+    if (opts.alg == 'H') {
         fprintf(stderr, "Calling FOLDALIGN with option '%s'\n", foldalignopt);
         callfoldalign(ctx->njob, seq);
         fprintf(stderr, "done.\n");
     }
-    if (ctx->alg == 'B') {
+    if (opts.alg == 'B') {
         fprintf(stderr, "Running LARA (Bauer et al. http://www.planet-lisa.net/)\n");
         calllara(ctx->njob, seq, "");
         fprintf(stderr, "done.\n");
     }
-    if (ctx->alg == 'T') {
+    if (opts.alg == 'T') {
         fprintf(stderr, "Running SLARA (Bauer et al. http://www.planet-lisa.net/)\n");
         calllara(ctx->njob, seq, "-s");
         fprintf(stderr, "done.\n");
     }
-    if (ctx->alg == 's') {
+    if (opts.alg == 's') {
         fprintf(stderr, "Preparing bpp\n");
         //		bpp = AllocateCharCub( ctx->njob, nlenmax, 0 );
         bpp = calloc(ctx->njob, sizeof(char**));
@@ -1695,7 +1646,7 @@ pairalign(aln_Opts opts, Context* ctx, const char* const* name, char** seq, char
         fprintf(stderr, "done.\n");
         fprintf(stderr, "Running MXSCARNA (Tabei et al. http://www.ncrna.org/software/mxscarna)\n");
     }
-    if (ctx->alg == 'G') {
+    if (opts.alg == 'G') {
         fprintf(stderr, "Preparing bpp\n");
         //		bpp = AllocateCharCub( ctx->njob, nlenmax, 0 );
         bpp = calloc(ctx->njob, sizeof(char**));
@@ -1716,7 +1667,7 @@ pairalign(aln_Opts opts, Context* ctx, const char* const* name, char** seq, char
         if (opts.specificityconsideration > 0.0)
             dynamicmtx = AllocateDoubleMtx(ctx->nalphabets, ctx->nalphabets);
 
-        if (ctx->alg == 'Y' || ctx->alg == 'r')
+        if (opts.alg == 'Y' || opts.alg == 'r')
             ilim = ctx->njob - ctx->nadd;
         else
             ilim = ctx->njob - 1;
@@ -1726,14 +1677,14 @@ pairalign(aln_Opts opts, Context* ctx, const char* const* name, char** seq, char
             fprintf(stderr, "% 5d / %d\r", i, ctx->njob - ctx->nadd);
             fflush(stderr);
 
-            if (ctx->alg == 'Y' || ctx->alg == 'r')
+            if (opts.alg == 'Y' || opts.alg == 'r')
                 jst = ctx->njob - ctx->nadd;
             else
                 jst = i + 1;
             for (j = jst; j < ctx->njob; j++) {
                 if (strlen(seq[i]) == 0 || strlen(seq[j]) == 0) {
                     if (store_dist) {
-                        if (ctx->alg == 'Y' || ctx->alg == 'r')
+                        if (opts.alg == 'Y' || opts.alg == 'r')
                             distancemtx[i][j - (ctx->njob - ctx->nadd)] = 3.0;
                         else
                             distancemtx[i][j - i] = 3.0;
@@ -1776,7 +1727,7 @@ pairalign(aln_Opts opts, Context* ctx, const char* const* name, char** seq, char
                     //					fprintf( stderr, "pscore (fft) = %f\n", pscore );
                     off1 = off2 = 0;
                 } else {
-                    switch (ctx->alg) {
+                    switch (opts.alg) {
                         case ('t'):
                             pscore = G__align11_noalign(ctx, ctx->n_dis_consweight_multi, ctx->penalty, ctx->penalty_ex, distseq1, distseq2);
                             off1 = off2 = 0;
@@ -1927,25 +1878,25 @@ pairalign(aln_Opts opts, Context* ctx, const char* const* name, char** seq, char
                     }
                 }
 
-                if (ctx->alg == 't' || (mseq1[0][0] != 0 && mseq2[0][0] != 0))  // 't' no jouken ha iranai to omou. if( ( mseq1[0][0] != 0 && mseq2[0][0] != 0  ) )
+                if (opts.alg == 't' || (mseq1[0][0] != 0 && mseq2[0][0] != 0))  // 't' no jouken ha iranai to omou. if( ( mseq1[0][0] != 0 && mseq2[0][0] != 0  ) )
                 {
 #if SCOREOUT
                     fprintf(stderr, "score = %10.2f (%d,%d)\n", pscore, i, j);
 #endif
-                    if ((ctx->nadd == 0 || (ctx->alg != 'Y' && ctx->alg != 'r') || (i < ctx->njob - ctx->nadd && ctx->njob - ctx->nadd <= j))) {
+                    if ((ctx->nadd == 0 || (opts.alg != 'Y' && opts.alg != 'r') || (i < ctx->njob - ctx->nadd && ctx->njob - ctx->nadd <= j))) {
                         if (!store_localhom)
                             ;
                         else if (ctx->specifictarget && targetmap[i] == -1 && targetmap[j] == -1)
                             ;
-                        else if (ctx->alg == 'R')
+                        else if (opts.alg == 'R')
                             putlocalhom_last(ctx, mseq1[0], mseq2[0], localhomtable[i] + j, lastresx[i] + j);
-                        else if (ctx->alg == 'r')
+                        else if (opts.alg == 'r')
                             putlocalhom_last(ctx, mseq1[0], mseq2[0], localhomtable[i] + j - (ctx->njob - ctx->nadd), lastresx[i] + j - (ctx->njob - ctx->nadd));
-                        else if (ctx->alg == 'H')
+                        else if (opts.alg == 'H')
                             putlocalhom_ext(ctx, mseq1[0], mseq2[0], localhomtable[i] + j, off1, off2, 'h');
-                        else if (ctx->alg == 'Y')
+                        else if (opts.alg == 'Y')
                             putlocalhom2(ctx, mseq1[0], mseq2[0], localhomtable[i] + j - (ctx->njob - ctx->nadd), off1, off2, 'h');
-                        else if (!ctx->specifictarget && ctx->alg != 'S' && ctx->alg != 'V')
+                        else if (!ctx->specifictarget && opts.alg != 'S' && opts.alg != 'V')
                             putlocalhom2(ctx, mseq1[0], mseq2[0], localhomtable[i] + j - i, off1, off2, 'h');
                         else {
                             if (targetmap[i] != -1 && targetmap[j] != -1) {
@@ -1968,7 +1919,7 @@ pairalign(aln_Opts opts, Context* ctx, const char* const* name, char** seq, char
                 }
 
                 if (stdout_align) {
-                    if (ctx->alg != 't') {
+                    if (opts.alg != 't') {
                         fprintf(stdout, "sequence %d - sequence %d, pairwise distance = %10.5f\n", i + 1, j + 1, pscore);
                         fprintf(stdout, ">%s\n", name[i]);
                         write1seq(stdout, mseq1[0]);
@@ -1980,7 +1931,7 @@ pairalign(aln_Opts opts, Context* ctx, const char* const* name, char** seq, char
                 if (stdout_dist)
                     fprintf(stdout, "%d %d d=%.3f\n", i + 1, j + 1, pscore);
                 if (store_dist) {
-                    if (ctx->alg == 'Y' || ctx->alg == 'r')
+                    if (opts.alg == 'Y' || opts.alg == 'r')
                         distancemtx[i][j - (ctx->njob - ctx->nadd)] = pscore;
                     else
                         distancemtx[i][j - i] = pscore;
@@ -1995,7 +1946,7 @@ pairalign(aln_Opts opts, Context* ctx, const char* const* name, char** seq, char
         hat2p = fopen(hat2file, "w");
         if (!hat2p)
             ErrorExit("Cannot open hat2.");
-        if (ctx->alg == 'Y' || ctx->alg == 'r')
+        if (opts.alg == 'Y' || opts.alg == 'r')
             WriteHat2_part_pointer(hat2p, ctx->njob, ctx->nadd, name, distancemtx);
         else
             WriteFloatHat2_pointer_halfmtx(ctx, hat2p, ctx->njob, name, distancemtx);  // jissiha double
@@ -2007,14 +1958,14 @@ pairalign(aln_Opts opts, Context* ctx, const char* const* name, char** seq, char
         ErrorExit("Cannot open hat3.");
     if (store_localhom && ngui == 0) {
         fprintf(stderr, "\n\n##### writing hat3\n");
-        if (ctx->alg == 'Y' || ctx->alg == 'r')
+        if (opts.alg == 'Y' || opts.alg == 'r')
             ilim = ctx->njob - ctx->nadd;
         else if (ctx->specifictarget)
             ilim = ntarget;
         else
             ilim = ctx->njob - 1;
         for (i = 0; i < ilim; i++) {
-            if (ctx->alg == 'Y' || ctx->alg == 'r') {
+            if (opts.alg == 'Y' || opts.alg == 'r') {
                 jst = ctx->njob - ctx->nadd;
                 jj = 0;
             } else if (ctx->specifictarget) {
@@ -2044,7 +1995,7 @@ pairalign(aln_Opts opts, Context* ctx, const char* const* name, char** seq, char
 #if DEBUG
         fprintf(stderr, "calling FreeLocalHomTable\n");
 #endif
-        if (ctx->alg == 'Y' || ctx->alg == 'r')
+        if (opts.alg == 'Y' || opts.alg == 'r')
             FreeLocalHomTable_part(localhomtable, (ctx->njob - ctx->nadd), ctx->nadd);
         else if (ctx->specifictarget)
             FreeLocalHomTable_part(localhomtable, ntarget, ctx->njob);
@@ -2057,7 +2008,7 @@ pairalign(aln_Opts opts, Context* ctx, const char* const* name, char** seq, char
     }
     fclose(hat3p);
 
-    if (ctx->alg == 's') {
+    if (opts.alg == 's') {
         char** ptpt;
         for (i = 0; i < ctx->njob; i++) {
             ptpt = bpp[i];
@@ -2075,14 +2026,14 @@ pairalign(aln_Opts opts, Context* ctx, const char* const* name, char** seq, char
     free(selfscore);
     free(effarr1);
     free(effarr2);
-    if (ctx->alg == 'N') {
+    if (opts.alg == 'N') {
         FreeCharMtx(dumseq1);
         FreeCharMtx(dumseq2);
     }
     free(distseq1);
     free(distseq2);
     if (store_dist && ngui == 0) {
-        if (ctx->alg == 'Y' || ctx->alg == 'r')
+        if (opts.alg == 'Y' || opts.alg == 'r')
             FreeDoubleMtx(distancemtx);  // 2020/Oct/23
         else
             FreeDoubleHalfMtx(distancemtx, ctx->njob);
@@ -2108,7 +2059,7 @@ pairlocalalign(aln_Opts opts, Context* ctx, int ngui, const char* const* namegui
 
     arguments(ctx, argc, argv);
 
-    if ((ctx->alg == 'r' || ctx->alg == 'R') && ctx->dorp == 'p') {
+    if ((opts.alg == 'r' || opts.alg == 'R') && ctx->dorp == 'p') {
         fprintf(stderr, "Not yet supported\n");
         exit(1);
     }
@@ -2126,7 +2077,7 @@ pairlocalalign(aln_Opts opts, Context* ctx, int ngui, const char* const* namegui
     nlen = AllocateIntVec(ctx->njob);
     thereisxineachseq = AllocateIntVec(ctx->njob);
 
-    if (ctx->alg == 'R') {
+    if (opts.alg == 'R') {
         lastresx = calloc(ctx->njob + 1, sizeof(Lastresx*));
         for (i = 0; i < ctx->njob; i++) {
             lastresx[i] = calloc(ctx->njob + 1, sizeof(Lastresx));  // muda
@@ -2138,7 +2089,7 @@ pairlocalalign(aln_Opts opts, Context* ctx, int ngui, const char* const* namegui
             lastresx[i][ctx->njob].naln = -1;
         }
         lastresx[ctx->njob] = NULL;
-    } else if (ctx->alg == 'r') {
+    } else if (opts.alg == 'r') {
         //		fprintf( stderr, "Allocating lastresx (%d), ctx->njob=%d, nadd=%d\n", ctx->njob-nadd+1, ctx->njob, nadd );
         lastresx = calloc(ctx->njob - ctx->nadd + 1, sizeof(Lastresx*));
         for (i = 0; i < ctx->njob - ctx->nadd; i++) {
