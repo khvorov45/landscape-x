@@ -574,8 +574,6 @@ extern void               eq2dashmatometehayaku(char** s, int n);
 extern void               findnewgaps(Context* ctx, int rep, char** seq, int* gaplen);
 extern void               findcommongaps(int, char**, int*);
 extern void               adjustgapmap(int, int*, char*);
-extern void               insertnewgaps_bothorders(aln_Opts opts, Context* ctx, int njob, int* alreadyaligned, char** seq, int* ex1, int* ex2, int* gaplen, int* gapmap, int gapmaplen, int alloclen, char alg, char gapchar);
-extern void               insertnewgaps(aln_Opts opts, Context* ctx, int njob, int* alreadyaligned, char** seq, int* ex1, int* ex2, int* gaplen, int* gapmap, int alloclen, char alg, char gapchar);
 extern void               restorecommongaps(int n, int n0, char** seq, int* top0, int* top1, int* gaplen, int alloclen, char gapchar);
 extern void               restorecommongapssmoothly(int n, int n0, char** seq, int* top0, int* top1, int* gaplen, int alloclen, char gapchar);
 extern int                samemember(int* mem, int* cand);

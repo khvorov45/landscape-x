@@ -70,7 +70,7 @@ typedef struct _thread_arg {
 #endif
 
 typedef struct lastcallthread_arg_t {
-    aln_Opts opts;
+    aln_Opts   opts;
     Context*   ctx;
     int        nq, nd;
     char**     dseq;
@@ -638,11 +638,11 @@ readlastresx(aln_Opts opts, Context* ctx, FILE* fp, Lastresx** lastresx) {
 
 static void*
 lastcallthread(lastcallthread_arg_t* targ) {
-    Context* ctx = targ->ctx;
-    aln_Opts opts = targ->opts;
-    int      k, i;
-    int      nq = targ->nq;
-    int      nd = targ->nd;
+    Context*   ctx = targ->ctx;
+    aln_Opts   opts = targ->opts;
+    int        k, i;
+    int        nq = targ->nq;
+    int        nd = targ->nd;
     Lastresx** lastresx = targ->lastresx;
     char**     dseq = targ->dseq;
     char**     qseq = targ->qseq;
@@ -1323,11 +1323,11 @@ pairalign(aln_Opts opts, Context* ctx, const char* const* name, char** seq, char
     double pscore = 0.0;  // by D.Mathog
     FILE * hat2p, *hat3p;
     //	double **distancemtx;
-    double* selfscore;
-    double* effarr1;
-    double* effarr2;
-    const char*   pt;
-    char*   hat2file = "hat2";
+    double*     selfscore;
+    double*     effarr1;
+    double*     effarr2;
+    const char* pt;
+    char*       hat2file = "hat2";
     //	LocalHom **localhomtable = NULL,
     LocalHom* tmpptr;
     int       intdum;
@@ -1338,7 +1338,7 @@ pairalign(aln_Opts opts, Context* ctx, const char* const* name, char** seq, char
     double    scoreoffset;
     int       ntarget;
     int *     targetmap, *targetmapr;
-    
+
     {
         ntarget = ctx->njob;
         targetmap = calloc(ctx->njob, sizeof(int));
@@ -1491,9 +1491,6 @@ pairalign(aln_Opts opts, Context* ctx, const char* const* name, char** seq, char
 
                 strcpy(aseq[0], seq[i]);
                 strcpy(aseq[1], seq[j]);
-                //				clus1 = conjuctionfortbfast( pair, i, aseq, mseq1, effarr1, effarr, indication1 );
-                //				clus2 = conjuctionfortbfast( pair, j, aseq, mseq2, effarr2, effarr, indication2 );
-                //				fprintf( stderr, "Skipping conjuction..\n" );
 
                 effarr1[0] = 1.0;
                 effarr2[0] = 1.0;
@@ -1501,25 +1498,11 @@ pairalign(aln_Opts opts, Context* ctx, const char* const* name, char** seq, char
                 mseq2[0] = aseq[1];
 
                 thereisx = thereisxineachseq[i] + thereisxineachseq[j];
-                //				strcpy( distseq1[0], dseq[i] ); // nen no tame
-                //				strcpy( distseq2[0], dseq[j] ); // nen no tame
                 distseq1[0] = dseq[i];
                 distseq2[0] = dseq[j];
 
-                //			fprintf( stderr, "mseq1 = %s\n", mseq1[0] );
-                //			fprintf( stderr, "mseq2 = %s\n", mseq2[0] );
-
-#if 0
-				fprintf( stderr, "group1 = %.66s", indication1 );
-				fprintf( stderr, "\n" );
-				fprintf( stderr, "group2 = %.66s", indication2 );
-				fprintf( stderr, "\n" );
-#endif
-                //			for( l=0; l<clus1; l++ ) fprintf( stderr, "## STEP-eff for mseq1-%d %f\n", l, effarr1[l] );
-
                 if (opts.use_fft) {
                     pscore = Falign(opts, ctx, NULL, NULL, ctx->n_dis_consweight_multi, mseq1, mseq2, effarr1, effarr2, NULL, NULL, 1, 1, alloclen, &intdum);
-                    //					fprintf( stderr, "pscore (fft) = %f\n", pscore );
                     off1 = off2 = 0;
                 } else {
                     switch (opts.alg) {
@@ -1830,12 +1813,12 @@ int
 pairlocalalign(aln_Opts opts, Context* ctx, int ngui, const char* const* namegui, char** seqgui, double** distancemtx, LocalHom** localhomtable, double** expdist) {
     aln_assert(ngui >= 2);
 
-    int *      nlen, *thereisxineachseq;
+    int*       thereisxineachseq;
     char **    mseq1, **mseq2;
     char**     aseq;
     char**     bseq;
     char**     dseq;
-    int        i, j, k;
+    int        i, j;
     int        alloclen;
     Lastresx** lastresx;
 
@@ -1886,7 +1869,7 @@ pairlocalalign(aln_Opts opts, Context* ctx, int ngui, const char* const* namegui
 
     alloclen = ctx->maxInputSeqLen * 2;
     aln_assert(ngui);
-    char** seq = seqgui;
+    char**             seq = seqgui;
     const char* const* name = namegui;
 
     aseq = AllocateCharMtx(2, alloclen + 10);
@@ -1894,7 +1877,6 @@ pairlocalalign(aln_Opts opts, Context* ctx, int ngui, const char* const* namegui
     dseq = AllocateCharMtx(ctx->njob, alloclen + 10);
     mseq1 = AllocateCharMtx(ctx->njob, 0);
     mseq2 = AllocateCharMtx(ctx->njob, 0);
-    nlen = AllocateIntVec(ctx->njob);
     thereisxineachseq = AllocateIntVec(ctx->njob);
 
     if (opts.alg == 'R') {
@@ -1931,17 +1913,14 @@ pairlocalalign(aln_Opts opts, Context* ctx, int ngui, const char* const* namegui
     initSignalSM(ctx);
     initFiles(ctx);
 
-
     // TODO(sen) Sequence verification?
 
-    if (ctx->dorp == 'p' && opts.scoremtx == 1 && opts.nblosum > 0)  // protein, not text.  hitsuyou?
-    {
+    if (ctx->dorp == 'p' && opts.scoremtx == 1 && opts.nblosum > 0) {
         for (i = 0; i < ctx->njob; i++) {
             copyWithNoGaps(bseq[i], seq[i]);
             thereisxineachseq[i] = removex(dseq[i], bseq[i]);
         }
-    } else  // text, dna
-    {
+    } else {
         for (i = 0; i < ctx->njob; i++) {
             copyWithNoGaps(bseq[i], seq[i]);
             strcpy(dseq[i], bseq[i]);
@@ -1952,46 +1931,8 @@ pairlocalalign(aln_Opts opts, Context* ctx, int ngui, const char* const* namegui
     pairalign(opts, ctx, name, bseq, aseq, dseq, thereisxineachseq, mseq1, mseq2, alloclen, lastresx, distancemtx, localhomtable, expdist, ngui);
 
     fprintf(ctx->trap_g, "done.\n");
-#if DEBUG
-    fprintf(stderr, "closing trap_g\n");
-#endif
     fclose(ctx->trap_g);
     fclose(ctx->prep_g);
 
-#if IODEBUG
-    fprintf(stderr, "OSHIMAI\n");
-#endif
-
-#if 1
-    if (lastresx) {
-        for (i = 0; lastresx[i]; i++) {
-            for (j = 0; lastresx[i][j].naln != -1; j++) {
-                for (k = 0; k < lastresx[i][j].naln; k++) {
-                    free(lastresx[i][j].aln[k].reg1);
-                    free(lastresx[i][j].aln[k].reg2);
-                }
-                free(lastresx[i][j].aln);
-            }
-            free(lastresx[i]);
-        }
-        free(lastresx);
-    }
-#endif
-    FreeCharMtx(aseq);
-    FreeCharMtx(bseq);
-    FreeCharMtx(dseq);
-    free(mseq1);
-    free(mseq2);
-    free(nlen);
-    free(thereisxineachseq);
-    freeconstants(ctx);
-
-    Falign(opts, ctx, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, NULL);
-    G__align11(ctx, NULL, NULL, NULL, 0, 0, 0);  // 20130603
-    G__align11_noalign(ctx, NULL, 0, 0, NULL, NULL);
-    L__align11(ctx, NULL, 0.0, NULL, NULL, 0, NULL, NULL);
-    L__align11_noalign(ctx, NULL, NULL, NULL);
-    genL__align11(ctx, NULL, NULL, NULL, 0, NULL, NULL);
-
-    return (0);
+    return 0;
 }

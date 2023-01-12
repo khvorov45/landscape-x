@@ -155,8 +155,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     }
 
     {
-        int       len1, len2;
-        int       clus1, clus2;
         int*      seedinlh1 = NULL;
         int*      seedinlh2 = NULL;
         int       m1, m2;
@@ -198,6 +196,9 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
 
         char** mseq1 = AllocateCharMtx(ctx->njob, 0);
         char** mseq2 = AllocateCharMtx(ctx->njob, 0);
+
+        int clus1 = 0;
+        int clus2 = 0;
 
         for (int l = 0; l < ctx->njob - 1; l++) {
             m1 = topol[l][0][0];
@@ -243,8 +244,8 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
 
             makedynamicmtx(opts, ctx, dynamicmtx, ctx->n_dis_consweight_multi, dep[l].distfromtip);
 
-            len1 = strlen(bseq[m1]);
-            len2 = strlen(bseq[m2]);
+            int len1 = strlen(bseq[m1]);
+            int len2 = strlen(bseq[m2]);
 
             // TODO(sen) Out of memory error?
             aln_assert(alloclen >= len1 + len2);
