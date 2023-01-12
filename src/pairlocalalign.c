@@ -1294,190 +1294,6 @@ preparebpp(int nseq, char*** bpp) {
     fclose(fp);
 }
 
-static void
-arguments(Context* ctx, int argc, char* argv[]) {
-    int c;
-
-    laste = 5000;
-    lastm = 3;
-    ctx->nadd = 0;
-    lastsubopt = 0;
-    lastonce = 0;
-    foldalignopt[0] = 0;
-    laraparams = NULL;
-    ctx->fftkeika = 0;
-    ctx->pslocal = -1000.0;
-    ctx->fmodel = 0;
-    ctx->fftscore = 1;
-    ctx->fftRepeatStop = 0;
-    ctx->fftNoAnchStop = 0;
-    ctx->weight = 3;
-    ctx->tbutree = 1;
-    ctx->disp = 0;
-    ctx->outgap = 1;
-    ctx->mix = 0;
-    ctx->tbitr = 0;
-    ctx->tbweight = 0;
-    ctx->tbrweight = 3;
-    ctx->checkC = 0;
-    ctx->kobetsubunkatsu = 0;
-    ctx->divpairscore = 0;
-    stdout_align = 0;
-    stdout_dist = 0;
-    store_dist = 1;
-    store_localhom = 1;
-    ctx->ppenalty_OP = NOTSPECIFIED;
-    ctx->ppenalty_EX = NOTSPECIFIED;
-    ctx->kimuraR = NOTSPECIFIED;
-    ctx->pamN = NOTSPECIFIED;
-    ctx->geta2 = GETA2;
-    ctx->fftWinSize = NOTSPECIFIED;
-    ctx->fftThreshold = NOTSPECIFIED;
-    ctx->RNAppenalty = NOTSPECIFIED;
-    ctx->RNApthr = NOTSPECIFIED;
-    ctx->usenaivescoreinsteadofalignmentscore = 0;
-    ctx->specifictarget = 0;
-    ctx->nwildcard = 0;
-
-    while (--argc > 0 && (*++argv)[0] == '-') {
-        while ((c = *++argv[0])) {
-            switch (c) {
-                case 'i':
-                    ++argv;
-                    --argc;
-                    goto nextoption;
-
-                case 'O':
-                    ctx->ppenalty_OP = (int)(atof(*++argv) * 1000 - 0.5);
-                    --argc;
-                    goto nextoption;
-                case 'E':
-                    ctx->ppenalty_EX = (int)(atof(*++argv) * 1000 - 0.5);
-                    --argc;
-                    goto nextoption;
-
-                case 'k':
-                    ctx->kimuraR = myatoi(*++argv);
-                    --argc;
-                    goto nextoption;
-
-                case 'l':
-                    if (atof(*++argv) < 0.00001)
-                        store_localhom = 0;
-                    --argc;
-                    goto nextoption;
-                case 'd':
-                    whereispairalign = *++argv;
-                    fprintf(stderr, "whereispairalign = %s\n", whereispairalign);
-                    --argc;
-                    goto nextoption;
-                case 'p':
-                    laraparams = *++argv;
-                    fprintf(stderr, "laraparams = %s\n", laraparams);
-                    --argc;
-                    goto nextoption;
-            
-                case 'I':
-                    ctx->nadd = myatoi(*++argv);
-                    --argc;
-                    goto nextoption;
-                case 'w':
-                    lastm = myatoi(*++argv);
-                    fprintf(stderr, "lastm = %d\n", lastm);
-                    --argc;
-                    goto nextoption;
-                case 'e':
-                    laste = myatoi(*++argv);
-                    fprintf(stderr, "laste = %d\n", laste);
-                    --argc;
-                    goto nextoption;
-
-                case 'K':  // Hontou ha iranai. disttbfast.c, tbfast.c to awaserutame.
-                    break;
-                case 'c':
-                    stdout_dist = 1;
-                    break;
-                case 'n':
-                    stdout_align = 1;
-                    break;
-                case 'x':
-                    store_localhom = 0;
-                    store_dist = 0;
-                    break;
-
-                case 'a':
-                    ctx->fmodel = 1;
-                    break;
-
-                case 'D':
-                    ctx->dorp = 'd';
-                    break;
-
-                case 'P':
-                    ctx->dorp = 'p';
-                    break;
-
-                case 'U':
-                    lastonce = 1;
-                    break;
-                case 'S':
-                    lastsubopt = 1;
-                    break;
-
-                case 'Z':
-                    ctx->usenaivescoreinsteadofalignmentscore = 1;
-                    break;
-
-                case 'v':
-                    ctx->tbrweight = 3;
-                    break;
-                case 'y':
-                    ctx->divpairscore = 1;
-                    break;
-                case '=':
-                    ctx->specifictarget = 1;
-                    break;
-                case ':':
-                    ctx->nwildcard = 1;
-                    break;
-
-                case 'J':
-                    ctx->tbutree = 0;
-                    break;
-
-                case 'o':
-                    strcat(foldalignopt, " ");
-                    strcat(foldalignopt, *++argv);
-                    fprintf(stderr, "foldalignopt = %s\n", foldalignopt);
-                    --argc;
-                    goto nextoption;
-
-                default:
-                    fprintf(stderr, "illegal option %c\n", c);
-                    argc = 0;
-                    break;
-            }
-        }
-
-    nextoption:
-        ;
-    }
-
-    if (argc == 1) {
-        argc--;
-    }
-
-    if (argc != 0) {
-        fprintf(stderr, "pairlocalalign options: Check source file !\n");
-        exit(1);
-    }
-
-    if (ctx->tbitr == 1 && ctx->outgap == 0) {
-        fprintf(stderr, "conflicting options : o, m or u\n");
-        exit(1);
-    }
-}
-
 int
 countamino(char* s, int end) {
     int val = 0;
@@ -2044,7 +1860,7 @@ pairalign(aln_Opts opts, Context* ctx, const char* const* name, char** seq, char
 }
 
 int
-pairlocalalign(aln_Opts opts, Context* ctx, int ngui, const char* const* namegui, char** seqgui, double** distancemtx, LocalHom** localhomtable, int argc, char** argv, double** expdist) {
+pairlocalalign(aln_Opts opts, Context* ctx, int ngui, const char* const* namegui, char** seqgui, double** distancemtx, LocalHom** localhomtable, double** expdist) {
     aln_assert(ngui >= 2);
 
     int *      nlen, *thereisxineachseq;
@@ -2057,7 +1873,46 @@ pairlocalalign(aln_Opts opts, Context* ctx, int ngui, const char* const* namegui
     int        alloclen;
     Lastresx** lastresx;
 
-    arguments(ctx, argc, argv);
+    laste = 5000;
+    lastm = 3;
+    ctx->nadd = 0;
+    lastsubopt = 0;
+    lastonce = 0;
+    foldalignopt[0] = 0;
+    laraparams = NULL;
+    ctx->fftkeika = 0;
+    ctx->pslocal = -1000.0;
+    ctx->fmodel = 0;
+    ctx->fftscore = 1;
+    ctx->fftRepeatStop = 0;
+    ctx->fftNoAnchStop = 0;
+    ctx->weight = 3;
+    ctx->tbutree = 1;
+    ctx->disp = 0;
+    ctx->outgap = 1;
+    ctx->mix = 0;
+    ctx->tbitr = 0;
+    ctx->tbweight = 0;
+    ctx->tbrweight = 3;
+    ctx->checkC = 0;
+    ctx->kobetsubunkatsu = 0;
+    ctx->divpairscore = 0;
+    stdout_align = 0;
+    stdout_dist = 0;
+    store_dist = 1;
+    store_localhom = 1;
+    ctx->ppenalty_OP = NOTSPECIFIED;
+    ctx->ppenalty_EX = NOTSPECIFIED;
+    ctx->kimuraR = NOTSPECIFIED;
+    ctx->pamN = NOTSPECIFIED;
+    ctx->geta2 = GETA2;
+    ctx->fftWinSize = NOTSPECIFIED;
+    ctx->fftThreshold = NOTSPECIFIED;
+    ctx->RNAppenalty = NOTSPECIFIED;
+    ctx->RNApthr = NOTSPECIFIED;
+    ctx->usenaivescoreinsteadofalignmentscore = 0;
+    ctx->specifictarget = 0;
+    ctx->nwildcard = 0;
 
     if ((opts.alg == 'r' || opts.alg == 'R') && ctx->dorp == 'p') {
         fprintf(stderr, "Not yet supported\n");

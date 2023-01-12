@@ -138,7 +138,7 @@ alignWithMafft(prb_Arena* arena, prb_Str mafftExe, prb_Str inputPath, prb_Str ma
     return mafftAlignedSeqs;
 }
 
-int tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes, aln_Opts opts, int argc, char* argv[]);
+int tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes, aln_Opts opts);
 
 int
 main() {
@@ -197,10 +197,9 @@ main() {
     prb_assert(prb_clearDir(arena, tempDir));
     prb_Str cwd = prb_getWorkingDir(arena);
     prb_assert(prb_setWorkingDir(arena, tempDir));
-    const char** tbfastArgs = prb_getArgArrayFromStr(arena, prb_STR("tbfast _  _ "));
-    int32_t      outBytes = 50 * prb_MEGABYTE;
-    void*        outBuf = prb_arenaAllocAndZero(arena, outBytes, 1);
-    tbfast_main((aln_Str*)genSeq.seqs, genSeq.seqCount, outBuf, outBytes, aln_defaultOpts(), arrlen(tbfastArgs), (char**)tbfastArgs);
+    int32_t outBytes = 50 * prb_MEGABYTE;
+    void*   outBuf = prb_arenaAllocAndZero(arena, outBytes, 1);
+    tbfast_main((aln_Str*)genSeq.seqs, genSeq.seqCount, outBuf, outBytes, aln_defaultOpts());
     prb_assert(prb_setWorkingDir(arena, cwd));
 
     prb_Str* tbfastDirectAlignedSeqs = getSeqsFromFile(arena, prb_pathJoin(arena, tempDir, prb_STR("pre")));

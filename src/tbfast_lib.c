@@ -39,253 +39,6 @@ typedef struct TbfastOpts {
     int32_t callpairlocalalign;
 } TbfastOpts;
 
-static void
-arguments(Context* ctx, TbfastOpts* tempOpts, int argc, char* argv[], int* pac, char** pav, int* tac, char** tav)  // 2 kai yobaremasu.
-{
-    int c;
-    int i;
-
-    reporterr("tbfast_lib args: ");
-    for (int32_t argIndex = 0; argIndex < argc; argIndex++) {
-        char* arg = argv[argIndex];
-        reporterr("%s ", arg);
-    }
-    reporterr("\n");
-
-    if (pac) {
-        pav[0] = "tbfast-pair";
-        *pac = 1;
-        tav[0] = "tbfast";
-        *tac = 1;
-
-        for (i = 0; i < argc; i++) {
-            if (argv[i][0] == '_') {
-                tempOpts->callpairlocalalign = 1;
-
-                for (i++; i < argc; i++) {
-                    if (argv[i][0] == '_') {
-                        argc -= 2;
-                        argv += 2;
-
-                        goto pavend;
-                    }
-                    pav[*pac] = argv[i];
-                    *pac += 1;
-                }
-            }
-        }
-
-    pavend:
-
-        reporterr("tbfast_lib pav: ");
-        for (int32_t argIndex = 0; argIndex < *pac; argIndex++) {
-            char* arg = pav[argIndex];
-            reporterr("%s ", arg);
-        }
-        reporterr("\n");
-
-        for (i -= 1; i < argc; i++) {
-            tav[*tac] = argv[i];
-            *tac += 1;
-        }
-
-        reporterr("tbfast_lib tav: ");
-        for (int32_t argIndex = 0; argIndex < *tac; argIndex++) {
-            char* arg = tav[argIndex];
-            reporterr("%s ", arg);
-        }
-        reporterr("\n");
-
-        argc -= *pac - 1;
-        argv += *pac - 1;
-    }
-
-    reporterr("tbfast_lib args left: ");
-    for (int32_t argIndex = 0; argIndex < argc; argIndex++) {
-        char* arg = argv[argIndex];
-        reporterr("%s ", arg);
-    }
-    reporterr("\n");
-
-    while (--argc > 0 && (*++argv)[0] == '-') {
-        while ((c = *++argv[0])) {
-            switch (c) {
-                case 'I':
-                    ctx->nadd = myatoi(*++argv);
-                    --argc;
-                    goto nextoption;
-                case 'e':
-                    ctx->RNApthr = (int)(atof(*++argv) * 1000 - 0.5);
-                    --argc;
-                    goto nextoption;
-                case 'o':
-                    ctx->RNAppenalty = (int)(atof(*++argv) * 1000 - 0.5);
-                    --argc;
-                    goto nextoption;
-
-                case 'k':
-                    ctx->kimuraR = myatoi(*++argv);
-                    //					fprintf( stderr, "kappa = %d\n", kimuraR );
-                    --argc;
-                    goto nextoption;
-
-                case 'r':
-                    ctx->consweight_rna = atof(*++argv);
-                    ctx->rnakozo = 1;
-                    --argc;
-                    goto nextoption;
-                case 'c':
-                    ctx->consweight_multi = atof(*++argv);
-                    --argc;
-                    goto nextoption;
-
-                case 'R':
-                    ctx->rnaprediction = 'r';
-                case 'a':
-                    ctx->fmodel = 1;
-                    break;
-
-                case 'K':
-                    ctx->addprofile = 0;
-                    break;
-                case 'y':
-                    tempOpts->distout = 1;
-                    break;
-                case 't':
-                    tempOpts->treeout = 1;
-                    break;
-                case '^':
-                    tempOpts->treeout = 2;
-                    break;
-                case 'T':
-                    tempOpts->noalign = 1;
-                    break;
-                case 'D':
-                    ctx->dorp = 'd';
-                    break;
-                case 'P':
-                    ctx->dorp = 'p';
-                    break;
-                case 'L':
-                    ctx->legacygapcost = 1;
-                    break;
-#if 1
-                case 'O':
-                    ctx->outgap = 0;
-                    break;
-#else
-                case 'O':
-                    fftNoAnchStop = 1;
-                    break;
-#endif
-#if 0
-				case 'S' :
-					scoreout = 1; // for checking parallel calculation
-					break;
-#else
-                case 'S':
-                    ctx->spscoreout = 1;  // 2014/Dec/30, sp score
-                    break;
-#endif
-                case 'H':
-                    tempOpts->subalignment = 1;
-                    tempOpts->subalignmentoffset = myatoi(*++argv);
-                    --argc;
-                    goto nextoption;
-#if 0
-				case 'e':
-					fftscore = 0;
-					break;
-				case 'r':
-					fmodel = -1;
-					break;
-				case 'R':
-					fftRepeatStop = 1;
-					break;
-				case 's':
-					treemethod = 's';
-					break;
-#endif
-
-                case 'n':
-                    ctx->outnumber = 1;
-                    break;
-
-                case 'N':
-                    ctx->nevermemsave = 1;
-                    break;
-                case 'B':
-                    break;
-
-                case 'U':
-                    tempOpts->treein = 1;
-                    break;
-                case 'u':
-                    ctx->tbrweight = 0;
-                    ctx->weight = 0;
-                    break;
-                case 'v':
-                    ctx->tbrweight = 3;
-                    break;
-                case 'd':
-                    tempOpts->multidist = 1;
-                    break;
-
-                case 'J':
-                    ctx->tbutree = 0;
-                    break;
-
-                case 'w':
-                    ctx->fftWinSize = myatoi(*++argv);
-                    --argc;
-                    goto nextoption;
-
-                case 'Y':
-                    tempOpts->keeplength = 1;
-                    break;
-                case 'z':
-                    tempOpts->mapout = 2;
-                    break;
-                case 'Z':
-                    tempOpts->mapout = 1;
-                    break;
-                case 'p':
-                    tempOpts->smoothing = 1;
-                    break;
-                case '=':
-                    ctx->specifictarget = 1;
-                    break;
-                case ':':
-                    ctx->nwildcard = 1;
-                    break;
-                case '+':
-                    ++argv;
-                    --argc;
-                    goto nextoption;
-                default:
-                    // TODO(sen) This needs to be fixed
-                    fprintf(stderr, "illegal option %c\n", c);
-                    argc = 0;
-                    break;
-            }
-        }
-    nextoption:
-        ;
-    }
-
-    if (argc == 1) {
-        argc--;
-    }
-    if (argc != 0) {
-        fprintf(stderr, "argc=%d, tbfast options: Check source file !\n", argc);
-        exit(1);
-    }
-    if (ctx->tbitr == 1 && ctx->outgap == 0) {
-        fprintf(stderr, "conflicting options : o, m or u\n");
-        exit(1);
-    }
-}
-
 static double
 preferenceval(int ori, int pos, int max) {
     pos -= ori;
@@ -826,10 +579,8 @@ WriteOptions(aln_Opts opts, Context* ctx, FILE* fp) {
     fflush(fp);
 }
 
-// TODO(sen) Get rid of args and arg parsing
-
 int
-tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes, aln_Opts opts, int argc, char* argv[]) {
+tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes, aln_Opts opts) {
     aln_Arena permArena_ = {.base = out, .size = outBytes / 4};
     aln_Arena tempArena_ = {.base = (uint8_t*)out + permArena_.size, .size = outBytes - permArena_.size};
 
@@ -903,6 +654,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
 
     TbfastOpts  tempOpts_ = {};
     TbfastOpts* tempOpts = &tempOpts_;
+    tempOpts->callpairlocalalign = 1;
 
     int*     selfscore = NULL;
     int      nogaplen;
@@ -956,13 +708,6 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     int*  uselh = NULL;
     int   nseed = 0;
     int*  nfilesfornode = NULL;
-
-    char** pav = calloc(argc, sizeof(char*));
-    char** tav = calloc(argc, sizeof(char*));
-
-    int pac = 0;
-    int tac = 0;
-    arguments(ctx, tempOpts, argc, argv, &pac, pav, &tac, tav);
 
     nkozo = 0;
 
@@ -1083,8 +828,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
         }
 
         if (tempOpts->callpairlocalalign) {
-            pairlocalalign(pairLocalAlignOpts, ctx, ctx->njob, name, seq, iscore, localhomtable, pac, pav, expdist);
-            arguments(ctx, tempOpts, tac, tav, NULL, NULL, NULL, NULL);
+            pairlocalalign(pairLocalAlignOpts, ctx, ctx->njob, name, seq, iscore, localhomtable, expdist);
             tempOpts->callpairlocalalign = 1;
             if (expdist)
                 FreeDoubleMtx(expdist);
@@ -1198,8 +942,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
         }
     } else if (ctx->compacttree != 3) {
         if (tempOpts->callpairlocalalign) {
-            pairlocalalign(pairLocalAlignOpts, ctx, ctx->njob, name, seq, iscore, NULL, pac, pav, expdist);
-            arguments(ctx, tempOpts, tac, tav, NULL, NULL, NULL, NULL);
+            pairlocalalign(pairLocalAlignOpts, ctx, ctx->njob, name, seq, iscore, NULL, expdist);
             tempOpts->callpairlocalalign = 1;
             if (expdist)
                 FreeDoubleMtx(expdist);
@@ -1293,8 +1036,6 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
         }
     }
 
-    free(tav);
-    free(pav);
     constants(opts, ctx, ctx->njob, seq);
 
     initSignalSM(ctx);
