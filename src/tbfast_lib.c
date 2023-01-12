@@ -7,34 +7,6 @@
 #define DEBUG 0
 #define IODEBUG 0
 
-typedef struct msacompactdistmtxthread_arg {
-    Context* ctx;
-    int      njob;
-    int      thread_no;
-    int*     selfscore;
-    double** partmtx;
-    char**   seq;
-    int**    skiptable;
-    double*  mindist;
-    int*     mindistfrom;
-    int*     jobpospt;
-} msacompactdistmtxthread_arg_t;
-
-typedef struct TbfastOpts {
-    int32_t treein;
-    int32_t treeout;
-    int32_t distout;
-    int32_t noalign;
-    int32_t multidist;
-    int32_t subalignment;
-    int32_t subalignmentoffset;
-    int32_t keeplength;
-    int32_t ndeleted;
-    int32_t mapout;
-    int32_t smoothing;
-    int32_t callpairlocalalign;
-} TbfastOpts;
-
 static void
 WriteOptions(aln_Opts opts, Context* ctx, FILE* fp) {
     if (ctx->dorp == 'd')
@@ -175,67 +147,29 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         seq[strIndex] = thisSeq;
     }
 
-    TbfastOpts  tempOpts_ = {};
-    TbfastOpts* tempOpts = &tempOpts_;
-    tempOpts->callpairlocalalign = 1;
-
     char**   bseq = NULL;
     double** iscore = NULL;
-    double * eff = NULL, *eff_kozo_mapped = NULL;
-    int      i, j;
-    int***   topol = NULL;
     double** expdist = NULL;
     Treedep* dep = NULL;
-    double** len = NULL;
     FILE*    prep = NULL;
-    int      nsubalignments, maxmem;
-    int**    subtable;
-    int*     insubtable;
-    int*     preservegaps;
     int**    localmem = NULL;
 
-    int          alloclen = 0;
-    LocalHom*    tmpptr;
-    static char* kozoarivec = NULL;
-    int          ntarget = 0;
-    int*         targetmap = NULL;
-    int*         targetmapr = NULL;
-    int          jst, jj;
+    int       alloclen = 0;
+    int       ntarget = 0;
+    int*      targetmap = NULL;
+    int*      targetmapr = NULL;
+    int*      uselh = NULL;
 
-    int* uselh = NULL;
-    int  nseed = 0;
-    int* nfilesfornode = NULL;
-
-    int nkozo = 0;
-
-    if (tempOpts->subalignment) {
-        readsubalignmentstable(ctx->njob, NULL, NULL, &nsubalignments, &maxmem);
-        fprintf(stderr, "nsubalignments = %d\n", nsubalignments);
-        fprintf(stderr, "maxmem = %d\n", maxmem);
-        subtable = AllocateIntMtx(nsubalignments, maxmem + 1);
-        insubtable = AllocateIntVec(ctx->njob);
-        for (int i = 0; i < ctx->njob; i++)
-            insubtable[i] = 0;
-        preservegaps = AllocateIntVec(ctx->njob);
-        for (int i = 0; i < ctx->njob; i++)
-            preservegaps[i] = 0;
-        readsubalignmentstable(ctx->njob, subtable, preservegaps, NULL, NULL);
-    }
-
-    char** mseq1 = AllocateCharMtx(ctx->njob, 0);
-    char** mseq2 = AllocateCharMtx(ctx->njob, 0);
-
-    topol = AllocateIntCub(ctx->njob, 2, 0);
-    len = AllocateFloatMtx(ctx->njob, 2);
-    eff = AllocateDoubleVec(ctx->njob);
-    kozoarivec = AllocateCharVec(ctx->njob);
+    char**   mseq1 = AllocateCharMtx(ctx->njob, 0);
+    char**   mseq2 = AllocateCharMtx(ctx->njob, 0);
+    int***   topol = AllocateIntCub(ctx->njob, 2, 0);
+    double** len = AllocateFloatMtx(ctx->njob, 2);
+    double*  eff = AllocateDoubleVec(ctx->njob);
 
     dep = (Treedep*)calloc(ctx->njob, sizeof(Treedep));
     localmem = AllocateIntMtx(2, ctx->njob + 1);
 
     iscore = AllocateFloatHalfMtx(ctx->njob);
-
-    tempOpts->ndeleted = 0;
 
     ntarget = ctx->njob;
     targetmap = calloc(ctx->njob, sizeof(int));
@@ -268,15 +202,15 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
 
         {
             pairlocalalign(pairLocalAlignOpts, ctx, ctx->njob, name, seq, iscore, localhomtable, expdist);
-            tempOpts->callpairlocalalign = 1;
             if (expdist)
                 FreeDoubleMtx(expdist);
             expdist = NULL;
 
             {
-                for (ilim = ctx->njob, i = 0; i < ntarget; i++) {
-                    for (j = 0; j < ilim; j++) {
-                        for (tmpptr = localhomtable[i] + j; tmpptr; tmpptr = tmpptr->next) {
+                ilim = ctx->njob;
+                for (int i = 0; i < ntarget; i++) {
+                    for (int j = 0; j < ilim; j++) {
+                        for (LocalHom* tmpptr = localhomtable[i] + j; tmpptr; tmpptr = tmpptr->next) {
                             if (tmpptr->opt == -1.0)
                                 continue;
                             tmpptr->opt = (tmpptr->opt) / 5.8 * 600;
@@ -293,10 +227,10 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
                     fprintf(stderr, "Writing hat3 for iterative refinement\n");
                     ilim = ctx->njob - 1;
                     for (int i = 0; i < ilim; i++) {
-                        jst = i;
-                        jj = 0;
-                        for (j = jst; j < ctx->njob; j++, jj++) {
-                            for (tmpptr = localhomtable[i] + jj; tmpptr; tmpptr = tmpptr->next) {
+                        int jst = i;
+                        int jj = 0;
+                        for (int j = jst; j < ctx->njob; j++, jj++) {
+                            for (LocalHom* tmpptr = localhomtable[i] + jj; tmpptr; tmpptr = tmpptr->next) {
                                 if (tmpptr->opt == -1.0)
                                     continue;
                                 if (targetmap[j] == -1 || targetmap[i] < targetmap[j])
@@ -312,16 +246,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
                 }
             }
         }
-
-        nkozo = 0;
-        for (int i = 0; i < ctx->njob; i++) {
-            //			fprintf( stderr, "kozoarivec[%d] = %d\n", i, kozoarivec[i] );
-            if (kozoarivec[i])
-                nkozo++;
-        }
-        if (nkozo) {
-            eff_kozo_mapped = AllocateDoubleVec(ctx->njob);
-        }
     }
 
     constants(opts, ctx, ctx->njob, seq);
@@ -330,16 +254,12 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     initFiles(ctx);
     WriteOptions(opts, ctx, ctx->trap_g);
 
-    aln_assert(!(tempOpts->distout && !tempOpts->treeout && tempOpts->noalign));
-
     // TODO(sen) Sequence verification?
 
     fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(opts, ctx, ctx->njob, iscore, topol, len, dep, 1, 1);
 
     localmem[0][0] = -1;
     topolorderz(localmem[0], topol, dep, ctx->njob - 2, 2);
-
-    aln_assert(!(tempOpts->treeout && tempOpts->noalign));
 
     ctx->weight = 3;
     counteff_simple_double_nostatic_memsave(ctx->njob, topol, len, dep, eff);
@@ -361,24 +281,18 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         int*      seedinlh2 = NULL;
         int       m1, m2;
         double    dumdb = 0.0;
-        int       ffttry;
-        int       nfiles;
         double*** cpmxchild0 = NULL;
         double*** cpmxchild1 = NULL;
         double    orieff1, orieff2;
 
-        RNApair*** grouprna1 = 0;
-        RNApair*** grouprna2 = 0;
-        char*      swaplist = 0;
+        char* swaplist = 0;
 
-        int*      fftlog = AllocateIntVec(ctx->njob);
-        double*   effarr1 = AllocateDoubleVec(ctx->njob);
-        double*   effarr2 = AllocateDoubleVec(ctx->njob);
-        char*     indication1 = AllocateCharVec(150);
-        char*     indication2 = AllocateCharVec(150);
-        int*      gaplen = AllocateIntVec(alloclen + 10);
-        int*      gapmap = AllocateIntVec(alloclen + 10);
-        
+        int*    fftlog = AllocateIntVec(ctx->njob);
+        double* effarr1 = AllocateDoubleVec(ctx->njob);
+        double* effarr2 = AllocateDoubleVec(ctx->njob);
+        char*   indication1 = AllocateCharVec(150);
+        char*   indication2 = AllocateCharVec(150);
+
         double**  dynamicmtx = AllocateDoubleMtx(ctx->nalphabets, ctx->nalphabets);
         int**     localmem = calloc(sizeof(int*), 2);
         double*** cpmxhist = (double***)calloc(ctx->njob - 1, sizeof(double**));
@@ -406,18 +320,16 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
             m1 = topol[l][0][0];
             m2 = topol[l][1][0];
 
-            if (eff_kozo_mapped) {
+            if (dep[l].child0 == -1) {
                 cpmxchild0 = NULL;
+            } else {
+                cpmxchild0 = cpmxhist + dep[l].child0;
+            }
+
+            if (dep[l].child1 == -1) {
                 cpmxchild1 = NULL;
             } else {
-                if (dep[l].child0 == -1)
-                    cpmxchild0 = NULL;
-                else
-                    cpmxchild0 = cpmxhist + dep[l].child0;
-                if (dep[l].child1 == -1)
-                    cpmxchild1 = NULL;
-                else
-                    cpmxchild1 = cpmxhist + dep[l].child1;
+                cpmxchild1 = cpmxhist + dep[l].child1;
             }
 
             if (dep[l].child0 == -1) {
@@ -450,117 +362,19 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
 
             len1 = strlen(bseq[m1]);
             len2 = strlen(bseq[m2]);
-            if (alloclen < len1 + len2) {
-                fprintf(stderr, "\nReallocating..");
-                alloclen = (len1 + len2) + 1000;
-                ReallocateCharMtx(bseq, ctx->njob, alloclen + 10);
-                gaplen = realloc(gaplen, (alloclen + 10) * sizeof(int));
-                if (gaplen == NULL) {
-                    fprintf(stderr, "Cannot realloc gaplen\n");
-                    exit(1);
-                }
-                gapmap = realloc(gapmap, (alloclen + 10) * sizeof(int));
-                if (gapmap == NULL) {
-                    fprintf(stderr, "Cannot realloc gapmap\n");
-                    exit(1);
-                }
-                fprintf(stderr, "done. alloclen = %d\n", alloclen);
-            }
 
-            if (eff_kozo_mapped) {
-                clus1 = fastconjuction_noname_kozo(localmem[0], bseq, mseq1, effarr1, eff, effarr1_kozo, eff_kozo_mapped, indication1);
-                clus2 = fastconjuction_noname_kozo(localmem[1], bseq, mseq2, effarr2, eff, effarr2_kozo, eff_kozo_mapped, indication2);
-            } else {
-                clus1 = fastconjuction_noname(localmem[0], bseq, mseq1, effarr1, eff, indication1, opts.minimumweight, &orieff1);  // orieff tsukau!
-                clus2 = fastconjuction_noname(localmem[1], bseq, mseq2, effarr2, eff, indication2, opts.minimumweight, &orieff2);  // orieff tsukau!
-            }
-            
-            ctx->newgapstr = "-";
+            // TODO(sen) Out of memory error?
+            aln_assert(alloclen >= len1 + len2);
 
-            if (ctx->compacttree == 3)
-                nfiles = nfilesfornode[l];
-            else
-                nfiles = 0;
+            clus1 = fastconjuction_noname(localmem[0], bseq, mseq1, effarr1, eff, indication1, opts.minimumweight, &orieff1);  // orieff tsukau!
+            clus2 = fastconjuction_noname(localmem[1], bseq, mseq2, effarr2, eff, indication2, opts.minimumweight, &orieff2);  // orieff tsukau!
 
-            if (l < 1000 || l % 100 == 0)
-                fprintf(stderr, "\rSTEP % 5d /%d ", l + 1, ctx->njob - 1);
+            fastshrinklocalhom_half(localmem[0], localmem[1], localhomtable, localhomshrink);
 
-            if (opts.constraint && ctx->compacttree != 3) {
-                fastshrinklocalhom_half(localmem[0], localmem[1], localhomtable, localhomshrink);
-            } else if (opts.constraint && nseed) {
-                fastshrinklocalhom_half_seed(localmem[0], localmem[1], nseed, seedinlh1, seedinlh2, localhomtable, localhomshrink);
-                for (int i = 0; i < ctx->njob; i++)
-                    reporterr("seedinlh1[%d]=%d\n", i, seedinlh1[i]);
-                for (int i = 0; i < ctx->njob; i++)
-                    reporterr("seedinlh2[%d]=%d\n", i, seedinlh2[i]);
-            }
-
-            if (ctx->rnakozo && ctx->rnaprediction == 'm') {
-                makegrouprna(grouprna1, NULL, localmem[0]);
-                makegrouprna(grouprna2, NULL, localmem[1]);
-            }
-
-            if (!ctx->nevermemsave && (opts.constraint != 2 && opts.alg != 'M' && (len1 > 30000 || len2 > 30000))) {
-                aln_assert(!"should not execute");
-            }
-
-            if (fftlog[m1] && fftlog[m2])
-                ffttry = (nlen[m1] > clus1 && nlen[m2] > clus2 && clus1 < 1000 && clus2 < 1000);
-            else
-                ffttry = 0;
-            if (opts.constraint == 2) {
-                if (opts.alg == 'M') {
-                    fprintf(stderr, "\n\nMemory saving mode is not supported.\n\n");
-                    exit(1);
-                }
-                if (opts.alg == 'A') {
-                    imp_match_init_strict(opts, ctx, clus1, clus2, strlen(mseq1[0]), strlen(mseq2[0]), mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, localmem[0], localmem[1], uselh, seedinlh1, seedinlh2, (ctx->compacttree == 3) ? l : -1, nfiles);
-                    if (ctx->rnakozo)
-                        imp_rna(ctx, clus1, clus2, mseq1, mseq2, effarr1, effarr2, grouprna1, grouprna2);
-                    A__align(opts, ctx, dynamicmtx, ctx->penalty, ctx->penalty_ex, mseq1, mseq2, effarr1, effarr2, clus1, clus2, alloclen, opts.constraint, &dumdb, NULL, NULL, NULL, NULL, ctx->outgap, ctx->outgap, localmem[0][0], 1, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
-                }
-                if (opts.alg == 'd') {
-                    imp_match_init_strictD(opts, ctx, clus1, clus2, strlen(mseq1[0]), strlen(mseq2[0]), mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, localmem[0], localmem[1], uselh, seedinlh1, seedinlh2, (ctx->compacttree == 3) ? l : -1, nfiles);
-                    if (ctx->rnakozo)
-                        imp_rnaD(ctx, clus1, clus2, mseq1, mseq2, effarr1, effarr2, grouprna1, grouprna2);
-                    D__align(opts, ctx, dynamicmtx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, alloclen, opts.constraint, &dumdb, ctx->outgap, ctx->outgap);
-                } else if (opts.alg == 'Q') {
-                    aln_assert(!"not supported");
-                }
-            } else if (ctx->force_fft || (opts.use_fft && ffttry)) {
-                fprintf(stderr, " f\b\b");
-                if (opts.alg == 'M') {
-                    fprintf(stderr, "m");
-                    Falign_udpari_long(opts, ctx, NULL, dynamicmtx, mseq1, mseq2, effarr1, effarr2, NULL, NULL, clus1, clus2, alloclen, fftlog + m1);
-                } else
-                    Falign(opts, ctx, NULL, NULL, dynamicmtx, mseq1, mseq2, effarr1, effarr2, NULL, NULL, clus1, clus2, alloclen, fftlog + m1);
-            } else {
-                fprintf(stderr, " d\b\b");
-                fftlog[m1] = 0;
-                switch (opts.alg) {
-                    case ('a'):
-                        Aalign(ctx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, alloclen);
-                        break;
-                    case ('M'):
-                        fprintf(stderr, "m");
-                        MSalignmm(opts, ctx, dynamicmtx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, alloclen, NULL, NULL, NULL, NULL, ctx->outgap, ctx->outgap, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
-                        break;
-                    case ('A'):
-                        A__align(opts, ctx, dynamicmtx, ctx->penalty, ctx->penalty_ex, mseq1, mseq2, effarr1, effarr2, clus1, clus2, alloclen, 0, &dumdb, NULL, NULL, NULL, NULL, ctx->outgap, ctx->outgap, localmem[0][0], 1, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
-                        break;
-                    case ('d'):
-                        D__align(opts, ctx, dynamicmtx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, alloclen, 0, &dumdb, ctx->outgap, ctx->outgap);
-                        break;
-                    default:
-                        ErrorExit("ERROR IN SOURCE FILE");
-                }
-            }
+            imp_match_init_strict(opts, ctx, clus1, clus2, strlen(mseq1[0]), strlen(mseq2[0]), mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, localmem[0], localmem[1], uselh, seedinlh1, seedinlh2, (ctx->compacttree == 3) ? l : -1, 0);
+            A__align(opts, ctx, dynamicmtx, ctx->penalty, ctx->penalty_ex, mseq1, mseq2, effarr1, effarr2, clus1, clus2, alloclen, opts.constraint, &dumdb, NULL, NULL, NULL, NULL, ctx->outgap, ctx->outgap, localmem[0][0], 1, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
 
             nlen[m1] = 0.5 * (nlen[m1] + nlen[m2]);
-
-            if (ctx->disp) {
-                display(ctx, bseq, ctx->njob);
-            }
         }
     }
 
