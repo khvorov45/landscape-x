@@ -44,33 +44,6 @@ intlen(int* num) {
     return (num - numbk - 1);
 }
 
-char
-seqcheck(Context* ctx, char** seq) {
-    int    i, len;
-    char** seqbk = seq;
-    while (*seq) {
-        len = strlen(*seq);
-        for (i = 0; i < len; i++) {
-            if (ctx->amino_n[(int)(*seq)[i]] == -1) {
-                reporterr("========================================================================= \n");
-                reporterr("========================================================================= \n");
-                reporterr("=== \n");
-                reporterr("=== Alphabet '%c' is unknown.\n", (*seq)[i]);
-                reporterr("=== Please check site %d in sequence %d.\n", i + 1, (int)(seq - seqbk + 1));
-                reporterr("=== \n");
-                reporterr("=== To make an alignment that has unusual characters (U, @, #, etc), try  \n");
-                reporterr("=== %% mafft --anysymbol input > output\n");
-                reporterr("=== \n");
-                reporterr("========================================================================= \n");
-                reporterr("========================================================================= \n");
-                return ((int)(*seq)[i]);
-            }
-        }
-        seq++;
-    }
-    return (0);
-}
-
 void
 intcat(int* s1, int* s2) {
     while (*s1 != -1)

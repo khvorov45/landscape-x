@@ -1840,7 +1840,6 @@ pairlocalalign(aln_Opts opts, Context* ctx, int ngui, const char* const* namegui
     char**     bseq;
     char**     dseq;
     int        i, j, k;
-    char       c;
     int        alloclen;
     Lastresx** lastresx;
 
@@ -1936,13 +1935,8 @@ pairlocalalign(aln_Opts opts, Context* ctx, int ngui, const char* const* namegui
     initSignalSM(ctx);
     initFiles(ctx);
 
-    c = seqcheck(ctx, seq);
-    if (c) {
-        fprintf(stderr, "Illegal character %c\n", c);
-        exit(1);
-    }
 
-    //reporterr( "expdist=%p\n", expdist );
+    // TODO(sen) Sequence verification?
 
     if (ctx->dorp == 'p' && opts.scoremtx == 1 && opts.nblosum > 0)  // protein, not text.  hitsuyou?
     {

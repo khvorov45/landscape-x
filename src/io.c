@@ -3040,31 +3040,6 @@ reporterr(const char* str, ...) {
     return;
 }
 
-#if !defined(mingw) && !defined(_MSC_VER)
-void
-setstacksize(rlim_t kStackSize) {
-    //	const rlim_t kStackSize = 100 * 1024 * 1024;   // min stack size = 10MB
-    struct rlimit rl;
-    int           result;
-    rlim_t        originalsize;
-
-    result = getrlimit(RLIMIT_STACK, &rl);
-    if (result == 0) {
-        originalsize = rl.rlim_cur;
-        if (rl.rlim_cur < kStackSize) {
-            rl.rlim_cur = kStackSize;
-            reporterr("stacksize: %d kb->%d kb\n", originalsize / 1024, rl.rlim_cur / 1024);
-            result = setrlimit(RLIMIT_STACK, &rl);
-            if (result != 0) {
-                reporterr("Warning: Failed to extend stack size. It's ok in most cases but there may be problems in --pileup and --chainedtree.\n");
-            }
-        } else
-            reporterr("stacksize: %d kb\n", rl.rlim_cur / 1024);
-    } else
-        reporterr("Warning: Cannot check stack size.\n");
-}
-#endif
-
 void
 treeout_bin(FILE* fp, int n, int*** topol, double** len, Treedep* dep, int* nfilesfornode)
 // dep ha nakutemo topol kara saigen dekiru.

@@ -584,44 +584,35 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     TbfastOpts* tempOpts = &tempOpts_;
     tempOpts->callpairlocalalign = 1;
 
-    char **  mseq1 = NULL, **mseq2 = NULL;
     char**   bseq = NULL;
-    double **iscore = NULL;
+    double** iscore = NULL;
     double * eff = NULL, *eff_kozo_mapped = NULL;
-    int      i, j, k, ien;
-    int ***  topol = NULL;
+    int      i, j;
+    int***   topol = NULL;
     double** expdist = NULL;
     Treedep* dep = NULL;
-    double **len = NULL;
+    double** len = NULL;
     FILE*    prep = NULL;
     char*    mergeoralign = NULL;
     int      nsubalignments, maxmem;
     int**    subtable;
     int*     insubtable;
     int*     preservegaps;
-    char*    originalgaps = NULL;
-    char**   addbk = NULL;
     int**    localmem = NULL;
 
-    char         c;
     int          alloclen = 0;
     LocalHom*    tmpptr;
     static char* kozoarivec = NULL;
-    int          nkozo;
     int          ntarget = 0;
     int*         targetmap = NULL;
     int*         targetmapr = NULL;
     int          jst, jj;
 
-    int*  uselh = NULL;
-    int   nseed = 0;
-    int*  nfilesfornode = NULL;
+    int* uselh = NULL;
+    int  nseed = 0;
+    int* nfilesfornode = NULL;
 
-    nkozo = 0;
-
-#if !defined(mingw) && !defined(_MSC_VER)
-    setstacksize(200 * ctx->njob);
-#endif
+    int nkozo = 0;
 
     if (tempOpts->subalignment) {
         readsubalignmentstable(ctx->njob, NULL, NULL, &nsubalignments, &maxmem);
@@ -637,8 +628,8 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         readsubalignmentstable(ctx->njob, subtable, preservegaps, NULL, NULL);
     }
 
-    mseq1 = AllocateCharMtx(ctx->njob, 0);
-    mseq2 = AllocateCharMtx(ctx->njob, 0);
+    char** mseq1 = AllocateCharMtx(ctx->njob, 0);
+    char** mseq2 = AllocateCharMtx(ctx->njob, 0);
 
     nlen = AllocateIntVec(ctx->njob);
 
@@ -652,50 +643,18 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     dep = (Treedep*)calloc(ctx->njob, sizeof(Treedep));
     localmem = AllocateIntMtx(2, ctx->njob + 1);
 
-    if (ctx->compacttree == 3)
-        nfilesfornode = calloc(sizeof(int), ctx->njob - 1);
-
-#if REPORTCOSTS
-    reporterr("before allocating iscore\n");
-    use_getrusage();
-#endif
-
-    if (ctx->tbutree && ctx->compacttree != 3)
-        iscore = AllocateFloatHalfMtx(ctx->njob);
+    iscore = AllocateFloatHalfMtx(ctx->njob);
 
     tempOpts->ndeleted = 0;
 
-    if (tempOpts->treein) {
-        loadtree(ctx, ctx->njob, topol, len, name, dep, tempOpts->treeout);
-        fprintf(stderr, "\ndone.\n\n");
-        if (tempOpts->callpairlocalalign && opts.specificityconsideration > 0.0) {
-            int* mem0 = calloc(sizeof(int), ctx->njob);
-            int* mem1 = calloc(sizeof(int), ctx->njob);
-            expdist = AllocateDoubleMtx(ctx->njob, ctx->njob);
-            for (i = 0; i < ctx->njob - 1; i++) {
-                topolorderz(mem0, topol, dep, i, 0);
-                topolorderz(mem1, topol, dep, i, 1);
-
-                for (j = 0; mem0[j] != -1; j++)
-                    for (k = 0; mem1[k] != -1; k++) {
-                        expdist[mem0[j]][mem1[k]] += (len[i][0] + len[i][1]);
-                        expdist[mem1[k]][mem0[j]] += (len[i][0] + len[i][1]);
-                    }
-            }
-            free(mem0);
-            free(mem1);
-        }
+    ntarget = ctx->njob;
+    targetmap = calloc(ctx->njob, sizeof(int));
+    targetmapr = calloc(ctx->njob, sizeof(int));
+    for (i = 0; i < ctx->njob; i++) {
+        targetmap[i] = targetmapr[i] = i;
     }
 
-    if (ctx->compacttree != 3) {
-        ntarget = ctx->njob;
-        targetmap = calloc(ctx->njob, sizeof(int));
-        targetmapr = calloc(ctx->njob, sizeof(int));
-        for (i = 0; i < ctx->njob; i++)
-            targetmap[i] = targetmapr[i] = i;
-    }
-
-    LocalHom** localhomtable = (LocalHom**)calloc(ntarget, sizeof(LocalHom*));;
+    LocalHom** localhomtable = (LocalHom**)calloc(ntarget, sizeof(LocalHom*));
     {
         int ilim = ctx->njob;
         for (int i = 0; i < ntarget; i++) {
@@ -783,30 +742,7 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
 
     aln_assert(!(tempOpts->distout && !tempOpts->treeout && tempOpts->noalign));
 
-    c = seqcheck(ctx, seq);
-    if (c) {
-        fprintf(stderr, "Illegal character %c\n", c);
-        exit(1);
-    }
-
-    if (ctx->nadd && tempOpts->keeplength) {
-        originalgaps = (char*)calloc(ctx->maxInputSeqLen + 1, sizeof(char));
-        recordoriginalgaps(originalgaps, ctx->njob - ctx->nadd, seq);
-
-        if (tempOpts->mapout) {
-            addbk = (char**)calloc(ctx->nadd + 1, sizeof(char*));
-            for (i = 0; i < ctx->nadd; i++) {
-                ien = strlen(seq[ctx->njob - ctx->nadd + i]);
-                addbk[i] = (char*)calloc(ien + 1, sizeof(char));
-                copyWithNoGaps(addbk[i], seq[ctx->njob - ctx->nadd + i]);
-            }
-            addbk[ctx->nadd] = NULL;
-        } else
-            addbk = NULL;
-    } else {
-        originalgaps = NULL;
-        addbk = NULL;
-    }
+    // TODO(sen) Sequence verification?
 
     fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(opts, ctx, ctx->njob, iscore, topol, len, dep, 1, 1);
 

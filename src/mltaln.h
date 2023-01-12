@@ -11,7 +11,6 @@
 #include <limits.h>
 #include <unistd.h>
 
-#include <sys/resource.h>  // for setstacksize, 2016/Jun
 #include <sys/shm.h>  // shared memory
 #include <sys/mman.h>  // shm_open
 
@@ -347,7 +346,6 @@ extern char** Dalignm1();
 extern char** align0();
 extern double Cscore_m_1(char**, int, int, double**);
 extern double score_m_1(char**, int, int, double**);
-extern char   seqcheck(Context* ctx, char**);
 extern double ipower(double, int);
 extern double translate_and_Calign(char** mseq1, char** mseq2, double* effarr1, double* effarr2, int clus1, int clus2, int alloclen);
 extern double A__align(aln_Opts opts, Context* ctx, double** scoringmtx, int penalty, int penalty_ex, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, char* gs1, char* gs2, char* ge1, char* ge2, int headgp, int tailgp, int firstmem, int calledby, double*** cpmxchild0, double*** cpmxchild1, double*** cpmxresult, double orieff1, double orieff2);
@@ -627,7 +625,6 @@ extern void   fillimp(aln_Opts opts, double** impmtx, int clus1, int clus2, int 
 extern void   fillimp_file(aln_Opts opts, Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, int* orinum1, int* orinum2, int* uselh, int* seedinlh1, int* seedinlh2, int nodeid, int nfiles);
 extern int    pairlocalalign(aln_Opts opts, Context* ctx, int ngui, const char* const* namegui, char** seqgui, double** distancemtx, LocalHom** localhomtable, double** expdist);
 extern char   creverse(char f);
-extern void   setstacksize(rlim_t);
 extern void   use_getrusage(void);
 extern void   treeout_bin(FILE* treefp, int n, int*** topol, double** len, Treedep* dep, int* nfilesfornode);
 extern void   treein_bin(FILE* treefp, int n, int*** topol, double** len, Treedep* dep, int* nfilesfornode);
