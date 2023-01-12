@@ -579,13 +579,12 @@ WriteOptions(aln_Opts opts, Context* ctx, FILE* fp) {
     fflush(fp);
 }
 
-int
-tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes, aln_Opts opts) {
+aln_AlignResult
+tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outBytes, aln_Opts opts) {
     aln_Arena permArena_ = {.base = out, .size = outBytes / 4};
     aln_Arena tempArena_ = {.base = (uint8_t*)out + permArena_.size, .size = outBytes - permArena_.size};
 
     aln_Arena* permArena = &permArena_;
-    aln_unused(permArena);
     aln_Arena* tempArena = &tempArena_;
 
     aln_Opts pairLocalAlignOpts = opts;
@@ -608,7 +607,6 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     ctx->ndistclass = 10;
     ctx->maxdistclass = -1;
     ctx->lhlimit = INT_MAX;
-    ctx->LineLengthInFASTA = -1;
     ctx->njob = stringsCount;
     ctx->rnaprediction = 'm';
     ctx->addprofile = 1;
@@ -1042,11 +1040,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
     initFiles(ctx);
     WriteOptions(opts, ctx, ctx->trap_g);
 
-    if (tempOpts->distout && !tempOpts->treeout && tempOpts->noalign) {
-        writeData_pointer(ctx, ctx->prep_g, ctx->njob, name, seq);
-        fprintf(stderr, "\n");
-        goto chudan;
-    }
+    aln_assert(!(tempOpts->distout && !tempOpts->treeout && tempOpts->noalign));
 
     c = seqcheck(ctx, seq);
     if (c) {
@@ -1307,11 +1301,7 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
 
     fclose(orderfp);
 
-    if (tempOpts->treeout && tempOpts->noalign) {
-        writeData_pointer(ctx, ctx->prep_g, ctx->njob, name, seq);
-        fprintf(stderr, "\n");
-        goto chudan;  // 2016Jul31
-    }
+    aln_assert(!(tempOpts->treeout && tempOpts->noalign));
 
     if (ctx->tbrweight) {
         ctx->weight = 3;
@@ -1639,148 +1629,16 @@ tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes,
         }
     }
 
-    writeData_pointer(ctx, ctx->prep_g, ctx->njob, name, bseq);
-
-#if IODEBUG
-    fprintf(stderr, "OSHIMAI\n");
-#endif
-
-    if (opts.constraint && ctx->compacttree != 3) {
-        if (ctx->specifictarget)
-            FreeLocalHomTable_part(localhomtable, ntarget, ctx->njob);
-        else
-            FreeLocalHomTable_half(localhomtable, ctx->njob);
-    } else if (opts.constraint && nkozo) {
-        FreeLocalHomTable_half(localhomtable, nkozo);
+    aln_Str* alignedSeqs = aln_arenaAllocArray(permArena, aln_Str, stringsCount);
+    for (int32_t strIndex = 0; strIndex < stringsCount; strIndex++) {
+        aln_Str alignedSeq = {bseq[strIndex], strlen(bseq[strIndex])};
+        char* permCopy = aln_arenaAllocArray(permArena, char, alignedSeq.len);
+        for (int32_t charIndex = 0; charIndex < alignedSeq.len; charIndex++) {
+            permCopy[charIndex] = alignedSeq.ptr[charIndex];
+        }
+        alignedSeqs[strIndex] = (aln_Str) {permCopy, alignedSeq.len};
     }
 
-    if (ctx->compacttree != 3) {
-        free(targetmap);
-        free(targetmapr);
-    }
-
-    if (opts.constraint && ctx->compacttree == 3 && uselh)
-        free(uselh);
-    uselh = NULL;
-
-    if (ctx->spscoreout)
-        reporterr("Unweighted sum-of-pairs score = %10.5f\n", sumofpairsscore(ctx, ctx->njob, bseq));
-
-    if (tempOpts->ndeleted > 0) {
-        reporterr("\nTo keep the alignment length, %d letters were DELETED.\n", tempOpts->ndeleted);
-        if (tempOpts->mapout)
-            reporterr("The deleted letters are shown in the (filename).map file.\n");
-        else
-            reporterr("To know the positions of deleted letters, rerun the same command with the --mapout option.\n");
-    }
-
-    free(kozoarivec);
-    FreeCharMtx(bseq);
-    free(mseq1);
-    free(mseq2);
-
-    free(selfscore);
-
-    FreeIntCub(topol);
-    topol = NULL;
-    free(eff);
-    free(dep);
-    if (nfilesfornode)
-        free(nfilesfornode);
-    nfilesfornode = NULL;
-    closeFiles(ctx);
-    if (ctx->nadd)
-        free(addmem);
-    FreeIntMtx(localmem);
-    if (eff_kozo_mapped)
-        free(eff_kozo_mapped);
-    eff_kozo_mapped = NULL;
-
-    return (0);
-
-chudan:
-    if (seq)
-        FreeCharMtx(seq);
-    seq = NULL;
-    if (mseq1)
-        free(mseq1);
-    mseq1 = NULL;
-    if (mseq2)
-        free(mseq2);
-    mseq2 = NULL;
-
-    if (selfscore)
-        free(selfscore);
-    selfscore = NULL;
-    if (mergeoralign)
-        free(mergeoralign);
-    mergeoralign = NULL;
-
-    if (localhomtable) {
-        reporterr("freeing localhomtable\n");
-        if (ctx->specifictarget)
-            FreeLocalHomTable_part(localhomtable, ntarget, ctx->njob);
-        else
-            FreeLocalHomTable_half(localhomtable, ctx->njob);
-    }
-    localhomtable = NULL;
-    if (targetmap)
-        free(targetmap);
-    targetmap = NULL;
-    if (targetmapr)
-        free(targetmapr);
-    targetmapr = NULL;
-    if (uselh)
-        free(uselh);
-    uselh = NULL;
-
-    if (kozoarivec)
-        free(kozoarivec);
-    kozoarivec = NULL;
-    if (eff_kozo_mapped)
-        free(eff_kozo_mapped);
-    eff_kozo_mapped = NULL;
-    if (eff_kozo)
-        free(eff_kozo);
-    eff_kozo = NULL;
-
-    if (topol)
-        FreeIntCub(topol);
-    topol = NULL;
-    if (topol_kozo)
-        FreeIntCub(topol_kozo);
-    topol_kozo = NULL;
-    if (len)
-        FreeFloatMtx(len);
-    len = NULL;
-    if (len_kozo)
-        FreeFloatMtx(len_kozo);
-    len_kozo = NULL;
-    if (iscore)
-        FreeFloatHalfMtx(iscore, ctx->njob);
-    iscore = NULL;
-    if (iscore_kozo && nseed)
-        FreeFloatHalfMtx(iscore_kozo, nseed);
-    iscore = NULL;  // ? nseed?
-    if (eff)
-        free(eff);
-    eff = NULL;
-    if (dep)
-        free(dep);
-    dep = NULL;
-    if (nfilesfornode)
-        free(nfilesfornode);
-    nfilesfornode = NULL;
-
-    if (addmem)
-        free(addmem);
-    addmem = NULL;
-    if (localmem)
-        FreeIntMtx(localmem);
-    localmem = NULL;
-
-    freeconstants(ctx);
-    closeFiles(ctx);
-    FreeCommonIP(ctx);
-    return (0);
+    aln_AlignResult result = {.seqs = alignedSeqs, .seqCount = stringsCount, .bytesWritten = permArena->used};
+    return result;
 }

@@ -24,8 +24,8 @@ typedef enum aln_Status {
 } aln_Status;
 
 typedef struct aln_Str {
-    char*   ptr;
-    int32_t len;
+    char*    ptr;
+    intptr_t len;
 } aln_Str;
 
 typedef struct aln_Opts {
@@ -46,6 +46,12 @@ typedef struct aln_Opts {
     char    alg;
     bool    use_fft;
 } aln_Opts;
+
+typedef struct aln_AlignResult {
+    aln_Str* seqs;
+    intptr_t seqCount;
+    intptr_t bytesWritten;
+} aln_AlignResult;
 
 aln_PUBLICAPI aln_Opts aln_defaultOpts(void);
 

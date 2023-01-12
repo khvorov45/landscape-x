@@ -138,7 +138,7 @@ alignWithMafft(prb_Arena* arena, prb_Str mafftExe, prb_Str inputPath, prb_Str ma
     return mafftAlignedSeqs;
 }
 
-int tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, int32_t outBytes, aln_Opts opts);
+aln_AlignResult tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, intptr_t outBytes, aln_Opts opts);
 
 int
 main() {
@@ -197,15 +197,17 @@ main() {
     prb_assert(prb_clearDir(arena, tempDir));
     prb_Str cwd = prb_getWorkingDir(arena);
     prb_assert(prb_setWorkingDir(arena, tempDir));
-    int32_t outBytes = 50 * prb_MEGABYTE;
-    void*   outBuf = prb_arenaAllocAndZero(arena, outBytes, 1);
-    tbfast_main((aln_Str*)genSeq.seqs, genSeq.seqCount, outBuf, outBytes, aln_defaultOpts());
+    intptr_t outBytes = prb_arenaFreeSize(arena);
+    void*    outBuf = prb_arenaFreePtr(arena);
+    aln_AlignResult myAlignResult = tbfast_main((aln_Str*)genSeq.seqs, genSeq.seqCount, outBuf, outBytes, aln_defaultOpts());
+    prb_arenaChangeUsed(arena, myAlignResult.bytesWritten);
     prb_assert(prb_setWorkingDir(arena, cwd));
 
-    prb_Str* tbfastDirectAlignedSeqs = getSeqsFromFile(arena, prb_pathJoin(arena, tempDir, prb_STR("pre")));
-    prb_assert(arrlen(tbfastDirectAlignedSeqs) == genSeq.seqCount);
+    prb_assert(myAlignResult.seqCount == genSeq.seqCount);
     for (i32 seqIndex = 0; seqIndex < genSeq.seqCount; seqIndex++) {
-        prb_assert(prb_streq(mafftAlignedSeqs[seqIndex], tbfastDirectAlignedSeqs[seqIndex]));
+        aln_Str myStr = myAlignResult.seqs[seqIndex];
+        prb_Str myStrPrb = {myStr.ptr, (int32_t)myStr.len};
+        prb_assert(prb_streq(mafftAlignedSeqs[seqIndex], myStrPrb));
     }
 
     prb_writelnToStdout(arena, prb_fmt(arena, "tests took %.2fms", prb_getMsFrom(testsStart)));

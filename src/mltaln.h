@@ -299,7 +299,6 @@ typedef struct Context {
     int      specifictarget;
     int      nadd;
     int      usenaivescoreinsteadofalignmentscore;
-    int      LineLengthInFASTA;
 } Context;
 
 void      MtxuntDouble(double**, int);
@@ -487,7 +486,6 @@ extern int          allSpace(char* str);
 extern void         kake2hiku(char* str);
 extern int          countATGC(char* s, int* total);
 extern void         writeDataforgaln(FILE* fp, int locnjob, char** name, char** aseq);
-extern void         writeData_pointer(Context* ctx, FILE* fp, int locnjob, const char* const* name, char** aseq);
 extern void         readhat2_doublehalf_pointer(FILE* fp, int nseq, double** mtx);
 extern void         readhat2_double(FILE* fp, int nseq, double** mtx);
 extern void         readhat2_int(FILE* fp, int nseq, int** mtx);
@@ -604,7 +602,6 @@ extern void               makedynamicmtx(aln_Opts opts, Context* ctx, double** o
 extern double             dist2offset(aln_Opts opts, double dist);
 extern void               reporterr(const char* str, ...);
 extern void               freeconstants(Context* ctx);
-extern void               closeFiles(Context* ctx);
 extern void               FreeCommonIP(Context* ctx);
 extern void               makeskiptable(int n, int** skip, char** seq);
 extern int                generatesubalignmentstable(int nseq, int*** tablept, int* nsubpt, int* maxmempt, int*** topol, double** len, double threshold);

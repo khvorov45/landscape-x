@@ -1009,31 +1009,6 @@ countnormalletters(char* seq, char* ref) {
 }
 
 void
-writeData_pointer(Context* ctx, FILE* fp, int locnjob, const char* const* name, char** aseq) {
-    int i, j;
-    int nalen;
-
-    for (i = 0; i < locnjob; i++) {
-#if DEBUG
-        fprintf(stderr, "i = %d in writeData\n", i);
-#endif
-        fprintf(fp, ">%s\n", name[i] + 1);
-#if 1
-        if (ctx->LineLengthInFASTA < 0)
-            fprintf(fp, "%s\n", aseq[i]);
-        else  // V7.510 deha tsukawanai
-        {
-            nalen = strlen(aseq[i]);
-            for (j = 0; j < nalen; j = j + ctx->LineLengthInFASTA)
-                fprintf(fp, "%.*s\n", ctx->LineLengthInFASTA, aseq[i] + j);
-        }
-#else
-        fprintf(fp, "%s\n", aseq[i]);
-#endif
-    }
-}
-
-void
 write1seq(FILE* fp, char* aseq) {
     int j;
     int nalen;
@@ -1543,12 +1518,6 @@ initFiles(Context* ctx) {
         ErrorExit("cannot open trace");
     fprintf(ctx->trap_g, "PID = %d\n", getpid());
     fflush(ctx->trap_g);
-}
-
-void
-closeFiles(Context* ctx) {
-    fclose(ctx->prep_g);
-    fclose(ctx->trap_g);
 }
 
 void
