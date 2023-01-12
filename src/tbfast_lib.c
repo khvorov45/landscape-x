@@ -78,41 +78,16 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         seq[strIndex] = thisSeq;
     }
 
-    char**   bseq = NULL;
-    double** iscore = NULL;
-    double** expdist = NULL;
-    Treedep* dep = NULL;
-    FILE*    prep = NULL;
-    int**    localmem = NULL;
-
-    int  alloclen = 0;
-    int  ntarget = 0;
-    int* targetmap = NULL;
-    int* targetmapr = NULL;
-    int* uselh = NULL;
-
-    char**   mseq1 = AllocateCharMtx(ctx->njob, 0);
-    char**   mseq2 = AllocateCharMtx(ctx->njob, 0);
-    int***   topol = AllocateIntCub(ctx->njob, 2, 0);
-    double** len = AllocateFloatMtx(ctx->njob, 2);
-    double*  eff = AllocateDoubleVec(ctx->njob);
-
-    dep = (Treedep*)calloc(ctx->njob, sizeof(Treedep));
-    localmem = AllocateIntMtx(2, ctx->njob + 1);
-
-    iscore = AllocateFloatHalfMtx(ctx->njob);
-
-    ntarget = ctx->njob;
-    targetmap = calloc(ctx->njob, sizeof(int));
-    targetmapr = calloc(ctx->njob, sizeof(int));
+    int* targetmap = calloc(ctx->njob, sizeof(int));
+    int* targetmapr = calloc(ctx->njob, sizeof(int));
     for (int i = 0; i < ctx->njob; i++) {
         targetmap[i] = targetmapr[i] = i;
     }
 
-    LocalHom** localhomtable = (LocalHom**)calloc(ntarget, sizeof(LocalHom*));
+    LocalHom** localhomtable = (LocalHom**)calloc(ctx->njob, sizeof(LocalHom*));
     {
         int ilim = ctx->njob;
-        for (int i = 0; i < ntarget; i++) {
+        for (int i = 0; i < ctx->njob; i++) {
             localhomtable[i] = (LocalHom*)calloc(ilim, sizeof(LocalHom));
             for (int j = 0; j < ilim; j++) {
                 localhomtable[i][j].start1 = -1;
@@ -130,53 +105,48 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
             }
             ilim--;
         }
+    }
 
-        {
-            pairlocalalign(pairLocalAlignOpts, ctx, ctx->njob, name, seq, iscore, localhomtable, expdist);
-            if (expdist)
-                FreeDoubleMtx(expdist);
-            expdist = NULL;
+    double** iscore = AllocateFloatHalfMtx(ctx->njob);
+    pairlocalalign(pairLocalAlignOpts, ctx, ctx->njob, name, seq, iscore, localhomtable, 0);
 
-            {
-                ilim = ctx->njob;
-                for (int i = 0; i < ntarget; i++) {
-                    for (int j = 0; j < ilim; j++) {
-                        for (LocalHom* tmpptr = localhomtable[i] + j; tmpptr; tmpptr = tmpptr->next) {
-                            if (tmpptr->opt == -1.0)
-                                continue;
-                            tmpptr->opt = (tmpptr->opt) / 5.8 * 600;
-                        }
-                    }
-                    ilim--;
+    {
+        int ilim = ctx->njob;
+        for (int i = 0; i < ctx->njob; i++) {
+            for (int j = 0; j < ilim; j++) {
+                for (LocalHom* tmpptr = localhomtable[i] + j; tmpptr; tmpptr = tmpptr->next) {
+                    if (tmpptr->opt == -1.0)
+                        continue;
+                    tmpptr->opt = (tmpptr->opt) / 5.8 * 600;
                 }
+            }
+            ilim--;
+        }
+    }
 
-                {
-                    prep = fopen("hat3", "w");
-                    if (!prep)
-                        ErrorExit("Cannot open hat3 to write.");
-
-                    fprintf(stderr, "Writing hat3 for iterative refinement\n");
-                    ilim = ctx->njob - 1;
-                    for (int i = 0; i < ilim; i++) {
-                        int jst = i;
-                        int jj = 0;
-                        for (int j = jst; j < ctx->njob; j++, jj++) {
-                            for (LocalHom* tmpptr = localhomtable[i] + jj; tmpptr; tmpptr = tmpptr->next) {
-                                if (tmpptr->opt == -1.0)
-                                    continue;
-                                if (targetmap[j] == -1 || targetmap[i] < targetmap[j])
-                                    fprintf(prep, "%d %d %d %7.5f %d %d %d %d %c\n", targetmapr[i], j, tmpptr->overlapaa, tmpptr->opt / 600 * 5.8, tmpptr->start1, tmpptr->end1, tmpptr->start2, tmpptr->end2, tmpptr->korh);
-                            }
-                        }
-                    }
-                    fclose(prep);
-
-                    prep = fopen("hat2", "w");
-                    WriteFloatHat2_pointer_halfmtx(ctx, prep, ctx->njob, name, iscore);
-                    fclose(prep);
+    {
+        FILE* prep = fopen("hat3", "w");
+        aln_assert(prep);
+        int ilim = ctx->njob - 1;
+        for (int i = 0; i < ilim; i++) {
+            int jst = i;
+            int jj = 0;
+            for (int j = jst; j < ctx->njob; j++, jj++) {
+                for (LocalHom* tmpptr = localhomtable[i] + jj; tmpptr; tmpptr = tmpptr->next) {
+                    if (tmpptr->opt == -1.0)
+                        continue;
+                    if (targetmap[j] == -1 || targetmap[i] < targetmap[j])
+                        fprintf(prep, "%d %d %d %7.5f %d %d %d %d %c\n", targetmapr[i], j, tmpptr->overlapaa, tmpptr->opt / 600 * 5.8, tmpptr->start1, tmpptr->end1, tmpptr->start2, tmpptr->end2, tmpptr->korh);
                 }
             }
         }
+        fclose(prep);
+    }
+
+    {
+        FILE* prep = fopen("hat2", "w");
+        WriteFloatHat2_pointer_halfmtx(ctx, prep, ctx->njob, name, iscore);
+        fclose(prep);
     }
 
     constants(opts, ctx, ctx->njob, seq);
@@ -186,19 +156,24 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
 
     // TODO(sen) Sequence verification?
 
+    int***   topol = AllocateIntCub(ctx->njob, 2, 0);
+    double** len = AllocateFloatMtx(ctx->njob, 2);
+    Treedep* dep = (Treedep*)calloc(ctx->njob, sizeof(Treedep));
     fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(opts, ctx, ctx->njob, iscore, topol, len, dep, 1, 1);
 
+    int** localmem = AllocateIntMtx(2, ctx->njob + 1);
     localmem[0][0] = -1;
     topolorderz(localmem[0], topol, dep, ctx->njob - 2, 2);
 
     ctx->weight = 3;
+    double* eff = AllocateDoubleVec(ctx->njob);
     counteff_simple_double_nostatic_memsave(ctx->njob, topol, len, dep, eff);
     for (int i = ctx->njob - ctx->nadd; i < ctx->njob; i++) {
         eff[i] /= (double)100;
     }
 
-    alloclen = ctx->maxInputSeqLen * 2 + 1;
-    bseq = AllocateCharMtx(ctx->njob, alloclen);
+    int    alloclen = ctx->maxInputSeqLen * 2 + 1;
+    char** bseq = AllocateCharMtx(ctx->njob, alloclen);
 
     for (int i = 0; i < ctx->njob; i++) {
         copyWithNoGaps(bseq[i], seq[i]);
@@ -245,6 +220,9 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
             fftlog[l] = 1;
 
         calcimportance_half(ctx, ctx->njob, eff, bseq, localhomtable, alloclen);
+
+        char** mseq1 = AllocateCharMtx(ctx->njob, 0);
+        char** mseq2 = AllocateCharMtx(ctx->njob, 0);
 
         for (int l = 0; l < ctx->njob - 1; l++) {
             m1 = topol[l][0][0];
@@ -301,7 +279,7 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
 
             fastshrinklocalhom_half(localmem[0], localmem[1], localhomtable, localhomshrink);
 
-            imp_match_init_strict(opts, ctx, clus1, clus2, strlen(mseq1[0]), strlen(mseq2[0]), mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, localmem[0], localmem[1], uselh, seedinlh1, seedinlh2, (ctx->compacttree == 3) ? l : -1, 0);
+            imp_match_init_strict(opts, ctx, clus1, clus2, strlen(mseq1[0]), strlen(mseq2[0]), mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, localmem[0], localmem[1], 0, seedinlh1, seedinlh2, (ctx->compacttree == 3) ? l : -1, 0);
             A__align(opts, ctx, dynamicmtx, ctx->penalty, ctx->penalty_ex, mseq1, mseq2, effarr1, effarr2, clus1, clus2, alloclen, opts.constraint, &dumdb, NULL, NULL, NULL, NULL, ctx->outgap, ctx->outgap, localmem[0][0], 1, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
 
             nlen[m1] = 0.5 * (nlen[m1] + nlen[m2]);
