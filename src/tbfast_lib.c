@@ -38,65 +38,6 @@ typedef struct TbfastOpts {
     int32_t callpairlocalalign;
 } TbfastOpts;
 
-static double
-preferenceval(int ori, int pos, int max) {
-    pos -= ori;
-    if (pos < 0)
-        pos += max;
-    return (0.00000000000001 * pos);
-}
-
-static void*
-msacompactdisthalfmtxthread(msacompactdistmtxthread_arg_t* targ) {
-    Context* ctx = targ->ctx;
-    int      njob = targ->njob;
-    int*     selfscore = targ->selfscore;
-    double** partmtx = targ->partmtx;
-    char**   seq = targ->seq;
-    int**    skiptable = targ->skiptable;
-    double*  mindist = targ->mindist;
-    int*     mindistfrom = targ->mindistfrom;
-    int*     jobpospt = targ->jobpospt;
-    double   tmpdist, preference, tmpdistx, tmpdisty;
-    int      i, j;
-
-    while (1) {
-        {
-            i = *jobpospt;
-            if (i == njob - 1) {
-                return (NULL);
-            }
-            *jobpospt = i + 1;
-        }
-
-        if (i % 100 == 0) {
-            fprintf(stderr, "\r% 5d / %d", i, njob);
-        }
-
-        for (j = i + 1; j < njob; j++) {
-            tmpdist = distcompact_msa(ctx, seq[i], seq[j], skiptable[i], skiptable[j], selfscore[i], selfscore[j]);  // osoikedo,
-
-            preference = preferenceval(i, j, njob);
-            tmpdistx = tmpdist + preference;
-            if (tmpdistx < mindist[i]) {
-                mindist[i] = tmpdistx;
-                mindistfrom[i] = j;
-            }
-
-            preference = preferenceval(j, i, njob);
-            tmpdisty = tmpdist + preference;
-            if (tmpdisty < mindist[j]) {
-                mindist[j] = tmpdisty;
-                mindistfrom[j] = i;
-            }
-            if (partmtx[i])
-                partmtx[i][j] = tmpdist;
-            if (partmtx[j])
-                partmtx[j][i] = tmpdist;
-        }
-    }
-}
-
 static void
 treebase(aln_Opts opts, Context* ctx, TbfastOpts* tempOpts, int* nlen, char** aseq, int nadd, char* mergeoralign, char** mseq1, char** mseq2, int*** topol, Treedep* dep, double* effarr, int* alloclen, LocalHom** localhomtable, RNApair*** singlerna, double* effarr_kozo, int* uselh, int nseed, int* nfilesfornode) {
     int             i, l, m;
@@ -643,19 +584,16 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     TbfastOpts* tempOpts = &tempOpts_;
     tempOpts->callpairlocalalign = 1;
 
-    int*     selfscore = NULL;
     char **  mseq1 = NULL, **mseq2 = NULL;
     char**   bseq = NULL;
-    double **iscore = NULL, **iscore_kozo = NULL;
-    int**    skiptable;
+    double **iscore = NULL;
     double * eff = NULL, *eff_kozo_mapped = NULL;
-    int      i, j, k, ien, ik, jk;
-    int ***  topol = NULL, ***topol_kozo = NULL;
+    int      i, j, k, ien;
+    int ***  topol = NULL;
     double** expdist = NULL;
     Treedep* dep = NULL;
-    double **len = NULL, **len_kozo = NULL;
+    double **len = NULL;
     FILE*    prep = NULL;
-    FILE*    hat2p = NULL;
     char*    mergeoralign = NULL;
     int      nsubalignments, maxmem;
     int**    subtable;
@@ -664,14 +602,10 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     char*    originalgaps = NULL;
     char**   addbk = NULL;
     int**    localmem = NULL;
-    int*     mindistfrom = NULL;
-    double*  mindist = NULL;
-    double** partmtx = NULL;
 
     char         c;
     int          alloclen = 0;
     LocalHom*    tmpptr;
-    double       ssi, ssj, bunbo;
     static char* kozoarivec = NULL;
     int          nkozo;
     int          ntarget = 0;
@@ -679,7 +613,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     int*         targetmapr = NULL;
     int          jst, jj;
 
-    FILE* fp;
     int*  uselh = NULL;
     int   nseed = 0;
     int*  nfilesfornode = NULL;
@@ -708,7 +641,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     mseq2 = AllocateCharMtx(ctx->njob, 0);
 
     nlen = AllocateIntVec(ctx->njob);
-    selfscore = AllocateIntVec(ctx->njob);
 
     topol = AllocateIntCub(ctx->njob, 2, 0);
     len = AllocateFloatMtx(ctx->njob, 2);
@@ -839,9 +771,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
                 nkozo++;
         }
         if (nkozo) {
-            topol_kozo = AllocateIntCub(nkozo, 2, 0);
-            len_kozo = AllocateFloatMtx(nkozo, 2);
-            iscore_kozo = AllocateFloatHalfMtx(nkozo);
             eff_kozo_mapped = AllocateDoubleVec(ctx->njob);
         }
     }
@@ -879,225 +808,7 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         addbk = NULL;
     }
 
-    if (!tempOpts->treein) {
-        reporterr("tbutree = %d, compacttree = %d\n", ctx->tbutree, ctx->compacttree);
-        if (ctx->compacttree == 3) {
-            iscore = NULL;
-        } else if (ctx->tbutree == 0 && ctx->compacttree) {
-            iscore = NULL;
-            reporterr("Making a compact tree from msa, step 1.. \n");
-            skiptable = AllocateIntMtx(ctx->njob, 0);
-            makeskiptable(ctx->njob, skiptable, seq);
-            mindistfrom = (int*)calloc(ctx->njob, sizeof(int));
-            mindist = (double*)calloc(ctx->njob, sizeof(double));
-            partmtx = (double**)calloc(ctx->njob, sizeof(double*));
-
-            for (i = 0; i < ctx->njob; i++) {
-                selfscore[i] = (int)naivepairscorefast(ctx, seq[i], seq[i], skiptable[i], skiptable[i], ctx->penalty_dist);
-            }
-
-            {
-                int jobpos = 0;
-
-                {
-                    for (j = 0; j < ctx->njob; j++) {
-                        mindist[j] = 999.9;
-                        mindistfrom[j] = -1;
-                    }
-
-                    msacompactdistmtxthread_arg_t targ = {
-                        .ctx = ctx,
-                        .thread_no = 0,
-                        .njob = ctx->njob,
-                        .selfscore = selfscore,
-                        .partmtx = partmtx,
-                        .seq = seq,
-                        .skiptable = skiptable,
-                        .jobpospt = &jobpos,
-                        .mindistfrom = mindistfrom,
-                        .mindist = mindist,
-                    };
-
-                    msacompactdisthalfmtxthread(&targ);
-                }
-
-                for (i = 0; i < ctx->njob; i++)
-                    mindist[i] -= preferenceval(i, mindistfrom[i], ctx->njob);
-            }
-            reporterr("\rdone.                                          \n");
-        } else if (ctx->tbutree == 0 && ctx->compacttree == 0) {
-            reporterr("Making a distance matrix from msa .. \n");
-            iscore = AllocateFloatHalfMtx(ctx->njob);
-
-            for (i = 1; i < ctx->njob; i++) {
-                if (nlen[i] != nlen[0]) {
-                    fprintf(stderr, "Input pre-aligned seqences or make hat2.\n");
-                    exit(1);
-                }
-            }
-
-            skiptable = AllocateIntMtx(ctx->njob, 0);
-            makeskiptable(ctx->njob, skiptable, seq);
-            ien = ctx->njob - 1;
-            for (i = 0; i < ctx->njob; i++) {
-                selfscore[i] = (int)naivepairscorefast(ctx, seq[i], seq[i], skiptable[i], skiptable[i], ctx->penalty_dist);
-            }
-
-            {
-                for (i = 0; i < ien; i++) {
-                    if (i % 10 == 0) {
-                        fprintf(stderr, "\r% 5d / %d", i, ien);
-                    }
-                    ssi = selfscore[i];
-                    for (j = i + 1; j < ctx->njob; j++) {
-                        ssj = selfscore[j];
-                        bunbo = MIN(ssi, ssj);
-                        if (bunbo == 0.0)
-                            iscore[i][j - i] = 2.0;
-                        else
-                            iscore[i][j - i] = (1.0 - naivepairscorefast(ctx, seq[i], seq[j], skiptable[i], skiptable[j], ctx->penalty_dist) / bunbo) * 2.0;  // 2014/Aug/15 fast
-                        if (iscore[i][j - i] > 10)
-                            iscore[i][j - i] = 10.0;
-                    }
-                }
-            }
-            //			fprintf( stderr, "\ndone.\n\n" );
-            FreeIntMtx(skiptable);
-            //			fflush( stderr );
-            reporterr("\rdone.                                           \n");
-
-        } else {
-            if (tempOpts->callpairlocalalign) {
-                if (tempOpts->multidist) {
-                    reporterr("Bug in v7.290.  Please email katoh@ifrec.osaka-u.ac.jp\n");
-                    exit(1);
-                }
-            } else {
-                if (tempOpts->multidist) {
-                    fprintf(stderr, "Loading 'hat2n' (aligned sequences - new sequences) ... ");
-                    prep = fopen("hat2n", "r");
-                    if (prep == NULL)
-                        ErrorExit("Make hat2.");
-                    readhat2_doublehalf_pointer(prep, ctx->njob, iscore);
-                    fclose(prep);
-                    fprintf(stderr, "done.\n");
-
-                    fprintf(stderr, "Loading 'hat2i' (aligned sequences) ... ");
-                    prep = fopen("hat2i", "r");
-                    if (prep == NULL)
-                        ErrorExit("Make hat2i.");
-                    readhat2_doublehalf_pointer(prep, ctx->njob - ctx->nadd, iscore);
-                    fclose(prep);
-                    fprintf(stderr, "done.\n");
-                } else {
-                    fprintf(stderr, "Loading 'hat2' ... ");
-                    prep = fopen("hat2", "r");
-                    if (prep == NULL)
-                        ErrorExit("Make hat2.");
-                    readhat2_doublehalf_pointer(prep, ctx->njob, iscore);
-                    fclose(prep);
-                    fprintf(stderr, "done.\n");
-                }
-
-                if (tempOpts->distout) {
-                    reporterr("\nwriting hat2 (2)\n");
-                    hat2p = fopen("hat2", "w");
-                    WriteFloatHat2_pointer_halfmtx(ctx, hat2p, ctx->njob, name, iscore);
-                    fclose(hat2p);
-                }
-            }
-        }
-
-        if (nkozo && ctx->compacttree != 3) {
-            ien = ctx->njob - 1;
-            ik = 0;
-            for (i = 0; i < ien; i++) {
-                jk = ik + 1;
-                for (j = i + 1; j < ctx->njob; j++) {
-                    if (kozoarivec[i] && kozoarivec[j]) {
-                        iscore_kozo[ik][jk - ik] = iscore[i][j - i];
-                    }
-                    if (kozoarivec[j])
-                        jk++;
-                }
-                if (kozoarivec[i])
-                    ik++;
-            }
-        } else if (nkozo && ctx->compacttree == 3)  // kozo ha saisho ni atsumarunode ik, jk ha hontouha iranai.
-        {
-            for (i = 0; i < ctx->njob; i++) {
-                if (kozoarivec[i])
-                    selfscore[i] = naivepairscore11(ctx, seq[i], seq[i], 0.0);
-                else
-                    selfscore[i] = -1;
-            }
-            ien = ctx->njob - 1;
-            ik = 0;
-            for (i = 0; i < ien; i++) {
-                jk = ik + 1;
-                for (j = i + 1; j < ctx->njob; j++) {
-                    if (kozoarivec[i] && kozoarivec[j]) {
-                        reporterr("seq0=%s\n", seq[i]);
-                        reporterr("seq1=%s\n", seq[j]);
-                        reporterr("selfscore0=%d\n", selfscore[0]);
-                        reporterr("selfscore1=%d\n", selfscore[1]);
-                        iscore_kozo[ik][jk - ik] = distdp_noalign(ctx, seq[i], seq[j], (double)selfscore[i], (double)selfscore[j], alloclen);
-                        reporterr("iscore_kozo[%d][%d]=%f\n", ik, jk, iscore_kozo[ik][jk - ik]);
-                    }
-                    if (kozoarivec[j])
-                        jk++;
-                }
-                if (kozoarivec[i])
-                    ik++;
-                G__align11_noalign(ctx, NULL, 0, 0, NULL, NULL);
-            }
-        }
-
-        if (tempOpts->subalignment) {
-            fprintf(stderr, "Constructing a UPGMA tree ... ");
-            fixed_supg_double_realloc_nobk_halfmtx_treeout_constrained(opts, ctx, ctx->njob, iscore, topol, len, name, dep, nsubalignments, subtable, 1);
-        } else if (ctx->compacttree == 3) {
-            fp = fopen("hat3dir/tree", "rb");  // windows no tame rb
-            treein_bin(fp, ctx->njob, topol, len, dep, nfilesfornode);
-            fclose(fp);
-
-            if (opts.constraint) {
-                uselh = AllocateIntVec(ctx->njob);
-                fp = fopen("hat3dir/uselh", "rb");
-                if (uselhin(fp, ctx->njob, uselh)) {
-                    free(uselh);
-                    uselh = NULL;
-                }
-                fclose(fp);
-                //				for( i=0; i<ctx->njob; i++ ) reporterr( "uselh[%d]=%d\n", i, uselh[i] );
-            }
-        } else if (ctx->tbutree == 0 && ctx->compacttree)  // tbutree != 0 no toki (aln->mtx) ha, 6merdistance -> disttbfast.c; dp distance -> muzukashii
-        {
-            compacttree_memsaveselectable(opts, ctx, ctx->njob, partmtx, mindistfrom, mindist, NULL, selfscore, seq, skiptable, topol, len, name, NULL, dep, tempOpts->treeout, ctx->compacttree, 1);
-
-            if (mindistfrom)
-                free(mindistfrom);
-            mindistfrom = NULL;
-            if (mindist)
-                free(mindist);
-            mindist = NULL;
-            if (skiptable)
-                FreeIntMtx(skiptable);
-            skiptable = NULL;
-            free(partmtx);
-        } else if (tempOpts->treeout) {
-            fprintf(stderr, "Constructing a UPGMA tree ... ");
-            fixed_musclesupg_double_realloc_nobk_halfmtx_treeout_memsave(opts, ctx, ctx->njob, iscore, topol, len, name, dep, 1, tempOpts->treeout);
-        } else {
-            fprintf(stderr, "Constructing a UPGMA tree ... ");
-            fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(opts, ctx, ctx->njob, iscore, topol, len, dep, 1, 1);
-        }
-
-        if (nkozo) {
-            fixed_musclesupg_double_realloc_nobk_halfmtx(opts, ctx, nkozo, iscore_kozo, topol_kozo, len_kozo, NULL, 1, 1);
-        }
-        fprintf(stderr, "\ndone.\n\n");
-    }
+    fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(opts, ctx, ctx->njob, iscore, topol, len, dep, 1, 1);
 
     localmem[0][0] = -1;
     topolorderz(localmem[0], topol, dep, ctx->njob - 2, 2);
