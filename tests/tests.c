@@ -88,6 +88,10 @@ generateSequences(prb_Arena* arena, Rng* rng, char* choices, i32 choicesCount, i
             }
         }
         seqBuf[seqLen] = '\0';
+
+        i32 xLocation = getRandomU32BiasedBound(rng, seqLen);
+        seqBuf[xLocation] = 'X';
+
         seqs[seqIndex] = (prb_Str) {seqBuf, seqLen};
     }
 
