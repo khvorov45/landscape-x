@@ -215,10 +215,10 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         fprintf(stderr, "maxmem = %d\n", maxmem);
         subtable = AllocateIntMtx(nsubalignments, maxmem + 1);
         insubtable = AllocateIntVec(ctx->njob);
-        for (i = 0; i < ctx->njob; i++)
+        for (int i = 0; i < ctx->njob; i++)
             insubtable[i] = 0;
         preservegaps = AllocateIntVec(ctx->njob);
-        for (i = 0; i < ctx->njob; i++)
+        for (int i = 0; i < ctx->njob; i++)
             preservegaps[i] = 0;
         readsubalignmentstable(ctx->njob, subtable, preservegaps, NULL, NULL);
     }
@@ -243,7 +243,7 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     ntarget = ctx->njob;
     targetmap = calloc(ctx->njob, sizeof(int));
     targetmapr = calloc(ctx->njob, sizeof(int));
-    for (i = 0; i < ctx->njob; i++) {
+    for (int i = 0; i < ctx->njob; i++) {
         targetmap[i] = targetmapr[i] = i;
     }
 
@@ -295,7 +295,7 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
 
                     fprintf(stderr, "Writing hat3 for iterative refinement\n");
                     ilim = ctx->njob - 1;
-                    for (i = 0; i < ilim; i++) {
+                    for (int i = 0; i < ilim; i++) {
                         jst = i;
                         jj = 0;
                         for (j = jst; j < ctx->njob; j++, jj++) {
@@ -317,7 +317,7 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         }
 
         nkozo = 0;
-        for (i = 0; i < ctx->njob; i++) {
+        for (int i = 0; i < ctx->njob; i++) {
             //			fprintf( stderr, "kozoarivec[%d] = %d\n", i, kozoarivec[i] );
             if (kozoarivec[i])
                 nkozo++;
@@ -346,120 +346,73 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
 
     ctx->weight = 3;
     counteff_simple_double_nostatic_memsave(ctx->njob, topol, len, dep, eff);
-    for (i = ctx->njob - ctx->nadd; i < ctx->njob; i++) {
+    for (int i = ctx->njob - ctx->nadd; i < ctx->njob; i++) {
         eff[i] /= (double)100;
     }
 
     alloclen = ctx->maxInputSeqLen * 2 + 1;
     bseq = AllocateCharMtx(ctx->njob, alloclen);
 
-    for (i = 0; i < ctx->njob; i++) {
+    for (int i = 0; i < ctx->njob; i++) {
         copyWithNoGaps(bseq[i], seq[i]);
     }
 
-    for (i = 0; i < ctx->njob - 1; i++) {
+    for (int i = 0; i < ctx->njob - 1; i++) {
         mergeoralign[i] = 'a';
     }
 
     {
-        int             i, l, m;
-        int             len1nocommongap;
-        int             len1, len2;
-        int             clus1, clus2;
-        double          pscore, tscore;
-        char *          indication1, *indication2;
-        double*         effarr1 = NULL;
-        double*         effarr2 = NULL;
-        double*         effarr1_kozo = NULL;
-        double*         effarr2_kozo = NULL;
-        LocalHom***     localhomshrink = NULL;
-        int*            seedinlh1 = NULL;
-        int*            seedinlh2 = NULL;
-        char*           swaplist = NULL;
-        int*            fftlog;
-        int             m1, m2;
-        int*            gaplen;
-        int*            gapmap;
-        int*            alreadyaligned;
-        double          dumdb = 0.0;
-        int             ffttry;
-        RNApair ***     grouprna1 = NULL, ***grouprna2 = NULL;
-        static double** dynamicmtx;
-        int             gapmaplen;
-        int**           localmem = NULL;
-        int             nfiles;
-        double***       cpmxhist = NULL;
-        int**           memhist = NULL;
-        double***       cpmxchild0 = NULL;
-        double***       cpmxchild1 = NULL;
-        double          orieff1, orieff2;
+        int       m;
+        int       len1nocommongap;
+        int       len1, len2;
+        int       clus1, clus2;
+        int*      seedinlh1 = NULL;
+        int*      seedinlh2 = NULL;
+        int       m1, m2;
+        double    dumdb = 0.0;
+        int       ffttry;
+        int       gapmaplen;
+        int       nfiles;
+        double*** cpmxchild0 = NULL;
+        double*** cpmxchild1 = NULL;
+        double    orieff1, orieff2;
 
-        if (ctx->rnakozo && ctx->rnaprediction == 'm') {
-            grouprna1 = (RNApair***)calloc(ctx->njob, sizeof(RNApair**));
-            grouprna2 = (RNApair***)calloc(ctx->njob, sizeof(RNApair**));
-        } else {
-            grouprna1 = grouprna2 = NULL;
+        RNApair*** grouprna1 = 0;
+        RNApair*** grouprna2 = 0;
+        char*      swaplist = 0;
+
+        int*      fftlog = AllocateIntVec(ctx->njob);
+        double*   effarr1 = AllocateDoubleVec(ctx->njob);
+        double*   effarr2 = AllocateDoubleVec(ctx->njob);
+        char*     indication1 = AllocateCharVec(150);
+        char*     indication2 = AllocateCharVec(150);
+        int*      gaplen = AllocateIntVec(alloclen + 10);
+        int*      gapmap = AllocateIntVec(alloclen + 10);
+        
+        double**  dynamicmtx = AllocateDoubleMtx(ctx->nalphabets, ctx->nalphabets);
+        int**     localmem = calloc(sizeof(int*), 2);
+        double*** cpmxhist = (double***)calloc(ctx->njob - 1, sizeof(double**));
+        int**     memhist = (int**)calloc(ctx->njob - 1, sizeof(int*));
+        double*   effarr1_kozo = AllocateDoubleVec(ctx->njob);
+        double*   effarr2_kozo = AllocateDoubleVec(ctx->njob);
+
+        LocalHom*** localhomshrink = (LocalHom***)calloc(ctx->njob, sizeof(LocalHom**));
+        for (int i = 0; i < ctx->njob; i++) {
+            localhomshrink[i] = (LocalHom**)calloc(ctx->njob, sizeof(LocalHom*));
         }
 
-        fftlog = AllocateIntVec(ctx->njob);
-        effarr1 = AllocateDoubleVec(ctx->njob);
-        effarr2 = AllocateDoubleVec(ctx->njob);
-        indication1 = AllocateCharVec(150);
-        indication2 = AllocateCharVec(150);
-        gaplen = AllocateIntVec(alloclen + 10);
-        gapmap = AllocateIntVec(alloclen + 10);
-        alreadyaligned = AllocateIntVec(ctx->njob);
-        dynamicmtx = AllocateDoubleMtx(ctx->nalphabets, ctx->nalphabets);
-        localmem = calloc(sizeof(int*), 2);
-        cpmxhist = (double***)calloc(ctx->njob - 1, sizeof(double**));
-        for (i = 0; i < ctx->njob - 1; i++)
-            cpmxhist[i] = NULL;
-        memhist = (int**)calloc(ctx->njob - 1, sizeof(int*));
-        for (i = 0; i < ctx->njob - 1; i++)
-            memhist[i] = NULL;
-
-        swaplist = NULL;
-        if (opts.constraint && ctx->compacttree != 3) {
-            localhomshrink = (LocalHom***)calloc(ctx->njob, sizeof(LocalHom**));
-            for (i = 0; i < ctx->njob; i++) {
-                localhomshrink[i] = (LocalHom**)calloc(ctx->njob, sizeof(LocalHom*));
-            }
-        } else if (opts.constraint && nseed) {
-            localhomshrink = (LocalHom***)calloc(nseed, sizeof(LocalHom**));
-            for (i = 0; i < nseed; i++)
-                localhomshrink[i] = (LocalHom**)calloc(nseed, sizeof(LocalHom*));
-
-            seedinlh1 = calloc(ctx->njob, sizeof(int));
-            seedinlh2 = calloc(ctx->njob, sizeof(int));
-        } else if (opts.constraint && nseed == 0) {
-            seedinlh1 = NULL;
-            seedinlh2 = NULL;
-            localhomshrink = NULL;
-        }
-
-        effarr1_kozo = AllocateDoubleVec(ctx->njob);
-        effarr2_kozo = AllocateDoubleVec(ctx->njob);
-        for (i = 0; i < ctx->njob; i++)
-            effarr1_kozo[i] = 0.0;
-        for (i = 0; i < ctx->njob; i++)
-            effarr2_kozo[i] = 0.0;
-
-        for (i = 0; i < ctx->njob - ctx->nadd; i++)
+        int* alreadyaligned = AllocateIntVec(ctx->njob);
+        for (int i = 0; i < ctx->njob - ctx->nadd; i++)
             alreadyaligned[i] = 1;
-        for (i = ctx->njob - ctx->nadd; i < ctx->njob; i++)
+        for (int i = ctx->njob - ctx->nadd; i < ctx->njob; i++)
             alreadyaligned[i] = 0;
 
-        for (l = 0; l < ctx->njob; l++)
+        for (int l = 0; l < ctx->njob; l++)
             fftlog[l] = 1;
 
-        if (opts.constraint && ctx->compacttree != 3) {
-            calcimportance_half(ctx, ctx->njob, eff, bseq, localhomtable, alloclen);
-        } else if (opts.constraint && nseed) {
-            dontcalcimportance_half(ctx, nseed, bseq, localhomtable);
-        }
+        calcimportance_half(ctx, ctx->njob, eff, bseq, localhomtable, alloclen);
 
-        tscore = 0.0;
-        for (l = 0; l < ctx->njob - 1; l++) {
+        for (int l = 0; l < ctx->njob - 1; l++) {
             m1 = topol[l][0][0];
             m2 = topol[l][1][0];
 
@@ -566,9 +519,9 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
                 fastshrinklocalhom_half(localmem[0], localmem[1], localhomtable, localhomshrink);
             } else if (opts.constraint && nseed) {
                 fastshrinklocalhom_half_seed(localmem[0], localmem[1], nseed, seedinlh1, seedinlh2, localhomtable, localhomshrink);
-                for (i = 0; i < ctx->njob; i++)
+                for (int i = 0; i < ctx->njob; i++)
                     reporterr("seedinlh1[%d]=%d\n", i, seedinlh1[i]);
-                for (i = 0; i < ctx->njob; i++)
+                for (int i = 0; i < ctx->njob; i++)
                     reporterr("seedinlh2[%d]=%d\n", i, seedinlh2[i]);
             }
 
@@ -594,13 +547,13 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
                     imp_match_init_strict(opts, ctx, clus1, clus2, strlen(mseq1[0]), strlen(mseq2[0]), mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, localmem[0], localmem[1], uselh, seedinlh1, seedinlh2, (ctx->compacttree == 3) ? l : -1, nfiles);
                     if (ctx->rnakozo)
                         imp_rna(ctx, clus1, clus2, mseq1, mseq2, effarr1, effarr2, grouprna1, grouprna2);
-                    pscore = A__align(opts, ctx, dynamicmtx, ctx->penalty, ctx->penalty_ex, mseq1, mseq2, effarr1, effarr2, clus1, clus2, alloclen, opts.constraint, &dumdb, NULL, NULL, NULL, NULL, ctx->outgap, ctx->outgap, localmem[0][0], 1, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
+                    A__align(opts, ctx, dynamicmtx, ctx->penalty, ctx->penalty_ex, mseq1, mseq2, effarr1, effarr2, clus1, clus2, alloclen, opts.constraint, &dumdb, NULL, NULL, NULL, NULL, ctx->outgap, ctx->outgap, localmem[0][0], 1, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
                 }
                 if (opts.alg == 'd') {
                     imp_match_init_strictD(opts, ctx, clus1, clus2, strlen(mseq1[0]), strlen(mseq2[0]), mseq1, mseq2, effarr1, effarr2, effarr1_kozo, effarr2_kozo, localhomshrink, swaplist, localmem[0], localmem[1], uselh, seedinlh1, seedinlh2, (ctx->compacttree == 3) ? l : -1, nfiles);
                     if (ctx->rnakozo)
                         imp_rnaD(ctx, clus1, clus2, mseq1, mseq2, effarr1, effarr2, grouprna1, grouprna2);
-                    pscore = D__align(opts, ctx, dynamicmtx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, alloclen, opts.constraint, &dumdb, ctx->outgap, ctx->outgap);
+                    D__align(opts, ctx, dynamicmtx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, alloclen, opts.constraint, &dumdb, ctx->outgap, ctx->outgap);
                 } else if (opts.alg == 'Q') {
                     aln_assert(!"not supported");
                 }
@@ -608,25 +561,25 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
                 fprintf(stderr, " f\b\b");
                 if (opts.alg == 'M') {
                     fprintf(stderr, "m");
-                    pscore = Falign_udpari_long(opts, ctx, NULL, dynamicmtx, mseq1, mseq2, effarr1, effarr2, NULL, NULL, clus1, clus2, alloclen, fftlog + m1);
+                    Falign_udpari_long(opts, ctx, NULL, dynamicmtx, mseq1, mseq2, effarr1, effarr2, NULL, NULL, clus1, clus2, alloclen, fftlog + m1);
                 } else
-                    pscore = Falign(opts, ctx, NULL, NULL, dynamicmtx, mseq1, mseq2, effarr1, effarr2, NULL, NULL, clus1, clus2, alloclen, fftlog + m1);
+                    Falign(opts, ctx, NULL, NULL, dynamicmtx, mseq1, mseq2, effarr1, effarr2, NULL, NULL, clus1, clus2, alloclen, fftlog + m1);
             } else {
                 fprintf(stderr, " d\b\b");
                 fftlog[m1] = 0;
                 switch (opts.alg) {
                     case ('a'):
-                        pscore = Aalign(ctx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, alloclen);
+                        Aalign(ctx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, alloclen);
                         break;
                     case ('M'):
                         fprintf(stderr, "m");
-                        pscore = MSalignmm(opts, ctx, dynamicmtx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, alloclen, NULL, NULL, NULL, NULL, ctx->outgap, ctx->outgap, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
+                        MSalignmm(opts, ctx, dynamicmtx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, alloclen, NULL, NULL, NULL, NULL, ctx->outgap, ctx->outgap, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
                         break;
                     case ('A'):
-                        pscore = A__align(opts, ctx, dynamicmtx, ctx->penalty, ctx->penalty_ex, mseq1, mseq2, effarr1, effarr2, clus1, clus2, alloclen, 0, &dumdb, NULL, NULL, NULL, NULL, ctx->outgap, ctx->outgap, localmem[0][0], 1, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
+                        A__align(opts, ctx, dynamicmtx, ctx->penalty, ctx->penalty_ex, mseq1, mseq2, effarr1, effarr2, clus1, clus2, alloclen, 0, &dumdb, NULL, NULL, NULL, NULL, ctx->outgap, ctx->outgap, localmem[0][0], 1, cpmxchild0, cpmxchild1, cpmxhist + l, orieff1, orieff2);
                         break;
                     case ('d'):
-                        pscore = D__align(opts, ctx, dynamicmtx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, alloclen, 0, &dumdb, ctx->outgap, ctx->outgap);
+                        D__align(opts, ctx, dynamicmtx, mseq1, mseq2, effarr1, effarr2, clus1, clus2, alloclen, 0, &dumdb, ctx->outgap, ctx->outgap);
                         break;
                     default:
                         ErrorExit("ERROR IN SOURCE FILE");
@@ -634,8 +587,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
             }
 
             nlen[m1] = 0.5 * (nlen[m1] + nlen[m2]);
-
-            tscore += pscore;
 
             if (ctx->disp)
                 display(ctx, bseq, ctx->njob);
@@ -658,67 +609,10 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
                 }
                 eq2dashmatometehayaku(mseq1, clus1);
                 eq2dashmatometehayaku(mseq2, clus2);
-                for (i = 0; (m = localmem[1][i]) > -1; i++)
+                for (int i = 0; (m = localmem[1][i]) > -1; i++)
                     alreadyaligned[m] = 1;
             }
-
-            free(localmem[0]);
-            free(localmem[1]);
         }
-
-        if (cpmxhist) {
-            for (i = 0; i < ctx->njob - 1; i++) {
-                if (cpmxhist[i]) {
-                    FreeDoubleMtx(cpmxhist[i]);
-                    cpmxhist[i] = NULL;
-                }
-            }
-            free(cpmxhist);
-            cpmxhist = NULL;
-        }
-
-        free(memhist);
-        memhist = NULL;
-
-        bool scoreout = false;
-        if (scoreout) {
-            fprintf(stderr, "totalscore = %10.2f\n\n", tscore);
-        }
-
-        if (ctx->rnakozo && ctx->rnaprediction == 'm') {
-            if (grouprna1)
-                free(grouprna1);  // nakami ha?
-            if (grouprna2)
-                free(grouprna2);  // nakami ha?
-            grouprna1 = grouprna2 = NULL;
-        }
-
-        if (opts.constraint) {
-            if (localhomshrink)  // nen no tame
-            {
-                if (ctx->compacttree == 3)
-                    m = nseed;
-                else
-                    m = ctx->njob;
-                for (i = 0; i < m; i++) {
-                    free(localhomshrink[i]);
-                    localhomshrink[i] = NULL;
-                }
-                free(localhomshrink);
-                localhomshrink = NULL;
-            }
-            if (seedinlh1)
-                free(seedinlh1);
-            if (seedinlh2)
-                free(seedinlh2);
-        }
-
-        Falign(opts, ctx, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, NULL);
-        Falign_udpari_long(opts, ctx, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, NULL);
-        D__align(opts, ctx, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, 0, 0);
-        A__align(opts, ctx, NULL, 0, 0, NULL, NULL, NULL, NULL, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, 0, 0, -1, -1, NULL, NULL, NULL, 0.0, 0.0);
-        imp_match_init_strictD(opts, ctx, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
-        imp_match_init_strict(opts, ctx, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
     }
 
     aln_Str* alignedSeqs = aln_arenaAllocArray(permArena, aln_Str, stringsCount);
