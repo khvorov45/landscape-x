@@ -6319,34 +6319,10 @@ readlocalhomfromfile_autofid(LocalHom* lhpt, FILE* fp, int o1, int o2)  // for h
     lhpt->last = lhpt;
     lhpt->korh = 'h';
 
-#if 0  // specific target ni taiousuru!
-	if( h3i->specifictarget )
-	{
-		int *targetmap = h3i->targetmap;
-		if( targetmap[o1] == -1 && targetmap[o2] == -1 ) return( -1 );
-		if( targetmap[o1] == -1 )
-		{
-			k1 = targetmap[o2];
-			k2 = o1;
-			swap = 1;
-		}
-		else
-		{
-			k1 = targetmap[o1];
-			k2 = o2;
-			swap = 0;
-		}
-		k1tri = 0;
-	}
-	else
-#endif
-    {
-        if (o2 > o1) {
-            swap = 0;
-        } else {
-            swap = 1;
-        }
-        //		k1tri = (unsigned long long)k1*(k1-1)/2;
+    if (o2 > o1) {
+        swap = 0;
+    } else {
+        swap = 1;
     }
 
     if (fp) {

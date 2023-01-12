@@ -296,7 +296,6 @@ typedef struct Context {
     char     codonscore;
     int      compacttree;
     int      lhlimit;
-    int      specifictarget;
     int      nadd;
     int      usenaivescoreinsteadofalignmentscore;
 } Context;

@@ -7,7 +7,6 @@
 #define DEBUG 0
 #define IODEBUG 0
 #define SCOREOUT 0
-#define SHISHAGONYU 0  // for debug
 
 #define REPORTCOSTS 0
 
@@ -99,7 +98,7 @@ msacompactdisthalfmtxthread(msacompactdistmtxthread_arg_t* targ) {
 }
 
 static void
-treebase(aln_Opts opts, Context* ctx, TbfastOpts* tempOpts, int* nlen, char** aseq, int nadd, char* mergeoralign, char** mseq1, char** mseq2, int*** topol, Treedep* dep, double* effarr, int* alloclen, LocalHom** localhomtable, RNApair*** singlerna, double* effarr_kozo, int* targetmap, int* targetmapr, int ntarget, int* uselh, int nseed, int* nfilesfornode) {
+treebase(aln_Opts opts, Context* ctx, TbfastOpts* tempOpts, int* nlen, char** aseq, int nadd, char* mergeoralign, char** mseq1, char** mseq2, int*** topol, Treedep* dep, double* effarr, int* alloclen, LocalHom** localhomtable, RNApair*** singlerna, double* effarr_kozo, int* uselh, int nseed, int* nfilesfornode) {
     int             i, l, m;
     int             len1nocommongap;
     int             len1, len2;
@@ -163,8 +162,6 @@ treebase(aln_Opts opts, Context* ctx, TbfastOpts* tempOpts, int* nlen, char** as
 
     swaplist = NULL;
     if (opts.constraint && ctx->compacttree != 3) {
-        if (ctx->specifictarget)
-            swaplist = calloc(ctx->njob, sizeof(char));
         localhomshrink = (LocalHom***)calloc(ctx->njob, sizeof(LocalHom**));
         for (i = 0; i < ctx->njob; i++) {
             localhomshrink[i] = (LocalHom**)calloc(ctx->njob, sizeof(LocalHom*));
@@ -198,10 +195,7 @@ treebase(aln_Opts opts, Context* ctx, TbfastOpts* tempOpts, int* nlen, char** as
         fftlog[l] = 1;
 
     if (opts.constraint && ctx->compacttree != 3) {
-        if (ctx->specifictarget)
-            calcimportance_target(ctx, ctx->njob, ntarget, effarr, aseq, localhomtable, targetmap, targetmapr, *alloclen);
-        else
-            calcimportance_half(ctx, ctx->njob, effarr, aseq, localhomtable, *alloclen);
+        calcimportance_half(ctx, ctx->njob, effarr, aseq, localhomtable, *alloclen);
     } else if (opts.constraint && nseed) {
         dontcalcimportance_half(ctx, nseed, aseq, localhomtable);
     }
@@ -316,10 +310,7 @@ treebase(aln_Opts opts, Context* ctx, TbfastOpts* tempOpts, int* nlen, char** as
 #endif
 
         if (opts.constraint && ctx->compacttree != 3) {
-            if (ctx->specifictarget)
-                fastshrinklocalhom_target(localmem[0], localmem[1], localhomtable, localhomshrink, swaplist, targetmap);
-            else
-                fastshrinklocalhom_half(localmem[0], localmem[1], localhomtable, localhomshrink);
+            fastshrinklocalhom_half(localmem[0], localmem[1], localhomtable, localhomshrink);
         } else if (opts.constraint && nseed) {
             fastshrinklocalhom_half_seed(localmem[0], localmem[1], nseed, seedinlh1, seedinlh2, localhomtable, localhomshrink);
             for (i = 0; i < ctx->njob; i++)
@@ -485,8 +476,6 @@ treebase(aln_Opts opts, Context* ctx, TbfastOpts* tempOpts, int* nlen, char** as
             free(seedinlh1);
         if (seedinlh2)
             free(seedinlh2);
-        if (ctx->specifictarget)
-            free(swaplist);
     }
 
     free(fftlog);
@@ -666,7 +655,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     Treedep* dep = NULL;
     double **len = NULL, **len_kozo = NULL;
     FILE*    prep = NULL;
-    FILE*    orderfp = NULL;
     FILE*    hat2p = NULL;
     char*    mergeoralign = NULL;
     int      nsubalignments, maxmem;
@@ -682,15 +670,14 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
 
     char         c;
     int          alloclen = 0;
-    LocalHom**   localhomtable = NULL;
     LocalHom*    tmpptr;
     double       ssi, ssj, bunbo;
     static char* kozoarivec = NULL;
     int          nkozo;
-    int          ntarget;
+    int          ntarget = 0;
     int*         targetmap = NULL;
     int*         targetmapr = NULL;
-    int          ilim, jst, jj;
+    int          jst, jj;
 
     FILE* fp;
     int*  uselh = NULL;
@@ -768,20 +755,7 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         }
     }
 
-    if (ctx->specifictarget && ctx->compacttree != 3) {
-        targetmap = calloc(ctx->njob, sizeof(int));
-        ntarget = 0;
-        for (i = 0; i < ctx->njob; i++) {
-            targetmap[i] = -1;
-            if (!strncmp(name[i] + 1, "_focus_", 7))
-                targetmap[i] = ntarget++;
-        }
-        targetmapr = calloc(ntarget, sizeof(int));
-        for (i = 0; i < ctx->njob; i++)
-            if (targetmap[i] != -1)
-                targetmapr[targetmap[i]] = i;
-
-    } else if (ctx->compacttree != 3) {
+    if (ctx->compacttree != 3) {
         ntarget = ctx->njob;
         targetmap = calloc(ctx->njob, sizeof(int));
         targetmapr = calloc(ctx->njob, sizeof(int));
@@ -789,12 +763,12 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
             targetmap[i] = targetmapr[i] = i;
     }
 
-    if (opts.constraint && ctx->compacttree != 3) {
-        ilim = ctx->njob;
-        localhomtable = (LocalHom**)calloc(ntarget, sizeof(LocalHom*));
-        for (i = 0; i < ntarget; i++) {
+    LocalHom** localhomtable = (LocalHom**)calloc(ntarget, sizeof(LocalHom*));;
+    {
+        int ilim = ctx->njob;
+        for (int i = 0; i < ntarget; i++) {
             localhomtable[i] = (LocalHom*)calloc(ilim, sizeof(LocalHom));
-            for (j = 0; j < ilim; j++) {
+            for (int j = 0; j < ilim; j++) {
                 localhomtable[i][j].start1 = -1;
                 localhomtable[i][j].end1 = -1;
                 localhomtable[i][j].start2 = -1;
@@ -808,66 +782,38 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
                 localhomtable[i][j].last = localhomtable[i] + j;
                 localhomtable[i][j].korh = 'h';
             }
-            if (!ctx->specifictarget)
-                ilim--;
+            ilim--;
         }
 
-        if (tempOpts->callpairlocalalign) {
+        {
             pairlocalalign(pairLocalAlignOpts, ctx, ctx->njob, name, seq, iscore, localhomtable, expdist);
             tempOpts->callpairlocalalign = 1;
             if (expdist)
                 FreeDoubleMtx(expdist);
             expdist = NULL;
 
-            if (ctx->compacttree != 3) {
+            {
                 for (ilim = ctx->njob, i = 0; i < ntarget; i++) {
                     for (j = 0; j < ilim; j++) {
                         for (tmpptr = localhomtable[i] + j; tmpptr; tmpptr = tmpptr->next) {
                             if (tmpptr->opt == -1.0)
                                 continue;
-#if SHISHAGONYU
-                            char buff[100];
-                            sprintf(buff, "%10.5f", tmpptr->opt);
-                            tmpptr->opt = 0.0;
-                            sscanf(buff, "%lf", &(tmpptr->opt));
-#endif
                             tmpptr->opt = (tmpptr->opt) / 5.8 * 600;
                         }
                     }
-                    if (!ctx->specifictarget)
-                        ilim--;
+                    ilim--;
                 }
 
-                prep = fopen("hat3.seed", "r");
-                if (prep) {
-                    fprintf(stderr, "Loading 'hat3.seed' ... ");
-                    if (ctx->specifictarget)
-                        readlocalhomtable2_target(prep, localhomtable, kozoarivec, targetmap);
-                    else
-                        readlocalhomtable2_half(prep, ctx->njob, localhomtable, kozoarivec);
-                    fclose(prep);
-                    fprintf(stderr, "\ndone.\n");
-                } else
-                    fprintf(stderr, "No hat3.seed. No problem.\n");
-
-                if (opts.outputhat23) {
+                {
                     prep = fopen("hat3", "w");
                     if (!prep)
                         ErrorExit("Cannot open hat3 to write.");
 
                     fprintf(stderr, "Writing hat3 for iterative refinement\n");
-                    if (ctx->specifictarget)
-                        ilim = ntarget;
-                    else
-                        ilim = ctx->njob - 1;
+                    ilim = ctx->njob - 1;
                     for (i = 0; i < ilim; i++) {
-                        if (ctx->specifictarget) {
-                            jst = 0;
-                            jj = 0;
-                        } else {
-                            jst = i;
-                            jj = 0;
-                        }
+                        jst = i;
+                        jj = 0;
                         for (j = jst; j < ctx->njob; j++, jj++) {
                             for (tmpptr = localhomtable[i] + jj; tmpptr; tmpptr = tmpptr->next) {
                                 if (tmpptr->opt == -1.0)
@@ -882,34 +828,8 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
                     prep = fopen("hat2", "w");
                     WriteFloatHat2_pointer_halfmtx(ctx, prep, ctx->njob, name, iscore);
                     fclose(prep);
-                } else if (tempOpts->distout) {
-                    prep = fopen("hat2", "w");
-                    WriteFloatHat2_pointer_halfmtx(ctx, prep, ctx->njob, name, iscore);
-                    fclose(prep);
-                }
-            } else {
-                prep = fopen("hat3.seed", "r");
-                if (prep) {
-                    char r;
-                    r = fgetc(prep);
-                    if (isalnum(r) || r == ' ') {
-                        reporterr("Structural alignment is not yet supported in the --memsavepair mode. Try normal mode,\n");
-                        exit(1);
-                    }
-                    fclose(prep);
                 }
             }
-        } else {
-            fprintf(stderr, "Loading 'hat3' ... ");
-            prep = fopen("hat3", "r");
-            if (prep == NULL)
-                ErrorExit("Make hat3.");
-            if (ctx->specifictarget)
-                readlocalhomtable2_target(prep, localhomtable, kozoarivec, targetmap);
-            else
-                readlocalhomtable2_half(prep, ctx->njob, localhomtable, kozoarivec);
-            fclose(prep);
-            fprintf(stderr, "\ndone.\n");
         }
 
         nkozo = 0;
@@ -923,99 +843,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
             len_kozo = AllocateFloatMtx(nkozo, 2);
             iscore_kozo = AllocateFloatHalfMtx(nkozo);
             eff_kozo_mapped = AllocateDoubleVec(ctx->njob);
-        }
-    } else if (ctx->compacttree != 3) {
-        if (tempOpts->callpairlocalalign) {
-            pairlocalalign(pairLocalAlignOpts, ctx, ctx->njob, name, seq, iscore, NULL, expdist);
-            tempOpts->callpairlocalalign = 1;
-            if (expdist)
-                FreeDoubleMtx(expdist);
-            expdist = NULL;
-
-            fprintf(stderr, "blosum %d / kimura 200\n", opts.nblosum);
-            fprintf(stderr, "scoremtx=%d\n", opts.scoremtx);
-            fprintf(stderr, "fastathreshold=%f\n", opts.fastathreshold);
-        }
-        if (tempOpts->distout || opts.outputhat23) {
-            reporterr("\nwriting hat2 (1)\n");
-            prep = fopen("hat2", "w");
-            WriteFloatHat2_pointer_halfmtx(ctx, prep, ctx->njob, name, iscore);
-            fclose(prep);
-        }
-    } else  // ie, conpacttree == 3 // ntarget ha tsukawanai. uselh <- nodepair kara
-    {
-        ctx->specifictarget = 0;  // ichiou uwagaki. '-=' option ha mushi sareru.
-        //		reporterr( "compacttree=3, ntarget=%d\n", ntarget );
-        // hat3 <- hat3dir
-        // hat3.seed
-
-        prep = fopen("hat3.seed", "r");
-        if (prep) {
-            char r;
-            fprintf(stderr, "Checking 'hat3.seed' ... ");
-            r = fgetc(prep);
-            if (isalnum(r) || r == ' ')
-                nkozo = 1;
-            else {
-                nkozo = 0;
-                fclose(prep);
-            }
-        } else {
-            nkozo = 0;
-            fprintf(stderr, "No hat3.seed. No problem.\n");
-            localhomtable = NULL;
-        }
-
-        nseed = 0;
-        if (nkozo) {
-            for (i = 0; i < ctx->njob; i++)
-                if (strncmp(name[i] + 1, "_seed", 4))
-                    break;  // konran!!!
-            nseed = i;
-
-            topol_kozo = AllocateIntCub(nseed, 2, 0);
-            len_kozo = AllocateFloatMtx(nseed, 2);
-            iscore_kozo = AllocateFloatHalfMtx(nseed);
-            eff_kozo_mapped = AllocateDoubleVec(ctx->njob);
-
-            if (localhomtable) {
-                reporterr("bug. localhomtable is already allocated?\n");
-                exit(1);
-            }
-
-            ilim = nseed;
-            localhomtable = (LocalHom**)calloc(nseed, sizeof(LocalHom*));
-            for (i = 0; i < nseed; i++) {
-                localhomtable[i] = (LocalHom*)calloc(ilim, sizeof(LocalHom));
-                for (j = 0; j < ilim; j++) {
-                    localhomtable[i][j].start1 = -1;
-                    localhomtable[i][j].end1 = -1;
-                    localhomtable[i][j].start2 = -1;
-                    localhomtable[i][j].end2 = -1;
-                    localhomtable[i][j].overlapaa = -1.0;
-                    localhomtable[i][j].opt = -1.0;
-                    localhomtable[i][j].importance = -1.0;
-                    localhomtable[i][j].next = NULL;
-                    localhomtable[i][j].nokori = 0;
-                    localhomtable[i][j].extended = -1;
-                    localhomtable[i][j].last = localhomtable[i] + j;
-                    localhomtable[i][j].korh = 'k';  // dochirademo
-                }
-                ilim--;
-            }
-            readlocalhomtable2_half(prep, nseed, localhomtable, kozoarivec);
-            fclose(prep);
-
-            nkozo = 0;  // kazoenaoshi
-            for (i = 0; i < ctx->njob; i++) {
-                fprintf(stderr, "kozoarivec[%d] = %d\n", i, kozoarivec[i]);
-                if (kozoarivec[i])
-                    nkozo++;
-            }
-            if (nkozo != nseed) {
-                reporterr("problem in input file?  nkozo != nseed\n");
-                exit(1);
-            }
         }
     }
 
@@ -1275,17 +1102,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     localmem[0][0] = -1;
     topolorderz(localmem[0], topol, dep, ctx->njob - 2, 2);
 
-    orderfp = fopen("order", "w");
-    if (!orderfp) {
-        fprintf(stderr, "Cannot open 'order'\n");
-        exit(1);
-    }
-
-    for (i = 0; i < ctx->njob; i++)
-        fprintf(orderfp, "%d\n", localmem[0][i]);
-
-    fclose(orderfp);
-
     aln_assert(!(tempOpts->treeout && tempOpts->noalign));
 
     ctx->weight = 3;
@@ -1305,7 +1121,7 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         mergeoralign[i] = 'a';
     }
 
-    treebase(opts, ctx, tempOpts, nlen, bseq, ctx->nadd, mergeoralign, mseq1, mseq2, topol, dep, eff, &alloclen, localhomtable, NULL, eff_kozo_mapped, targetmap, targetmapr, ntarget, uselh, nseed, nfilesfornode);
+    treebase(opts, ctx, tempOpts, nlen, bseq, ctx->nadd, mergeoralign, mseq1, mseq2, topol, dep, eff, &alloclen, localhomtable, NULL, eff_kozo_mapped, uselh, nseed, nfilesfornode);
 
     aln_Str* alignedSeqs = aln_arenaAllocArray(permArena, aln_Str, stringsCount);
     for (int32_t strIndex = 0; strIndex < stringsCount; strIndex++) {

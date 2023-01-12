@@ -3,7 +3,6 @@
 #define DEBUG 0
 #define IODEBUG 0
 #define SCOREOUT 0
-#define SHISHAGONYU 0  // for debug
 
 #define NODIST -9999
 
@@ -1340,27 +1339,8 @@ pairalign(aln_Opts opts, Context* ctx, const char* const* name, char** seq, char
     double    scoreoffset;
     int       ntarget;
     int *     targetmap, *targetmapr;
-
-    if (ctx->specifictarget) {
-        targetmap = calloc(ctx->njob, sizeof(int));
-        ntarget = 0;
-        for (i = 0; i < ctx->njob; i++) {
-            targetmap[i] = -1;
-            if (!strncmp(name[i] + 1, "_focus_", 7))
-                targetmap[i] = ntarget++;
-        }
-        targetmapr = calloc(ntarget, sizeof(int));
-        for (i = 0; i < ctx->njob; i++)
-            if (targetmap[i] != -1)
-                targetmapr[targetmap[i]] = i;
-
-        if (ntarget == 0) {
-            reporterr("\n\nAdd '>_focus_' to the title lines of the sequences to be focused on.\n\n");
-            exit(1);
-        } else {
-            reporterr("nfocus = %d \n", ntarget);
-        }
-    } else {
+    
+    {
         ntarget = ctx->njob;
         targetmap = calloc(ctx->njob, sizeof(int));
         targetmapr = calloc(ctx->njob, sizeof(int));
@@ -1391,7 +1371,7 @@ pairalign(aln_Opts opts, Context* ctx, const char* const* name, char** seq, char
                 localhomtable[i][j].last = localhomtable[i] + j;
                 localhomtable[i][j].korh = 'h';
             }
-            if (!ctx->specifictarget && opts.alg != 'Y' && opts.alg != 'r')
+            if (opts.alg != 'Y' && opts.alg != 'r')
                 jst--;
         }
     }
@@ -1702,8 +1682,6 @@ pairalign(aln_Opts opts, Context* ctx, const char* const* name, char** seq, char
                     if ((ctx->nadd == 0 || (opts.alg != 'Y' && opts.alg != 'r') || (i < ctx->njob - ctx->nadd && ctx->njob - ctx->nadd <= j))) {
                         if (!store_localhom)
                             ;
-                        else if (ctx->specifictarget && targetmap[i] == -1 && targetmap[j] == -1)
-                            ;
                         else if (opts.alg == 'R')
                             putlocalhom_last(ctx, mseq1[0], mseq2[0], localhomtable[i] + j, lastresx[i] + j);
                         else if (opts.alg == 'r')
@@ -1712,7 +1690,7 @@ pairalign(aln_Opts opts, Context* ctx, const char* const* name, char** seq, char
                             putlocalhom_ext(ctx, mseq1[0], mseq2[0], localhomtable[i] + j, off1, off2, 'h');
                         else if (opts.alg == 'Y')
                             putlocalhom2(ctx, mseq1[0], mseq2[0], localhomtable[i] + j - (ctx->njob - ctx->nadd), off1, off2, 'h');
-                        else if (!ctx->specifictarget && opts.alg != 'S' && opts.alg != 'V')
+                        else if (opts.alg != 'S' && opts.alg != 'V')
                             putlocalhom2(ctx, mseq1[0], mseq2[0], localhomtable[i] + j - i, off1, off2, 'h');
                         else {
                             if (targetmap[i] != -1 && targetmap[j] != -1) {
@@ -1776,16 +1754,11 @@ pairalign(aln_Opts opts, Context* ctx, const char* const* name, char** seq, char
         fprintf(stderr, "\n\n##### writing hat3\n");
         if (opts.alg == 'Y' || opts.alg == 'r')
             ilim = ctx->njob - ctx->nadd;
-        else if (ctx->specifictarget)
-            ilim = ntarget;
         else
             ilim = ctx->njob - 1;
         for (i = 0; i < ilim; i++) {
             if (opts.alg == 'Y' || opts.alg == 'r') {
                 jst = ctx->njob - ctx->nadd;
-                jj = 0;
-            } else if (ctx->specifictarget) {
-                jst = 0;
                 jj = 0;
             } else {
                 jst = i;
@@ -1813,8 +1786,6 @@ pairalign(aln_Opts opts, Context* ctx, const char* const* name, char** seq, char
 #endif
         if (opts.alg == 'Y' || opts.alg == 'r')
             FreeLocalHomTable_part(localhomtable, (ctx->njob - ctx->nadd), ctx->nadd);
-        else if (ctx->specifictarget)
-            FreeLocalHomTable_part(localhomtable, ntarget, ctx->njob);
         else
             FreeLocalHomTable_half(localhomtable, ctx->njob);
 #if DEBUG
@@ -1911,7 +1882,6 @@ pairlocalalign(aln_Opts opts, Context* ctx, int ngui, const char* const* namegui
     ctx->RNAppenalty = NOTSPECIFIED;
     ctx->RNApthr = NOTSPECIFIED;
     ctx->usenaivescoreinsteadofalignmentscore = 0;
-    ctx->specifictarget = 0;
     ctx->nwildcard = 0;
 
     if ((opts.alg == 'r' || opts.alg == 'R') && ctx->dorp == 'p') {
@@ -2032,19 +2002,6 @@ pairlocalalign(aln_Opts opts, Context* ctx, int ngui, const char* const* namegui
     L__align11(ctx, NULL, 0.0, NULL, NULL, 0, NULL, NULL);
     L__align11_noalign(ctx, NULL, NULL, NULL);
     genL__align11(ctx, NULL, NULL, NULL, 0, NULL, NULL);
-
-#if SHISHAGONYU
-    if (ngui) {
-        char buf[100];
-        for (i = 0; i < ctx->njob - 1; i++)
-            for (j = i + 1; j < ctx->njob; j++) {
-                sprintf(buf, "%5.3f", distancemtx[i][j - i]);
-                distancemtx[i][j - i] = 0.0;
-                sscanf(buf, "%lf", distancemtx[i] + j - i);
-                //			distancemtx[i][j-i] = 0.001 * (int)(distancemtx[i][j-i] * 1000 + 0.5);
-            }
-    }
-#endif
 
     return (0);
 }
