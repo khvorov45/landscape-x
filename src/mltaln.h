@@ -296,7 +296,6 @@ typedef struct Context {
     int      compacttree;
     int      lhlimit;
     int      nadd;
-    int      usenaivescoreinsteadofalignmentscore;
 } Context;
 
 void      MtxuntDouble(double**, int);
@@ -619,7 +618,7 @@ extern double distcompact(Context* ctx, int len1, int len2, int* table1, int* po
 extern double distcompact_msa(Context* ctx, const char* seq1, const char* seq2, int* skiptable1, int* skiptable2, int ss1, int ss2);
 extern void   fillimp(aln_Opts opts, double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2);
 extern void   fillimp_file(aln_Opts opts, Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, int* orinum1, int* orinum2, int* uselh, int* seedinlh1, int* seedinlh2, int nodeid, int nfiles);
-extern int    pairlocalalign(aln_Opts opts, Context* ctx, const char* const* namegui, char** seqgui, double** distancemtx, LocalHom** localhomtable);
+extern int    pairlocalalign(aln_Opts opts, Context* ctx, const char* const* namegui, char** seqgui, double** distancemtx);
 extern char   creverse(char f);
 extern void   use_getrusage(void);
 extern void   treeout_bin(FILE* treefp, int n, int*** topol, double** len, Treedep* dep, int* nfilesfornode);

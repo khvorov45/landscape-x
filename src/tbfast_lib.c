@@ -103,15 +103,13 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         aln_Opts pairLocalAlignOpts = opts;
         pairLocalAlignOpts.ppenalty = -2000;
         pairLocalAlignOpts.poffset = 100;
-        pairLocalAlignOpts.use_fft = 0;
         pairLocalAlignOpts.constraint = 0;
         pairlocalalign(
             pairLocalAlignOpts,
             ctx,
             name,
             seq,
-            iscore,
-            localhomtable
+            iscore
         );
     }
 

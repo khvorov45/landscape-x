@@ -43,7 +43,6 @@ typedef struct aln_Opts {
     double  sueff_global;
     char    treemethod;
     char    alg;
-    bool    use_fft;
 } aln_Opts;
 
 typedef struct aln_AlignResult {
@@ -252,7 +251,6 @@ aln_defaultOpts(void) {
         .sueff_global = 0.1,
         .treemethod = 'X',
         .alg = 'A',
-        .use_fft = true,
     };
     return opts;
 }
