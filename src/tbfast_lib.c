@@ -188,7 +188,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     Treedep* dep = NULL;
     double** len = NULL;
     FILE*    prep = NULL;
-    char*    mergeoralign = NULL;
     int      nsubalignments, maxmem;
     int**    subtable;
     int*     insubtable;
@@ -230,8 +229,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     len = AllocateFloatMtx(ctx->njob, 2);
     eff = AllocateDoubleVec(ctx->njob);
     kozoarivec = AllocateCharVec(ctx->njob);
-
-    mergeoralign = AllocateCharVec(ctx->njob);
 
     dep = (Treedep*)calloc(ctx->njob, sizeof(Treedep));
     localmem = AllocateIntMtx(2, ctx->njob + 1);
@@ -357,13 +354,7 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         copyWithNoGaps(bseq[i], seq[i]);
     }
 
-    for (int i = 0; i < ctx->njob - 1; i++) {
-        mergeoralign[i] = 'a';
-    }
-
     {
-        int       m;
-        int       len1nocommongap;
         int       len1, len2;
         int       clus1, clus2;
         int*      seedinlh1 = NULL;
@@ -371,7 +362,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         int       m1, m2;
         double    dumdb = 0.0;
         int       ffttry;
-        int       gapmaplen;
         int       nfiles;
         double*** cpmxchild0 = NULL;
         double*** cpmxchild1 = NULL;
@@ -456,12 +446,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
                 memhist[l][clus1 + clus2] = -1;
             }
 
-            if (mergeoralign[l] == 'n') {
-                free(localmem[0]);
-                free(localmem[1]);
-                continue;
-            }
-
             makedynamicmtx(opts, ctx, dynamicmtx, ctx->n_dis_consweight_multi, dep[l].distfromtip);
 
             len1 = strlen(bseq[m1]);
@@ -490,22 +474,8 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
                 clus1 = fastconjuction_noname(localmem[0], bseq, mseq1, effarr1, eff, indication1, opts.minimumweight, &orieff1);  // orieff tsukau!
                 clus2 = fastconjuction_noname(localmem[1], bseq, mseq2, effarr2, eff, indication2, opts.minimumweight, &orieff2);  // orieff tsukau!
             }
-
-            if (mergeoralign[l] == '1' || mergeoralign[l] == '2') {
-                ctx->newgapstr = "=";
-            } else
-                ctx->newgapstr = "-";
-
-            len1nocommongap = len1;
-            if (mergeoralign[l] == '1')  // nai
-            {
-                findcommongaps(clus2, mseq2, gapmap);
-                commongappick(clus2, mseq2);
-            } else if (mergeoralign[l] == '2') {
-                findcommongaps(clus1, mseq1, gapmap);
-                commongappick(clus1, mseq1);
-                len1nocommongap = strlen(mseq1[0]);
-            }
+            
+            ctx->newgapstr = "-";
 
             if (ctx->compacttree == 3)
                 nfiles = nfilesfornode[l];
@@ -588,29 +558,8 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
 
             nlen[m1] = 0.5 * (nlen[m1] + nlen[m2]);
 
-            if (ctx->disp)
+            if (ctx->disp) {
                 display(ctx, bseq, ctx->njob);
-
-            if (mergeoralign[l] == '1') {
-                reporterr("Check source!!\n");
-                exit(1);
-            }
-            if (mergeoralign[l] == '2') {
-                gapmaplen = strlen(mseq1[0]) - len1nocommongap + len1;
-                adjustgapmap(gapmaplen, gapmap, mseq1[0]);
-                if (tempOpts->smoothing) {
-                    restorecommongapssmoothly(ctx->njob, ctx->njob - (clus1 + clus2), bseq, localmem[0], localmem[1], gapmap, alloclen, '-');
-                    findnewgaps(ctx, 0, mseq1, gaplen);
-                    insertnewgaps_bothorders(opts, ctx, ctx->njob, alreadyaligned, bseq, localmem[0], localmem[1], gaplen, gapmap, gapmaplen, alloclen, opts.alg, '-');
-                } else {
-                    restorecommongaps(ctx->njob, ctx->njob - (clus1 + clus2), bseq, localmem[0], localmem[1], gapmap, alloclen, '-');
-                    findnewgaps(ctx, 0, mseq1, gaplen);
-                    insertnewgaps(opts, ctx, ctx->njob, alreadyaligned, bseq, localmem[0], localmem[1], gaplen, gapmap, alloclen, opts.alg, '-');
-                }
-                eq2dashmatometehayaku(mseq1, clus1);
-                eq2dashmatometehayaku(mseq2, clus2);
-                for (int i = 0; (m = localmem[1][i]) > -1; i++)
-                    alreadyaligned[m] = 1;
             }
         }
     }
