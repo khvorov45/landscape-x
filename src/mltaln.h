@@ -599,7 +599,6 @@ extern void               makedynamicmtx(aln_Opts opts, Context* ctx, double** o
 extern double             dist2offset(aln_Opts opts, double dist);
 extern void               reporterr(const char* str, ...);
 extern void               freeconstants(Context* ctx);
-extern void               FreeCommonIP(Context* ctx);
 extern void               makeskiptable(int n, int** skip, char** seq);
 extern int                generatesubalignmentstable(int nseq, int*** tablept, int* nsubpt, int* maxmempt, int*** topol, double** len, double threshold);
 extern double             sumofpairsscore(Context* ctx, int nseq, char** seq);

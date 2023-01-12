@@ -2,7 +2,6 @@
 
 #define DEBUG 0
 #define IODEBUG 0
-#define SCOREOUT 0
 
 #define NODIST -9999
 
@@ -1676,9 +1675,6 @@ pairalign(aln_Opts opts, Context* ctx, const char* const* name, char** seq, char
 
                 if (opts.alg == 't' || (mseq1[0][0] != 0 && mseq2[0][0] != 0))  // 't' no jouken ha iranai to omou. if( ( mseq1[0][0] != 0 && mseq2[0][0] != 0  ) )
                 {
-#if SCOREOUT
-                    fprintf(stderr, "score = %10.2f (%d,%d)\n", pscore, i, j);
-#endif
                     if ((ctx->nadd == 0 || (opts.alg != 'Y' && opts.alg != 'r') || (i < ctx->njob - ctx->nadd && ctx->njob - ctx->nadd <= j))) {
                         if (!store_localhom)
                             ;

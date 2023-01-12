@@ -13,8 +13,6 @@
 #define N0LOOPFIRST 0
 #define YOUNGER0TREE 1  // --add ni hitsuyou
 
-#define REPORTCOSTS 0
-
 #define RECURSIVETOP 0
 
 #define TREE7325 0
@@ -5847,14 +5845,6 @@ makedynamicmtx(aln_Opts opts, Context* ctx, double** out, double** in, double of
         }
     }
 }
-void
-FreeCommonIP(Context* ctx) {
-    if (ctx->commonIP)
-        FreeIntMtx(ctx->commonIP);
-    ctx->commonIP = NULL;
-    ctx->commonAlloc1 = 0;
-    ctx->commonAlloc2 = 0;
-}
 
 void
 makeskiptable(int n, int** skip, char** seq) {
@@ -6502,9 +6492,6 @@ fillimp_file(aln_Opts opts, Context* ctx, double** impmtx, int clus1, int clus2,
                     npairs++;
                 }
             }
-#if REPORTCOSTS
-//		reporterr( "node %d, npairs = %d, nfiles = %d\n", nodeid, npairs, nfiles );
-#endif
     } else if (uselh) {
         //		npairs = (unsigned long long)clus1 * clus2;
         npairs = 0;
@@ -6518,15 +6505,8 @@ fillimp_file(aln_Opts opts, Context* ctx, double** impmtx, int clus1, int clus2,
                     npairs++;
                 }
             }
-#if REPORTCOSTS
-//		reporterr( "node %d, npairs = %d, nfiles = %d\n", nodeid, npairs, nfiles );
-#endif
-    } else  // use all
-    {
+    } else {
         npairs = (unsigned long long)clus1 * clus2;
-#if REPORTCOSTS
-//		reporterr( "node %d, npairs = %d, nfiles = %d (all)\n", nodeid, npairs, nfiles );
-#endif
     }
 
     if (localhom)  // seed yurai
