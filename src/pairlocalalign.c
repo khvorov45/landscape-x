@@ -4,33 +4,7 @@ int
 pairlocalalign(aln_Opts pairLocalAlignOpts, Context* ctx, char** seq) {
     aln_assert(ctx->njob >= 2);
 
-    ctx->fmodel = 0;
-    ctx->fftscore = 1;
-    ctx->fftRepeatStop = 0;
-    ctx->fftNoAnchStop = 0;
-    ctx->weight = 3;
-    ctx->tbutree = 1;
-    ctx->disp = 0;
-    ctx->outgap = 1;
-    ctx->mix = 0;
-    ctx->tbitr = 0;
-    ctx->tbweight = 0;
-    ctx->tbrweight = 3;
-    ctx->checkC = 0;
-    ctx->kobetsubunkatsu = 0;
-    ctx->divpairscore = 0;
-    ctx->ppenalty_OP = NOTSPECIFIED;
-    ctx->ppenalty_EX = NOTSPECIFIED;
-    ctx->kimuraR = NOTSPECIFIED;
-    ctx->pamN = NOTSPECIFIED;
-    ctx->geta2 = GETA2;
-    ctx->fftWinSize = NOTSPECIFIED;
-    ctx->fftThreshold = NOTSPECIFIED;
-    ctx->RNAppenalty = NOTSPECIFIED;
-    ctx->RNApthr = NOTSPECIFIED;
-    ctx->nwildcard = 0;
-
-    constants(pairLocalAlignOpts, ctx, ctx->njob, seq);
+    constants(pairLocalAlignOpts, ctx);
     initSignalSM(ctx);
 
     // TODO(sen) Sequence verification?

@@ -95,9 +95,8 @@ match_calc(Context* ctx, double** n_dynamicmtx, double* match, double** cpmx1, d
 }
 
 static void
-Atracking_localhom(Context* ctx, double* impwmpt, double* lasthorizontalw, double* lastverticalw, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int icyc, int jcyc, int* warpis, int* warpjs, int warpbase, int* ngap1, int* ngap2, int reuseprofiles, char** gt1, char** gt2) {
+Atracking_localhom(Context* ctx, double* impwmpt, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int icyc, int jcyc, int* warpis, int* warpjs, int warpbase, int* ngap1, int* ngap2, int reuseprofiles, char** gt1, char** gt2) {
     int    i, j, l, iin, jin, ifi, jfi, lgth1, lgth2, k, limk;
-    double wm;
     char * gaptable1, *gt1bk;
     char * gaptable2, *gt2bk;
     lgth1 = strlen(seq1[0]);
@@ -109,28 +108,6 @@ Atracking_localhom(Context* ctx, double* impwmpt, double* lasthorizontalw, doubl
     } else {
         gt1bk = *gt1;
         gt2bk = *gt2;
-    }
-
-    if (ctx->outgap == 1)
-        ;
-    else {
-        wm = lastverticalw[0];
-        for (i = 0; i < lgth1; i++) {
-            if (lastverticalw[i] >= wm) {
-                wm = lastverticalw[i];
-                iin = i;
-                jin = lgth2 - 1;
-                ijp[lgth1][lgth2] = +(lgth1 - i);
-            }
-        }
-        for (j = 0; j < lgth2; j++) {
-            if (lasthorizontalw[j] >= wm) {
-                wm = lasthorizontalw[j];
-                iin = lgth1 - 1;
-                jin = j;
-                ijp[lgth1][lgth2] = -(lgth2 - j);
-            }
-        }
     }
 
     for (i = 0; i < lgth1 + 1; i++) {
@@ -1446,7 +1423,7 @@ A__align(aln_Opts opts, Context* ctx, double** n_dynamicmtx, int penalty_l, int 
     gt2 = gt2bk = AllocateCharVec(lgth1 + lgth2 + 1);
 
     if (constraint) {
-        Atracking_localhom(ctx, impmatch, currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, warpis, warpjs, warpbase, &ngap1, &ngap2, reuseprofiles, &gt1, &gt2);
+        Atracking_localhom(ctx, impmatch, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, warpis, warpjs, warpbase, &ngap1, &ngap2, reuseprofiles, &gt1, &gt2);
     } else {
         wmo = Atracking(ctx, currentw, lastverticalw, fpenalty, fpenalty_ex, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, tailgp, warpis, warpjs, warpbase, &ngap1, &ngap2, reuseprofiles, &gt1, &gt2);
         if (!tailgp)

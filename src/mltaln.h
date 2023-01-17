@@ -333,7 +333,7 @@ short**   AllocateShortMtx(int, int);
 void      FreeShortMtx(short**);
 void      freeintmtx(int**, int);
 
-extern void   constants(aln_Opts opts, Context* ctx, int nseq, char** seq);
+extern void   constants(aln_Opts opts, Context* ctx);
 extern double A__align(aln_Opts opts, Context* ctx, double** scoringmtx, int penalty, int penalty_ex, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, char* gs1, char* gs2, char* ge1, char* ge2, int headgp, int tailgp, int firstmem, int calledby, double*** cpmxchild0, double*** cpmxchild1, double*** cpmxresult, double orieff1, double orieff2);
 extern double G__align11(Context* ctx, double** scoringmtx, char** seq1, char** seq2, int alloclen, int headgp, int tailgp);
 extern double imp_match_out_sc(int, int);
@@ -441,13 +441,6 @@ extern void   imp_match_init_strict(aln_Opts opts, int clus1, int clus2, int lgt
 extern void   cpmx_ribosum(Context* ctx, char** seq, char** seqr, char* dir, double** cpmx, double* eff, int lgth, int clus);
 extern void   assignstrweight(int nseq, double* strweight, Node* stopol, int*** topol, int step, int LorR, char* kozoari, double* seqweight);
 extern double plainscore(Context* ctx, int nseq, char** seq);
-extern void   eq2dash(char* s);
-extern void   eq2dashmatometehayaku(char** s, int n);
-extern void   findnewgaps(Context* ctx, int rep, char** seq, int* gaplen);
-extern void   findcommongaps(int, char**, int*);
-extern void   adjustgapmap(int, int*, char*);
-extern void   restorecommongaps(int n, int n0, char** seq, int* top0, int* top1, int* gaplen, int alloclen, char gapchar);
-extern void   restorecommongapssmoothly(int n, int n0, char** seq, int* top0, int* top1, int* gaplen, int alloclen, char gapchar);
 extern int    samemember(int* mem, int* cand);
 extern int    samemembern(int* mem, int* cand, int candn);
 extern int    includemember(int* mem, int* cand);
@@ -466,13 +459,7 @@ extern int    generatesubalignmentstable(int nseq, int*** tablept, int* nsubpt, 
 extern double sumofpairsscore(Context* ctx, int nseq, char** seq);
 
 extern int    isallgap(char*);
-extern int    deletenewinsertions_whole(int on, int an, char** oseq, char** aseq, GapPos** deletelist);
-extern int    deletenewinsertions_whole_eq(int on, int an, char** oseq, char** aseq, GapPos** deletelist);
 extern int    deletenewinsertions_difflist(int on, int an, char** oseq, char** aseq, GapPos** difflist);
-extern int    recordoriginalgaps(char* originallygapped, int n, char** s);
-extern void   restoreoriginalgaps(int n, char** seq, char* originalgaps);
-extern void   reconstructdeletemap(Context* ctx, int nadd, char** addbk, GapPos** deletelist, char** realn, FILE* fp, const char* const* name);
-extern void   reconstructdeletemap_compact(Context* ctx, int nadd, char** addbk, GapPos** deletelist, char** realn, FILE* fp, const char* const* name);
 extern void   topolorder(int* order, int* posinorder, int*** topol, Treedep* dep, int pos, int child);
 extern int*   topolorderz(int* order, int*** topol, Treedep* dep, int pos, int nchild);
 extern int*   topolordery(int* order, int*** topol, Treedep* dep, int pos, int nchild);

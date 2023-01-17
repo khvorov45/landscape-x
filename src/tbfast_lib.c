@@ -29,14 +29,9 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     ctx->njob = stringsCount;
     ctx->rnaprediction = 'm';
     ctx->addprofile = 1;
-    ctx->fftscore = 1;
-    ctx->weight = 3;
-    ctx->tbutree = 1;
     ctx->outgap = 1;
-    ctx->tbrweight = 3;
     ctx->kimuraR = NOTSPECIFIED;
     ctx->pamN = NOTSPECIFIED;
-    ctx->geta2 = GETA2;
     ctx->fftWinSize = NOTSPECIFIED;
     ctx->fftThreshold = NOTSPECIFIED;
     ctx->RNAppenalty = NOTSPECIFIED;
@@ -44,6 +39,9 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     ctx->RNApthr = NOTSPECIFIED;
     ctx->TMorJTT = JTT;
     ctx->consweight_multi = 1.0;
+
+    ctx->ppenalty_OP = NOTSPECIFIED;
+    ctx->ppenalty_EX = NOTSPECIFIED;
 
     // TODO(sen) What do we need the name array for?
     // TODO(sen) Can we use the strings directly as aos?
@@ -121,7 +119,7 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         }
     }
 
-    constants(opts, ctx, ctx->njob, seq);
+    constants(opts, ctx);
 
     initSignalSM(ctx);
 
@@ -136,7 +134,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     localmem[0][0] = -1;
     topolorderz(localmem[0], topol, dep, ctx->njob - 2, 2);
 
-    ctx->weight = 3;
     double* eff = AllocateDoubleVec(ctx->njob);
     counteff_simple_double_nostatic_memsave(ctx->njob, topol, len, dep, eff);
     for (int i = ctx->njob; i < ctx->njob; i++) {
