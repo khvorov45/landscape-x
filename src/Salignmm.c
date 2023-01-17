@@ -4,7 +4,6 @@
 #define DEBUG 0
 #define XXXXXXX 0
 #define USE_PENALTY_EX 1
-#define FASTMATCHCALC 1
 #define SLOW 0
 
 #define TERMGAPFAC 0.0
@@ -19,16 +18,9 @@ imp_match_out_sc(int i1, int j1) {
 
 static void
 imp_match_out_vead(double* imp, int i1, int lgth2) {
-#if FASTMATCHCALC
     double* pt = impmtx[i1];
     while (lgth2--)
         *imp++ += *pt++;
-#else
-    int     j;
-    double* pt = impmtx[i1];
-    for (j = 0; j < lgth2; j++)
-        *imp++ += pt[j];
-#endif
 }
 static void
 imp_match_out_vead_tate(double* imp, int j1, int lgth1) {
@@ -38,8 +30,7 @@ imp_match_out_vead_tate(double* imp, int j1, int lgth1) {
 }
 
 void
-imp_match_init_strict(aln_Opts opts, Context* ctx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2, int* uselh, int* seedinlh1, int* seedinlh2, int nodeid, int nfiles) {
-
+imp_match_init_strict(aln_Opts opts, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2) {
     if (seq1 == NULL) {
         if (impmtx)
             FreeFloatMtx(impmtx);
@@ -51,24 +42,16 @@ imp_match_init_strict(aln_Opts opts, Context* ctx, int clus1, int clus2, int lgt
     if (impalloclen < lgth1 + 2 || impalloclen < lgth2 + 2) {
         if (impmtx)
             FreeFloatMtx(impmtx);
-        //		if( nocount1 ) free( nocount1 );
-        //		if( nocount2 ) free( nocount2 );
         impalloclen = MAX(lgth1, lgth2) + 2;
         impmtx = AllocateFloatMtx(impalloclen, impalloclen);
-        //		nocount1 = AllocateCharVec( impalloclen );
-        //		nocount2 = AllocateCharVec( impalloclen );
     }
 
-    if (nodeid == -1)
-        fillimp(opts, impmtx, clus1, clus2, lgth1, lgth2, seq1, seq2, eff1, eff2, eff1_kozo, eff2_kozo, localhom, swaplist, orinum1, orinum2);  // uselh -> target -> localhomtable. seedinlh12 -> localhom ni haitteiru.
-    else
-        fillimp_file(opts, ctx, impmtx, clus1, clus2, lgth1, lgth2, seq1, seq2, eff1, eff2, eff1_kozo, eff2_kozo, localhom, orinum1, orinum2, uselh, seedinlh1, seedinlh2, nodeid, nfiles);
+    fillimp(opts, impmtx, clus1, clus2, lgth1, lgth2, seq1, seq2, eff1, eff2, eff1_kozo, eff2_kozo, localhom, swaplist, orinum1, orinum2);  // uselh -> target -> localhomtable. seedinlh12 -> localhom ni haitteiru.
 }
 
 static void
 match_calc(Context* ctx, double** n_dynamicmtx, double* match, double** cpmx1, double** cpmx2, int i1, int lgth2, double** doublework, int** intwork, int initialize) {
-#if FASTMATCHCALC
-    int j, l;
+    int      j, l;
     double** cpmxpd = doublework;
     int**    cpmxpdn = intwork;
     double * matchpt, *cpmxpdpt, **cpmxpdptpt;
@@ -94,8 +77,6 @@ match_calc(Context* ctx, double** n_dynamicmtx, double* match, double** cpmx1, d
         for (l = 0; l < ctx->nalphabets; l++) {
             scarr[l] = 0.0;
             for (j = 0; j < ctx->nalphabets; j++)
-                //				scarr[l] += n_dis[j][l] * cpmx1[j][i1];
-                //				scarr[l] += n_dis_consweight_multi[j][l] * cpmx1[j][i1];
                 scarr[l] += n_dynamicmtx[j][l] * cpmx1[j][i1];
         }
         matchpt = match;
@@ -111,43 +92,6 @@ match_calc(Context* ctx, double** n_dynamicmtx, double* match, double** cpmx1, d
         }
     }
     free(scarr);
-//	fprintf( stderr, "done\n" );
-#else
-    int j, k, l;
-    //	double scarr[26];
-    double** cpmxpd = doublework;
-    int**    cpmxpdn = intwork;
-    double*  scarr;
-    scarr = calloc(nalphabets, sizeof(double));
-    // simple
-    if (initialize) {
-        int count = 0;
-        for (j = 0; j < lgth2; j++) {
-            count = 0;
-            for (l = 0; l < nalphabets; l++) {
-                if (cpmx2[l][j]) {
-                    cpmxpd[count][j] = cpmx2[l][j];
-                    cpmxpdn[count][j] = l;
-                    count++;
-                }
-            }
-            cpmxpdn[count][j] = -1;
-        }
-    }
-    for (l = 0; l < nalphabets; l++) {
-        scarr[l] = 0.0;
-        for (k = 0; k < nalphabets; k++)
-            //			scarr[l] += n_dis[k][l] * cpmx1[k][i1];
-            //			scarr[l] += n_dis_consweight_multi[k][l] * cpmx1[k][i1];
-            scarr[l] += n_dynamicmtx[k][l] * cpmx1[k][i1];
-    }
-    for (j = 0; j < lgth2; j++) {
-        match[j] = 0.0;
-        for (k = 0; cpmxpdn[k][j] > -1; k++)
-            match[j] += scarr[cpmxpdn[k][j]] * cpmxpd[k][j];
-    }
-    free(scarr);
-#endif
 }
 
 static void
@@ -805,7 +749,7 @@ A__align(aln_Opts opts, Context* ctx, double** n_dynamicmtx, int penalty_l, int 
             orlgth1 = 0;
             orlgth2 = 0;
 
-            imp_match_init_strict(opts, ctx, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0);
+            imp_match_init_strict(opts, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
             FreeFloatVec(w1);
             FreeFloatVec(w2);
@@ -963,13 +907,8 @@ A__align(aln_Opts opts, Context* ctx, double** n_dynamicmtx, int penalty_l, int 
         gapfreq1 = AllocateFloatVec(ll1 + 2);
         gapfreq2 = AllocateFloatVec(ll2 + 2);
 
-#if FASTMATCHCALC
         doublework = AllocateFloatMtx(MAX(ll1, ll2) + 2, ctx->nalphabets);
         intwork = AllocateIntMtx(MAX(ll1, ll2) + 2, ctx->nalphabets + 1);
-#else
-        doublework = AllocateFloatMtx(nalphabets, MAX(ll1, ll2) + 2);
-        intwork = AllocateIntMtx(nalphabets, MAX(ll1, ll2) + 2);
-#endif
 
 #if DEBUG
         fprintf(stderr, "succeeded\n");

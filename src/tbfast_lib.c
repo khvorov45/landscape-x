@@ -139,7 +139,7 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     ctx->weight = 3;
     double* eff = AllocateDoubleVec(ctx->njob);
     counteff_simple_double_nostatic_memsave(ctx->njob, topol, len, dep, eff);
-    for (int i = ctx->njob - ctx->nadd; i < ctx->njob; i++) {
+    for (int i = ctx->njob; i < ctx->njob; i++) {
         eff[i] /= (double)100;
     }
 
@@ -151,8 +151,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     }
 
     {
-        int*      seedinlh1 = NULL;
-        int*      seedinlh2 = NULL;
         int       m1, m2;
         double    dumdb = 0.0;
         double*** cpmxchild0 = NULL;
@@ -180,9 +178,9 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         }
 
         int* alreadyaligned = AllocateIntVec(ctx->njob);
-        for (int i = 0; i < ctx->njob - ctx->nadd; i++)
+        for (int i = 0; i < ctx->njob; i++)
             alreadyaligned[i] = 1;
-        for (int i = ctx->njob - ctx->nadd; i < ctx->njob; i++)
+        for (int i = ctx->njob; i < ctx->njob; i++)
             alreadyaligned[i] = 0;
 
         for (int l = 0; l < ctx->njob; l++)
@@ -253,7 +251,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
 
             imp_match_init_strict(
                 opts,
-                ctx,
                 clus1,
                 clus2,
                 strlen(mseq1[0]),
@@ -267,12 +264,7 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
                 localhomshrink,
                 swaplist,
                 localmem[0],
-                localmem[1],
-                0,
-                seedinlh1,
-                seedinlh2,
-                (ctx->compacttree == 3) ? l : -1,
-                0
+                localmem[1]
             );
 
             A__align(

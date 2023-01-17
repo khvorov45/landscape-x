@@ -4,7 +4,6 @@
 
 #define DEBUG 0
 #define USE_PENALTY_EX 0
-#define FASTMATCHCALC 1
 #define STOREWM 0
 
 #define DPTANNI 100
@@ -169,10 +168,7 @@ static void match_calc( double **n_dynamicmtx, double *match, double **cpmx1, do
 
 static void
 match_calc_alphabet_seq(Context* ctx, double** n_dynamicmtx, double* match, double** cpmx1, double** cpmx2, int i1, int start2, int lgth2, double** doublework, int** intwork, int initialize) {
-#if FASTMATCHCALC
-    //	fprintf( stderr, "\nmatch_calc... %d", i1 );
     int j, l, p;
-    //	double scarr[26];
     double** cpmxpd = doublework;
     int**    cpmxpdn = intwork;
     double * matchpt, *cpmxpdpt, **cpmxpdptpt;
@@ -180,7 +176,6 @@ match_calc_alphabet_seq(Context* ctx, double** n_dynamicmtx, double* match, doub
     double*  scarr;
     scarr = calloc(ctx->nalphabets, sizeof(double));
 
-    //	reporterr( "lgth2=%d.  j=%d-%d, p=%d-%d\n", lgth2, 0, lgth2, start2, start2+lgth2 );
     if (initialize) {
         int count = 0;
         for (j = 0, p = start2; j < lgth2; j++, p++) {
@@ -200,8 +195,6 @@ match_calc_alphabet_seq(Context* ctx, double** n_dynamicmtx, double* match, doub
         for (l = 0; l < ctx->nalphabets; l++) {
             scarr[l] = 0.0;
             for (j = 0; j < ctx->nalphabets; j++)
-                //				scarr[l] += n_dis[j][l] * cpmx1[j][i1];
-                //				scarr[l] += n_dis_consweight_multi[j][l] * cpmx1[j][i1];
                 scarr[l] += n_dynamicmtx[j][l] * cpmx1[j][i1];
         }
         matchpt = match;
@@ -217,43 +210,6 @@ match_calc_alphabet_seq(Context* ctx, double** n_dynamicmtx, double* match, doub
         }
     }
     free(scarr);
-//	fprintf( stderr, "done\n" );
-#else
-    int j, k, l, p;
-    //	double scarr[26];
-    double** cpmxpd = doublework;
-    int**    cpmxpdn = intwork;
-    double*  scarr;
-    scarr = calloc(nalphabets, sizeof(double));
-    // simple
-    if (initialize) {
-        int count = 0;
-        for (j = 0, p = start2; j < lgth2; j++, p++) {
-            count = 0;
-            for (l = 0; l < nalphabets; l++) {
-                if (cpmx2[l][p]) {
-                    cpmxpd[count][j] = cpmx2[l][p];
-                    cpmxpdn[count][j] = l;
-                    count++;
-                }
-            }
-            cpmxpdn[count][j] = -1;
-        }
-    }
-    for (l = 0; l < nalphabets; l++) {
-        scarr[l] = 0.0;
-        for (k = 0; k < nalphabets; k++)
-            //			scarr[l] += n_dis[k][l] * cpmx1[k][i1];
-            //			scarr[l] += n_dis_consweight_multi[k][l] * cpmx1[k][i1];
-            scarr[l] += n_dynamicmtx[k][l] * cpmx1[k][i1];
-    }
-    for (j = 0; j < lgth2; j++) {
-        match[j] = 0.0;
-        for (k = 0; cpmxpdn[k][j] > -1; k++)
-            match[j] += scarr[cpmxpdn[k][j]] * cpmxpd[k][j];
-    }
-    free(scarr);
-#endif
 }
 
 static void
@@ -654,13 +610,8 @@ MSalignmm_tanni(Context* ctx, double** n_dynamicmtx, int icyc, int jcyc, char** 
     m = AllocateFloatVec(ll2 + 2);
     mp = AllocateIntVec(ll2 + 2);
 
-#if FASTMATCHCALC
     doublework = AllocateFloatMtx(MAX(ll1, ll2) + 2, ctx->nalphabets + 1);
     intwork = AllocateIntMtx(MAX(ll1, ll2) + 2, ctx->nalphabets + 1);
-#else
-    doublework = AllocateFloatMtx(nalphabets + 1, MAX(ll1, ll2) + 2);
-    intwork = AllocateIntMtx(nalphabets + 1, MAX(ll1, ll2) + 2);
-#endif
 
     intmtx = AllocateIntMtx(ll1 + 1, ll2 + 1);
 
@@ -1071,13 +1022,8 @@ MSalignmm_rec(Context* ctx, double** n_dynamicmtx, int icyc, int jcyc, double* e
     mp = AllocateIntVec(ll2 + 2);
     gaps = AllocateCharVec(MAX(ll1, ll2) + 2);
 
-#if FASTMATCHCALC
     doublework = AllocateFloatMtx(MAX(ll1, ll2) + 2, ctx->nalphabets);
     intwork = AllocateIntMtx(MAX(ll1, ll2) + 2, ctx->nalphabets);
-#else
-    doublework = AllocateFloatMtx(nalphabets, MAX(ll1, ll2) + 2);
-    intwork = AllocateIntMtx(nalphabets, MAX(ll1, ll2) + 2);
-#endif
 
 #if DEBUG
     fprintf(stderr, "succeeded\n");

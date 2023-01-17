@@ -186,13 +186,11 @@ typedef struct GapPos {
 } GapPos;
 
 typedef struct Context {
-    char     modelname[500];
     int      njob;
     int      maxInputSeqLen;
     int      amino_n[0x100];
     char     amino_grp[0x100];
     int**    amino_dis;
-    double** amino_dis_consweight_multi;
     int**    n_dis;
     double** n_disLN;
     int**    n_disFFT;
@@ -439,7 +437,7 @@ extern double naivepairscore11_dynmtx(Context* ctx, double**, char* seq1, char* 
 extern double naivepairscorefast(Context* ctx, const char* seq1, const char* seq2, int* skip1, int* skip2, int penal);
 void          makegrouprna(RNApair*** group, RNApair*** all, int* memlist);
 extern void   fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(aln_Opts opts, Context* ctx, int nseq, double** eff, int*** topol, double** len, Treedep*, int progressout, int efffree);
-extern void   imp_match_init_strict(aln_Opts opts, Context* ctx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1kozo, double* eff2kozo, LocalHom*** localhom, char* swaplist, int* memlist1, int* memlist2, int* uselh, int* seedinlh1, int* seedinlh2, int nodeid, int nfiles);
+extern void   imp_match_init_strict(aln_Opts opts, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1kozo, double* eff2kozo, LocalHom*** localhom, char* swaplist, int* memlist1, int* memlist2);
 extern void   cpmx_ribosum(Context* ctx, char** seq, char** seqr, char* dir, double** cpmx, double* eff, int lgth, int clus);
 extern void   assignstrweight(int nseq, double* strweight, Node* stopol, int*** topol, int step, int LorR, char* kozoari, double* seqweight);
 extern double plainscore(Context* ctx, int nseq, char** seq);
@@ -463,7 +461,6 @@ extern void   gapcountf(double* freq, char** seq, int nseq, double* eff, int lgt
 extern void   gapcountadd(double* freq, char** seq, int nseq, double* eff, int lgth);
 extern void   outgapcount(double* freq, int nseq, char* gappat, double* eff);
 extern void   makedynamicmtx(Context* ctx, double** out, double** in, double offset);
-extern void   freeconstants(Context* ctx);
 extern void   makeskiptable(int n, int** skip, char** seq);
 extern int    generatesubalignmentstable(int nseq, int*** tablept, int* nsubpt, int* maxmempt, int*** topol, double** len, double threshold);
 extern double sumofpairsscore(Context* ctx, int nseq, char** seq);
@@ -480,7 +477,6 @@ extern void   topolorder(int* order, int* posinorder, int*** topol, Treedep* dep
 extern int*   topolorderz(int* order, int*** topol, Treedep* dep, int pos, int nchild);
 extern int*   topolordery(int* order, int*** topol, Treedep* dep, int pos, int nchild);
 extern void   fillimp(aln_Opts opts, double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2);
-extern void   fillimp_file(aln_Opts opts, Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, int* orinum1, int* orinum2, int* uselh, int* seedinlh1, int* seedinlh2, int nodeid, int nfiles);
 extern int    pairlocalalign(aln_Opts opts, Context* ctx, char** seqgui);
 extern void   use_getrusage(void);
 extern void   sortbylength(int* uselh, Lennum* in, int size, unsigned long long numpairs);

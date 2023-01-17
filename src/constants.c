@@ -1115,8 +1115,6 @@ BLOSUMmtx(int n, double** matrix, double* freq, unsigned char* amino, char* amin
 #define DEBUG 0
 #define TEST 0
 
-#define NORMALIZE1 1
-
 static int
 shishagonyuu(double in) {
     int out;
@@ -1135,22 +1133,10 @@ static void
 nscore(int* amino_n, int** n_dis) {
     int i;
     for (i = 0; i < 26; i++) {
-        //		reporterr( "i=%d (%c), n_dis[%d][%d] = %d\n", i, amino[i], i, amino_n['n'], n_dis[i][amino_n['n']] );
         n_dis[i][amino_n['n']] = shishagonyuu((double)0.25 * n_dis[i][i]);
-        //		reporterr( "-> i=%d, n_dis[%d][%d] = %d\n", i, i, amino_n['n'], n_dis[i][amino_n['n']] );
         n_dis[amino_n['n']][i] = n_dis[i][amino_n['n']];
     }
-    //	n_dis[amino_n['n']][amino_n['n']] = shishagonyuu( (double)0.25 * 0.25 * ( n_dis[0][0] + n_dis[1][1] + n_dis[2][2] + n_dis[3][3] ) );
-    n_dis[amino_n['n']][amino_n['n']] = shishagonyuu((double)0.25 * (n_dis[0][0] + n_dis[1][1] + n_dis[2][2] + n_dis[3][3]));  // 2017/Jan/2
-
-#if 0  // Ato de kakunin
-	for( i=0; i<26; i++ )
-	{
-		n_dis[i][amino_n['-']] = shishagonyuu( (double)0.25 * n_dis[i][i] );
-		n_dis[amino_n['-']][i] = n_dis[i][amino_n['-']];
-	}
-//	n_dis[amino_n['-']][amino_n['-']] = shishagonyuu( (double)0.25 * 0.25 * ( n_dis[0][0] + n_dis[1][1] + n_dis[2][2] + n_dis[3][3] ) ); // DAME!
-#endif
+    n_dis[amino_n['n']][amino_n['n']] = shishagonyuu((double)0.25 * (n_dis[0][0] + n_dis[1][1] + n_dis[2][2] + n_dis[3][3]));
 }
 
 static void
@@ -1329,21 +1315,20 @@ generatenuc1pam(double** pam1, int kimuraR, double* freq) {
 
 void
 constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
-    int i, j, x;
-    //	double tmp;
+    int  i, j, x;
     char shiftmodel[100];
     int  charsize = 0;
 
-    if (opts.nblosum < 0)
+    if (opts.nblosum < 0) {
         ctx->dorp = 'p';
+    }
 
     if (opts.penalty_shift_factor >= 10)
         ctx->trywarp = 0;
     else
         ctx->trywarp = 1;
 
-    if (ctx->dorp == 'd') /* DNA */
-    {
+    if (ctx->dorp == 'd') {
         int      k, m;
         double   average;
         double** pamx = AllocateDoubleMtx(11, 11);
@@ -1382,9 +1367,6 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
 
         ctx->RNApenalty = (int)(3 * 600.0 / 1000.0 * ctx->RNAppenalty + 0.5);
         ctx->RNApenalty_ex = (int)(3 * 600.0 / 1000.0 * ctx->RNAppenalty_ex + 0.5);
-        //		reporterr(       "DEFAULTRNAGOP_N = %d\n", DEFAULTRNAGOP_N );
-        //		reporterr(       "RNAppenalty = %d\n", RNAppenalty );
-        //		reporterr(       "RNApenalty = %d\n", RNApenalty );
 
         ctx->RNAthr = (int)(3 * 600.0 / 1000.0 * ctx->RNApthr + 0.5);
         ctx->penalty = (int)(3 * 600.0 / 1000.0 * opts.ppenalty + 0.5);
@@ -1403,8 +1385,6 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
             sprintf(shiftmodel, "%4.2f (%4.2f)", -(double)ctx->penalty_shift / 1800, -(double)ctx->penalty_shift / 600);
         else
             sprintf(shiftmodel, "noshift");
-
-        sprintf(ctx->modelname, "%s%d (%d), %4.2f (%4.2f), %4.2f (%4.2f), %s", ctx->rnakozo ? "RNA" : "DNA", ctx->pamN, ctx->kimuraR, -(double)opts.ppenalty * 0.001, -(double)opts.ppenalty * 0.003, -(double)opts.poffset * 0.001, -(double)opts.poffset * 0.003, shiftmodel);
 
         for (i = 0; i < 26; i++)
             ctx->amino[i] = locaminon[i];
@@ -1429,7 +1409,6 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
             for (i = 0; i < 4; i++)
                 for (j = 0; j < 4; j++)
                     pamx[i][j] = (double)locn_disn[i][j];
-#if NORMALIZE1
             average = 0.0;
             for (i = 0; i < 4; i++)
                 for (j = 0; j < 4; j++)
@@ -1450,21 +1429,8 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
             for (i = 0; i < 4; i++)
                 for (j = 0; j < 4; j++)
                     pamx[i][j] -= ctx->offset;
-#endif
         } else {
-#if 0
-				double f = 0.99;
-				double s = (double)kimuraR / ( 2 + kimuraR ) * 0.01;
-				double v = (double)1       / ( 2 + kimuraR ) * 0.01;
-				pam1[0][0] = f; pam1[0][1] = s; pam1[0][2] = v; pam1[0][3] = v;
-				pam1[1][0] = s; pam1[1][1] = f; pam1[1][2] = v; pam1[1][3] = v;
-				pam1[2][0] = v; pam1[2][1] = v; pam1[2][2] = f; pam1[2][3] = s;
-				pam1[3][0] = v; pam1[3][1] = v; pam1[3][2] = s; pam1[3][3] = f;
-#else
             generatenuc1pam(pam1, ctx->kimuraR, freq);
-#endif
-
-            reporterr("generating a scoring matrix for nucleotide (dist=%d) ... ", ctx->pamN);
 
             if (ctx->disp) {
                 reporterr(" TPM \n");
@@ -1493,7 +1459,6 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
             for (i = 0; i < 4; i++)
                 for (j = 0; j < 4; j++)
                     pamx[i][j] /= freq[j];
-            //					pamx[i][j] /= 0.25;
 
             for (i = 0; i < 4; i++)
                 for (j = 0; j < 4; j++) {
@@ -1513,8 +1478,6 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
                 }
                 reporterr("\n");
             }
-
-            // ?????
 
             average = 0.0;
             for (i = 0; i < 4; i++)
@@ -1539,17 +1502,6 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
             for (i = 0; i < 4; i++)
                 for (j = 0; j < 4; j++)
                     pamx[i][j] = shishagonyuu(pamx[i][j]);
-
-            if (ctx->disp) {
-                reporterr(" after shishagonyuu\n");
-                for (i = 0; i < 4; i++) {
-                    for (j = 0; j < 4; j++)
-                        reporterr("%+#6.10f", pamx[i][j]);
-                    reporterr("\n");
-                }
-                reporterr("\n");
-            }
-            reporterr("done\n");
         }
 
         for (i = 0; i < 5; i++) {
@@ -1561,27 +1513,6 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
             for (j = 5; j < 10; j++) {
                 pamx[i][j] = pamx[i - 5][j - 5];
             }
-
-        if (ctx->disp) {
-            reporterr(" before dis\n");
-            for (i = 0; i < 4; i++) {
-                for (j = 0; j < 4; j++)
-                    reporterr("%+#6.10f", pamx[i][j]);
-                reporterr("\n");
-            }
-            reporterr("\n");
-        }
-
-        if (ctx->disp) {
-            reporterr(" score matrix  \n");
-            for (i = 0; i < 4; i++) {
-                for (j = 0; j < 4; j++)
-                    reporterr("%+#6.10f", pamx[i][j]);
-                reporterr("\n");
-            }
-            reporterr("\n");
-            exit(1);
-        }
 
         for (i = 0; i < 26; i++)
             ctx->amino[i] = locaminon[i];
@@ -1598,20 +1529,6 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
         if (ctx->nwildcard)
             nscore(ctx->amino_n, ctx->n_dis);
 
-        if (ctx->disp) {
-            reporterr(" score matrix  \n");
-            for (i = 0; i < 26; i++) {
-                for (j = 0; j < 26; j++)
-                    reporterr("%+6d", ctx->n_dis[i][j]);
-                reporterr("\n");
-            }
-            reporterr("\n");
-            reporterr("penalty = %d, penalty_ex = %d\n", ctx->penalty, ctx->penalty_ex);
-            //exit( 1 );
-        }
-
-// RIBOSUM
-#if 1
         average = 0.0;
         for (i = 0; i < 4; i++)
             for (j = 0; j < 4; j++)
@@ -1625,8 +1542,6 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
             for (j = 0; j < 4; j++)
                 for (k = 0; k < 4; k++)
                     for (m = 0; m < 4; m++) {
-                        //			if( i%4==0&&j%4==3 || i%4==3&&j%4==0 || i%4==1&&j%4==2 || i%4==2&&j%4==1 || i%4==1&&j%4==3 || i%4==3&&j%4==1 )
-                        //			if( k%4==0&&m%4==3 || k%4==3&&m%4==0 || k%4==1&&m%4==2 || k%4==2&&m%4==1 || k%4==1&&m%4==3 || k%4==3&&m%4==1 )
                         average += ribosum16[i * 4 + j][k * 4 + m] * freq[i] * freq[j] * freq[k] * freq[m];
                     }
         for (i = 0; i < 16; i++)
@@ -1651,14 +1566,12 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
             for (j = 0; j < 16; j++)
                 ribosum16[i][j] *= 600.0 / average;
 
-#if 1
         for (i = 0; i < 4; i++)
             for (j = 0; j < 4; j++)
                 ribosum4[i][j] -= ctx->offset; /* extending gap cost ?????*/
         for (i = 0; i < 16; i++)
             for (j = 0; j < 16; j++)
                 ribosum16[i][j] -= ctx->offset; /* extending gap cost ?????*/
-#endif
 
         for (i = 0; i < 4; i++)
             for (j = 0; j < 4; j++)
@@ -1683,18 +1596,15 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
             }
             reporterr("\n");
         }
-        //		reporterr(       "done\n" );
 
-#if 1
         for (i = 0; i < 37; i++)
             for (j = 0; j < 37; j++)
-                ctx->ribosumdis[i][j] = 0.0;  //iru
+                ctx->ribosumdis[i][j] = 0.0;
         for (m = 0; m < 9; m++)
-            for (i = 0; i < 4; i++)  // loop
+            for (i = 0; i < 4; i++)
                 for (k = 0; k < 9; k++)
                     for (j = 0; j < 4; j++)
-                        ctx->ribosumdis[m * 4 + i][k * 4 + j] = ribosum4[i][j];  // loop-loop
-        //			for( k=0; k<9; k++ ) for( j=0; j<4; j++ ) ribosumdis[m*4+i][k*4+j] = n_dis[i][j]; // loop-loop
+                        ctx->ribosumdis[m * 4 + i][k * 4 + j] = ribosum4[i][j];
 
         for (i = 0; i < 16; i++)
             for (j = 0; j < 16; j++)
@@ -1702,28 +1612,6 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
         for (i = 0; i < 16; i++)
             for (j = 0; j < 16; j++)
                 ctx->ribosumdis[i + 20][j + 20] = ribosum16[i][j];  // stem5-stem5
-#else  // do not use ribosum
-        for (i = 0; i < 37; i++)
-            for (j = 0; j < 37; j++)
-                ribosumdis[i][j] = 0.0;  //iru
-        for (m = 0; m < 9; m++)
-            for (i = 0; i < 4; i++)  // loop
-                for (k = 0; k < 9; k++)
-                    for (j = 0; j < 4; j++)
-                        ribosumdis[m * 4 + i][k * 4 + j] = n_dis[i][j];  // loop-loop
-#endif
-
-        if (ctx->disp) {
-            reporterr("ribosumdis\n");
-            for (i = 0; i < 37; i++) {
-                for (j = 0; j < 37; j++)
-                    reporterr("%+5d", ctx->ribosumdis[i][j]);
-                reporterr("\n");
-            }
-            reporterr("\n");
-        }
-//		reporterr(       "done\n" );
-#endif
 
         FreeDoubleMtx(pam1);
         FreeDoubleMtx(pamx);
@@ -1786,11 +1674,6 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
             sprintf(shiftmodel, "%4.2f", -(double)ctx->penalty_shift / 600);
         else
             sprintf(shiftmodel, "noshift");
-
-        if (opts.nblosum == -1)
-            sprintf(ctx->modelname, "User-defined, %4.2f, %+4.2f, %+4.2f, %s", -(double)opts.ppenalty / 1000, -(double)opts.poffset / 1000, -(double)opts.ppenalty_ex / 1000, shiftmodel);
-        else
-            sprintf(ctx->modelname, "BLOSUM%d, %4.2f, %+4.2f, %+4.2f, %s", opts.nblosum, -(double)opts.ppenalty / 1000, -(double)opts.poffset / 1000, -(double)opts.ppenalty_ex / 1000, shiftmodel);
 
         for (i = 0; i < 0x80; i++)
             ctx->amino_n[i] = -1;
@@ -2004,8 +1887,6 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
         else
             sprintf(shiftmodel, "noshift");
 
-        sprintf(ctx->modelname, "%s %dPAM, %4.2f, %4.2f, %s", (ctx->TMorJTT == TM) ? "Transmembrane" : "JTT", ctx->pamN, -(double)opts.ppenalty / 1000, -(double)opts.poffset / 1000, shiftmodel);
-
         JTTmtx(rsr, freq, ctx->amino, ctx->amino_grp, (int)(ctx->TMorJTT == TM));
 
         for (i = 0; i < 0x80; i++)
@@ -2114,7 +1995,6 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
         fprintf(stdout, "Itch average = %f, tmp = %f \n", average, tmp);
 #endif
 
-#if NORMALIZE1
         if (ctx->fmodel == -1)
             average = 0.0;
         else {
@@ -2188,20 +2068,6 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
             for (j = 0; j < 20; j++)
                 pamx[i][j] = shishagonyuu(pamx[i][j]);
 
-#else
-
-        average = 0.0;
-        for (i = 0; i < 20; i++)
-            for (j = 0; j < 20; j++)
-                average += pamx[i][j];
-        average /= 400.0;
-
-        for (i = 0; i < 20; i++)
-            for (j = 0; j < 20; j++) {
-                pamx[i][j] -= average;
-                pamx[i][j] = shishagonyuu(pamx[i][j]);
-            }
-#endif
         if (ctx->disp) {
             fprintf(stdout, " scoring matrix  \n");
             for (i = 0; i < 20; i++) {
@@ -2245,27 +2111,21 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
         FreeDoubleVec(datafreq);
     }
 
-#if DEBUG
-    reporterr("scoremtx = %d\n", scoremtx);
-    reporterr("amino[] = %s\n", amino);
-#endif
-
     ctx->amino_dis = AllocateIntMtx(charsize, charsize);
-    ctx->amino_dis_consweight_multi = AllocateDoubleMtx(charsize, charsize);
 
     for (i = 0; i < charsize; i++)
         ctx->amino_n[i] = -1;
+
     for (i = 0; i < ctx->nalphabets; i++)
         ctx->amino_n[(int)ctx->amino[i]] = i;
+
     for (i = 0; i < charsize; i++)
         for (j = 0; j < charsize; j++)
             ctx->amino_dis[i][j] = 0;
+
     for (i = 0; i < ctx->nalphabets; i++)
         for (j = 0; j < ctx->nalphabets; j++)
             ctx->n_disLN[i][j] = 0;
-    for (i = 0; i < charsize; i++)
-        for (j = 0; j < charsize; j++)
-            ctx->amino_dis_consweight_multi[i][j] = 0.0;
 
     ctx->n_dis_consweight_multi = AllocateDoubleMtx(ctx->nalphabets, ctx->nalphabets);
     ctx->n_disFFT = AllocateIntMtx(ctx->nalphabets, ctx->nalphabets);
@@ -2273,7 +2133,6 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
         for (j = 0; j < ctx->nalphabets; j++) {
             ctx->amino_dis[(int)ctx->amino[i]][(int)ctx->amino[j]] = ctx->n_dis[i][j];
             ctx->n_dis_consweight_multi[i][j] = (double)ctx->n_dis[i][j] * ctx->consweight_multi;
-            ctx->amino_dis_consweight_multi[(int)ctx->amino[i]][(int)ctx->amino[j]] = (double)ctx->n_dis[i][j] * ctx->consweight_multi;
         }
 
     if (ctx->dorp == 'd') {
@@ -2335,26 +2194,4 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
         for (i = 0; i < 20; i++)
             ctx->volume[i] /= sd;
     }
-}
-
-void
-freeconstants(Context* ctx) {
-    if (ctx->n_disLN)
-        FreeDoubleMtx(ctx->n_disLN);
-    ctx->n_disLN = NULL;
-    if (ctx->n_dis)
-        FreeIntMtx(ctx->n_dis);
-    ctx->n_dis = NULL;
-    if (ctx->n_disFFT)
-        FreeIntMtx(ctx->n_disFFT);
-    ctx->n_disFFT = NULL;
-    if (ctx->n_dis_consweight_multi)
-        FreeDoubleMtx(ctx->n_dis_consweight_multi);
-    ctx->n_dis_consweight_multi = NULL;
-    if (ctx->amino_dis)
-        FreeIntMtx(ctx->amino_dis);
-    ctx->amino_dis = NULL;
-    if (ctx->amino_dis_consweight_multi)
-        FreeDoubleMtx(ctx->amino_dis_consweight_multi);
-    ctx->amino_dis_consweight_multi = NULL;
 }
