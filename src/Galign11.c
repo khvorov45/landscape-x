@@ -806,8 +806,7 @@ G__align11_noalign(Context* ctx, double** n_dynamicmtx, int penal, int penal_ex,
         doublework = AllocateFloatMtx(ctx->nalphabets, MAX(ll1, ll2) + 2);
         intwork = AllocateIntMtx(ctx->nalphabets, MAX(ll1, ll2) + 2);
 
-        //		amino_dynamicmtx = AllocateDoubleMtx( 0x80, 0x80 );
-        amino_dynamicmtx = AllocateDoubleMtx(0x100, 0x100);  // 2017/Nov.  constants.c no 'charsize' wo global hensuu nishita houga yoi?
+        amino_dynamicmtx = AllocateDoubleMtx(0x100, 0x100);
 #if DEBUG
         fprintf(stderr, "succeeded\n");
 #endif

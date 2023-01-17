@@ -18,7 +18,7 @@
 #define DEFAULTPAMN 200
 
 int  locpenaltym = -1440;
-int  exgpm = +0; /* != 0 nisuruto kowareru. exgp ha constants.c de kurikomu */
+int  exgpm = +0;
 char locaminom[] = "ARNDCQEGHILKMFPSTWYVBZX.-J";
 char locgrpm[] = {0, 3, 2, 2, 5, 2, 2, 0, 3, 1, 1, 3, 1, 4, 0, 0, 0, 4, 4, 1, 2, 2, 6, 6, 6, 1};
 
@@ -1124,16 +1124,6 @@ shishagonyuu(double in) {
     else
         out = 0;
     return (out);
-}
-
-static void
-nscore(int* amino_n, int** n_dis) {
-    int i;
-    for (i = 0; i < 26; i++) {
-        n_dis[i][amino_n['n']] = shishagonyuu((double)0.25 * n_dis[i][i]);
-        n_dis[amino_n['n']][i] = n_dis[i][amino_n['n']];
-    }
-    n_dis[amino_n['n']][amino_n['n']] = shishagonyuu((double)0.25 * (n_dis[0][0] + n_dis[1][1] + n_dis[2][2] + n_dis[3][3]));
 }
 
 static void
