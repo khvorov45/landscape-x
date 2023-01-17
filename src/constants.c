@@ -881,7 +881,7 @@ int locn_disn[26][26] = {
 //clang-format on
 
 void
-BLOSUMmtx(Context* ctx, int n, double** matrix, double* freq, unsigned char* amino, char* amino_grp, int* rescalept) {
+BLOSUMmtx(int n, double** matrix, double* freq, unsigned char* amino, char* amino_grp) {
     char   locaminod[] = "ARNDCQEGHILKMFPSTWYVBZX.-J";
     char   locgrpd[] = {0, 3, 2, 2, 5, 2, 2, 0, 3, 1, 1, 3, 1, 4, 0, 0, 0, 4, 4, 1, 2, 2, 6, 6, 6, 1};
     double freqd[20] = {0.077, 0.051, 0.043, 0.052, 0.020, 0.041, 0.062, 0.074, 0.023, 0.052, 0.091, 0.059, 0.024, 0.040, 0.051, 0.069, 0.059, 0.014, 0.032, 0.066};
@@ -1071,27 +1071,18 @@ BLOSUMmtx(Context* ctx, int n, double** matrix, double* freq, unsigned char* ami
     double  av;
     double* tmpmtx;
 
-    if (n == 30)
-        tmpmtx = tmpmtx30;
-    else if (n == 45)
-        tmpmtx = tmpmtx45;
-    else if (n == 50)
-        tmpmtx = tmpmtx50;
-    else if (n == 62)
-        tmpmtx = tmpmtx62;
-    else if (n == 80)
-        tmpmtx = tmpmtx80;
-    else if (n == 90)
-        tmpmtx = tmpmtx90;
-    else if (n == 100)
-        tmpmtx = tmpmtx100;
-    else if (n == 0)
-        tmpmtx = tmpmtx0;
-    else if (n == -1)
-        tmpmtx = loadaamtx(ctx, rescalept);
-    else {
-        fprintf(stderr, "blosum %d ?\n", n);
-        exit(1);
+    switch (n) {
+        case 30: tmpmtx = tmpmtx30; break;
+        case 45: tmpmtx = tmpmtx45; break;
+        case 50: tmpmtx = tmpmtx50; break;
+        case 62: tmpmtx = tmpmtx62; break;
+        case 80: tmpmtx = tmpmtx80; break;
+        case 90: tmpmtx = tmpmtx90; break;
+        case 100: tmpmtx = tmpmtx100; break;
+        case 0: tmpmtx = tmpmtx0; break;
+
+        // TODO(sen) Error?
+        default: aln_assert(!"invalid n"); break;
     }
 
     count = 0;
@@ -1119,92 +1110,6 @@ BLOSUMmtx(Context* ctx, int n, double** matrix, double* freq, unsigned char* ami
         amino[i] = locaminod[i];
     for (i = 0; i < 26; i++)
         amino_grp[(int)amino[i]] = locgrpd[i];
-}
-
-static int
-checkchar(int i) {
-    if (i > 0xff || i <= 0x00 || i == 0x3E || i == 0x3D || i == 0x3C || i == 0x2D || i == 0x20 || i == 0x0d || i == 0x0a)
-        return (1);
-    return (0);
-}
-
-static int
-overridematrix(double** matrix) {
-    char         buf[500];
-    FILE*        fp;
-    unsigned int i1, i2;
-    double       v;
-    char*        bpt;
-    int          nread;
-    int          userdefined;
-
-    fp = fopen("_aamtx", "r");
-    if (fp == NULL) {
-        fprintf(stderr, "warning: cannot open scorematrix. Use the default one.\n");
-        //		f2cl.c de tomaranai youni
-        //		exit( 1 );
-        return 0;
-    }
-
-    userdefined = 0;
-    while (1) {
-        fgets(buf, 499, fp);
-        if (feof(fp))
-            break;
-
-        if ((bpt = strchr(buf, '#')))
-            *bpt = 0;
-
-        i1 = i2 = 0;
-        nread = sscanf(buf, "%x %x %lf", &i1, &i2, &v);
-        if (nread == EOF)
-            continue;
-        if (nread != 3) {
-            reporterr("Format error in this line?\n");
-            reporterr("%s\n", buf);
-            //			reporterr( "To set a score, 100, for a match of 0x41 and 0x42, \n" );
-            //			reporterr( "0x41 0x42 100 \n" );
-            exit(1);
-        }
-        if (checkchar(i1)) {
-            reporterr("%c=0x%x cannot be used (1)\n", i1, i1);
-            exit(1);
-        }
-        if (checkchar(i2)) {
-            reporterr("%c=0x%x cannot be used (2)\n", i2, i2);
-            exit(1);
-        }
-        //		reporterr( "Score(%c=0x%x,%c=0x%x)=%f\n", i1, i1, i2, i2, v );
-        matrix[i1][i2] = v;
-        matrix[i2][i1] = v;  // 2018/May/11
-        userdefined = 1;
-    }
-    fclose(fp);
-    return userdefined;
-}
-
-int
-extendedmtx(Context* ctx, double** matrix, double* freq, unsigned char* amino, char* amino_grp) {
-    int i;
-    int j;
-    int userdefined;
-
-    for (i = 0; i < ctx->nalphabets; i++) {
-        amino[i] = (unsigned char)i;
-    }
-    for (i = 0; i < ctx->nalphabets; i++)
-        amino_grp[(int)amino[i]] = i % 6;
-    for (i = 0; i < ctx->nalphabets; i++)
-        freq[i] = 1.0 / ctx->nalphabets;
-
-    for (i = 0; i < ctx->nalphabets; i++) {
-        for (j = 0; j <= i; j++) {
-            matrix[i][j] = matrix[j][i] = (double)-1.0;
-        }
-    }
-
-    userdefined = overridematrix(matrix);
-    return userdefined;
 }
 
 #define DEBUG 0
@@ -1374,87 +1279,6 @@ calcfreq(Context* ctx, int nseq, char** seq, double* datafreq) {
     //	reporterr(       "datafreq = \n" );
     //	for( i=0; i<nscoredalphabets; i++ )
     //		reporterr(       "%f\n", datafreq[i] );
-
-    total = 0.0;
-    for (i = 0; i < ctx->nscoredalphabets; i++)
-        total += datafreq[i];
-    //	reporterr(       "total = %f\n", total );
-    for (i = 0; i < ctx->nscoredalphabets; i++)
-        datafreq[i] /= (double)total;
-}
-
-static void
-calcfreq_from_scoremtx(Context* ctx, double** n_distmp, double* datafreq) {
-    int i, j;
-    int nused = 0;
-    for (i = 0; i < ctx->nalphabets; i++)
-        datafreq[i] = 0.0;
-    for (i = 0; i < ctx->nalphabets; i++)
-        for (j = 0; j < i; j++) {
-            if (n_distmp[i][j] != -1) {
-                if (datafreq[i] == 0.0)
-                    nused += 1;
-                if (datafreq[j] == 0.0)
-                    nused += 1;
-                datafreq[i] = datafreq[j] = 1.0;
-            }
-        }
-    for (i = 0; i < ctx->nalphabets; i++)
-        datafreq[i] /= (double)nused;
-    reporterr("nused=\n", nused);
-    //	for( i=0; i<nalphabets; i++ ) reporterr( "%f\n", datafreq[i] );
-}
-
-static int
-checkscoremtx(Context* ctx, double** n_distmp, int nseq, char** seq) {
-    int i, j, l, k;
-    int aan;
-    for (i = 0; i < nseq; i++) {
-        l = strlen(seq[i]);
-        for (j = 0; j < l; j++) {
-            aan = ctx->amino_n[(unsigned char)seq[i][j]];
-            for (k = 0; k < ctx->nalphabets; k++) {
-                //				if( n_distmp[k][aan] != -1.0 && k != aan ) break;
-                if (n_distmp[k][aan] != -1.0)
-                    break;
-            }
-            if (k == ctx->nalphabets)
-                return aan;
-        }
-    }
-    return 0;
-}
-
-static void
-calcfreq_extended(Context* ctx, int nseq, char** seq, double* datafreq) {
-    int    i, j, l;
-    int    aan;
-    double total;
-    for (i = 0; i < ctx->nscoredalphabets; i++)
-        datafreq[i] = 0.0;
-    total = 0.0;
-    for (i = 0; i < nseq; i++) {
-        l = strlen(seq[i]);
-        for (j = 0; j < l; j++) {
-            aan = ctx->amino_n[(unsigned char)seq[i][j]];
-            if (aan >= 0 && aan < ctx->nscoredalphabets && seq[i][j] != '-') {
-                datafreq[aan] += 1.0;
-                total += 1.0;
-            }
-        }
-    }
-    total = 0.0;
-    for (i = 0; i < ctx->nscoredalphabets; i++)
-        total += datafreq[i];
-    for (i = 0; i < ctx->nscoredalphabets; i++)
-        datafreq[i] /= (double)total;
-        //	for( i=0; i<nscoredalphabets; i++ ) if( datafreq[i] < 0.0001 ) datafreq[i] = 0.0001;
-
-#if 0
-	reporterr(       "datafreq = \n" );
-	for( i=0; i<nscoredalphabets; i++ )
-		reporterr(       "%d %c %f\n", i, amino[i], datafreq[i] );
-#endif
 
     total = 0.0;
     for (i = 0; i < ctx->nscoredalphabets; i++)
@@ -1905,227 +1729,12 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
         FreeDoubleMtx(pamx);
         free(freq);
 
-    } else if (ctx->dorp == 'p' && opts.scoremtx == 1 && opts.nblosum == -2) /* extended */
-    {
-        double* freq;
-        double* freq1;
-        double* datafreq;
-        double  average;
-        //		double tmp;
-        double** n_distmp;
-        int      userdefined;
-
-        ctx->nalphabets = 0x100;
-        ctx->nscoredalphabets = 0x100;
-        charsize = 0x100;
-
-        reporterr("nalphabets = %d\n", ctx->nalphabets);
-
-        ctx->n_dis = AllocateIntMtx(ctx->nalphabets, ctx->nalphabets);
-        ctx->n_disLN = AllocateDoubleMtx(ctx->nalphabets, ctx->nalphabets);
-        n_distmp = AllocateDoubleMtx(ctx->nalphabets, ctx->nalphabets);
-        datafreq = AllocateDoubleVec(ctx->nalphabets);
-        freq = AllocateDoubleVec(ctx->nalphabets);
-
-        aln_assert(opts.ppenalty != NOTSPECIFIED);
-        aln_assert(opts.ppenalty_dist != NOTSPECIFIED);
-        aln_assert(opts.poffset != NOTSPECIFIED);
-        aln_assert(opts.ppenalty_ex != NOTSPECIFIED);
-
-        if (ctx->ppenalty_OP == NOTSPECIFIED)
-            ctx->ppenalty_OP = DEFAULTGOP_B;
-        if (ctx->ppenalty_EX == NOTSPECIFIED)
-            ctx->ppenalty_EX = DEFAULTGEP_B;
-        if (ctx->pamN == NOTSPECIFIED)
-            ctx->pamN = 0;
-        if (ctx->kimuraR == NOTSPECIFIED)
-            ctx->kimuraR = 1;
-        ctx->penalty = (int)(600.0 / 1000.0 * opts.ppenalty + 0.5);
-        ctx->penalty_dist = (int)(600.0 / 1000.0 * opts.ppenalty_dist + 0.5);
-        ctx->penalty_shift = (int)(opts.penalty_shift_factor * ctx->penalty);
-        ctx->penalty_OP = (int)(600.0 / 1000.0 * ctx->ppenalty_OP + 0.5);
-        ctx->penalty_ex = (int)(600.0 / 1000.0 * opts.ppenalty_ex + 0.5);
-        ctx->penalty_EX = (int)(600.0 / 1000.0 * ctx->ppenalty_EX + 0.5);
-        ctx->offset = (int)(600.0 / 1000.0 * opts.poffset + 0.5);
-        ctx->offsetFFT = (int)(600.0 / 1000.0 * (-0) + 0.5);
-        ctx->offsetLN = (int)(600.0 / 1000.0 * 100 + 0.5);
-        ctx->penaltyLN = (int)(600.0 / 1000.0 * -2000 + 0.5);
-        ctx->penalty_exLN = (int)(600.0 / 1000.0 * -100 + 0.5);
-
-        userdefined = extendedmtx(ctx, n_distmp, freq, ctx->amino, ctx->amino_grp);
-
-        if (ctx->trywarp)
-            sprintf(shiftmodel, "%4.2f", -(double)ctx->penalty_shift / 600);
-        else
-            sprintf(shiftmodel, "noshift");
-
-        sprintf(ctx->modelname, "Extended, %4.2f, %+4.2f, %+4.2f, %s", -(double)opts.ppenalty / 1000, -(double)opts.poffset / 1000, -(double)opts.ppenalty_ex / 1000, shiftmodel);
-
-        for (i = 0; i < 0x100; i++)
-            ctx->amino_n[i] = -1;
-        for (i = 0; i < ctx->nalphabets; i++) {
-            ctx->amino_n[(unsigned char)ctx->amino[i]] = i;
-        }
-
-        if (ctx->fmodel == 1) {
-            calcfreq_extended(ctx, nseq, seq, datafreq);
-            freq1 = datafreq;
-        } else {
-            calcfreq_from_scoremtx(ctx, n_distmp, datafreq);
-            freq1 = datafreq;
-        }
-#if 1
-        if (userdefined)
-            if ((i = checkscoremtx(ctx, n_distmp, nseq, seq))) {
-                reporterr("\n\nAlphabet %c (0x%x) is used in the sequence file but no score involving this alphabet is given in the matrix file.\n", i, i);
-                reporterr("Check if the data is as intended.\n\n\n");
-                exit(1);
-            }
-#endif
-
-#if TEST
-        reporterr("raw scoreing matrix : \n");
-        for (i = 0; i < nalphabets; i++) {
-            for (j = 0; j < nalphabets; j++) {
-                fprintf(stdout, "%6.2f", n_distmp[i][j]);
-            }
-            fprintf(stdout, "\n");
-        }
-#endif
-        if (ctx->fmodel == -1)
-            average = 0.0;
-        else {
-#if TEST
-            for (i = 0; i < nalphabets; i++)
-                fprintf(stdout, "freq[%c] = %f, datafreq[%c] = %f, freq1[] = %f\n", amino[i], freq[i], amino[i], datafreq[i], freq1[i]);
-#endif
-            average = 0.0;
-            for (i = 0; i < ctx->nalphabets; i++)
-                for (j = 0; j < ctx->nalphabets; j++)
-                    average += n_distmp[i][j] * freq1[i] * freq1[j];
-        }
-#if 0
-		if( disp ) fprintf( stdout, "####### average2  = %f\n", average );
-#endif
-
-        for (i = 0; i < ctx->nalphabets; i++)
-            for (j = 0; j < ctx->nalphabets; j++) {
-                if (n_distmp[i][j] == -1.0)
-                    n_distmp[i][j] = -average;
-                else
-                    n_distmp[i][j] -= average;
-            }
-#if 0
-		fprintf( stderr, "average2 = %f\n", average );
-		fprintf( stderr, "after average subtruction : \n" );
-		for( i=0; i<nalphabets; i++ )
-		{
-			fprintf( stderr, "i=%d, %x\n", i, i );
-			for( j=0; j<nalphabets; j++ ) 
-			{
-				fprintf( stderr, "%6.2f", n_distmp[i][j] );
-			}
-			fprintf( stderr, "\n" );
-		}
-#endif
-
-        average = 0.0;
-        for (i = 0; i < ctx->nalphabets; i++)
-            average += n_distmp[i][i] * freq1[i];
-#if 0
-		if( disp ) fprintf( stdout, "####### average1  = %f\n", average );
-#endif
-
-        if (average < 0.0) {
-            reporterr("\nUnrealistic scoring matrix.  Give larger positive values to matches (A/A, B/B, etc).\n\n");
-            exit(1);
-        }
-
-        for (i = 0; i < ctx->nalphabets; i++)
-            for (j = 0; j < ctx->nalphabets; j++)
-                n_distmp[i][j] *= 600.0 / average;
-#if TEST
-        fprintf(stderr, "after average division : \n");
-        for (i = 0; i < nalphabets; i++) {
-            fprintf(stderr, "i=%d, %x\n", i, i);
-            for (j = 0; j <= i; j++) {
-                fprintf(stderr, "%7.1f", n_distmp[i][j]);
-            }
-            fprintf(stderr, "\n");
-        }
-#endif
-
-        for (i = 0; i < ctx->nalphabets; i++)
-            for (j = 0; j < ctx->nalphabets; j++)
-                n_distmp[i][j] -= ctx->offset;
-#if TEST
-        fprintf(stderr, "after offset subtruction (offset = %d): \n", offset);
-        for (i = 0; i < nalphabets; i++) {
-            fprintf(stderr, "i=%d, %x\n", i, i);
-            for (j = 0; j <= i; j++) {
-                fprintf(stderr, "%30.10f", n_distmp[i][j]);
-            }
-            fprintf(stderr, "\n");
-        }
-#endif
-#if 0
-/* ���� �������������������� */
-			penalty -= offset;
-#endif
-
-        for (i = 0; i < ctx->nalphabets; i++)
-            for (j = 0; j < ctx->nalphabets; j++)
-                n_distmp[i][j] = shishagonyuu(n_distmp[i][j]);
-
-        if (ctx->disp) {
-            fprintf(stdout, "freq = \n");
-            for (i = 0; i < ctx->nalphabets; i++)
-                fprintf(stdout, "%c %f\n", ctx->amino[i], freq1[i]);
-            fprintf(stdout, " scoring matrix  \n");
-            for (i = 0; i < ctx->nalphabets; i++) {
-                fprintf(stdout, "%c    ", ctx->amino[i]);
-                for (j = 0; j < ctx->nalphabets; j++)
-                    fprintf(stdout, "%5.0f", n_distmp[i][j]);
-                fprintf(stdout, "\n");
-            }
-            fprintf(stdout, "     ");
-            for (i = 0; i < ctx->nalphabets; i++)
-                fprintf(stdout, "    %c", ctx->amino[i]);
-
-            average = 0.0;
-            for (i = 0; i < ctx->nalphabets; i++)
-                for (j = 0; j < ctx->nalphabets; j++)
-                    average += n_distmp[i][j] * freq1[i] * freq1[j];
-            fprintf(stdout, "average = %f\n", average);
-
-            average = 0.0;
-            for (i = 0; i < ctx->nalphabets; i++)
-                average += n_distmp[i][i] * freq1[i];
-            fprintf(stdout, "itch average = %f\n", average);
-            reporterr("parameters: %d, %d, %d\n", ctx->penalty, ctx->penalty_ex, ctx->offset);
-
-            exit(1);
-        }
-
-        for (i = 0; i < ctx->nalphabets; i++)
-            for (j = 0; j < ctx->nalphabets; j++)
-                ctx->n_dis[i][j] = 0;
-        for (i = 0; i < ctx->nalphabets; i++)
-            for (j = 0; j < ctx->nalphabets; j++)
-                ctx->n_dis[i][j] = (int)n_distmp[i][j];
-        for (i = 0; i < ctx->nalphabets; i++)
-            for (j = 0; j < ctx->nalphabets; j++)
-                ctx->n_dis[i][ctx->amino_n['-']] = ctx->n_dis[ctx->amino_n['-']][i] = 0;
-
-        FreeDoubleMtx(n_distmp);
-        FreeDoubleVec(datafreq);
-        FreeDoubleVec(freq);
     } else if (ctx->dorp == 'p' && opts.scoremtx == 1) {
-        double* freq;
-        double* freq1;
-        double* datafreq;
-        double  average;
-        double  iaverage;
+        double*  freq;
+        double*  freq1;
+        double*  datafreq;
+        double   average;
+        double   iaverage;
         double** n_distmp;
         int      rescale = 1;
 
@@ -2169,7 +1778,7 @@ constants(aln_Opts opts, Context* ctx, int nseq, char** seq) {
         ctx->penaltyLN = (int)(600.0 / 1000.0 * -2000 + 0.5);
         ctx->penalty_exLN = (int)(600.0 / 1000.0 * -100 + 0.5);
 
-        BLOSUMmtx(ctx, opts.nblosum, n_distmp, freq, ctx->amino, ctx->amino_grp, &rescale);
+        BLOSUMmtx(opts.nblosum, n_distmp, freq, ctx->amino, ctx->amino_grp);
 
         reporterr("rescale = %d\n", rescale);
 

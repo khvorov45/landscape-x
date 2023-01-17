@@ -16,87 +16,8 @@ static int   lastm;
 static int   lastsubopt;
 static int   lastonce;
 
-static void
-pairalign(aln_Opts opts, Context* ctx, const char* const* name, char** seq, char** aseq, char** dseq, int* thereisxineachseq, char** mseq1, char** mseq2, int alloclen, double** distancemtx) {
-    int     j, ilim, jst;
-    int     thereisx;
-    double  pscore = 0.0;
-    FILE*   hat2p;
-    double* selfscore;
-    double* effarr1;
-    double* effarr2;
-    char*   hat2file = "hat2";
-    char ** distseq1, **distseq2;
-    int *   targetmap, *targetmapr;
-
-    targetmap = calloc(ctx->njob, sizeof(int));
-    targetmapr = calloc(ctx->njob, sizeof(int));
-    for (int i = 0; i < ctx->njob; i++) {
-        targetmap[i] = targetmapr[i] = i;
-    }
-
-    distseq1 = AllocateCharMtx(1, 0);  // muda
-    distseq2 = AllocateCharMtx(1, 0);  // muda
-
-    selfscore = AllocateDoubleVec(ctx->njob);
-    effarr1 = AllocateDoubleVec(ctx->njob);
-    effarr2 = AllocateDoubleVec(ctx->njob);
-
-    for (int i = 0; i < ctx->njob; i++) {
-        pscore = 0.0;
-        for (char* pt = seq[i]; *pt; pt++) {
-            pscore += ctx->amino_dis[(unsigned char)*pt][(unsigned char)*pt];
-        }
-        selfscore[i] = pscore;
-    }
-
-    ilim = ctx->njob - 1;
-    for (int i = 0; i < ilim; i++) {
-        jst = i + 1;
-        for (j = jst; j < ctx->njob; j++) {
-            strcpy(aseq[0], seq[i]);
-            strcpy(aseq[1], seq[j]);
-
-            effarr1[0] = 1.0;
-            effarr2[0] = 1.0;
-            mseq1[0] = aseq[0];
-            mseq2[0] = aseq[1];
-
-            thereisx = thereisxineachseq[i] + thereisxineachseq[j];
-            distseq1[0] = dseq[i];
-            distseq2[0] = dseq[j];
-
-            if (store_localhom && (targetmap[i] != -1 || targetmap[j] != -1)) {
-                pscore = G__align11(ctx, ctx->n_dis_consweight_multi, mseq1, mseq2, alloclen, ctx->outgap, ctx->outgap);
-                if (thereisx) {
-                    pscore = G__align11_noalign(ctx, ctx->n_dis_consweight_multi, ctx->penalty, ctx->penalty_ex, distseq1, distseq2);
-                }
-            } else {
-                pscore = G__align11_noalign(ctx, ctx->n_dis_consweight_multi, ctx->penalty, ctx->penalty_ex, distseq1, distseq2);
-            }
-        }
-    }
-
-    if (store_dist && ctx->njob == 0) {
-        hat2p = fopen(hat2file, "w");
-        if (!hat2p)
-            ErrorExit("Cannot open hat2.");
-        if (opts.alg == 'Y' || opts.alg == 'r')
-            WriteHat2_part_pointer(hat2p, ctx->njob, ctx->nadd, name, distancemtx);
-        else
-            WriteFloatHat2_pointer_halfmtx(ctx, hat2p, ctx->njob, name, distancemtx);  // jissiha double
-        fclose(hat2p);
-    }
-}
-
 int
-pairlocalalign(
-    aln_Opts           pairLocalAlignOpts,
-    Context*           ctx,
-    const char* const* name,
-    char**             seq,
-    double**           iscore
-) {
+pairlocalalign(aln_Opts pairLocalAlignOpts, Context* ctx, char** seq) {
     aln_assert(ctx->njob >= 2);
 
     laste = 5000;
@@ -140,7 +61,6 @@ pairlocalalign(
 
     constants(pairLocalAlignOpts, ctx, ctx->njob, seq);
     initSignalSM(ctx);
-    initFiles(ctx);
 
     // TODO(sen) Sequence verification?
 
@@ -170,19 +90,51 @@ pairlocalalign(
     char** aseq = AllocateCharMtx(2, alloclen + 10);
     char** mseq1 = AllocateCharMtx(ctx->njob, 0);
     char** mseq2 = AllocateCharMtx(ctx->njob, 0);
-    pairalign(
-        pairLocalAlignOpts,
-        ctx,
-        name,
-        bseq,
-        aseq,
-        dseq,
-        countsOfXs,
-        mseq1,
-        mseq2,
-        alloclen,
-        iscore
-    );
+    {
+        int* targetmap = calloc(ctx->njob, sizeof(int));
+        int* targetmapr = calloc(ctx->njob, sizeof(int));
+        for (int i = 0; i < ctx->njob; i++) {
+            targetmap[i] = targetmapr[i] = i;
+        }
+
+        char** distseq1 = AllocateCharMtx(1, 0);  // muda
+        char** distseq2 = AllocateCharMtx(1, 0);  // muda
+
+        double* selfscore = AllocateDoubleVec(ctx->njob);
+        double* effarr1 = AllocateDoubleVec(ctx->njob);
+        double* effarr2 = AllocateDoubleVec(ctx->njob);
+
+        double pscore = 0.0;
+        for (int i = 0; i < ctx->njob; i++) {
+            pscore = 0.0;
+            for (char* pt = bseq[i]; *pt; pt++) {
+                pscore += ctx->amino_dis[(unsigned char)*pt][(unsigned char)*pt];
+            }
+            selfscore[i] = pscore;
+        }
+
+        int ilim = ctx->njob - 1;
+        for (int i = 0; i < ilim; i++) {
+            for (int j = i + 1; j < ctx->njob; j++) {
+                strcpy(aseq[0], bseq[i]);
+                strcpy(aseq[1], bseq[j]);
+
+                effarr1[0] = 1.0;
+                effarr2[0] = 1.0;
+                mseq1[0] = aseq[0];
+                mseq2[0] = aseq[1];
+
+                distseq1[0] = dseq[i];
+                distseq2[0] = dseq[j];
+
+                pscore = G__align11(ctx, ctx->n_dis_consweight_multi, mseq1, mseq2, alloclen, ctx->outgap, ctx->outgap);
+                int thereisx = countsOfXs[i] + countsOfXs[j];
+                if (thereisx) {
+                    pscore = G__align11_noalign(ctx, ctx->n_dis_consweight_multi, ctx->penalty, ctx->penalty_ex, distseq1, distseq2);
+                }
+            }
+        }
+    }
 
     return 0;
 }

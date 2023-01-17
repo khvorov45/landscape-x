@@ -187,7 +187,7 @@ main() {
                         anyObjRecompiled = true;
                         prb_Str cmd = prb_fmt(
                             arena,
-                            "clang -g -Denablemultithread -Werror -Wfatal-errors %.*s -x c %.*s -c -o %.*s",
+                            "clang -g -Denablemultithread -Wfatal-errors %.*s -x c %.*s -c -o %.*s",
                             prb_LIT(mafftSuppressedWarningsStr),
                             prb_LIT(srcPath),
                             prb_LIT(outpath)
@@ -296,24 +296,23 @@ main() {
                 arrput(srcObjPaths, outpath);
                 prb_Str outlog = prb_replaceExt(arena, outpath, prb_STR("log"));
                 arrput(srcObjPathsLog, outlog);
-                prb_Str cmd = prb_fmt(arena, "clang -g -Wall -Werror -Wextra -fno-caret-diagnostics -c %.*s -o %.*s", prb_LIT(thisFile), prb_LIT(outpath));
+                prb_Str cmd = prb_fmt(arena, "clang -g -Wall -Wextra -fno-caret-diagnostics -c %.*s -o %.*s", prb_LIT(thisFile), prb_LIT(outpath));
                 prb_writelnToStdout(arena, cmd);
-                prb_Process proc = prb_createProcess(cmd, (prb_ProcessSpec) {.redirectStderr = true, .stderrFilepath = outlog});
+                prb_Process proc = prb_createProcess(cmd, (prb_ProcessSpec) {.redirectStderr = true, .stderrFilepath = outlog, .redirectStdout = true, .stdoutFilepath = outlog});
                 arrput(srcCompileProcs, proc);
             }
         }
     }
 
     prb_assert(prb_launchProcesses(arena, srcCompileProcs, arrlen(srcCompileProcs), prb_Background_Yes));
-    if (prb_waitForProcesses(srcCompileProcs, arrlen(srcCompileProcs)) == prb_Failure) {
-        for (i32 logIndex = 0; logIndex < arrlen(srcObjPathsLog); logIndex++) {
-            prb_Str                  logfile = srcObjPathsLog[logIndex];
-            prb_ReadEntireFileResult readRes = prb_readEntireFile(arena, logfile);
-            prb_assert(readRes.success);
-            prb_writeToStdout(prb_strFromBytes(readRes.content));
-        }
-        prb_assert(!"compilation failed");
+    prb_Status waitSuccess = prb_waitForProcesses(srcCompileProcs, arrlen(srcCompileProcs));
+    for (i32 logIndex = 0; logIndex < arrlen(srcObjPathsLog); logIndex++) {
+        prb_Str                  logfile = srcObjPathsLog[logIndex];
+        prb_ReadEntireFileResult readRes = prb_readEntireFile(arena, logfile);
+        prb_assert(readRes.success);
+        prb_writeToStdout(prb_strFromBytes(readRes.content));
     }
+    prb_assert(waitSuccess);
 
     {
         prb_Str srcLibPath = prb_pathJoin(arena, srcOutDir, prb_STR("align.a"));

@@ -800,12 +800,8 @@ A__align(aln_Opts opts, Context* ctx, double** n_dynamicmtx, int penalty_l, int 
     int *   warpipt, *warpjpt;
     char *  gt1, *gt2, *gt1bk, *gt2bk;
 
-    //	for( i=0; i<icyc; i++ ) fprintf( stderr, "%s, %f\n", seq1[i], eff1[i] );
-    //	for( i=0; i<jcyc; i++ ) fprintf( stderr, "%s, %f\n", seq2[i], eff2[i] );
-
     if (seq1 == NULL) {
         if (orlgth1) {
-            //			fprintf( stderr, "## Freeing local arrays in A__align\n" );
             orlgth1 = 0;
             orlgth2 = 0;
 

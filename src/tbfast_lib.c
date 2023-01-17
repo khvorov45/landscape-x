@@ -104,13 +104,7 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         pairLocalAlignOpts.ppenalty = -2000;
         pairLocalAlignOpts.poffset = 100;
         pairLocalAlignOpts.constraint = 0;
-        pairlocalalign(
-            pairLocalAlignOpts,
-            ctx,
-            name,
-            seq,
-            iscore
-        );
+        pairlocalalign(pairLocalAlignOpts, ctx, seq);
     }
 
     {
@@ -130,7 +124,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     constants(opts, ctx, ctx->njob, seq);
 
     initSignalSM(ctx);
-    initFiles(ctx);
 
     // TODO(sen) Sequence verification?
 
