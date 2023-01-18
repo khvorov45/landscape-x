@@ -545,10 +545,7 @@ G__align11(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int al
         free(warpjs);
 
     resultlen = strlen(mseq1[0]);
-    if (alloclen < resultlen || resultlen > N) {
-        fprintf(stderr, "alloclen=%d, resultlen=%d, N=%d\n", alloclen, resultlen, N);
-        ErrorExit("LENGTH OVER!\n");
-    }
+    aln_assert(!(alloclen < resultlen || resultlen > N));
 
     strcpy(seq1[0], mseq1[0]);
     strcpy(seq2[0], mseq2[0]);

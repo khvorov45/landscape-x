@@ -11,10 +11,6 @@
 
 static double** impmtx = NULL;
 static int      impalloclen = 0;
-double
-imp_match_out_sc(int i1, int j1) {
-    return (impmtx[i1][j1]);
-}
 
 static void
 imp_match_out_vead(double* imp, int i1, int lgth2) {
@@ -176,7 +172,7 @@ Atracking_localhom(Context* ctx, double* impwmpt, char** seq1, char** seq2, char
         if (iin == lgth1 || jin == lgth2)
             ;
         else {
-            *impwmpt += (double)imp_match_out_sc(iin, jin);
+            *impwmpt += (double)impmtx[iin][jin];
 
             //		fprintf( stderr, "impwm = %f (iin=%d, jin=%d) seq1=%c, seq2=%c\n", *impwmpt, iin, jin, seq1[0][iin], seq2[0][jin] );
         }
@@ -1436,10 +1432,7 @@ A__align(aln_Opts opts, Context* ctx, double** n_dynamicmtx, int penalty_l, int 
         free(warpjs);
 
     resultlen = strlen(mseq1[0]);
-    if (alloclen < resultlen || resultlen > N) {
-        fprintf(stderr, "alloclen=%d, resultlen=%d, N=%d\n", alloclen, resultlen, N);
-        ErrorExit("LENGTH OVER!\n");
-    }
+    aln_assert(!(alloclen < resultlen || resultlen > N));
 
     if (ngap1 || !reuseprofiles)
         for (i = 0; i < icyc; i++)

@@ -1,12 +1,6 @@
 #include "mltaln.h"
 
 void
-ErrorExit(char* message) {
-    fprintf(stderr, "%s\n", message);
-    exit(1);
-}
-
-void
 initlocalhom1(LocalHom* lh) {
     lh->start1 = -1;
     lh->end1 = -1;
