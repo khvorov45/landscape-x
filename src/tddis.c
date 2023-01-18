@@ -495,20 +495,6 @@ OneClusterAndTheOther_fast(int locnjob, int* memlist1, int* memlist2, int* s1, i
             for (j = 0; (jm = memlist2[j]) != -1; j++)
                 smalldistmtx[i][j] = distmtx[MIN(im, jm)][MAX(im, jm)];
 #endif
-
-#if 0
-		reporterr( "\n" );
-		for( i=0; (im=memlist1[i])!=-1; i++ ) for( j=0; (jm=memlist2[j])!=-1; j++ )
-			reporterr( "smalldistmtx[%d][%d] = %f\n", i, j, smalldistmtx[i][j] );
-
-
-		for( i=0; (im=memlist1[i])!=-1; i++ ) for( j=0; (jm=memlist2[j])!=-1; j++ )
-			smalldistmtx[i][j] = distmtx[MIN(im,jm)][MAX(im,jm)];
-
-		for( i=0; (im=memlist1[i])!=-1; i++ ) for( j=0; (jm=memlist2[j])!=-1; j++ )
-			reporterr( "old smalldistmtx[%d][%d] = %f\n", i, j, smalldistmtx[i][j] );
-if( im > 10 && jm > 10 ) exit( 1 );
-#endif
     }
 }
 
@@ -521,7 +507,7 @@ makeEffMtx(int nseq, double** mtx, double* vec) {
 }
 
 int
-msshrinklocalhom_fast_target(int* memlist1, int* memlist2, LocalHom** localhom, LocalHom*** localhomshrink, char* swaplist, int* targetmap) {
+msshrinklocalhom_fast_target(int* memlist1, int* memlist2, aln_LocalHom** localhom, aln_LocalHom*** localhomshrink, char* swaplist, int* targetmap) {
     int m1, k1, m2, k2, t1, i2;
 
     for (k1 = 0; (m1 = memlist1[k1]) != -1; k1++) {
@@ -559,7 +545,7 @@ msshrinklocalhom_fast_target(int* memlist1, int* memlist2, LocalHom** localhom, 
 }
 
 int
-msshrinklocalhom_fast_half(int* memlist1, int* memlist2, LocalHom** localhom, LocalHom*** localhomshrink) {
+msshrinklocalhom_fast_half(int* memlist1, int* memlist2, aln_LocalHom** localhom, aln_LocalHom*** localhomshrink) {
     int m1, k1, m2, k2;
 
     for (k1 = 0; (m1 = memlist1[k1]) != -1; k1++) {
@@ -581,7 +567,7 @@ msshrinklocalhom_fast_half(int* memlist1, int* memlist2, LocalHom** localhom, Lo
 }
 
 int
-msshrinklocalhom_fast(int* memlist1, int* memlist2, LocalHom** localhom, LocalHom*** localhomshrink) {
+msshrinklocalhom_fast(int* memlist1, int* memlist2, aln_LocalHom** localhom, aln_LocalHom*** localhomshrink) {
     int m1, k1, m2, k2;
 
     for (k1 = 0; (m1 = memlist1[k1]) != -1; k1++) {
@@ -595,7 +581,7 @@ msshrinklocalhom_fast(int* memlist1, int* memlist2, LocalHom** localhom, LocalHo
     return (0);
 }
 int
-fastshrinklocalhom_one(int* mem1, int* mem2, int norg, LocalHom** localhom, LocalHom*** localhomshrink) {
+fastshrinklocalhom_one(int* mem1, int* mem2, int norg, aln_LocalHom** localhom, aln_LocalHom*** localhomshrink) {
     int  k1, k2;
     int *intpt1, *intpt2;
 
@@ -615,7 +601,7 @@ fastshrinklocalhom_one(int* mem1, int* mem2, int norg, LocalHom** localhom, Loca
 }
 
 int
-fastshrinklocalhom(int* mem1, int* mem2, LocalHom** localhom, LocalHom*** localhomshrink) {
+fastshrinklocalhom(int* mem1, int* mem2, aln_LocalHom** localhom, aln_LocalHom*** localhomshrink) {
     int  k1, k2;
     int *intpt1, *intpt2;
 
@@ -634,7 +620,7 @@ fastshrinklocalhom(int* mem1, int* mem2, LocalHom** localhom, LocalHom*** localh
 }
 
 int
-fastshrinklocalhom_half_seed(int* mem1, int* mem2, int nseed, int* posinlsh1, int* posinlsh2, LocalHom** localhom, LocalHom*** localhomshrink) {
+fastshrinklocalhom_half_seed(int* mem1, int* mem2, int nseed, int* posinlsh1, int* posinlsh2, aln_LocalHom** localhom, aln_LocalHom*** localhomshrink) {
     int  k1, k2, sk1, sk2;
     int *intpt1, *intpt2;
 
@@ -679,7 +665,7 @@ fastshrinklocalhom_half_seed(int* mem1, int* mem2, int nseed, int* posinlsh1, in
 }
 
 int
-fastshrinklocalhom_half(int* mem1, int* mem2, LocalHom** localhom, LocalHom*** localhomshrink) {
+fastshrinklocalhom_half(int* mem1, int* mem2, aln_LocalHom** localhom, aln_LocalHom*** localhomshrink) {
     int  k1, k2;
     int *intpt1, *intpt2;
 
@@ -705,7 +691,7 @@ fastshrinklocalhom_half(int* mem1, int* mem2, LocalHom** localhom, LocalHom*** l
 }
 
 int
-fastshrinklocalhom_target(int* mem1, int* mem2, LocalHom** localhom, LocalHom*** localhomshrink, char* swaplist, int* targetmap) {
+fastshrinklocalhom_target(int* mem1, int* mem2, aln_LocalHom** localhom, aln_LocalHom*** localhomshrink, char* swaplist, int* targetmap) {
     int  k1, k2;
     int *intpt1, *intpt2;
     int  t1, i2;
@@ -755,7 +741,7 @@ fastshrinklocalhom_target(int* mem1, int* mem2, LocalHom** localhom, LocalHom***
 }
 
 int
-msfastshrinklocalhom(int* mem1, int* mem2, LocalHom** localhom, LocalHom*** localhomshrink) {
+msfastshrinklocalhom(int* mem1, int* mem2, aln_LocalHom** localhom, aln_LocalHom*** localhomshrink) {
     int  k1, k2;
     int *intpt1, *intpt2;
     int  m1, m2;

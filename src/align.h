@@ -113,28 +113,43 @@ typedef struct aln_AlignResult {
 #endif
 
 typedef struct aln_Context {
-    int32_t  penalty;
-    int32_t  offset;
-    int32_t  constraint;
-    double   minimumweight;
-    double   fastathreshold;
-    double   sueff_global;
-    char     treemethod;
-    char     gap;
-    int      njob;
-    int      amino_n[0x100];
-    int**    n_dis;
-    double** n_dis_consweight_multi;
-    uint8_t  amino[0x100];
-    int      penalty_dist;
-    int      penalty_ex;
-    int      outgap;
-    double   consweight_multi;
-    int      commonAlloc1;
-    int      commonAlloc2;
-    int**    commonIP;
-    int      nalphabets;
+    int32_t   penalty;
+    int32_t   offset;
+    int32_t   constraint;
+    double    minimumweight;
+    double    fastathreshold;
+    double    sueff_global;
+    char      treemethod;
+    int32_t   njob;
+    int32_t   amino_n[0x100];
+    int32_t** n_dis;
+    double**  n_dis_consweight_multi;
+    uint8_t   amino[0x100];
+    int32_t   penalty_dist;
+    int32_t   penalty_ex;
+    int32_t   outgap;
+    double    consweight_multi;
+    int32_t   commonAlloc1;
+    int32_t   commonAlloc2;
+    int32_t** commonIP;
+    int32_t   nalphabets;
 } aln_Context;
+
+typedef struct aln_LocalHom {
+    struct aln_LocalHom* next;
+    struct aln_LocalHom* last;
+    int32_t              start1;
+    int32_t              end1;
+    int32_t              start2;
+    int32_t              end2;
+    double               opt;
+    int32_t              overlapaa;
+    int32_t              extended;
+    double               importance;
+    double               rimportance;
+    char                 korh;
+    int32_t              nokori;
+} aln_LocalHom;
 
 typedef struct aln_Arena {
     void*    base;

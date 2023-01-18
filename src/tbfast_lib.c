@@ -13,7 +13,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     aln_Arena* tempArena = &tempArena_;
 
     aln_Context* ctx = aln_arenaAllocStruct(tempArena, aln_Context);
-
     ctx->penalty = -918;
     ctx->penalty_dist = 918;
     ctx->offset = 60;
@@ -23,23 +22,17 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     ctx->fastathreshold = 2.7;
     ctx->sueff_global = 0.1;
     ctx->treemethod = 'X';
-    ctx->gap = '-';
     ctx->nalphabets = 26;
     ctx->njob = stringsCount;
     ctx->outgap = 1;
     ctx->consweight_multi = 1.0;
 
-    // TODO(sen) What do we need the name array for?
     // TODO(sen) Can we use the strings directly as aos?
     // NOTE(sen) Process input
-    const char* const* name = aln_arenaAllocArray(tempArena, const char*, stringsCount);
-    int*               nlen = aln_arenaAllocArray(tempArena, int, stringsCount);
-    int                maxInputSeqLen = 0;
+    int maxInputSeqLen = 0;
     for (int32_t strIndex = 0; strIndex < stringsCount; strIndex++) {
         aln_Str str = strings[strIndex];
         maxInputSeqLen = aln_max(maxInputSeqLen, str.len);
-        ((const char**)name)[strIndex] = "name";
-        nlen[strIndex] = str.len;
     }
 
     // TODO(sen) Remove the requirement for null-terminated array
@@ -54,18 +47,12 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         seq[strIndex] = thisSeq;
     }
 
-    int* targetmap = calloc(ctx->njob, sizeof(int));
-    int* targetmapr = calloc(ctx->njob, sizeof(int));
-    for (int i = 0; i < ctx->njob; i++) {
-        targetmap[i] = targetmapr[i] = i;
-    }
-
-    LocalHom** localhomtable = (LocalHom**)calloc(ctx->njob, sizeof(LocalHom*));
+    aln_LocalHom** localhomtable = aln_arenaAllocArray(tempArena, aln_LocalHom*, ctx->njob);
     {
-        int ilim = ctx->njob;
-        for (int i = 0; i < ctx->njob; i++) {
-            localhomtable[i] = (LocalHom*)calloc(ilim, sizeof(LocalHom));
-            for (int j = 0; j < ilim; j++) {
+        int32_t ilim = ctx->njob;
+        for (int32_t i = 0; i < ctx->njob; i++) {
+            localhomtable[i] = aln_arenaAllocArray(tempArena, aln_LocalHom, ilim);
+            for (int32_t j = 0; j < ilim; j++) {
                 localhomtable[i][j].start1 = -1;
                 localhomtable[i][j].end1 = -1;
                 localhomtable[i][j].start2 = -1;
@@ -73,7 +60,7 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
                 localhomtable[i][j].overlapaa = -1.0;
                 localhomtable[i][j].opt = -1.0;
                 localhomtable[i][j].importance = -1.0;
-                localhomtable[i][j].next = NULL;
+                localhomtable[i][j].next = 0;
                 localhomtable[i][j].nokori = 0;
                 localhomtable[i][j].extended = -1;
                 localhomtable[i][j].last = localhomtable[i] + j;
@@ -247,12 +234,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         char** mseq1 = AllocateCharMtx(ctx->njob, 0);
         char** mseq2 = AllocateCharMtx(ctx->njob, 0);
         {
-            int* targetmap = calloc(ctx->njob, sizeof(int));
-            int* targetmapr = calloc(ctx->njob, sizeof(int));
-            for (int i = 0; i < ctx->njob; i++) {
-                targetmap[i] = targetmapr[i] = i;
-            }
-
             char** distseq1 = AllocateCharMtx(1, 0);
             char** distseq2 = AllocateCharMtx(1, 0);
 
@@ -287,7 +268,7 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         int ilim = ctx->njob;
         for (int i = 0; i < ctx->njob; i++) {
             for (int j = 0; j < ilim; j++) {
-                for (LocalHom* tmpptr = localhomtable[i] + j; tmpptr; tmpptr = tmpptr->next) {
+                for (aln_LocalHom* tmpptr = localhomtable[i] + j; tmpptr; tmpptr = tmpptr->next) {
                     if (tmpptr->opt == -1.0)
                         continue;
                     tmpptr->opt = (tmpptr->opt) / 5.8 * 600;
@@ -304,7 +285,7 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     Treedep* dep = (Treedep*)calloc(ctx->njob, sizeof(Treedep));
     {
         double** iscore = AllocateFloatHalfMtx(ctx->njob);
-        fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(ctx, ctx->njob, iscore, topol, len, dep, 1, 1);
+        fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(ctx, ctx->njob, iscore, topol, len, dep, 1);
     }
 
     int** localmem = AllocateIntMtx(2, ctx->njob + 1);
@@ -346,9 +327,9 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         double*   effarr1_kozo = AllocateDoubleVec(ctx->njob);
         double*   effarr2_kozo = AllocateDoubleVec(ctx->njob);
 
-        LocalHom*** localhomshrink = (LocalHom***)calloc(ctx->njob, sizeof(LocalHom**));
+        aln_LocalHom*** localhomshrink = (aln_LocalHom***)calloc(ctx->njob, sizeof(aln_LocalHom**));
         for (int i = 0; i < ctx->njob; i++) {
-            localhomshrink[i] = (LocalHom**)calloc(ctx->njob, sizeof(LocalHom*));
+            localhomshrink[i] = (aln_LocalHom**)calloc(ctx->njob, sizeof(aln_LocalHom*));
         }
 
         int* alreadyaligned = AllocateIntVec(ctx->njob);
@@ -360,7 +341,7 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         for (int l = 0; l < ctx->njob; l++)
             fftlog[l] = 1;
 
-        calcimportance_half(ctx, ctx->njob, eff, bseq, localhomtable, alloclen);
+        calcimportance_half(ctx->njob, eff, bseq, localhomtable, alloclen);
 
         char** mseq1 = AllocateCharMtx(ctx->njob, 0);
         char** mseq2 = AllocateCharMtx(ctx->njob, 0);
@@ -469,8 +450,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
                 orieff1,
                 orieff2
             );
-
-            nlen[m1] = 0.5 * (nlen[m1] + nlen[m2]);
         }
     }
 

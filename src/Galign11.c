@@ -88,12 +88,12 @@ Atracking(aln_Context* ctx, double* lasthorizontalw, double* lastverticalw, char
             l = iin;
             while (--l >= 0) {
                 *--mseq1[0] = seq1[0][l];
-                *--mseq2[0] = ctx->gap;
+                *--mseq2[0] = '-';
                 k++;
             }
             l = jin;
             while (--l >= 0) {
-                *--mseq1[0] = ctx->gap;
+                *--mseq1[0] = '-';
                 *--mseq2[0] = seq2[0][l];
                 k++;
             }
@@ -102,12 +102,12 @@ Atracking(aln_Context* ctx, double* lasthorizontalw, double* lastverticalw, char
             l = iin - ifi;
             while (--l > 0) {
                 *--mseq1[0] = seq1[0][ifi + l];
-                *--mseq2[0] = ctx->gap;
+                *--mseq2[0] = '-';
                 k++;
             }
             l = jin - jfi;
             while (--l > 0) {
-                *--mseq1[0] = ctx->gap;
+                *--mseq1[0] = '-';
                 *--mseq2[0] = seq2[0][jfi + l];
                 k++;
             }
@@ -233,14 +233,14 @@ G__align11(aln_Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, in
     if (lgth1 == 0) {
         seq1[0][lgth2] = 0;
         while (lgth2)
-            seq1[0][--lgth2] = ctx->gap;
+            seq1[0][--lgth2] = '-';
         return (0.0);
     }
 
     if (lgth2 == 0) {
         seq2[0][lgth1] = 0;
         while (lgth1)
-            seq2[0][--lgth1] = ctx->gap;
+            seq2[0][--lgth1] = '-';
         return (0.0);
     }
 
@@ -341,7 +341,6 @@ G__align11(aln_Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, in
             currentw[j] += fpenalty * TERMGAPFAC;
 #if USE_PENALTY_EX  // 2018/Apr/22
             currentw[j] += fpenalty_ex * j * TERMGAPFAC_EX;
-//			reporterr( "added _ex\n" );
 #endif
         }
     }

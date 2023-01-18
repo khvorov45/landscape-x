@@ -41,7 +41,6 @@ intcat(int* s1, int* s2) {
     while (*s1 != -1)
         s1++;
     while (*s2 != -1) {
-        //		reporterr(       "copying %d\n", *s2 );
         *s1++ = *s2++;
     }
     *s1 = -1;
@@ -50,7 +49,6 @@ intcat(int* s1, int* s2) {
 void
 intcpy(int* s1, int* s2) {
     while (*s2 != -1) {
-        //		reporterr(       "copying %d\n", *s2 );
         *s1++ = *s2++;
     }
     *s1 = -1;
@@ -144,7 +142,6 @@ compfunc(const void* p, const void* q) {
 void
 limitlh(int* uselh, Lennum* in, int size, int limit) {
     int i;
-    //	for(i=0;i<size;i++) reporterr( "i=%d, onum=%d, len=%d\n", i, in[i].num, in[i].len );
 
     qsort(in, size, sizeof(Lennum), compfunc);
     shufflelennum(in, size / 2);
@@ -152,7 +149,6 @@ limitlh(int* uselh, Lennum* in, int size, int limit) {
 
     if (limit > size)
         limit = size;
-    //	reporterr( "numpairs=%llu, ULLONG_MAX=%llu, nn=%lld, INT_MAX=%d, n=%d\n", numpairs, ULLONG_MAX, nn, INT_MAX, n );
 
     for (i = 0; i < limit; i++)
         uselh[in[i].num] = 1;
@@ -165,7 +161,6 @@ sortbylength(int* uselh, Lennum* in, int size, unsigned long long numpairs) {
     int                i;
     unsigned long long nn;
     int                n;
-    //	for(i=0;i<size;i++) reporterr( "i=%d, onum=%d, len=%d\n", i, in[i].num, in[i].len );
 
     qsort(in, size, sizeof(Lennum), compfunc);
 
@@ -176,7 +171,6 @@ sortbylength(int* uselh, Lennum* in, int size, unsigned long long numpairs) {
     n = (int)nn;
     if (n > size)
         n = size;
-    //	reporterr( "numpairs=%llu, ULLONG_MAX=%llu, nn=%lld, INT_MAX=%d, n=%d\n", numpairs, ULLONG_MAX, nn, INT_MAX, n );
 
     for (i = 0; i < n; i++)
         uselh[in[i].num] = 1;
@@ -260,7 +254,7 @@ cluster_minimum_double(double d1, double d2) {
 }
 
 void
-fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(aln_Context* ctx, int nseq, double** eff, int*** topol, double** len, Treedep* dep, int progressout, int efffree) {
+fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(aln_Context* ctx, int nseq, double** eff, int*** topol, double** len, Treedep* dep, int efffree) {
     int     i, j, k, miniim, maxiim, minijm, maxijm;
     int*    intpt;
     double  tmpdouble;
@@ -289,7 +283,6 @@ fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(aln_Context* ctx, int nseq,
     else if (ctx->treemethod == 'q')
         clusterfuncpt[0] = cluster_minimum_double;
     else {
-        reporterr("Unknown treemethod, %c\n", ctx->treemethod);
         exit(1);
     }
 
@@ -319,16 +312,11 @@ fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(aln_Context* ctx, int nseq,
         nmemar[i] = 1;
     }
 
-    if (progressout)
-        reporterr("\n");
     for (k = 0; k < nseq - 1; k++) {
-        if (progressout && k % 10 == 0)
-            reporterr("\r% 5d / %d", k, nseq);
 
         minscore = 999.9;
         for (acpti = ac; acpti->next != NULL; acpti = acpti->next) {
             i = acpti->pos;
-            //			reporterr(       "k=%d i=%d\n", k, i );
             if (mindisfrom[i] < minscore)  // muscle
             {
                 im = i;
@@ -378,9 +366,7 @@ fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(aln_Context* ctx, int nseq,
             dep[k].child1 = prevnode;
         nmemjm = nmemar[jm];
         intpt = topol[k][1] = (int*)realloc(topol[k][1], (2) * sizeof(int));
-        //		intpt = topol[k][1] = (int *)realloc( topol[k][1], ( nmemjm + 1 ) * sizeof( int ) );
         if (!intpt) {
-            reporterr("Cannot reallocate topol\n");
             exit(1);
         }
         if (prevnode == -1) {
@@ -463,7 +449,6 @@ fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(aln_Context* ctx, int nseq,
             }
         }
 
-        //		reporterr(       "im,jm=%d,%d\n", im, jm );
         acjmprev = ac[jm].prev;
         acjmnext = ac[jm].next;
         acjmprev->next = acjmnext;
@@ -532,11 +517,9 @@ counteff_simple_double_nostatic_memsave(int nseq, int*** topol, double** len, Tr
 
     for (i = 0; i < nseq; i++) {
         if (len[i][0] < 0.0) {
-            reporterr("WARNING: negative branch length %f, step %d-0\n", len[i][0], i);
             len[i][0] = 0.0;
         }
         if (len[i][1] < 0.0) {
-            reporterr("WARNING: negative branch length %f, step %d-1\n", len[i][1], i);
             len[i][1] = 0.0;
         }
     }
@@ -593,21 +576,12 @@ counteff_simple_double_nostatic_memsave(int nseq, int*** topol, double** len, Tr
     free(memhist);
 
     for (i = 0; i < nseq; i++) {
-#if 1 /* 97.9.29 */
         rootnode[i] += GETA3;
-#endif
-#if 0
-		reporterr(       "### rootnode for %d = %f\n", i, rootnode[i] );
-#endif
     }
-#if 1
     total = 0.0;
     for (i = 0; i < nseq; i++) {
         total += rootnode[i];
     }
-#else
-    total = 1.0;
-#endif
 
     for (i = 0; i < nseq; i++) {
         node[i] = rootnode[i] / total;
@@ -629,22 +603,21 @@ copyWithNoGaps(char* aseq, const char* seq) {
 #define SEGMENTSIZE 150
 
 void
-calcimportance_half(aln_Context* ctx, int nseq, double* eff, char** seq, LocalHom** localhom, int alloclen) {
+calcimportance_half(int nseq, double* eff, char** seq, aln_LocalHom** localhom, int alloclen) {
     int       i, j, pos, len;
     double*   importance;
     double    tmpdouble;
     double *  ieff, totaleff;
     int*      nogaplen;
-    LocalHom* tmpptr;
+    aln_LocalHom* tmpptr;
 
     importance = AllocateDoubleVec(alloclen);
-    //	reporterr("alloclen=%d, nlenmax=%d\n", alloclen, nlenmax );
     nogaplen = AllocateIntVec(nseq);
     ieff = AllocateDoubleVec(nseq);
 
     totaleff = 0.0;
     for (i = 0; i < nseq; i++) {
-        nogaplen[i] = seqlen(seq[i], ctx->gap);
+        nogaplen[i] = seqlen(seq[i], '-');
         if (nogaplen[i] == 0)
             ieff[i] = 0.0;
         else
@@ -653,22 +626,8 @@ calcimportance_half(aln_Context* ctx, int nseq, double* eff, char** seq, LocalHo
     }
     for (i = 0; i < nseq; i++)
         ieff[i] /= totaleff;
-        //	for( i=0; i<nseq; i++ ) reporterr(       "eff[%d] = %f\n", i, ieff[i] );
-
-#if 0
-	for( i=0; i<nseq; i++ ) for( j=0; j<nseq; j++ )
-	{
-		tmpptr = localhom[i]+j;
-		reporterr(       "%d-%d\n", i, j );
-		do
-		{
-			reporterr(       "reg1=%d-%d, reg2=%d-%d, opt=%f\n", tmpptr->start1, tmpptr->end1, tmpptr->start2, tmpptr->end2, tmpptr->opt );
-		} while( tmpptr=tmpptr->next );
-	}
-#endif
 
     for (i = 0; i < nseq; i++) {
-        //		reporterr(       "i = %d\n", i );
         for (pos = 0; pos < alloclen; pos++) {
             importance[pos] = 0.0;
         }
@@ -678,17 +637,10 @@ calcimportance_half(aln_Context* ctx, int nseq, double* eff, char** seq, LocalHo
 
             else if (i < j) {
                 for (tmpptr = localhom[i] + j - i; tmpptr; tmpptr = tmpptr->next) {
-                    //					reporterr( "pos=%d, alloclen=%d\n", pos, alloclen );
                     if (tmpptr->opt == -1)
                         continue;
                     for (pos = tmpptr->start1; pos <= tmpptr->end1; pos++) {
-#if 1
-                        //						if( pos == 0 ) reporterr( "hit! i=%d, j=%d, pos=%d\n", i, j, pos );
                         importance[pos] += ieff[j];
-#else
-                        importance[pos] += ieff[j] * tmpptr->opt / MIN(nogaplen[i], nogaplen[j]);
-                        importance[pos] += ieff[j] * tmpptr->opt / tmpptr->overlapaa;
-#endif
                     }
                 }
             } else {
@@ -696,25 +648,13 @@ calcimportance_half(aln_Context* ctx, int nseq, double* eff, char** seq, LocalHo
                     if (tmpptr->opt == -1)
                         continue;
                     for (pos = tmpptr->start2; pos <= tmpptr->end2; pos++) {
-#if 1
-                        //						if( pos == 0 ) reporterr( "hit! i=%d, j=%d, pos=%d\n", i, j, pos );
                         importance[pos] += ieff[j];
-#else
-                        importance[pos] += ieff[j] * tmpptr->opt / MIN(nogaplen[i], nogaplen[j]);
-                        importance[pos] += ieff[j] * tmpptr->opt / tmpptr->overlapaa;
-#endif
                     }
                 }
             }
         }
-#if 0
-		reporterr(       "position specific importance of seq %d:\n", i );
-		for( pos=0; pos<nlenmax; pos++ )
-			reporterr(       "%d: %f\n", pos, importance[pos] );
-		reporterr(       "\n" );
-#endif
+
         for (j = 0; j < nseq; j++) {
-            //			reporterr(       "i=%d, j=%d\n", i, j );
             if (i == j)
                 continue;
 
@@ -750,103 +690,37 @@ calcimportance_half(aln_Context* ctx, int nseq, double* eff, char** seq, LocalHo
                         tmpdouble += importance[pos];
                         len++;
                     }
-
                     tmpdouble /= (double)len;
-
                     tmpptr->rimportance = tmpdouble * tmpptr->opt;
-                    //					tmpptr->fimportance = (double)tmpptr->importance;
                 }
             }
-
-            //			reporterr(       "importance of match between %d - %d = %f\n", i, j, tmpdouble );
         }
     }
 
-#if 0
-	printf(       "before averaging:\n" );
-
-	for( i=0; i<nseq; i++ ) for( j=0; j<nseq; j++ )
-	{
-		if( i == j ) continue;
-
-		else if( i < j ) 
-		{
-			printf(       "%d-%d\n", i, j );
-			for( tmpptr = localhom[i]+j-i; tmpptr; tmpptr=tmpptr->next )
-			{
-				printf(       "reg1=%d-%d, reg2=%d-%d, imp=%f -> %f opt=%f\n", tmpptr->start1, tmpptr->end1, tmpptr->start2, tmpptr->end2, tmpptr->opt / tmpptr->overlapaa, eff[i] * tmpptr->importance, tmpptr->opt );
-			}
-		}
-		else
-		{
-			printf(       "%d-%d\n", i, j );
-			for( tmpptr = localhom[j]+i-j; tmpptr; tmpptr=tmpptr->next )
-			{
-				printf(       "reg1=%d-%d, reg2=%d-%d, imp=%f -> %f opt=%f\n", tmpptr->start2, tmpptr->end2, tmpptr->start1, tmpptr->end1, tmpptr->opt / tmpptr->overlapaa, eff[i] * tmpptr->rimportance, tmpptr->opt );
-			}
-		}
-	}
-#endif
-
-#if 1
-    //	reporterr(       "average?\n" );
-    for (i = 0; i < nseq - 1; i++)
+    for (i = 0; i < nseq - 1; i++) {
         for (j = i + 1; j < nseq; j++) {
             double    imp;
-            LocalHom* tmpptr1;
-
-            //		reporterr(       "i=%d, j=%d\n", i, j );
-
+            aln_LocalHom* tmpptr1;
             tmpptr1 = localhom[i] + j - i;
             for (; tmpptr1; tmpptr1 = tmpptr1->next) {
                 if (tmpptr1->opt == -1.0) {
-                    //				reporterr(       "WARNING: i=%d, j=%d, tmpptr1->opt=%f, tmpptr2->opt=%f\n", i, j, tmpptr1->opt, tmpptr2->opt );
                     continue;
                 }
-                //			reporterr(       "## importances = %f, %f\n", tmpptr1->importance, tmpptr2->importance );
                 imp = 0.5 * (tmpptr1->importance + tmpptr1->rimportance);
                 tmpptr1->importance = tmpptr1->rimportance = imp;
-                //			tmpptr1->fimportance = tmpptr2->fimportance = (double)imp;
-
-                //			reporterr(       "## importance = %f\n", tmpptr1->importance );
             }
-
-#if 0  // commented out, 2012/02/10
-		if( ( tmpptr1 && !tmpptr2 ) || ( !tmpptr1 && tmpptr2 ) )
-		{
-			reporterr(       "ERROR: i=%d, j=%d\n", i, j );
-			exit( 1 );
-		}
-#endif
         }
-#endif
-#if 0
-	printf(       "after averaging:\n" );
+    }
 
-	for( i=0; i<nseq; i++ ) for( j=0; j<nseq; j++ )
-	{
-		if( i < j ) for( tmpptr = localhom[i]+j-i; tmpptr; tmpptr=tmpptr->next )
-		{
-			if( tmpptr->end1 && tmpptr->start1 != -1 )
-				printf(       "%d-%d, reg1=%d-%d, reg2=%d-%d, imp=%f -> %f opt=%f\n", i, j, tmpptr->start1, tmpptr->end1, tmpptr->start2, tmpptr->end2, tmpptr->opt / tmpptr->overlapaa, tmpptr->importance, tmpptr->opt );
-		}
-		else for( tmpptr = localhom[j]+i-j; tmpptr; tmpptr=tmpptr->next )
-		{
-			if( tmpptr->end2 && tmpptr->start2 != -1 )
-				printf(       "%d-%d, reg1=%d-%d, reg2=%d-%d, imp=%f -> %f opt=%f\n", i, j, tmpptr->start2, tmpptr->end2, tmpptr->start1, tmpptr->end1, tmpptr->opt / tmpptr->overlapaa, tmpptr->importance, tmpptr->opt );
-		}
-	}
-exit( 1 );
-#endif
     free(importance);
     free(nogaplen);
     free(ieff);
 }
 
 void
-gapireru(aln_Context* ctx, char* res, char* ori, char* gt) {
+gapireru(char* res, char* ori, char* gt) {
     char g = 0;
-    char gapchar = ctx->gap;
+    char gapchar = '-';
     while ((g = *gt++)) {
         if (g == '-') {
             *res++ = gapchar;
@@ -1096,18 +970,6 @@ getGapPattern(double* fgcp, int clus, char** seq, double* eff, int len) {
                 fpt++;
             }
         }
-#if 0
-		{
-			gb = gc;
-			gc = ( egappat[j] == '-' );
-			{
-				if( gb * !gc ) *fpt += feff;
-			}
-		}
-#endif
-    }
-    for (j = 0; j < len; j++) {
-        reporterr("%d, %f\n", j, fgcp[j]);
     }
 }
 
@@ -1206,119 +1068,12 @@ makedynamicmtx(aln_Context* ctx, double** out, double** in, double offset) {
             if (ctx->amino[j] == '-')
                 continue;  // text no toki arieru
             out[i][j] = out[i][j] * 600 / av;
-            reporterr("%c-%c: %f\n", ctx->amino[i], ctx->amino[j], out[i][j]);
         }
     }
-}
-
-void
-makeskiptable(int n, int** skip, char** seq) {
-    char* nogapseq;
-    int   nogaplen, alnlen;
-    int   i, j, posinseq;
-
-    nogapseq = calloc(strlen(seq[0]) + 1, sizeof(char));
-    for (i = 0; i < n; i++) {
-        copyWithNoGaps(nogapseq, seq[i]);
-        nogaplen = strlen(nogapseq);
-        alnlen = strlen(seq[i]);
-        skip[i] = calloc(nogaplen + 1, sizeof(int));
-
-        //		reporterr( "%s\n", nogapseq );
-
-        posinseq = 0;
-        for (j = 0; j < alnlen; j++) {
-            if (seq[i][j] == '-') {
-                skip[i][posinseq]++;
-            } else {
-                posinseq++;
-            }
-        }
-        //		for( j=0; j<nogaplen+1; j++ )
-        //			reporterr( "%d ", skip[i][j] );
-        //		reporterr( "\n" );
-        //		exit( 1 );
-    }
-    free(nogapseq);
-}
-
-int
-generatesubalignmentstable(int nseq, int*** tablept, int* nsubpt, int* maxmempt, int*** topol, double** len, double threshold) {
-    int     i, j, rep0, rep1, nmem, mem;
-    double  distfromtip0, distfromtip1;
-    double* distfromtip;
-    reporterr("\n\n\n");
-
-    *maxmempt = 0;
-    *nsubpt = 0;
-
-    distfromtip = calloc(nseq, sizeof(double));
-    for (i = 0; i < nseq - 1; i++) {
-#if 0
-		reporterr( "STEP %d\n", i );
-		for( j=0; topol[i][0][j]!=-1; j++ )
-			reporterr( "%3d ", topol[i][0][j] );
-		reporterr( "\n" );
-		reporterr( "len=%f\n", len[i][0] );
-#endif
-
-        rep0 = topol[i][0][0];
-        distfromtip0 = distfromtip[rep0];
-        distfromtip[rep0] += len[i][0];
-        //		reporterr( "distfromtip[%d] = %f->%f\n", rep0, distfromtip0, distfromtip[rep0] );
-
-#if 0
-		for( j=0; topol[i][1][j]!=-1; j++ )
-			reporterr( "%3d ", topol[i][1][j] );
-		reporterr( "\n" );
-		reporterr( "len=%f\n", len[i][1] );
-#endif
-
-        rep1 = topol[i][1][0];
-        distfromtip1 = distfromtip[rep1];
-        distfromtip[rep1] += len[i][1];
-        //		reporterr( "distfromtip[%d] = %f->%f\n", rep1, distfromtip1, distfromtip[rep1] );
-
-        if (topol[i][0][1] != -1 && distfromtip0 <= threshold && threshold < distfromtip[rep0]) {
-            //			reporterr( "HIT 0!\n" );
-            *tablept = realloc(*tablept, sizeof(char*) * (*nsubpt + 2));
-            for (j = 0, nmem = 0; (mem = topol[i][0][j]) != -1; j++)
-                nmem++;
-            //			reporterr( "allocating %d\n", nmem+1 );
-            (*tablept)[*nsubpt] = calloc(nmem + 1, sizeof(int));
-            (*tablept)[*nsubpt + 1] = NULL;
-            intcpy((*tablept)[*nsubpt], topol[i][0]);
-            if (*maxmempt < nmem)
-                *maxmempt = nmem;
-            *nsubpt += 1;
-        }
-
-        if (topol[i][1][1] != -1 && distfromtip1 <= threshold && threshold < distfromtip[rep1]) {
-            //			reporterr( "HIT 1!\n" );
-            *tablept = realloc(*tablept, sizeof(char*) * (*nsubpt + 2));
-            for (j = 0, nmem = 0; (mem = topol[i][1][j]) != -1; j++)
-                nmem++;
-            //			reporterr( "allocating %d\n", nmem+1 );
-            (*tablept)[*nsubpt] = calloc(nmem + 1, sizeof(int));
-            (*tablept)[*nsubpt + 1] = NULL;
-            intcpy((*tablept)[*nsubpt], topol[i][1]);
-            if (*maxmempt < nmem)
-                *maxmempt = nmem;
-            *nsubpt += 1;
-        }
-    }
-
-    if (distfromtip[0] <= threshold) {
-        free(distfromtip);
-        return (1);
-    }
-
-    free(distfromtip);
-    return (0);
 }
 
 static void
-movereg(char* seq1, char* seq2, LocalHom* tmpptr, int* start1pt, int* start2pt, int* end1pt, int* end2pt) {
+movereg(char* seq1, char* seq2, aln_LocalHom* tmpptr, int* start1pt, int* start2pt, int* end1pt, int* end2pt) {
     char* pt;
     int   tmpint;
 
@@ -1368,7 +1123,7 @@ movereg(char* seq1, char* seq2, LocalHom* tmpptr, int* start1pt, int* start2pt, 
 }
 
 static void
-movereg_swap(char* seq1, char* seq2, LocalHom* tmpptr, int* start1pt, int* start2pt, int* end1pt, int* end2pt) {
+movereg_swap(char* seq1, char* seq2, aln_LocalHom* tmpptr, int* start1pt, int* start2pt, int* end1pt, int* end2pt) {
     char* pt;
     int   tmpint;
 
@@ -1418,12 +1173,12 @@ movereg_swap(char* seq1, char* seq2, LocalHom* tmpptr, int* start1pt, int* start
 }
 
 void
-fillimp(aln_Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2) {
+fillimp(aln_Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, aln_LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2) {
     int       i, j, k1, k2, start1, start2, end1, end2;
     double    effij, effijx, effij_kozo;
     char *    pt1, *pt2;
-    LocalHom* tmpptr;
-    void (*movefunc)(char*, char*, LocalHom*, int*, int*, int*, int*);
+    aln_LocalHom* tmpptr;
+    void (*movefunc)(char*, char*, aln_LocalHom*, int*, int*, int*, int*);
 
     for (i = 0; i < lgth1; i++)
         for (j = 0; j < lgth2; j++)

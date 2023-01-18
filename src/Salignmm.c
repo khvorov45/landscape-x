@@ -26,7 +26,7 @@ imp_match_out_vead_tate(double* imp, int j1, int lgth1) {
 }
 
 void
-imp_match_init_strict(aln_Context* ctx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2) {
+imp_match_init_strict(aln_Context* ctx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, aln_LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2) {
     if (seq1 == NULL) {
         if (impmtx)
             FreeFloatMtx(impmtx);
@@ -91,7 +91,7 @@ match_calc(aln_Context* ctx, double** n_dynamicmtx, double* match, double** cpmx
 }
 
 static void
-Atracking_localhom(aln_Context* ctx, double* impwmpt, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int icyc, int jcyc, int* warpis, int* warpjs, int warpbase, int* ngap1, int* ngap2, int reuseprofiles, char** gt1, char** gt2) {
+Atracking_localhom(double* impwmpt, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int icyc, int jcyc, int* warpis, int* warpjs, int warpbase, int* ngap1, int* ngap2, int reuseprofiles, char** gt1, char** gt2) {
     int   i, j, l, iin, jin, ifi, jfi, lgth1, lgth2, k, limk;
     char *gaptable1, *gt1bk;
     char *gaptable2, *gt2bk;
@@ -204,7 +204,7 @@ Atracking_localhom(aln_Context* ctx, double* impwmpt, char** seq1, char** seq2, 
         }
     } else {
         for (i = 0; i < icyc; i++)
-            gapireru(ctx, mseq1[i], seq1[i], gaptable1);
+            gapireru(mseq1[i], seq1[i], gaptable1);
     }
 
     if (*ngap2 == 0 && reuseprofiles)
@@ -217,7 +217,7 @@ Atracking_localhom(aln_Context* ctx, double* impwmpt, char** seq1, char** seq2, 
         }
     } else {
         for (j = 0; j < jcyc; j++)
-            gapireru(ctx, mseq2[j], seq2[j], gaptable2);
+            gapireru(mseq2[j], seq2[j], gaptable2);
     }
 
     if (gt1 == NULL) {
@@ -302,18 +302,6 @@ creategapfreqresult(double** gapfresult, int limk, double eff1, double eff2, dou
     }
     (*gapfresult)[j] = 1.0;
 
-    //	free( gapf1 ); -> yobidashimoto
-    //	gapf1 = NULL;
-    //	free( gapf2 );
-    //	gapf1 = NULL;
-
-#if 0
-	reporterr( "gaptable1=%s\n", gaptable1 );
-	reporterr( "gaptable2=%s\n", gaptable2 );
-	reporterr( "result (gapfreq) = " );
-	for( j=0; j<alen+1; j++ ) reporterr( "%4.2f ", (*gapfresult)[j] );
-	reporterr( "\n" );
-#endif
 #endif
 }
 
@@ -324,21 +312,18 @@ createogresult(double** gapfresult, int limk, double eff1, double eff2, double* 
     int alen = strlen(gaptable1);
 
     *gapfresult = calloc(limk + 1, sizeof(double));
-#if 1  // sukoshi osoi
+#if 1
     for (j = 0; j < alen; j++)
         (*gapfresult)[j] = 0.0;
     for (j = 0, p = 0; j < alen; j++) {
         if (gaptable1[j] == '-') {
             if (j == 0) {
-                //				reporterr( "hit, j=%d, result += %f\n",  eff1 );
                 (*gapfresult)[j] += 1.0 * eff1;
             } else if (j && gaptable1[j - 1] != '-') {
-                //				reporterr( "hit, j=%d, p=%d, gf1[p]=%f, result += %f (1)\n", j, p, gf1[p], (gf1[p]) * eff1 );
                 (*gapfresult)[j] += (gf1[p - 1]) * eff1;  // p-1 daijoubu?
             }
         } else {
             if (j == 0 || (j && gaptable1[j - 1] != '-')) {
-                //				reporterr( "copying. j=%d, ori1[]=%f\n", j, ori1[p] );
                 (*gapfresult)[j] += ori1[p] * eff1;
             }
             p++;
@@ -348,29 +333,18 @@ createogresult(double** gapfresult, int limk, double eff1, double eff2, double* 
     for (j = 0, p = 0; j < alen; j++) {
         if (gaptable2[j] == '-') {
             if (j == 0) {
-                //				reporterr( "hit, j=%d, result += %f\n",  eff2 );
                 (*gapfresult)[j] += 1.0 * eff2;
             } else if (j && gaptable2[j - 1] != '-') {
-                //				reporterr( "hit, j=%d, p=%d, gf2[p]=%f, result += %f (2)\n", j, p, gf2[p], (gf2[p]) * eff2 );
                 (*gapfresult)[j] += (gf2[p - 1]) * eff2;  // p-1 daijoubu?
             }
         } else {
             if (j == 0 || (j && gaptable2[j - 1] != '-')) {
-                //				reporterr( "copying. j=%d, ori2[]=%f\n", j, ori2[p] );
                 (*gapfresult)[j] += ori2[p] * eff2;
             }
             p++;
         }
     }
-//	free( ori1 );
-//	ori1 = NULL;
-//	free( ori2 );
-//	ori2 = NULL;
-#if 0
-	reporterr( "createogresult (o) = " );
-	for( j=0; j<alen+1; j++ ) reporterr( "%4.2f ", (*gapfresult)[j] );
-	reporterr( "\n" );
-#endif
+
 #endif
 }
 
@@ -388,7 +362,6 @@ createfgresult(double** gapfresult, int limk, double eff1, double eff2, double* 
             if (j == alen - 1) {
                 (*gapfresult)[j] += eff1;
             } else if (gaptable1[j + 1] != '-') {
-                //				reporterr( "hit, j=%d, p=%d, gf1[p]=%f, result += %f (f1)\n", j, p, gf1[p], (gf1[p]) * eff1 );
                 (*gapfresult)[j] += gf1[p] * eff1;
             }
         } else {
@@ -403,7 +376,6 @@ createfgresult(double** gapfresult, int limk, double eff1, double eff2, double* 
             if (j == alen - 1) {
                 (*gapfresult)[j] += eff2;
             } else if (gaptable2[j + 1] != '-') {
-                //				reporterr( "hit, j=%d, p=%d, gf2[p]=%f, result += %f (f2)\n", j, p, gf1[p], (gf1[p]) * eff1 );
                 (*gapfresult)[j] += gf2[p] * eff2;
             }
         } else {
@@ -412,20 +384,10 @@ createfgresult(double** gapfresult, int limk, double eff1, double eff2, double* 
             p++;
         }
     }
-
-//	free( ori1 );
-//	ori1 = NULL;
-//	free( ori2 );
-//	ori2 = NULL;
-#if 0
-	reporterr( "createogresult (f) = " );
-	for( j=0; j<alen+1; j++ ) reporterr( "%4.2f ", (*gapfresult)[j] );
-	reporterr( "\n" );
-#endif
 }
 
 static double
-Atracking(aln_Context* ctx, double* lasthorizontalw, double* lastverticalw, double fpenalty, double fpenalty_ex, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int icyc, int jcyc, int tailgp, int* warpis, int* warpjs, int warpbase, int* ngap1, int* ngap2, int reuseprofiles, char** gt1, char** gt2) {
+Atracking(double* lasthorizontalw, double* lastverticalw, double fpenalty, double fpenalty_ex, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int icyc, int jcyc, int tailgp, int* warpis, int* warpjs, int warpbase, int* ngap1, int* ngap2, int reuseprofiles, char** gt1, char** gt2) {
     int    i, j, l, iin, jin, ifi, jfi, lgth1, lgth2, k, limk;
     double wm;
     char * gaptable1, *gt1bk;
@@ -571,8 +533,6 @@ Atracking(aln_Context* ctx, double* lasthorizontalw, double* lastverticalw, doub
         jin = jfi;
     }
 
-    //	reporterr( "gaptable1=%s\n", gaptable1 );
-    //	reporterr( "gaptable2=%s\n", gaptable2 );
     if (strchr(gaptable1, '-'))
         *ngap1 = 1;
     else
@@ -591,7 +551,7 @@ Atracking(aln_Context* ctx, double* lasthorizontalw, double* lastverticalw, doub
         }
     } else {
         for (i = 0; i < icyc; i++)
-            gapireru(ctx, mseq1[i], seq1[i], gaptable1);
+            gapireru(mseq1[i], seq1[i], gaptable1);
     }
 
     if (*ngap2 == 0 && reuseprofiles)
@@ -604,7 +564,7 @@ Atracking(aln_Context* ctx, double* lasthorizontalw, double* lastverticalw, doub
         }
     } else {
         for (j = 0; j < jcyc; j++)
-            gapireru(ctx, mseq2[j], seq2[j], gaptable2);
+            gapireru(mseq2[j], seq2[j], gaptable2);
     }
 
     if (gt1 == NULL) {
@@ -735,7 +695,7 @@ A__align(aln_Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_
             j = lgth2;
             seq1[i][j] = 0;
             while (j)
-                seq1[i][--j] = ctx->gap;
+                seq1[i][--j] = '-';
         }
         return (0.0);
     }
@@ -745,7 +705,7 @@ A__align(aln_Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_
             j = lgth1;
             seq2[i][j] = 0;
             while (j)
-                seq2[i][--j] = ctx->gap;
+                seq2[i][--j] = '-';
         }
         return (0.0);
     }
@@ -875,13 +835,11 @@ A__align(aln_Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_
         reuseprofiles = 0;
 
     if (ctx->n_dis[0][ctx->amino_n['-']] != 0) {
-        reporterr("Bug probably in versions >7.36.  Please report this issue to katoh@ifrec.osaka-u.ac.jp\n");
         exit(1);
     }
 
     if (cpmxresult) {
         if (sgap1) {
-            reporterr("The combination of sgap1 and cpmxhit is not supported. See Salignmm.c\n");
             exit(1);
         }
 
@@ -906,7 +864,6 @@ A__align(aln_Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_
         }
 
         if (cpmxchild1 && *cpmxchild1) {
-            //			reporterr( "\nUse cpmxhist for child 1!\n" );
             cpmx2pt = (cpmxchild1);
             gapfreq2pt = (*cpmxchild1)[ctx->nalphabets];
             ogcp2opt = (*cpmxchild1)[ctx->nalphabets + 1];
@@ -993,70 +950,6 @@ A__align(aln_Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_
         }
     }
 
-#if 0
-	reporterr( "\n" );
-	reporterr( "seq1 = \n" );
-	for( i=0; i<icyc; i++ )
-		reporterr( "%s\n", seq1[i] );
-
-	reporterr( "seq2 = \n" );
-	for( i=0; i<jcyc; i++ )
-		reporterr( "%s\n", seq2[i] );
-
-	reporterr( "\n    " );
-	for( j=0; j<nalphabets; j++ ) 
-		reporterr( "%4c ", amino[j] );
-	reporterr( "\ncpmx1pt = \n" );
-	for( i=0; i<lgth1; i++ ) 
-	{
-		reporterr( "%3d ", i );
-		for( j=0; j<nalphabets; j++ ) 
-			reporterr( "%4.2f ", (*cpmx1pt)[j][i] );
-		reporterr( "\n" );
-	}
-#endif
-
-#if 0
-	reporterr( "\n    " );
-	for( j=0; j<nalphabets; j++ ) 
-		reporterr( "%4c ", amino[j] );
-	reporterr( "\ncpmx2pt = \n" );
-	for( i=0; i<lgth2; i++ ) 
-	{
-		reporterr( "%3d ", i );
-		for( j=0; j<nalphabets; j++ ) 
-			reporterr( "%4.2f ", (*cpmx2pt)[j][i] );
-		reporterr( "\n" );
-	}
-	reporterr( "\ngapfreq1 = " );
-	for( i=0; i<lgth1+1; i++ ) reporterr( "%4.2f ", gapfreq1pt[i] );
-	reporterr( "\ngapfreq2 = " );
-	for( i=0; i<lgth2+1; i++ ) reporterr( "%4.2f ", gapfreq2pt[i] );
-	reporterr( "\n" );
-
-	reporterr( "\nogcp1opt = " );
-	for( i=0; i<lgth1+0; i++ ) reporterr( "%4.2f ", ogcp1opt[i] );
-	reporterr( "\nfgcp1opt = " );
-	for( i=0; i<lgth1+0; i++ ) reporterr( "%4.2f ", fgcp1opt[i] );
-	reporterr( "\n" );
-
-	reporterr( "\nogcp2opt = " );
-	for( i=0; i<lgth2+0; i++ ) reporterr( "%4.2f ", ogcp2opt[i] );
-	reporterr( "\nfgcp2opt = " );
-	for( i=0; i<lgth2+0; i++ ) reporterr( "%4.2f ", fgcp2opt[i] );
-	reporterr( "\n" );
-#endif
-
-#if 0
-	fprintf( stderr, "\ngapfreq1[] =" );
-	for( i=0; i<lgth1; i++ ) fprintf( stderr, "%5.2f ", gapfreq1[i] );
-	fprintf( stderr, "\n" );
-
-	fprintf( stderr, "\ngapfreq2[] =" );
-	for( i=0; i<lgth2; i++ ) fprintf( stderr, "%5.2f ", gapfreq2[i] );
-	fprintf( stderr, "\n" );
-#endif
-
     for (i = 0; i < lgth1; i++) {
         ogcp1[i] = 0.5 * (1.0 - ogcp1opt[i]) * fpenalty * (gapfreq1pt[i]);
         fgcp1[i] = 0.5 * (1.0 - fgcp1opt[i]) * fpenalty * (gapfreq1pt[i]);
@@ -1084,19 +977,15 @@ A__align(aln_Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_
 
     if (headgp == 1) {
         for (i = 1; i < lgth1 + 1; i++) {
-            //			initverticalw[i] += ( ogcp1[0] + fgcp1[i-1] ) ;
             initverticalw[i] += (ogcp1[0] * headgapfreq2 + fgcp1[i - 1] * gapfreq2pt[0]);
 #if USE_PENALTY_EX  // 2018/Apr/23
             initverticalw[i] += fpenalty_ex * i;
-//			reporterr( "added _ex\n" );
 #endif
         }
         for (j = 1; j < lgth2 + 1; j++) {
-            //			currentw[j] += ( ogcp2[0] + fgcp2[j-1] ) ;
             currentw[j] += (ogcp2[0] * headgapfreq1 + fgcp2[j - 1] * gapfreq1pt[0]);
 #if USE_PENALTY_EX  // 2018/Apr/23
             currentw[j] += fpenalty_ex * j;
-//			reporterr( "added _ex\n" );
 #endif
         }
     } else {
@@ -1288,9 +1177,9 @@ A__align(aln_Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_
     gt2 = gt2bk = AllocateCharVec(lgth1 + lgth2 + 1);
 
     if (constraint) {
-        Atracking_localhom(ctx, impmatch, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, warpis, warpjs, warpbase, &ngap1, &ngap2, reuseprofiles, &gt1, &gt2);
+        Atracking_localhom(impmatch, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, warpis, warpjs, warpbase, &ngap1, &ngap2, reuseprofiles, &gt1, &gt2);
     } else {
-        wmo = Atracking(ctx, currentw, lastverticalw, fpenalty, fpenalty_ex, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, tailgp, warpis, warpjs, warpbase, &ngap1, &ngap2, reuseprofiles, &gt1, &gt2);
+        wmo = Atracking(currentw, lastverticalw, fpenalty, fpenalty_ex, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, tailgp, warpis, warpjs, warpbase, &ngap1, &ngap2, reuseprofiles, &gt1, &gt2);
         if (!tailgp)
             wm = wmo;
     }
@@ -1298,14 +1187,10 @@ A__align(aln_Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_
 #if 1
     if (cpmxresult) {
         if (icyc + jcyc > 20)
-        //		if( 0 )
-        //		if( 1 )
         {
             int limk = gt1bk + lgth1 + lgth2 - gt1;
             limk = (int)(((limk + 1000) / 1000) * 1000);  // kiriage
-            //reporterr( "limk=%d\n", limk );
 
-#if 1  // marume gosa wo teigenn suru tame
             double totaleff1 = 0.0;
             double totaleff2 = 0.0;
             for (i = 0; i < icyc; i++)
@@ -1314,28 +1199,10 @@ A__align(aln_Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_
                 totaleff2 += eff2[j];
 
             if (fabs(totaleff1 - 1.0) > 0.001 || fabs(totaleff2 - 1.0) > 0.001) {
-                reporterr("totaleff1 = %50.40f\n", totaleff1);
-                reporterr("totaleff2 = %50.40f\n", totaleff2);
                 exit(1);
             }
             totaleff1 = totaleff1 * orieff1 / (orieff1 + orieff2);
             totaleff2 = totaleff2 * orieff2 / (orieff1 + orieff2);
-#else
-
-            //			reporterr( "totaleff1 (rescaled    ) = %20.10f\n", totaleff1 );
-            //			reporterr( "totaleff2 (rescaled    ) = %20.10f\n", totaleff2 );
-            //			double bk1 = totaleff1;
-            //			double bk2 = totaleff2;
-
-            double totaleff1 = orieff1 / (orieff1 + orieff2);
-            double totaleff2 = orieff2 / (orieff1 + orieff2);
-
-//			reporterr( "totaleff1 (not rescaled) = %20.10f\n", totaleff1 );
-//			reporterr( "totaleff2 (not rescaled) = %20.10f\n", totaleff2 );
-
-//			reporterr( "ratio1 = %30.25f\n", totaleff1/bk1 );
-//			reporterr( "ratio2 = %30.25f\n", totaleff2/bk2 );
-#endif
 
             *cpmxresult = AllocateDoubleMtx(ctx->nalphabets + 3, 0);  // gapcount, opg, fng no bun
             createcpmxresult(ctx, *cpmxresult, limk, totaleff1, totaleff2, cpmx1pt, cpmx2pt, gt1, gt2, (cpmx1 != *cpmx1pt), (cpmx2 != *cpmx2pt));  // naka de free
@@ -1356,18 +1223,6 @@ A__align(aln_Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_
                 free(gapfreq1pt);
             if (cpmx2 != *cpmx2pt)
                 free(gapfreq2pt);
-#if 0
-			reporterr( "\n" );
-			for( j=0; j<nalphabets; j++ ) 
-				reporterr( "%4c ", amino[j] );
-			reporterr( "\ncpmxresult = \n" );
-			for( i=0; i<strlen( gt1 ); i++ ) 
-			{
-				for( j=0; j<nalphabets; j++ ) 
-					reporterr( "%4.2f ", (*cpmxresult)[j][i] );
-				reporterr( "\n" );
-			}
-#endif
         } else
             *cpmxresult = NULL;
     }
@@ -1375,26 +1230,6 @@ A__align(aln_Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_
 
     free(gt1bk);
     free(gt2bk);
-#if 0  // 2021/Jun/24
-	if( *cpmx1pt != cpmx1 ) 
-	{
-		if( cpmxchild0 && *cpmxchild0 )
-		{
-			reporterr( "freeing *cpmxchild0\n" );
-			FreeDoubleMtx( *cpmxchild0 );
-			*cpmxchild0 = NULL;
-		}
-	}
-	if( *cpmx2pt != cpmx2 ) 
-	{
-		if( cpmxchild1 && *cpmxchild1 )
-		{
-			reporterr( "freeing *cpmxchild1\n" );
-			FreeDoubleMtx( *cpmxchild1 );
-			*cpmxchild1 = NULL;
-		}
-	}
-#endif
 
     if (warpis)
         free(warpis);
