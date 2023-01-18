@@ -125,7 +125,7 @@ Atracking(aln_Context* ctx, double* lasthorizontalw, double* lastverticalw, char
 }
 
 double
-G__align11(aln_Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int alloclen, int headgp, int tailgp) {
+G__align11(aln_Context* ctx, char** seq1, char** seq2, int alloclen) {
     register int i, j;
     int          lasti;
     int          lastj;
@@ -295,7 +295,7 @@ G__align11(aln_Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, in
     }
     for (i = 0; i < ctx->nalphabets; i++)
         for (j = 0; j < ctx->nalphabets; j++)
-            amino_dynamicmtx[(uint8_t)ctx->amino[i]][(uint8_t)ctx->amino[j]] = (double)n_dynamicmtx[i][j];
+            amino_dynamicmtx[(uint8_t)ctx->amino[i]][(uint8_t)ctx->amino[j]] = (double)ctx->n_dis_consweight_multi[i][j];
 
     mseq1[0] = mseq[0];
     mseq2[0] = mseq[1];
@@ -323,7 +323,7 @@ G__align11(aln_Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, in
     match_calc_mtx(amino_dynamicmtx, initverticalw, seq2, seq1, 0, lgth1);
     match_calc_mtx(amino_dynamicmtx, currentw, seq1, seq2, 0, lgth2);
 
-    if (headgp == 1) {
+    if (ctx->outgap == 1) {
         for (i = 1; i < lgth1 + 1; i++) {
             initverticalw[i] += fpenalty;
         }
@@ -355,7 +355,7 @@ G__align11(aln_Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, in
     else
         lastverticalw[0] = currentw[lgth2 - 1];  // lgth2==0 no toki error
 
-    if (tailgp)
+    if (ctx->outgap)
         lasti = lgth1 + 1;
     else
         lasti = lgth1;
@@ -463,8 +463,8 @@ G__align11(aln_Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, in
         lastverticalw[i] = currentw[lgth2 - 1];
     }
 
-    wmo = Atracking(ctx, currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, tailgp, warpis, warpjs, warpbase);
-    if (!tailgp)
+    wmo = Atracking(ctx, currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, ctx->outgap, warpis, warpjs, warpbase);
+    if (ctx->outgap)
         wm = wmo;
 
     if (warpis)
@@ -477,18 +477,12 @@ G__align11(aln_Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, in
 
     strcpy(seq1[0], mseq1[0]);
     strcpy(seq2[0], mseq2[0]);
-#if 0
-	fprintf( stderr, "\n" );
-	fprintf( stderr, ">\n%s\n", mseq1[0] );
-	fprintf( stderr, ">\n%s\n", mseq2[0] );
-	fprintf( stderr, "wm = %f\n", wm );
-#endif
 
     return (wm);
 }
 
 double
-G__align11_noalign(aln_Context* ctx, double** n_dynamicmtx, int penal, int penal_ex, char** seq1, char** seq2)
+G__align11_noalign(aln_Context* ctx, char** seq1, char** seq2)
 {
     register int i, j;
     int          lasti;
@@ -496,9 +490,9 @@ G__align11_noalign(aln_Context* ctx, double** n_dynamicmtx, int penal, int penal
     double  wm;
     double  g;
     double *currentw, *previousw;
-    double  fpenalty = (double)penal;
+    double  fpenalty = (double)ctx->penalty;
 #if USE_PENALTY_EX
-    double fpenalty_ex = (double)penal_ex;
+    double fpenalty_ex = (double)ctx->penalty_ex;
     double fpenalty_ex_i;
 #endif
 #if 1
@@ -594,7 +588,7 @@ G__align11_noalign(aln_Context* ctx, double** n_dynamicmtx, int penal, int penal
 
     for (i = 0; i < ctx->nalphabets; i++)
         for (j = 0; j < ctx->nalphabets; j++)
-            amino_dynamicmtx[(int)ctx->amino[i]][(int)ctx->amino[j]] = (double)n_dynamicmtx[i][j];
+            amino_dynamicmtx[(int)ctx->amino[i]][(int)ctx->amino[j]] = (double)ctx->n_dis_consweight_multi[i][j];
 
 #if 0
 	for( i=0; i<lgth1; i++ ) 

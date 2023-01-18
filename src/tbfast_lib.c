@@ -68,7 +68,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     {
         {
             double** n_distmp = AllocateDoubleMtx(20, 20);
-            double*  datafreq = AllocateDoubleVec(20);
             double*  freq = AllocateDoubleVec(20);
 
             {
@@ -169,13 +168,11 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
             }
 
             ctx->n_dis = aln_arenaAllocMatrix2Int32(tempArena, ctx->nalphabets, ctx->nalphabets);
-            for (int i = 0; i < 20; i++)
-                for (int j = 0; j < 20; j++)
+            for (int i = 0; i < 20; i++) {
+                for (int j = 0; j < 20; j++) {
                     aln_matrix2get(ctx->n_dis, i, j) = (int)n_distmp[i][j];
-
-            FreeDoubleMtx(n_distmp);
-            FreeDoubleVec(datafreq);
-            FreeDoubleVec(freq);
+                }
+            }
         }
 
         int charsize = 0x80;
@@ -246,10 +243,10 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
                     distseq1[0] = dseq[i];
                     distseq2[0] = dseq[j];
 
-                    G__align11(ctx, ctx->n_dis_consweight_multi, mseq1, mseq2, alloclen, ctx->outgap, ctx->outgap);
+                    G__align11(ctx, mseq1, mseq2, alloclen);
                     int thereisx = countsOfXs[i] + countsOfXs[j];
                     if (thereisx) {
-                        G__align11_noalign(ctx, ctx->n_dis_consweight_multi, ctx->penalty, ctx->penalty_ex, distseq1, distseq2);
+                        G__align11_noalign(ctx, distseq1, distseq2);
                     }
                 }
             }

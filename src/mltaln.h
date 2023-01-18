@@ -200,7 +200,8 @@ void      FreeShortMtx(short**);
 void      freeintmtx(int**, int);
 
 extern double A__align(aln_Context* ctx, double** scoringmtx, int penalty, int penalty_ex, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, char* gs1, char* gs2, char* ge1, char* ge2, int headgp, int tailgp, int firstmem, int calledby, double*** cpmxchild0, double*** cpmxchild1, double*** cpmxresult, double orieff1, double orieff2);
-extern double G__align11(aln_Context* ctx, double** scoringmtx, char** seq1, char** seq2, int alloclen, int headgp, int tailgp);
+extern double G__align11(aln_Context* ctx, char** seq1, char** seq2, int alloclen);
+extern double G__align11_noalign(aln_Context* ctx, char** seq1, char** seq2);
 extern void   cpmx_calc(aln_Context* ctx, char** seq, double** cpmx, double* eff, int lgth, int clus);
 extern void   intergroup_score(char**, char**, double*, double*, int, int, int, double*);
 extern int    fastconjuction(int* memlist, char** seq, char** aseq, double* peff, double* eff, char* d);
@@ -245,7 +246,6 @@ extern double    calcW(Node* ob, Node* op);
 extern void      branchWeightToPairWeight(int locnseq, int*** topol, double** pw, double** bw);
 extern void      weightFromABranch(int nseq, double* result, Node* stopol, int*** topol, int step, int LorR);
 extern void      distFromABranch(int nseq, double* result, Node* stopol, int*** topol, double** len, int step, int LorR);
-extern double    G__align11_noalign(aln_Context* ctx, double** scoringmtx, int penal, int penal_ex, char** seq1, char** seq2);
 
 extern void gapireru(char* res, char* ori, char* gt);
 extern int  seqlen(char* seq, char gap);
