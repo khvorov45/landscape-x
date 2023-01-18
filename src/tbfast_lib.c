@@ -66,15 +66,14 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     }
 
     {
+        aln_Matrix2F32 n_distmp = aln_arenaAllocMatrix2F32(tempArena, 20, 20);
+        double*        freq = AllocateDoubleVec(20);
+
         {
-            double** n_distmp = AllocateDoubleMtx(20, 20);
-            double*  freq = AllocateDoubleVec(20);
+            char   locaminod[] = "ARNDCQEGHILKMFPSTWYVBZX.-J";
+            double freqd[20] = {0.077, 0.051, 0.043, 0.052, 0.020, 0.041, 0.062, 0.074, 0.023, 0.052, 0.091, 0.059, 0.024, 0.040, 0.051, 0.069, 0.059, 0.014, 0.032, 0.066};
 
-            {
-                char   locaminod[] = "ARNDCQEGHILKMFPSTWYVBZX.-J";
-                double freqd[20] = {0.077, 0.051, 0.043, 0.052, 0.020, 0.041, 0.062, 0.074, 0.023, 0.052, 0.091, 0.059, 0.024, 0.040, 0.051, 0.069, 0.059, 0.014, 0.032, 0.066};
-
-                // clang-format off
+            // clang-format off
                 // NOTE(sen) BLOSUM62
                 double tmpmtx[] = { 
                     5.893685,
@@ -98,90 +97,93 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
                     -2.646022, -2.540799, -3.122641, -4.597428, -3.610671, -2.131601, -3.030688, -4.559647,  2.538948, -1.997058, -1.593097, -2.730047, -1.492308,  4.408690, -4.379667, -2.528713, -2.408996,  3.231335,  9.892544,
                     -0.284140, -3.753871, -4.314525, -4.713963, -1.211518, -3.297575, -3.663425, -4.708118, -4.676220,  3.820569,  1.182672, -3.393535,  1.030861, -1.273542, -3.523054, -2.469318, -0.083276, -4.251392, -1.811267,  5.653391
                 };
-                // clang-format on
+            // clang-format on
 
-                int count = 0;
-                for (int i = 0; i < 20; i++) {
-                    for (int j = 0; j <= i; j++) {
-                        n_distmp[i][j] = n_distmp[j][i] = (double)tmpmtx[count++];
-                    }
+            int count = 0;
+            for (int i = 0; i < 20; i++) {
+                for (int j = 0; j <= i; j++) {
+                    aln_matrix2get(n_distmp, i, j) = aln_matrix2get(n_distmp, j, i) = (double)tmpmtx[count++];
                 }
-
-                for (int i = 0; i < 20; i++) {
-                    freq[i] = freqd[i];
-                }
-
-                for (int i = 0; i < 26; i++)
-                    ctx->amino[i] = locaminod[i];
             }
 
-            for (int i = 0; i < 0x80; i++)
-                ctx->amino_n[i] = -1;
+            for (int i = 0; i < 20; i++) {
+                freq[i] = freqd[i];
+            }
+
             for (int i = 0; i < 26; i++)
-                ctx->amino_n[(int)ctx->amino[i]] = i;
+                ctx->amino[i] = locaminod[i];
+        }
 
-            double* freq1 = freq;
+        for (int i = 0; i < 0x80; i++)
+            ctx->amino_n[i] = -1;
+        for (int i = 0; i < 26; i++)
+            ctx->amino_n[(int)ctx->amino[i]] = i;
 
-            double average = 0.0;
-            {
-                for (int i = 0; i < 20; i++)
-                    for (int j = 0; j < 20; j++)
-                        average += n_distmp[i][j] * freq1[i] * freq1[j];
-            }
+        double* freq1 = freq;
 
-            {
-                for (int i = 0; i < 20; i++)
-                    for (int j = 0; j < 20; j++)
-                        n_distmp[i][j] -= average;
-            }
-
-            average = 0.0;
-            for (int i = 0; i < 20; i++)
-                average += n_distmp[i][i] * freq1[i];
-
-            {
-                for (int i = 0; i < 20; i++)
-                    for (int j = 0; j < 20; j++)
-                        n_distmp[i][j] *= 600.0 / average;
-            }
-
+        double average = 0.0;
+        {
             for (int i = 0; i < 20; i++)
                 for (int j = 0; j < 20; j++)
-                    n_distmp[i][j] -= ctx->offset;
+                    average += aln_matrix2get(n_distmp, i, j) * freq1[i] * freq1[j];
+        }
 
-            for (int i = 0; i < 20; i++) {
-                for (int j = 0; j < 20; j++) {
-                    int out = 0;
-                    {
-                        int in = n_distmp[i][j];
-                        if (in > 0.0)
-                            out = ((int)(in + 0.5));
-                        else if (in == 0.0)
-                            out = (0);
-                        else if (in < 0.0)
-                            out = ((int)(in - 0.5));
-                        else
-                            out = 0;
-                    }
-                    n_distmp[i][j] = out;
-                }
-            }
+        {
+            for (int i = 0; i < 20; i++)
+                for (int j = 0; j < 20; j++)
+                    aln_matrix2get(n_distmp, i, j) -= average;
+        }
 
-            ctx->n_dis = aln_arenaAllocMatrix2Int32(tempArena, ctx->nalphabets, ctx->nalphabets);
-            for (int i = 0; i < 20; i++) {
-                for (int j = 0; j < 20; j++) {
-                    aln_matrix2get(ctx->n_dis, i, j) = (int)n_distmp[i][j];
+        average = 0.0;
+        for (int i = 0; i < 20; i++)
+            average += aln_matrix2get(n_distmp, i, i) * freq1[i];
+
+        {
+            for (int i = 0; i < 20; i++)
+                for (int j = 0; j < 20; j++)
+                    aln_matrix2get(n_distmp, i, j) *= 600.0 / average;
+        }
+
+        for (int i = 0; i < 20; i++)
+            for (int j = 0; j < 20; j++)
+                aln_matrix2get(n_distmp, i, j) -= ctx->offset;
+
+        for (int i = 0; i < 20; i++) {
+            for (int j = 0; j < 20; j++) {
+                int out = 0;
+                {
+                    int in = aln_matrix2get(n_distmp, i, j);
+                    if (in > 0.0)
+                        out = ((int)(in + 0.5));
+                    else if (in == 0.0)
+                        out = (0);
+                    else if (in < 0.0)
+                        out = ((int)(in - 0.5));
+                    else
+                        out = 0;
                 }
+                aln_matrix2get(n_distmp, i, j) = out;
             }
         }
 
+        ctx->n_dis = aln_arenaAllocMatrix2I32(tempArena, ctx->nalphabets, ctx->nalphabets);
+        for (int i = 0; i < 20; i++) {
+            for (int j = 0; j < 20; j++) {
+                aln_matrix2get(ctx->n_dis, i, j) = (int)aln_matrix2get(n_distmp, i, j);
+            }
+        }
+    }
+
+    {
         int charsize = 0x80;
 
-        for (int i = 0; i < charsize; i++)
+        for (int i = 0; i < charsize; i++) {
             ctx->amino_n[i] = -1;
+        }
 
-        for (int i = 0; i < ctx->nalphabets; i++)
+        for (int i = 0; i < ctx->nalphabets; i++) {
             ctx->amino_n[(int)ctx->amino[i]] = i;
+        }
 
         ctx->n_dis_consweight_multi = AllocateDoubleMtx(ctx->nalphabets, ctx->nalphabets);
         for (int i = 0; i < ctx->nalphabets; i++) {

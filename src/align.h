@@ -47,7 +47,8 @@ typedef struct aln_AlignResult {
 #define aln_arrayCount(arr) (int32_t)(sizeof(arr) / sizeof(arr[0]))
 #define aln_arenaAllocArray(arena, type, len) (type*)aln_arenaAllocAndZero(arena, (len) * (int32_t)sizeof(type), alignof(type))
 #define aln_arenaAllocStruct(arena, type) (type*)aln_arenaAllocAndZero(arena, sizeof(type), alignof(type))
-#define aln_arenaAllocMatrix2Int32(arena, rowCount, colCount) (aln_Matrix2Int32) {.ptr = aln_arenaAllocArray(arena, int32_t, rowCount * colCount), .nrow = rowCount, .ncol = colCount}
+#define aln_arenaAllocMatrix2I32(arena, rowCount, colCount) (aln_Matrix2I32) {.ptr = aln_arenaAllocArray(arena, int32_t, rowCount * colCount), .nrow = rowCount, .ncol = colCount}
+#define aln_arenaAllocMatrix2F32(arena, rowCount, colCount) (aln_Matrix2F32) {.ptr = aln_arenaAllocArray(arena, float, rowCount * colCount), .nrow = rowCount, .ncol = colCount}
 #define aln_matrix2get(matrix, row, col) matrix.ptr[((row) * matrix.nrow) + (col)] 
 #define aln_isPowerOf2(x) (((x) > 0) && (((x) & ((x)-1)) == 0))
 #define aln_unused(x) ((x) = (x))
@@ -127,11 +128,17 @@ typedef struct aln_TempMemory {
     int32_t    tempCountAtBegin;
 } aln_TempMemory;
 
-typedef struct aln_Matrix2Int32 {
+typedef struct aln_Matrix2I32 {
     int32_t* ptr;
     int32_t  nrow;
     int32_t  ncol;
-} aln_Matrix2Int32;
+} aln_Matrix2I32;
+
+typedef struct aln_Matrix2F32 {
+    float* ptr;
+    int32_t  nrow;
+    int32_t  ncol;
+} aln_Matrix2F32;
 
 typedef struct aln_Context {
     int32_t          penalty;
@@ -143,7 +150,7 @@ typedef struct aln_Context {
     char             treemethod;
     int32_t          njob;
     int32_t          amino_n[0x100];
-    aln_Matrix2Int32 n_dis;
+    aln_Matrix2I32 n_dis;
     double**         n_dis_consweight_multi;
     uint8_t          amino[0x100];
     int32_t          penalty_dist;
