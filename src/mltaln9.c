@@ -1973,10 +1973,6 @@ fillimp(aln_Opts opts, double** impmtx, int clus1, int clus2, int lgth1, int lgt
                 pt2 = seq2[j] + k2;
                 while (*pt1 && *pt2) {
                     if (*pt1 != '-' && *pt2 != '-') {
-                        // �Ťߤ���Ťˤ����ʤ��褦�����դ��Ʋ�������
-                        //						impmtx[k1][k2] += tmpptr->wimportance * fastathreshold;
-                        //						impmtx[k1][k2] += tmpptr->importance * effij;
-                        //						impmtx[k1][k2] += tmpptr->fimportance * effij;
                         if (tmpptr->korh == 'k')
                             impmtx[k1][k2] += tmpptr->importance * effij_kozo;
                         else

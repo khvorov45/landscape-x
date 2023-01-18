@@ -29,11 +29,8 @@ typedef struct aln_Str {
 } aln_Str;
 
 typedef struct aln_Opts {
-    int32_t outputhat23;
     int32_t penalty;
     int32_t ppenalty_dist;
-    int32_t nblosum;
-    int32_t scoremtx;
     int32_t offset;
     int32_t constraint;
     int32_t ppenalty_ex;
@@ -237,11 +234,8 @@ aln_strGetNullTerminated(aln_Arena* arena, aln_Str str) {
 aln_PUBLICAPI aln_Opts 
 aln_defaultOpts(void) {
     aln_Opts opts = {
-        .outputhat23 = 16,
         .penalty = (int)(0.6 * (-1530.0) + 0.5),
         .ppenalty_dist = 1530,
-        .nblosum = 62,
-        .scoremtx = 1,
         .offset = (int)(0.6 * 100 + 0.5),
         .constraint = 2,
         .ppenalty_ex = -100,
