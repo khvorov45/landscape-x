@@ -14,11 +14,11 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
 
     aln_Context* ctx = aln_arenaAllocStruct(tempArena, aln_Context);
 
-    ctx->penalty = (int)(0.6 * (-1530.0) + 0.5);
-    ctx->ppenalty_dist = 1530;
-    ctx->offset = (int)(0.6 * 100 + 0.5);
+    ctx->penalty = -918;
+    ctx->penalty_dist = 918;
+    ctx->offset = 60;
     ctx->constraint = 2;
-    ctx->ppenalty_ex = -100;
+    ctx->penalty_ex = -60;
     ctx->minimumweight = 0.00001;
     ctx->fastathreshold = 2.7;
     ctx->sueff_global = 0.1;
@@ -89,12 +89,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
             double** n_distmp = AllocateDoubleMtx(20, 20);
             double*  datafreq = AllocateDoubleVec(20);
             double*  freq = AllocateDoubleVec(20);
-
-            aln_assert(ctx->ppenalty_dist != NOTSPECIFIED);
-            aln_assert(ctx->ppenalty_ex != NOTSPECIFIED);
-
-            ctx->penalty_dist = (int)(0.6 * ctx->ppenalty_dist + 0.5);
-            ctx->penalty_ex = (int)(0.6 * ctx->ppenalty_ex + 0.5);
 
             {
                 char   locaminod[] = "ARNDCQEGHILKMFPSTWYVBZX.-J";

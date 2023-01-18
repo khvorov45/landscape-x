@@ -28,32 +28,6 @@ typedef struct aln_Str {
     intptr_t len;
 } aln_Str;
 
-typedef struct aln_Context {
-    int32_t  penalty;
-    int32_t  ppenalty_dist;
-    int32_t  offset;
-    int32_t  constraint;
-    int32_t  ppenalty_ex;
-    double   minimumweight;
-    double   fastathreshold;
-    double   sueff_global;
-    char     treemethod;
-    char     gap;
-    int      njob;
-    int      amino_n[0x100];
-    int**    n_dis;
-    double** n_dis_consweight_multi;
-    uint8_t  amino[0x100];
-    int      penalty_dist;
-    int      penalty_ex;
-    int      outgap;
-    double   consweight_multi;
-    int      commonAlloc1;
-    int      commonAlloc2;
-    int**    commonIP;
-    int      nalphabets;
-} aln_Context;
-
 typedef struct aln_AlignResult {
     aln_Str* seqs;
     intptr_t seqCount;
@@ -138,7 +112,29 @@ typedef struct aln_AlignResult {
 #define aln_PRIVATEAPI static
 #endif
 
-// TODO(sen) Don't assert on out of memory?
+typedef struct aln_Context {
+    int32_t  penalty;
+    int32_t  offset;
+    int32_t  constraint;
+    double   minimumweight;
+    double   fastathreshold;
+    double   sueff_global;
+    char     treemethod;
+    char     gap;
+    int      njob;
+    int      amino_n[0x100];
+    int**    n_dis;
+    double** n_dis_consweight_multi;
+    uint8_t  amino[0x100];
+    int      penalty_dist;
+    int      penalty_ex;
+    int      outgap;
+    double   consweight_multi;
+    int      commonAlloc1;
+    int      commonAlloc2;
+    int**    commonIP;
+    int      nalphabets;
+} aln_Context;
 
 typedef struct aln_Arena {
     void*    base;
@@ -152,6 +148,8 @@ typedef struct aln_TempMemory {
     intptr_t   usedAtBegin;
     int32_t    tempCountAtBegin;
 } aln_TempMemory;
+
+// TODO(sen) Don't assert on out of memory?
 
 aln_PRIVATEAPI int32_t        aln_getOffsetForAlignment(void* ptr, int32_t align);
 aln_PRIVATEAPI aln_Arena      aln_createArenaFromArena(aln_Arena* arena, intptr_t bytes);
