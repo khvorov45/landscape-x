@@ -525,15 +525,6 @@ counteff_simple_double_nostatic_memsave(int nseq, int*** topol, double** len, Tr
     free(eff);
 }
 
-void
-copyWithNoGaps(char* aseq, const char* seq) {
-    for (; *seq != 0; seq++) {
-        if (*seq != '-')
-            *aseq++ = *seq;
-    }
-    *aseq = 0;
-}
-
 #define SEGMENTSIZE 150
 
 void

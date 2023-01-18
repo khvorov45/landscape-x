@@ -4,6 +4,15 @@
 #define aln_IMPLEMENTATION
 #include "mltaln.h"
 
+void
+copyWithNoGaps(char* aseq, const char* seq) {
+    for (; *seq != 0; seq++) {
+        if (*seq != '-')
+            *aseq++ = *seq;
+    }
+    *aseq = 0;
+}
+
 aln_AlignResult
 tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outBytes) {
     aln_Arena permArena_ = {.base = out, .size = outBytes / 4};
@@ -191,20 +200,22 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         }
     }
 
+    // TODO(sen) Are these results actually used anywhere?
     {
         aln_assert(ctx->njob >= 2);
 
         // TODO(sen) Sequence verification?
 
-        int    alloclen = maxInputSeqLen * 2;
-        char** bseq = AllocateCharMtx(ctx->njob, alloclen + 10);
-        char** dseq = AllocateCharMtx(ctx->njob, alloclen + 10);
-        int*   countsOfXs = AllocateIntVec(ctx->njob);
+        int           alloclen = maxInputSeqLen * 2;
+        aln_Matrix2U8 bseq = aln_arenaAllocMatrix2U8(tempArena, alloclen + 10, ctx->njob);
+        char**        dseq = AllocateCharMtx(ctx->njob, alloclen + 10);
+        int*          countsOfXs = AllocateIntVec(ctx->njob);
         for (int i = 0; i < ctx->njob; i++) {
-            copyWithNoGaps(bseq[i], seq[i]);
+            char* thisBseq = (char*)(bseq.ptr + i * bseq.width);
+            copyWithNoGaps(thisBseq, seq[i]);
             {
                 char* d = dseq[i];
-                char* m = bseq[i];
+                char* m = thisBseq;
                 int   countOfXs = 0;
                 while (*m != 0) {
                     if (*m == 'X' || *m == 'x') {
@@ -232,8 +243,8 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
             int ilim = ctx->njob - 1;
             for (int i = 0; i < ilim; i++) {
                 for (int j = i + 1; j < ctx->njob; j++) {
-                    strcpy(aseq[0], bseq[i]);
-                    strcpy(aseq[1], bseq[j]);
+                    strcpy(aseq[0], (char*)(bseq.ptr + i * bseq.width));
+                    strcpy(aseq[1], (char*)(bseq.ptr + j * bseq.width));
 
                     effarr1[0] = 1.0;
                     effarr2[0] = 1.0;

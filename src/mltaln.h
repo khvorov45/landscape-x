@@ -209,7 +209,6 @@ extern int    fastconjuction(int* memlist, char** seq, char** aseq, double* peff
 extern int       intlen(int* num);
 extern void      veryfastsupg_double(int nseq, double** oeff, int*** topol, double** len);
 extern void      counteff_simple_double_nostatic_memsave(int nseq, int*** topol, double** len, Treedep* dep, double* node);
-extern void      copyWithNoGaps(char* aseq, const char* seq);
 extern void      calcimportance_half(int nseq, double* eff, char** seq, aln_LocalHom** localhom, int alloclen);
 extern void      cpmx_calc_new(aln_Context* ctx, char** seq, double** cpmx, double* eff, int lgth, int clus);
 extern void      cpmx_calc_add(aln_Context* ctx, char** seq, double** cpmx, double* eff, int lgth, int clus);

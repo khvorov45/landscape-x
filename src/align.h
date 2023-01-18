@@ -47,9 +47,11 @@ typedef struct aln_AlignResult {
 #define aln_arrayCount(arr) (intptr_t)(sizeof(arr) / sizeof(arr[0]))
 #define aln_arenaAllocArray(arena, type, len) (type*)aln_arenaAllocAndZero(arena, (len) * (int32_t)sizeof(type), alignof(type))
 #define aln_arenaAllocStruct(arena, type) (type*)aln_arenaAllocAndZero(arena, sizeof(type), alignof(type))
-#define aln_arenaAllocMatrix2I32(arena, rowCount, colCount) (aln_Matrix2I32) {.ptr = aln_arenaAllocArray(arena, int32_t, rowCount * colCount), .nrow = rowCount, .ncol = colCount}
-#define aln_arenaAllocMatrix2F32(arena, rowCount, colCount) (aln_Matrix2F32) {.ptr = aln_arenaAllocArray(arena, float, rowCount * colCount), .nrow = rowCount, .ncol = colCount}
-#define aln_matrix2get(matrix, row, col) matrix.ptr[((row) * matrix.nrow) + (col)] 
+#define aln_arenaAllocMatrix2(matrixType, dataType, arena, width_, height_) (matrixType) {.ptr = aln_arenaAllocArray(arena, dataType, width_ * height_), .width = width_, .height = height_}
+#define aln_arenaAllocMatrix2I32(arena, width, height) aln_arenaAllocMatrix2(aln_Matrix2I32, int32_t, arena, width, height)
+#define aln_arenaAllocMatrix2F32(arena, width, height) aln_arenaAllocMatrix2(aln_Matrix2F32, float, arena, width, height)
+#define aln_arenaAllocMatrix2U8(arena, width, height) aln_arenaAllocMatrix2(aln_Matrix2U8, uint8_t, arena, width, height)
+#define aln_matrix2get(matrix, row, col) matrix.ptr[((row) * matrix.width) + (col)] 
 #define aln_isPowerOf2(x) (((x) > 0) && (((x) & ((x)-1)) == 0))
 #define aln_unused(x) ((x) = (x))
 
@@ -130,15 +132,21 @@ typedef struct aln_TempMemory {
 
 typedef struct aln_Matrix2I32 {
     int32_t* ptr;
-    int32_t  nrow;
-    int32_t  ncol;
+    int32_t  width;
+    int32_t  height;
 } aln_Matrix2I32;
 
 typedef struct aln_Matrix2F32 {
     float*  ptr;
-    int32_t nrow;
-    int32_t ncol;
+    int32_t width;
+    int32_t height;
 } aln_Matrix2F32;
+
+typedef struct aln_Matrix2U8 {
+    uint8_t* ptr;
+    int32_t  width;
+    int32_t  height;
+} aln_Matrix2U8;
 
 typedef struct aln_Context {
     int32_t        penalty;
