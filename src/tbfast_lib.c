@@ -93,7 +93,7 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
 
     {
         aln_Opts pairLocalAlignOpts = opts;
-        pairLocalAlignOpts.poffset = 100;
+        pairLocalAlignOpts.offset = (int)(0.6 * 100 + 0.5);
         pairLocalAlignOpts.constraint = 0;
 
         aln_assert(ctx->njob >= 2);

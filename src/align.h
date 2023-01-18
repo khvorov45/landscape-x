@@ -34,7 +34,7 @@ typedef struct aln_Opts {
     int32_t ppenalty_dist;
     int32_t nblosum;
     int32_t scoremtx;
-    int32_t poffset;
+    int32_t offset;
     int32_t constraint;
     int32_t ppenalty_ex;
     double  minimumweight;

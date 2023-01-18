@@ -667,7 +667,6 @@ constants(aln_Opts opts, Context* ctx) {
         double*  freq = AllocateDoubleVec(20);
 
         aln_assert(opts.ppenalty_dist != NOTSPECIFIED);
-        aln_assert(opts.poffset != NOTSPECIFIED);
         aln_assert(opts.ppenalty_ex != NOTSPECIFIED);
 
         if (ctx->ppenalty_OP == NOTSPECIFIED)
@@ -682,7 +681,6 @@ constants(aln_Opts opts, Context* ctx) {
         ctx->penalty_OP = (int)(0.6 * ctx->ppenalty_OP + 0.5);
         ctx->penalty_ex = (int)(0.6 * opts.ppenalty_ex + 0.5);
         ctx->penalty_EX = (int)(0.6 * ctx->ppenalty_EX + 0.5);
-        ctx->offset = (int)(0.6 * opts.poffset + 0.5);
         ctx->offsetFFT = (int)(0.6 * (-0) + 0.5);
         ctx->offsetLN = (int)(0.6 * 100 + 0.5);
         ctx->penaltyLN = (int)(0.6 * -2000 + 0.5);
@@ -722,7 +720,7 @@ constants(aln_Opts opts, Context* ctx) {
 
         for (int i = 0; i < 20; i++)
             for (int j = 0; j < 20; j++)
-                n_distmp[i][j] -= ctx->offset;
+                n_distmp[i][j] -= opts.offset;
 
         for (int i = 0; i < 20; i++)
             for (int j = 0; j < 20; j++)
@@ -768,10 +766,10 @@ constants(aln_Opts opts, Context* ctx) {
     {
         for (int i = 0; i < 20; i++)
             for (int j = 0; j < 20; j++)
-                ctx->n_disLN[i][j] = (double)ctx->n_dis[i][j] + ctx->offset - ctx->offsetLN;
+                ctx->n_disLN[i][j] = (double)ctx->n_dis[i][j] + opts.offset - ctx->offsetLN;
         for (int i = 0; i < 20; i++)
             for (int j = 0; j < 20; j++)
-                ctx->n_disFFT[i][j] = ctx->n_dis[i][j] + ctx->offset - ctx->offsetFFT;
+                ctx->n_disFFT[i][j] = ctx->n_dis[i][j] + opts.offset - ctx->offsetFFT;
     }
 
     if (ctx->fftThreshold == NOTSPECIFIED) {

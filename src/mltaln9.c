@@ -2157,374 +2157,25 @@ st_getGapPattern(Gappat** pat, int clus, char** seq, double* eff, int len) {
 #endif
 }
 
-static int
-minimum(int i1, int i2) {
-    return MIN(i1, i2);
-}
-
-static void
-commongappickpairfast(char* r1, char* r2, const char* i1, const char* i2, int* skip1, int* skip2) {
-    int skip, skipped1, skipped2;
-    skipped1 = skipped2 = 0;
-    while (1) {
-        skip = minimum(*skip1 - skipped1, *skip2 - skipped2);
-        i1 += skip;
-        i2 += skip;
-        skipped1 += skip;
-        skipped2 += skip;
-        //		fprintf( stderr, "i1 pos =%d, nlenmax=%d\n", (int)(i1- i1bk), nlenmax );
-        if (!*i1)
-            break;
-        //		reporterr( "%d, %c-%c\n", i1-i1bk, *i1, *i2 );
-        //		if( *i1 == '-' && *i2 == '-' )  // iranai?
-        //		{
-        //			reporterr( "Error in commongappickpairfast" );
-        //			exit( 1 );
-        //			i1++;
-        //			i2++;
-        //		}
-        if (*i1 != '-') {
-            skipped1 = 0;
-            skip1++;
-        } else
-            skipped1++;
-
-        if (*i2 != '-') {
-            skipped2 = 0;
-            skip2++;
-        } else
-            skipped2++;
-
-        *r1++ = *i1++;
-        *r2++ = *i2++;
-    }
-    *r1 = 0;
-    *r2 = 0;
-}
-
-static void
-commongappickpair(char* r1, char* r2, const char* i1, const char* i2) {
-    while (*i1) {
-        if (*i1 == '-' && *i2 == '-') {
-            i1++;
-            i2++;
-        } else {
-            *r1++ = *i1++;
-            *r2++ = *i2++;
-        }
-    }
-    *r1 = 0;
-    *r2 = 0;
-}
-
-double
-naivepairscorefast(Context* ctx, const char* seq1, const char* seq2, int* skip1, int* skip2, int penal) {
-    double vali;
-    int    len = strlen(seq1);
-    char * s1, *s2;
-    char * p1, *p2;
-
-    s1 = calloc(len + 1, sizeof(char));
-    s2 = calloc(len + 1, sizeof(char));
-    {
-        vali = 0.0;
-        commongappickpairfast(s1, s2, seq1, seq2, skip1, skip2);
-
-        p1 = s1;
-        p2 = s2;
-        while (*p1) {
-            if (*p1 == '-') {
-                //				reporterr(       "Penal! %c-%c in %d-%d, %f\n", *(p1-1), *(p2-1), i, j, feff );
-                vali += (double)penal;
-                //				while( *p1 == '-' || *p2 == '-' )
-                while (*p1 == '-')  // SP
-                {
-                    p1++;
-                    p2++;
-                }
-                continue;
-            }
-            if (*p2 == '-') {
-                //				reporterr(       "Penal! %c-%c in %d-%d, %f\n", *(p1-1), *(p2-1), i, j, feff );
-                vali += (double)penal;
-                //				while( *p2 == '-' || *p1 == '-' )
-                while (*p2 == '-')  // SP
-                {
-                    p1++;
-                    p2++;
-                }
-                continue;
-            }
-            //			reporterr(       "adding %c-%c, %d\n", *p1, *p2, amino_dis[*p1][*p2] );
-            vali += (double)ctx->amino_dis[(unsigned char)*p1++][(unsigned char)*p2++];
-        }
-    }
-    free(s1);
-    free(s2);
-    //	reporterr(       "###vali = %d\n", vali );
-    return (vali);
-}
-
-double
-naivepairscore11_dynmtx(Context* ctx, double** mtx, char* seq1, char* seq2, int penal) {
-    double vali;
-    int    len = strlen(seq1);
-    char * s1, *s2, *p1, *p2;
-    int    c1, c2;
-
-    s1 = calloc(len + 1, sizeof(char));
-    s2 = calloc(len + 1, sizeof(char));
-    {
-        vali = 0.0;
-        commongappickpair(s1, s2, seq1, seq2);
-        //		reporterr(       "###i1 = %s\n", s1 );
-        //		reporterr(       "###i2 = %s\n", s2 );
-        //		reporterr(       "###penal = %d\n", penal );
-
-        p1 = s1;
-        p2 = s2;
-        while (*p1) {
-            if (*p1 == '-') {
-                //				reporterr(       "Penal! %c-%c in %d-%d, %f\n", *(p1-1), *(p2-1), i, j, feff );
-                vali += (double)penal;
-                //				while( *p1 == '-' || *p2 == '-' )
-                while (*p1 == '-')  // SP
-                {
-                    p1++;
-                    p2++;
-                }
-                continue;
-            }
-            if (*p2 == '-') {
-                //				reporterr(       "Penal! %c-%c in %d-%d, %f\n", *(p1-1), *(p2-1), i, j, feff );
-                vali += (double)penal;
-                //				while( *p2 == '-' || *p1 == '-' )
-                while (*p2 == '-')  // SP
-                {
-                    p1++;
-                    p2++;
-                }
-                continue;
-            }
-            c1 = ctx->amino_n[(unsigned char)*p1++];
-            c2 = ctx->amino_n[(unsigned char)*p2++];
-            vali += (double)mtx[c1][c2];
-        }
-    }
-    free(s1);
-    free(s2);
-    //	reporterr(       "###vali = %d\n", vali );
-    return (vali);
-}
-
-double
-naivepairscore11(Context* ctx, const char* seq1, const char* seq2, int penal) {
-    double vali;
-    int    len = strlen(seq1);
-    char * s1, *s2, *p1, *p2;
-
-    s1 = calloc(len + 1, sizeof(char));
-    s2 = calloc(len + 1, sizeof(char));
-    {
-        vali = 0.0;
-        commongappickpair(s1, s2, seq1, seq2);
-        //		reporterr(       "###i1 = %s\n", s1 );
-        //		reporterr(       "###i2 = %s\n", s2 );
-        //		reporterr(       "###penal = %d\n", penal );
-
-        p1 = s1;
-        p2 = s2;
-        while (*p1) {
-            if (*p1 == '-') {
-                //				reporterr(       "Penal! %c-%c in %d-%d, %f\n", *(p1-1), *(p2-1), i, j, feff );
-                vali += (double)penal;
-                //				while( *p1 == '-' || *p2 == '-' )
-                while (*p1 == '-')  // SP
-                {
-                    p1++;
-                    p2++;
-                }
-                continue;
-            }
-            if (*p2 == '-') {
-                //				reporterr(       "Penal! %c-%c in %d-%d, %f\n", *(p1-1), *(p2-1), i, j, feff );
-                vali += (double)penal;
-                //				while( *p2 == '-' || *p1 == '-' )
-                while (*p2 == '-')  // SP
-                {
-                    p1++;
-                    p2++;
-                }
-                continue;
-            }
-            vali += (double)ctx->amino_dis[(unsigned char)*p1++][(unsigned char)*p2++];
-        }
-    }
-    free(s1);
-    free(s2);
-    //	reporterr(       "###vali = %d\n", vali );
-    return (vali);
-}
-
-int
-samemember(int* mem, int* cand) {
-    int i, j;
-    int nm, nc;
-
-    nm = 0;
-    for (i = 0; mem[i] > -1; i++)
-        nm++;
-    nc = 0;
-    for (i = 0; cand[i] > -1; i++)
-        nc++;
-
-    if (nm != nc)
-        return (0);
-
-    for (i = 0; mem[i] > -1; i++) {
-        for (j = 0; cand[j] > -1; j++)
-            if (mem[i] == cand[j])
-                break;
-        if (cand[j] == -1)
-            return (0);
-    }
-
-    if (mem[i] == -1) {
-        return (1);
-    } else {
-        return (0);
-    }
-}
-
-int
-samemembern(int* mem, int* cand, int nc) {
-    int i, j;
-    int nm;
-
-    nm = 0;
-    for (i = 0; mem[i] > -1; i++) {
-        nm++;
-        if (nm > nc)
-            return (0);
-    }
-
-    if (nm != nc)
-        return (0);
-
-    for (i = 0; mem[i] > -1; i++) {
-        for (j = 0; j < nc; j++)
-            if (mem[i] == cand[j])
-                break;
-        if (j == nc)
-            return (0);
-    }
-
-    if (mem[i] == -1) {
-#if 0
-		reporterr(       "mem = " );
-		for( i=0; mem[i]>-1; i++ )	reporterr(       "%d ", mem[i] );
-		reporterr(       "\n" );
-	
-		reporterr(       "cand = " );
-		for( i=0; cand[i]>-1; i++ )	reporterr(       "%d ", cand[i] );
-		reporterr(       "\n" );
-#endif
-        return (1);
-    } else {
-        return (0);
-    }
-}
-
-int
-includemember(int* mem, int* cand)  // mem in cand
-{
-    int i, j;
-
-#if 0
-	reporterr(       "mem = " );
-	for( i=0; mem[i]>-1; i++ )	reporterr(       "%d ", mem[i] );
-	reporterr(       "\n" );
-
-	reporterr(       "cand = " );
-	for( i=0; cand[i]>-1; i++ )	reporterr(       "%d ", cand[i] );
-	reporterr(       "\n" );
-#endif
-
-    for (i = 0; mem[i] > -1; i++) {
-        for (j = 0; cand[j] > -1; j++)
-            if (mem[i] == cand[j])
-                break;
-        if (cand[j] == -1)
-            return (0);
-    }
-    //	reporterr(       "INCLUDED! mem[0]=%d\n", mem[0] );
-    return (1);
-}
-
-int
-overlapmember(int* mem1, int* mem2) {
-    int i, j;
-
-    for (i = 0; mem1[i] > -1; i++)
-        for (j = 0; mem2[j] > -1; j++)
-            if (mem1[i] == mem2[j])
-                return (1);
-    return (0);
-}
-
-void
-gapcount(double* freq, char** seq, int nseq, double* eff, int lgth) {
-    int    i, j;
-    double fr;
-
-    //	for( i=0; i<lgth; i++ ) freq[i] = 0.0;
-    //	return;
-
-    for (i = 0; i < lgth; i++) {
-        fr = 0.0;
-        for (j = 0; j < nseq; j++) {
-            if (seq[j][i] == '-')
-                fr += eff[j];
-        }
-        freq[i] = fr;
-        //		reporterr(       "freq[%d] = %f\n", i, freq[i] );
-    }
-    //	reporterr(       "\n" );
-    return;
-}
-
 void
 gapcountadd(double* freq, char** seq, int nseq, double* eff, int lgth) {
     int    i;
     int    j = nseq - 1;
     double newfr = eff[j];
     double orifr = 1.0 - newfr;
-
-    //	for( i=0; i<lgth; i++ ) freq[i] = 0.0;
-    //	return;
-    //	for( i=0; i<nseq; i++ )
-    //		reporterr( "%s\n", seq[i] );
-
     for (i = 0; i < lgth; i++) {
-        //		reporterr(       "freq[%d] = %f", i, freq[i] );
-        freq[i] = 1.0 - freq[i];  // modosu
+        freq[i] = 1.0 - freq[i];
         freq[i] *= orifr;
-
         if (seq[j][i] == '-')
             freq[i] += newfr;
-        //		reporterr(       "->         %f\n", i, freq[i] );
     }
-    //	reporterr(       "\n" );
     return;
 }
+
 void
 gapcountf(double* freq, char** seq, int nseq, double* eff, int lgth) {
     int    i, j;
     double fr;
-
-    //	for( i=0; i<lgth; i++ ) freq[i] = 0.0;
-    //	return;
-
     for (i = 0; i < lgth; i++) {
         fr = 0.0;
         for (j = 0; j < nseq; j++) {
@@ -2532,9 +2183,7 @@ gapcountf(double* freq, char** seq, int nseq, double* eff, int lgth) {
                 fr += eff[j];
         }
         freq[i] = fr;
-        //		reporterr(       "in gapcountf, freq[%d] = %f\n", i, freq[i] );
     }
-    //	reporterr(       "\n" );
     return;
 }
 
@@ -2567,9 +2216,6 @@ makedynamicmtx(Context* ctx, double** out, double** in, double offset) {
 
     offset = dist2offset(offset * 2.0);  // offset 0..1 -> 0..2
 
-    //	if( offset > 0.0 ) offset = 0.0;
-    //	reporterr(       "dynamic offset = %f\n", offset );
-
     for (i = 0; i < ctx->nalphabets; i++)
         for (j = 0; j < ctx->nalphabets; j++) {
             out[i][j] = in[i][j];
@@ -2586,18 +2232,10 @@ makedynamicmtx(Context* ctx, double** out, double** in, double offset) {
             if (jj == '-')
                 continue;  // text no toki arieru
             out[i][j] = in[i][j] + offset * 600;
-            //			reporterr(       "%c-%c: %f\n", ii, jj, out[i][j] );
         }
     }
 
-    //	reporterr(       "offset = %f\n", offset );
-    //	reporterr(       "out[W][W] = %f\n", out[amino_n['W']][amino_n['W']] );
-    //	reporterr(       "out[A][A] = %f\n", out[amino_n['A']][amino_n['A']] );
-
     return;
-
-    // Taikaku youso no heikin ga 600 ni naruyouni re-scale.
-    // Hitaikaku youso ga ookiku narisugi.
 
     av = 0.0;
     for (i = 0; i < ctx->nalphabets; i++) {
