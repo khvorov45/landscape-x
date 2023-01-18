@@ -44,7 +44,7 @@ typedef struct aln_AlignResult {
 #define aln_max(a, b) (((a) > (b)) ? (a) : (b))
 #define aln_min(a, b) (((a) < (b)) ? (a) : (b))
 #define aln_clamp(x, a, b) (((x) < (a)) ? (a) : (((x) > (b)) ? (b) : (x)))
-#define aln_arrayCount(arr) (int32_t)(sizeof(arr) / sizeof(arr[0]))
+#define aln_arrayCount(arr) (intptr_t)(sizeof(arr) / sizeof(arr[0]))
 #define aln_arenaAllocArray(arena, type, len) (type*)aln_arenaAllocAndZero(arena, (len) * (int32_t)sizeof(type), alignof(type))
 #define aln_arenaAllocStruct(arena, type) (type*)aln_arenaAllocAndZero(arena, sizeof(type), alignof(type))
 #define aln_arenaAllocMatrix2I32(arena, rowCount, colCount) (aln_Matrix2I32) {.ptr = aln_arenaAllocArray(arena, int32_t, rowCount * colCount), .nrow = rowCount, .ncol = colCount}
@@ -149,10 +149,10 @@ typedef struct aln_Context {
     double           sueff_global;
     char             treemethod;
     int32_t          njob;
-    int32_t          amino_n[0x100];
+    int32_t          amino_n[256];
     aln_Matrix2I32 n_dis;
     double**         n_dis_consweight_multi;
-    uint8_t          amino[0x100];
+    uint8_t          amino[256];
     int32_t          penalty_dist;
     int32_t          penalty_ex;
     int32_t          outgap;

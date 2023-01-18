@@ -27,6 +27,18 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     ctx->outgap = 1;
     ctx->consweight_multi = 1.0;
 
+    {
+        char* localamino = "ARNDCQEGHILKMFPSTWYVBZX.-J";
+        for (int i = 0; i < 128; i++) {
+            ctx->amino_n[i] = -1;
+        }
+        for (int i = 0; i < 26; i++) {
+            char amino = localamino[i];
+            ctx->amino[i] = amino;
+            ctx->amino_n[(int32_t)amino] = i;
+        }
+    }
+
     // TODO(sen) Can we use the strings directly as aos?
     // NOTE(sen) Process input
     int maxInputSeqLen = 0;
@@ -70,7 +82,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         double*        freq = AllocateDoubleVec(20);
 
         {
-            char   locaminod[] = "ARNDCQEGHILKMFPSTWYVBZX.-J";
             double freqd[20] = {0.077, 0.051, 0.043, 0.052, 0.020, 0.041, 0.062, 0.074, 0.023, 0.052, 0.091, 0.059, 0.024, 0.040, 0.051, 0.069, 0.059, 0.014, 0.032, 0.066};
 
             // clang-format off
@@ -109,15 +120,7 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
             for (int i = 0; i < 20; i++) {
                 freq[i] = freqd[i];
             }
-
-            for (int i = 0; i < 26; i++)
-                ctx->amino[i] = locaminod[i];
         }
-
-        for (int i = 0; i < 0x80; i++)
-            ctx->amino_n[i] = -1;
-        for (int i = 0; i < 26; i++)
-            ctx->amino_n[(int)ctx->amino[i]] = i;
 
         double* freq1 = freq;
 
