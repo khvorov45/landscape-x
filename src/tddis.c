@@ -129,8 +129,6 @@ cpmx_ribosum(Context* ctx, char** seq, char** seqr, char* dir, double** cpmx, do
             }
 #endif
 
-            //			fprintf( stderr, "%c -> code=%d toa=%d, tog=%d, toc=%d, tot=%d, ton=%d, efee=%f\n", *seqpt, code%4, ribosumdis[code][4+0], ribosumdis[code][4+1], ribosumdis[code][4+2], ribosumdis[code][20+3], ribosumdis[code][36], feff );
-
             seqpt++;
             seqrpt++;
             dirpt++;

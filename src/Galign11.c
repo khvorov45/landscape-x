@@ -18,22 +18,12 @@ match_calc_mtx(double** mtx, double* match, char** s1, char** s2, int i1, int lg
 
 static double
 Atracking(aln_Opts opts, Context* ctx, double* lasthorizontalw, double* lastverticalw, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int tailgp, int* warpis, int* warpjs, int warpbase) {
-    int i, j, l, iin, jin, ifi, jfi, lgth1, lgth2, k, limk;
-    //	char gap[] = "-";
-    char* gap;
-    gap = ctx->newgapstr;
+    int   i, j, l, iin, jin, ifi, jfi, lgth1, lgth2, k, limk;
     lgth1 = strlen(seq1[0]);
     lgth2 = strlen(seq2[0]);
     double wm, g;
     double fpenalty = (double)opts.penalty;
     double fpenalty_ex = (double)ctx->penalty_ex;
-
-#if 0
-	for( i=0; i<lgth1; i++ ) 
-	{
-		fprintf( stderr, "lastverticalw[%d] = %f\n", i, lastverticalw[i] );
-	}
-#endif
 
     for (i = 0; i < lgth1 + 1; i++) {
         ijp[i][0] = i + 1;
@@ -42,13 +32,9 @@ Atracking(aln_Opts opts, Context* ctx, double* lasthorizontalw, double* lastvert
         ijp[0][j] = -(j + 1);
     }
 
-    //	if( tailgp == 1 || ijp[lgth1][lgth2] >= warpbase )
     if (tailgp == 1)
         ;
     else {
-#if 1
-        //		reporterr( "lastverticalw[lgth1-1] = %f\n", lastverticalw[lgth1-1] );
-        //		reporterr( "lasthorizontalw[lgth2-1] = %f\n", lasthorizontalw[lgth2-1] );
         wm = lasthorizontalw[lgth2 - 1] - 1.0;  // lasthorizontalw[lgth2-1] yori kanarazu chiisai.
         for (j = lgth2 - 2; j >= 0; j--) {
             if ((g = lasthorizontalw[j] + (fpenalty * TERMGAPFAC + fpenalty_ex * (lgth2 - 1 - j) * TERMGAPFAC_EX)) > wm) {
@@ -73,25 +59,6 @@ Atracking(aln_Opts opts, Context* ctx, double* lasthorizontalw, double* lastvert
             jin = lgth2 - 1;
             ijp[lgth1][lgth2] = 0;
         }
-#else
-        wm = lastverticalw[0];
-        for (i = 0; i < lgth1; i++) {
-            if (lastverticalw[i] >= wm) {
-                wm = lastverticalw[i];
-                iin = i;
-                jin = lgth2 - 1;
-                ijp[lgth1][lgth2] = +(lgth1 - i);
-            }
-        }
-        for (j = 0; j < lgth2; j++) {
-            if (lasthorizontalw[j] >= wm) {
-                wm = lasthorizontalw[j];
-                iin = lgth1 - 1;
-                jin = j;
-                ijp[lgth1][lgth2] = -(lgth2 - j);
-            }
-        }
-#endif
     }
 
     mseq1[0] += lgth1 + lgth2;
@@ -104,7 +71,6 @@ Atracking(aln_Opts opts, Context* ctx, double* lasthorizontalw, double* lastvert
     limk = lgth1 + lgth2 + 1;
     for (k = 0; k < limk; k++) {
         if (ijp[iin][jin] >= warpbase) {
-            //			fprintf( stderr, "WARP!\n" );
             ifi = warpis[ijp[iin][jin] - warpbase];
             jfi = warpjs[ijp[iin][jin] - warpbase];
         } else if (ijp[iin][jin] < 0) {
@@ -122,12 +88,12 @@ Atracking(aln_Opts opts, Context* ctx, double* lasthorizontalw, double* lastvert
             l = iin;
             while (--l >= 0) {
                 *--mseq1[0] = seq1[0][l];
-                *--mseq2[0] = *gap;
+                *--mseq2[0] = opts.gap;
                 k++;
             }
             l = jin;
             while (--l >= 0) {
-                *--mseq1[0] = *gap;
+                *--mseq1[0] = opts.gap;
                 *--mseq2[0] = seq2[0][l];
                 k++;
             }
@@ -136,12 +102,12 @@ Atracking(aln_Opts opts, Context* ctx, double* lasthorizontalw, double* lastvert
             l = iin - ifi;
             while (--l > 0) {
                 *--mseq1[0] = seq1[0][ifi + l];
-                *--mseq2[0] = *gap;
+                *--mseq2[0] = opts.gap;
                 k++;
             }
             l = jin - jfi;
             while (--l > 0) {
-                *--mseq1[0] = *gap;
+                *--mseq1[0] = opts.gap;
                 *--mseq2[0] = seq2[0][jfi + l];
                 k++;
             }
@@ -155,20 +121,17 @@ Atracking(aln_Opts opts, Context* ctx, double* lasthorizontalw, double* lastvert
         jin = jfi;
     }
 
-    //	fprintf( stderr, "%s\n", mseq1[0] );
-    //	fprintf( stderr, "%s\n", mseq2[0] );
     return (wm);
 }
 
 double
 G__align11(aln_Opts opts, Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int alloclen, int headgp, int tailgp) {
-    //	int k;
     register int i, j;
-    int          lasti; /* outgap == 0 -> lgth1, outgap == 1 -> lgth1+1 */
+    int          lasti;
     int          lastj;
     int          lgth1, lgth2;
     int          resultlen;
-    double       wm, wmo; /* int ?????? */
+    double       wm, wmo;
     double       g;
     double *     currentw, *previousw;
     double       fpenalty = (double)opts.penalty;
@@ -200,9 +163,9 @@ G__align11(aln_Opts opts, Context* ctx, double** n_dynamicmtx, char** seq1, char
     static int      orlgth1 = 0, orlgth2 = 0;
     static double** amino_dynamicmtx = NULL;  // ??
 
-    int*    warpis = NULL;
-    int*    warpjs = NULL;
-    int     warpbase;
+    int* warpis = NULL;
+    int* warpjs = NULL;
+    int  warpbase;
 
     if (seq1 == NULL) {
         if (orlgth1 > 0 && orlgth2 > 0) {
@@ -270,24 +233,22 @@ G__align11(aln_Opts opts, Context* ctx, double** n_dynamicmtx, char** seq1, char
     if (lgth1 == 0) {
         seq1[0][lgth2] = 0;
         while (lgth2)
-            seq1[0][--lgth2] = *ctx->newgapstr;
-        //		fprintf( stderr, "seq1[0] = %s\n", seq1[0] );
+            seq1[0][--lgth2] = opts.gap;
         return (0.0);
     }
 
     if (lgth2 == 0) {
         seq2[0][lgth1] = 0;
         while (lgth1)
-            seq2[0][--lgth1] = *ctx->newgapstr;
-        //		fprintf( stderr, "seq2[0] = %s\n", seq2[0] );
+            seq2[0][--lgth1] = opts.gap;
         return (0.0);
     }
 
     wm = 0.0;
 
     if (orlgth1 == 0) {
-        mseq1 = AllocateCharMtx(2, 0);  // 2020/Apr
-        mseq2 = AllocateCharMtx(2, 0);  // 2020/Apr
+        mseq1 = AllocateCharMtx(2, 0);
+        mseq2 = AllocateCharMtx(2, 0);
     }
 
     if (lgth1 > orlgth1 || lgth2 > orlgth2) {
@@ -312,10 +273,6 @@ G__align11(aln_Opts opts, Context* ctx, double** n_dynamicmtx, char** seq1, char
 
         ll1 = MAX((int)(1.3 * lgth1), orlgth1) + 100;
         ll2 = MAX((int)(1.3 * lgth2), orlgth2) + 100;
-
-#if DEBUG
-        fprintf(stderr, "\ntrying to allocate (%d+%d)xn matrices ... ", ll1, ll2);
-#endif
 
         w1 = AllocateFloatVec(ll2 + 2);
         w2 = AllocateFloatVec(ll2 + 2);
@@ -515,8 +472,7 @@ G__align11(aln_Opts opts, Context* ctx, double** n_dynamicmtx, char** seq1, char
                 wm = g;
                 *ijppt = +(i - *mpjpt);
             }
-            if ((g = *prept) >= *mjpt)
-            {
+            if ((g = *prept) >= *mjpt) {
                 *mjpt = g;
                 *mpjpt = i - 1;
             }
@@ -561,14 +517,11 @@ G__align11(aln_Opts opts, Context* ctx, double** n_dynamicmtx, char** seq1, char
 
 double
 G__align11_noalign(Context* ctx, double** n_dynamicmtx, int penal, int penal_ex, char** seq1, char** seq2)
-/* warp mitaiou */
 {
-    //	int k;
     register int i, j;
-    int          lasti; /* outgap == 0 -> lgth1, outgap == 1 -> lgth1+1 */
+    int          lasti;
     int          lgth1, lgth2;
-    //	int resultlen;
-    double  wm; /* int ?????? */
+    double  wm;
     double  g;
     double *currentw, *previousw;
     double  fpenalty = (double)penal;
@@ -683,21 +636,12 @@ G__align11_noalign(Context* ctx, double** n_dynamicmtx, int penal, int penal_ex,
 
     match_calc_mtx(amino_dynamicmtx, currentw, seq1, seq2, 0, lgth2);
 
-    if (1)  // tsuneni outgap-1
     {
         for (i = 1; i < lgth1 + 1; i++) {
             initverticalw[i] += fpenalty;
-#if USE_PENALTY_EX  // 2018/Apr/23
-//			initverticalw[i] += fpenalty_ex * i; // ato de fukkatsu
-//			reporterr( "added _ex\n" );
-#endif
         }
         for (j = 1; j < lgth2 + 1; j++) {
             currentw[j] += fpenalty;
-#if USE_PENALTY_EX  // 2018/Apr/23
-//			currentw[j] += fpenalty_ex * j; // ato de fukkatsu
-//			reporterr( "added _ex\n" );
-#endif
         }
     }
 
@@ -713,7 +657,7 @@ G__align11_noalign(Context* ctx, double** n_dynamicmtx, int penal, int penal_ex,
     if (1)
         lasti = lgth1 + 1;
     else
-        lasti = lgth1;  // tsuneni outgap-1
+        lasti = lgth1;
 
 #if XXXXXXX
     fprintf(stderr, "currentw = \n");

@@ -41,7 +41,7 @@ typedef struct aln_Opts {
     double  fastathreshold;
     double  sueff_global;
     char    treemethod;
-    char    alg;
+    char    gap;
 } aln_Opts;
 
 typedef struct aln_AlignResult {
@@ -249,7 +249,7 @@ aln_defaultOpts(void) {
         .fastathreshold = 2.7,
         .sueff_global = 0.1,
         .treemethod = 'X',
-        .alg = 'A',
+        .gap = '-',
     };
 
     return opts;

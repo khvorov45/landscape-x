@@ -14,38 +14,20 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
 
     Context* ctx = aln_arenaAllocStruct(tempArena, Context);
 
-    ctx->RNAscoremtx = 'n';
-    ctx->parallelizationstrategy = BAATARI1;
-    ctx->newgapstr = "-";
     ctx->nalphabets = 26;
-    ctx->ndistclass = 10;
-    ctx->maxdistclass = -1;
-    ctx->lhlimit = INT_MAX;
     ctx->njob = stringsCount;
-    ctx->rnaprediction = 'm';
-    ctx->addprofile = 1;
     ctx->outgap = 1;
-    ctx->kimuraR = NOTSPECIFIED;
-    ctx->pamN = NOTSPECIFIED;
-    ctx->fftWinSize = NOTSPECIFIED;
-    ctx->fftThreshold = NOTSPECIFIED;
-    ctx->RNAppenalty = NOTSPECIFIED;
-    ctx->RNAppenalty_ex = NOTSPECIFIED;
-    ctx->RNApthr = NOTSPECIFIED;
-    ctx->TMorJTT = JTT;
     ctx->consweight_multi = 1.0;
-
-    ctx->ppenalty_OP = NOTSPECIFIED;
-    ctx->ppenalty_EX = NOTSPECIFIED;
 
     // TODO(sen) What do we need the name array for?
     // TODO(sen) Can we use the strings directly as aos?
     // NOTE(sen) Process input
     const char* const* name = aln_arenaAllocArray(tempArena, const char*, stringsCount);
     int*               nlen = aln_arenaAllocArray(tempArena, int, stringsCount);
+    int                maxInputSeqLen = 0;
     for (int32_t strIndex = 0; strIndex < stringsCount; strIndex++) {
         aln_Str str = strings[strIndex];
-        ctx->maxInputSeqLen = aln_max(ctx->maxInputSeqLen, str.len);
+        maxInputSeqLen = aln_max(maxInputSeqLen, str.len);
         ((const char**)name)[strIndex] = "name";
         nlen[strIndex] = str.len;
     }
@@ -55,7 +37,7 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     for (int32_t strIndex = 0; strIndex < stringsCount; strIndex++) {
         aln_Str str = strings[strIndex];
         // TODO(sen) Remove the requirement for null-terminated str
-        char* thisSeq = aln_arenaAllocArray(tempArena, char, ctx->maxInputSeqLen + 1);
+        char* thisSeq = aln_arenaAllocArray(tempArena, char, maxInputSeqLen + 1);
         for (int32_t charInd = 0; charInd < str.len; charInd++) {
             thisSeq[charInd] = str.ptr[charInd];
         }
@@ -94,7 +76,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     {
         {
             ctx->n_dis = AllocateIntMtx(ctx->nalphabets, ctx->nalphabets);
-            ctx->n_disLN = AllocateDoubleMtx(ctx->nalphabets, ctx->nalphabets);
             double** n_distmp = AllocateDoubleMtx(20, 20);
             double*  datafreq = AllocateDoubleVec(20);
             double*  freq = AllocateDoubleVec(20);
@@ -102,26 +83,11 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
             aln_assert(opts.ppenalty_dist != NOTSPECIFIED);
             aln_assert(opts.ppenalty_ex != NOTSPECIFIED);
 
-            if (ctx->ppenalty_OP == NOTSPECIFIED)
-                ctx->ppenalty_OP = -1530;
-            if (ctx->ppenalty_EX == NOTSPECIFIED)
-                ctx->ppenalty_EX = -00;
-            if (ctx->pamN == NOTSPECIFIED)
-                ctx->pamN = 0;
-            if (ctx->kimuraR == NOTSPECIFIED)
-                ctx->kimuraR = 1;
             ctx->penalty_dist = (int)(0.6 * opts.ppenalty_dist + 0.5);
-            ctx->penalty_OP = (int)(0.6 * ctx->ppenalty_OP + 0.5);
             ctx->penalty_ex = (int)(0.6 * opts.ppenalty_ex + 0.5);
-            ctx->penalty_EX = (int)(0.6 * ctx->ppenalty_EX + 0.5);
-            ctx->offsetFFT = (int)(0.6 * (-0) + 0.5);
-            ctx->offsetLN = (int)(0.6 * 100 + 0.5);
-            ctx->penaltyLN = (int)(0.6 * -2000 + 0.5);
-            ctx->penalty_exLN = (int)(0.6 * -100 + 0.5);
 
             {
                 char   locaminod[] = "ARNDCQEGHILKMFPSTWYVBZX.-J";
-                char   locgrpd[] = {0, 3, 2, 2, 5, 2, 2, 0, 3, 1, 1, 3, 1, 4, 0, 0, 0, 4, 4, 1, 2, 2, 6, 6, 6, 1};
                 double freqd[20] = {0.077, 0.051, 0.043, 0.052, 0.020, 0.041, 0.062, 0.074, 0.023, 0.052, 0.091, 0.059, 0.024, 0.040, 0.051, 0.069, 0.059, 0.014, 0.032, 0.066};
 
                 // clang-format off
@@ -163,8 +129,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
 
                 for (int i = 0; i < 26; i++)
                     ctx->amino[i] = locaminod[i];
-                for (int i = 0; i < 26; i++)
-                    ctx->amino_grp[(int)ctx->amino[i]] = locgrpd[i];
             }
 
             for (int i = 0; i < 0x80; i++)
@@ -232,7 +196,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         }
 
         int charsize = 0x80;
-        ctx->amino_dis = AllocateIntMtx(charsize, charsize);
 
         for (int i = 0; i < charsize; i++)
             ctx->amino_n[i] = -1;
@@ -240,36 +203,11 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         for (int i = 0; i < ctx->nalphabets; i++)
             ctx->amino_n[(int)ctx->amino[i]] = i;
 
-        for (int i = 0; i < charsize; i++)
-            for (int j = 0; j < charsize; j++)
-                ctx->amino_dis[i][j] = 0;
-
-        for (int i = 0; i < ctx->nalphabets; i++)
-            for (int j = 0; j < ctx->nalphabets; j++)
-                ctx->n_disLN[i][j] = 0;
-
         ctx->n_dis_consweight_multi = AllocateDoubleMtx(ctx->nalphabets, ctx->nalphabets);
-        ctx->n_disFFT = AllocateIntMtx(ctx->nalphabets, ctx->nalphabets);
-        for (int i = 0; i < ctx->nalphabets; i++)
+        for (int i = 0; i < ctx->nalphabets; i++) {
             for (int j = 0; j < ctx->nalphabets; j++) {
-                ctx->amino_dis[(int)ctx->amino[i]][(int)ctx->amino[j]] = ctx->n_dis[i][j];
                 ctx->n_dis_consweight_multi[i][j] = (double)ctx->n_dis[i][j] * ctx->consweight_multi;
             }
-
-        {
-            for (int i = 0; i < 20; i++)
-                for (int j = 0; j < 20; j++)
-                    ctx->n_disLN[i][j] = (double)ctx->n_dis[i][j] + opts.offset - ctx->offsetLN;
-            for (int i = 0; i < 20; i++)
-                for (int j = 0; j < 20; j++)
-                    ctx->n_disFFT[i][j] = ctx->n_dis[i][j] + opts.offset - ctx->offsetFFT;
-        }
-
-        if (ctx->fftThreshold == NOTSPECIFIED) {
-            ctx->fftThreshold = FFT_THRESHOLD;
-        }
-        if (ctx->fftWinSize == NOTSPECIFIED) {
-            ctx->fftWinSize = FFT_WINSIZE_P;
         }
     }
 
@@ -278,7 +216,7 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
 
         // TODO(sen) Sequence verification?
 
-        int    alloclen = ctx->maxInputSeqLen * 2;
+        int    alloclen = maxInputSeqLen * 2;
         char** bseq = AllocateCharMtx(ctx->njob, alloclen + 10);
         char** dseq = AllocateCharMtx(ctx->njob, alloclen + 10);
         int*   countsOfXs = AllocateIntVec(ctx->njob);
@@ -314,18 +252,8 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
             char** distseq1 = AllocateCharMtx(1, 0);
             char** distseq2 = AllocateCharMtx(1, 0);
 
-            double* selfscore = AllocateDoubleVec(ctx->njob);
             double* effarr1 = AllocateDoubleVec(ctx->njob);
             double* effarr2 = AllocateDoubleVec(ctx->njob);
-
-            double pscore = 0.0;
-            for (int i = 0; i < ctx->njob; i++) {
-                pscore = 0.0;
-                for (char* pt = bseq[i]; *pt; pt++) {
-                    pscore += ctx->amino_dis[(unsigned char)*pt][(unsigned char)*pt];
-                }
-                selfscore[i] = pscore;
-            }
 
             int ilim = ctx->njob - 1;
             for (int i = 0; i < ilim; i++) {
@@ -341,10 +269,10 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
                     distseq1[0] = dseq[i];
                     distseq2[0] = dseq[j];
 
-                    pscore = G__align11(opts, ctx, ctx->n_dis_consweight_multi, mseq1, mseq2, alloclen, ctx->outgap, ctx->outgap);
+                    G__align11(opts, ctx, ctx->n_dis_consweight_multi, mseq1, mseq2, alloclen, ctx->outgap, ctx->outgap);
                     int thereisx = countsOfXs[i] + countsOfXs[j];
                     if (thereisx) {
-                        pscore = G__align11_noalign(ctx, ctx->n_dis_consweight_multi, opts.penalty, ctx->penalty_ex, distseq1, distseq2);
+                        G__align11_noalign(ctx, ctx->n_dis_consweight_multi, opts.penalty, ctx->penalty_ex, distseq1, distseq2);
                     }
                 }
             }
@@ -385,7 +313,7 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         eff[i] /= (double)100;
     }
 
-    int    alloclen = ctx->maxInputSeqLen * 2 + 1;
+    int    alloclen = maxInputSeqLen * 2 + 1;
     char** bseq = AllocateCharMtx(ctx->njob, alloclen);
 
     for (int i = 0; i < ctx->njob; i++) {
@@ -428,7 +356,7 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         for (int l = 0; l < ctx->njob; l++)
             fftlog[l] = 1;
 
-        calcimportance_half(ctx, ctx->njob, eff, bseq, localhomtable, alloclen);
+        calcimportance_half(opts, ctx->njob, eff, bseq, localhomtable, alloclen);
 
         char** mseq1 = AllocateCharMtx(ctx->njob, 0);
         char** mseq2 = AllocateCharMtx(ctx->njob, 0);

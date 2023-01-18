@@ -91,10 +91,10 @@ match_calc(Context* ctx, double** n_dynamicmtx, double* match, double** cpmx1, d
 }
 
 static void
-Atracking_localhom(Context* ctx, double* impwmpt, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int icyc, int jcyc, int* warpis, int* warpjs, int warpbase, int* ngap1, int* ngap2, int reuseprofiles, char** gt1, char** gt2) {
-    int    i, j, l, iin, jin, ifi, jfi, lgth1, lgth2, k, limk;
-    char * gaptable1, *gt1bk;
-    char * gaptable2, *gt2bk;
+Atracking_localhom(aln_Opts opts, double* impwmpt, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int icyc, int jcyc, int* warpis, int* warpjs, int warpbase, int* ngap1, int* ngap2, int reuseprofiles, char** gt1, char** gt2) {
+    int   i, j, l, iin, jin, ifi, jfi, lgth1, lgth2, k, limk;
+    char *gaptable1, *gt1bk;
+    char *gaptable2, *gt2bk;
     lgth1 = strlen(seq1[0]);
     lgth2 = strlen(seq2[0]);
 
@@ -204,7 +204,7 @@ Atracking_localhom(Context* ctx, double* impwmpt, char** seq1, char** seq2, char
         }
     } else {
         for (i = 0; i < icyc; i++)
-            gapireru(ctx, mseq1[i], seq1[i], gaptable1);
+            gapireru(opts, mseq1[i], seq1[i], gaptable1);
     }
 
     if (*ngap2 == 0 && reuseprofiles)
@@ -217,7 +217,7 @@ Atracking_localhom(Context* ctx, double* impwmpt, char** seq1, char** seq2, char
         }
     } else {
         for (j = 0; j < jcyc; j++)
-            gapireru(ctx, mseq2[j], seq2[j], gaptable2);
+            gapireru(opts, mseq2[j], seq2[j], gaptable2);
     }
 
     if (gt1 == NULL) {
@@ -425,21 +425,7 @@ createfgresult(double** gapfresult, int limk, double eff1, double eff2, double* 
 }
 
 static double
-Atracking(Context* ctx, double* lasthorizontalw, double* lastverticalw, double fpenalty, double fpenalty_ex, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int icyc, int jcyc, int tailgp, int* warpis, int* warpjs, int warpbase, int* ngap1, int* ngap2, int reuseprofiles,
-#if 0
-						double *eff1, double *eff2,
-						double ***cpmxresult, 
-						double **cpmx1, double **cpmx2, 
-						double *gapfreq1, double *gapfreq2, 
-						double *ogcp1o, double *ogcp2o, 
-						double *fgcp1o, double *fgcp2o, 
-						double orieff1, double orieff2,
-						int usehist1, int usehist2
-#else
-          char** gt1,
-          char** gt2
-#endif
-) {
+Atracking(aln_Opts opts, double* lasthorizontalw, double* lastverticalw, double fpenalty, double fpenalty_ex, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int icyc, int jcyc, int tailgp, int* warpis, int* warpjs, int warpbase, int* ngap1, int* ngap2, int reuseprofiles, char** gt1, char** gt2) {
     int    i, j, l, iin, jin, ifi, jfi, lgth1, lgth2, k, limk;
     double wm;
     char * gaptable1, *gt1bk;
@@ -605,7 +591,7 @@ Atracking(Context* ctx, double* lasthorizontalw, double* lastverticalw, double f
         }
     } else {
         for (i = 0; i < icyc; i++)
-            gapireru(ctx, mseq1[i], seq1[i], gaptable1);
+            gapireru(opts, mseq1[i], seq1[i], gaptable1);
     }
 
     if (*ngap2 == 0 && reuseprofiles)
@@ -618,7 +604,7 @@ Atracking(Context* ctx, double* lasthorizontalw, double* lastverticalw, double f
         }
     } else {
         for (j = 0; j < jcyc; j++)
-            gapireru(ctx, mseq2[j], seq2[j], gaptable2);
+            gapireru(opts, mseq2[j], seq2[j], gaptable2);
     }
 
     if (gt1 == NULL) {
@@ -635,14 +621,13 @@ Atracking(Context* ctx, double* lasthorizontalw, double* lastverticalw, double f
 double
 A__align(aln_Opts opts, Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_l, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, char* sgap1, char* sgap2, char* egap1, char* egap2, int headgp, int tailgp, int firstmem, int calledbyfulltreebase, double*** cpmxchild0, double*** cpmxchild1, double*** cpmxresult, double orieff1, double orieff2) {
     int        reuseprofiles;
-    static int previousfirstlen;  // 2016/Feb/1 // MEMBER NO CHECK GA HITSUYOU!!!!
-    static int previousicyc;  // 2016/Feb/1 // MEMBER NO CHECK GA HITSUYOU!!!!
+    static int previousfirstlen;
+    static int previousicyc;
     static int previousfirstmem;
     static int previouscall;
     int        ngap1, ngap2;
-    //	int k;
     register int i, j;
-    int          lasti, lastj; /* outgap == 0 -> lgth1, outgap == 1 -> lgth1+1 */
+    int          lasti, lastj;
     int          lgth1, lgth2;
     int          resultlen;
     double       wm = 0.0; /* int ?????? */
@@ -696,11 +681,11 @@ A__align(aln_Opts opts, Context* ctx, double** n_dynamicmtx, int penalty_l, int 
     double          headgapfreq1;
     double          headgapfreq2;
 
-    int*    warpis = NULL;
-    int*    warpjs = NULL;
+    int* warpis = NULL;
+    int* warpjs = NULL;
 
-    int     warpbase;
-    char *  gt1, *gt2, *gt1bk, *gt2bk;
+    int   warpbase;
+    char *gt1, *gt2, *gt1bk, *gt2bk;
 
     if (seq1 == NULL) {
         if (orlgth1) {
@@ -750,7 +735,7 @@ A__align(aln_Opts opts, Context* ctx, double** n_dynamicmtx, int penalty_l, int 
             j = lgth2;
             seq1[i][j] = 0;
             while (j)
-                seq1[i][--j] = *ctx->newgapstr;
+                seq1[i][--j] = opts.gap;
         }
         return (0.0);
     }
@@ -760,7 +745,7 @@ A__align(aln_Opts opts, Context* ctx, double** n_dynamicmtx, int penalty_l, int 
             j = lgth1;
             seq2[i][j] = 0;
             while (j)
-                seq2[i][--j] = *ctx->newgapstr;
+                seq2[i][--j] = opts.gap;
         }
         return (0.0);
     }
@@ -993,7 +978,6 @@ A__align(aln_Opts opts, Context* ctx, double** n_dynamicmtx, int penalty_l, int 
             gapfreq2pt[lgth2] = 0.0;
         }
 
-        if (ctx->legacygapcost == 0)  // sgap1 no toki headgapfreq, gapfreq1pt[lgth] ha 1 toha kagiranai.
         {
             if (reuseprofiles)
                 gapcountadd(gapfreq1pt, seq1, icyc, eff1, lgth1);
@@ -1006,13 +990,6 @@ A__align(aln_Opts opts, Context* ctx, double** n_dynamicmtx, int penalty_l, int 
                 gapfreq2pt[i] = 1.0 - gapfreq2pt[i];
             headgapfreq1 = 1.0 - headgapfreq1;
             headgapfreq2 = 1.0 - headgapfreq2;
-        } else {
-            for (i = 0; i < lgth1 + 1; i++)
-                gapfreq1pt[i] = 1.0;
-            for (i = 0; i < lgth2 + 1; i++)
-                gapfreq2pt[i] = 1.0;
-            headgapfreq1 = 1.0;
-            headgapfreq2 = 1.0;
         }
     }
 
@@ -1311,14 +1288,12 @@ A__align(aln_Opts opts, Context* ctx, double** n_dynamicmtx, int penalty_l, int 
     gt2 = gt2bk = AllocateCharVec(lgth1 + lgth2 + 1);
 
     if (constraint) {
-        Atracking_localhom(ctx, impmatch, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, warpis, warpjs, warpbase, &ngap1, &ngap2, reuseprofiles, &gt1, &gt2);
+        Atracking_localhom(opts, impmatch, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, warpis, warpjs, warpbase, &ngap1, &ngap2, reuseprofiles, &gt1, &gt2);
     } else {
-        wmo = Atracking(ctx, currentw, lastverticalw, fpenalty, fpenalty_ex, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, tailgp, warpis, warpjs, warpbase, &ngap1, &ngap2, reuseprofiles, &gt1, &gt2);
+        wmo = Atracking(opts, currentw, lastverticalw, fpenalty, fpenalty_ex, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, tailgp, warpis, warpjs, warpbase, &ngap1, &ngap2, reuseprofiles, &gt1, &gt2);
         if (!tailgp)
             wm = wmo;
     }
-
-    //	reporterr( "wm = %f\n", wm );
 
 #if 1
     if (cpmxresult) {
