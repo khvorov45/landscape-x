@@ -472,11 +472,7 @@ Atracking(Context* ctx, double* lasthorizontalw, double* lastverticalw, double f
         ;
     else {
 #if 1
-        //		double fpenalty = (double)penalty;
-        //		double fpenalty_ex = (double)penalty_ex;
         double g;
-        //		reporterr( "in S, lastverticalw[lgth1-1] = %f\n", lastverticalw[lgth1-1] );
-        //		reporterr( "in S, lasthorizontalw[lgth2-1] = %f\n", lasthorizontalw[lgth2-1] );
         wm = lasthorizontalw[lgth2 - 1] - 1.0;  // lasthorizontalw[lgth2-1] yori kanarazu chiisai.
         for (j = lgth2 - 2; j >= 0; j--) {
             if ((g = lasthorizontalw[j] + (fpenalty * TERMGAPFAC + fpenalty_ex * (lgth2 - 1 - j) * TERMGAPFAC_EX)) > wm) {
@@ -653,7 +649,6 @@ A__align(aln_Opts opts, Context* ctx, double** n_dynamicmtx, int penalty_l, int 
     double       wmo = 0.0;
     double       g;
     double *     currentw, *previousw;
-//	double fpenalty = (double)penalty;
 #if USE_PENALTY_EX
     double fpenalty_ex = (double)penalty_ex_l;
 #endif

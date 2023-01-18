@@ -209,7 +209,6 @@ typedef struct Context {
     int      utree;
     int      tbutree;
     int      trywarp;
-    int      penalty;
     int      penaltyLN;
     int      penalty_dist;
     int      RNApenalty;
@@ -223,7 +222,6 @@ typedef struct Context {
     int      ppenalty_EX;
     int      penalty_OP;
     int      ppenalty_OP;
-    int      penalty_shift;
     int      offset;
     int      offsetLN;
     int      offsetFFT;
@@ -335,7 +333,7 @@ void      freeintmtx(int**, int);
 
 extern void   constants(aln_Opts opts, Context* ctx);
 extern double A__align(aln_Opts opts, Context* ctx, double** scoringmtx, int penalty, int penalty_ex, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, char* gs1, char* gs2, char* ge1, char* ge2, int headgp, int tailgp, int firstmem, int calledby, double*** cpmxchild0, double*** cpmxchild1, double*** cpmxresult, double orieff1, double orieff2);
-extern double G__align11(Context* ctx, double** scoringmtx, char** seq1, char** seq2, int alloclen, int headgp, int tailgp);
+extern double G__align11(aln_Opts opts, Context* ctx, double** scoringmtx, char** seq1, char** seq2, int alloclen, int headgp, int tailgp);
 extern void   cpmx_calc(Context* ctx, char** seq, double** cpmx, double* eff, int lgth, int clus);
 extern void   intergroup_score(char**, char**, double*, double*, int, int, int, double*);
 extern int    fastconjuction(int* memlist, char** seq, char** aseq, double* peff, double* eff, char* d);
@@ -426,7 +424,6 @@ extern void   fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(aln_Opts opts
 extern void   imp_match_init_strict(aln_Opts opts, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1kozo, double* eff2kozo, LocalHom*** localhom, char* swaplist, int* memlist1, int* memlist2);
 extern void   cpmx_ribosum(Context* ctx, char** seq, char** seqr, char* dir, double** cpmx, double* eff, int lgth, int clus);
 extern void   assignstrweight(int nseq, double* strweight, Node* stopol, int*** topol, int step, int LorR, char* kozoari, double* seqweight);
-extern double plainscore(Context* ctx, int nseq, char** seq);
 extern int    samemember(int* mem, int* cand);
 extern int    samemembern(int* mem, int* cand, int candn);
 extern int    includemember(int* mem, int* cand);
@@ -442,7 +439,6 @@ extern void   outgapcount(double* freq, int nseq, char* gappat, double* eff);
 extern void   makedynamicmtx(Context* ctx, double** out, double** in, double offset);
 extern void   makeskiptable(int n, int** skip, char** seq);
 extern int    generatesubalignmentstable(int nseq, int*** tablept, int* nsubpt, int* maxmempt, int*** topol, double** len, double threshold);
-extern double sumofpairsscore(Context* ctx, int nseq, char** seq);
 
 extern int    isallgap(char*);
 extern int    deletenewinsertions_difflist(int on, int an, char** oseq, char** aseq, GapPos** difflist);

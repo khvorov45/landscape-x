@@ -30,7 +30,7 @@ typedef struct aln_Str {
 
 typedef struct aln_Opts {
     int32_t outputhat23;
-    int32_t ppenalty;
+    int32_t penalty;
     int32_t ppenalty_dist;
     int32_t nblosum;
     int32_t scoremtx;
@@ -38,7 +38,6 @@ typedef struct aln_Opts {
     int32_t constraint;
     int32_t ppenalty_ex;
     double  minimumweight;
-    double  penalty_shift_factor;
     double  fastathreshold;
     double  sueff_global;
     char    treemethod;
@@ -239,19 +238,19 @@ aln_PUBLICAPI aln_Opts
 aln_defaultOpts(void) {
     aln_Opts opts = {
         .outputhat23 = 16,
-        .ppenalty = -1530,
+        .penalty = (int)(0.6 * (-1530.0) + 0.5),
         .ppenalty_dist = 1530,
         .nblosum = 62,
         .scoremtx = 1,
         .constraint = 2,
         .ppenalty_ex = -100,
         .minimumweight = 0.00001,
-        .penalty_shift_factor = 100.0,
         .fastathreshold = 2.7,
         .sueff_global = 0.1,
         .treemethod = 'X',
         .alg = 'A',
     };
+
     return opts;
 }
 

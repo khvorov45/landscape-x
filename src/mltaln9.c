@@ -2366,22 +2366,6 @@ naivepairscore11(Context* ctx, const char* seq1, const char* seq2, int penal) {
     return (vali);
 }
 
-double
-plainscore(Context* ctx, int nseq, char** s) {
-    int    i, j, ilim;
-    double v = 0.0;
-
-    ilim = nseq - 1;
-    for (i = 0; i < ilim; i++)
-        for (j = i + 1; j < nseq; j++) {
-            v += (double)naivepairscore11(ctx, s[i], s[j], ctx->penalty);
-        }
-
-    reporterr("penalty = %d\n", ctx->penalty);
-
-    return (v);
-}
-
 int
 samemember(int* mem, int* cand) {
     int i, j;
@@ -2739,19 +2723,6 @@ generatesubalignmentstable(int nseq, int*** tablept, int* nsubpt, int* maxmempt,
 
     free(distfromtip);
     return (0);
-}
-
-double
-sumofpairsscore(Context* ctx, int nseq, char** seq) {
-    double v = 0;
-    int    i, j;
-    for (i = 1; i < nseq; i++) {
-        for (j = 0; j < i; j++) {
-            v += naivepairscore11(ctx, seq[i], seq[j], ctx->penalty) / 600;
-        }
-    }
-    //	v /= ( (nseq-1) * nseq ) / 2;
-    return (v);
 }
 
 static void

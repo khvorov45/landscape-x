@@ -17,7 +17,7 @@ match_calc_mtx(double** mtx, double* match, char** s1, char** s2, int i1, int lg
 }
 
 static double
-Atracking(Context* ctx, double* lasthorizontalw, double* lastverticalw, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int tailgp, int* warpis, int* warpjs, int warpbase) {
+Atracking(aln_Opts opts, Context* ctx, double* lasthorizontalw, double* lastverticalw, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int tailgp, int* warpis, int* warpjs, int warpbase) {
     int i, j, l, iin, jin, ifi, jfi, lgth1, lgth2, k, limk;
     //	char gap[] = "-";
     char* gap;
@@ -25,7 +25,7 @@ Atracking(Context* ctx, double* lasthorizontalw, double* lastverticalw, char** s
     lgth1 = strlen(seq1[0]);
     lgth2 = strlen(seq2[0]);
     double wm, g;
-    double fpenalty = (double)ctx->penalty;
+    double fpenalty = (double)opts.penalty;
     double fpenalty_ex = (double)ctx->penalty_ex;
 
 #if 0
@@ -161,7 +161,7 @@ Atracking(Context* ctx, double* lasthorizontalw, double* lastverticalw, char** s
 }
 
 double
-G__align11(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int alloclen, int headgp, int tailgp) {
+G__align11(aln_Opts opts, Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int alloclen, int headgp, int tailgp) {
     //	int k;
     register int i, j;
     int          lasti; /* outgap == 0 -> lgth1, outgap == 1 -> lgth1+1 */
@@ -171,7 +171,7 @@ G__align11(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int al
     double       wm, wmo; /* int ?????? */
     double       g;
     double *     currentw, *previousw;
-    double       fpenalty = (double)ctx->penalty;
+    double       fpenalty = (double)opts.penalty;
 #if USE_PENALTY_EX
     double fpenalty_ex = (double)ctx->penalty_ex;
     double fpenalty_ex_i;
@@ -534,7 +534,7 @@ G__align11(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int al
         lastverticalw[i] = currentw[lgth2 - 1];  // lgth2==0 no toki error
     }
 
-    wmo = Atracking(ctx, currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, tailgp, warpis, warpjs, warpbase);
+    wmo = Atracking(opts, ctx, currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, tailgp, warpis, warpjs, warpbase);
     if (!tailgp)
         wm = wmo;
 

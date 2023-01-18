@@ -666,7 +666,6 @@ constants(aln_Opts opts, Context* ctx) {
         double*  datafreq = AllocateDoubleVec(20);
         double*  freq = AllocateDoubleVec(20);
 
-        aln_assert(opts.ppenalty != NOTSPECIFIED);
         aln_assert(opts.ppenalty_dist != NOTSPECIFIED);
         aln_assert(opts.poffset != NOTSPECIFIED);
         aln_assert(opts.ppenalty_ex != NOTSPECIFIED);
@@ -679,9 +678,7 @@ constants(aln_Opts opts, Context* ctx) {
             ctx->pamN = 0;
         if (ctx->kimuraR == NOTSPECIFIED)
             ctx->kimuraR = 1;
-        ctx->penalty = (int)(0.6 * opts.ppenalty + 0.5);
         ctx->penalty_dist = (int)(0.6 * opts.ppenalty_dist + 0.5);
-        ctx->penalty_shift = (int)(opts.penalty_shift_factor * ctx->penalty);
         ctx->penalty_OP = (int)(0.6 * ctx->ppenalty_OP + 0.5);
         ctx->penalty_ex = (int)(0.6 * opts.ppenalty_ex + 0.5);
         ctx->penalty_EX = (int)(0.6 * ctx->ppenalty_EX + 0.5);

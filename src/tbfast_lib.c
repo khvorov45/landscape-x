@@ -93,7 +93,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
 
     {
         aln_Opts pairLocalAlignOpts = opts;
-        pairLocalAlignOpts.ppenalty = -2000;
         pairLocalAlignOpts.poffset = 100;
         pairLocalAlignOpts.constraint = 0;
 
@@ -166,10 +165,10 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
                     distseq1[0] = dseq[i];
                     distseq2[0] = dseq[j];
 
-                    pscore = G__align11(ctx, ctx->n_dis_consweight_multi, mseq1, mseq2, alloclen, ctx->outgap, ctx->outgap);
+                    pscore = G__align11(pairLocalAlignOpts, ctx, ctx->n_dis_consweight_multi, mseq1, mseq2, alloclen, ctx->outgap, ctx->outgap);
                     int thereisx = countsOfXs[i] + countsOfXs[j];
                     if (thereisx) {
-                        pscore = G__align11_noalign(ctx, ctx->n_dis_consweight_multi, ctx->penalty, ctx->penalty_ex, distseq1, distseq2);
+                        pscore = G__align11_noalign(ctx, ctx->n_dis_consweight_multi, pairLocalAlignOpts.penalty, ctx->penalty_ex, distseq1, distseq2);
                     }
                 }
             }
@@ -340,7 +339,7 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
                 opts,
                 ctx,
                 dynamicmtx,
-                ctx->penalty,
+                opts.penalty,
                 ctx->penalty_ex,
                 mseq1,
                 mseq2,
