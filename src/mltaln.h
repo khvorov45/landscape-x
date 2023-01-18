@@ -365,9 +365,6 @@ extern int       fastconjuction_noname(int* memlist, char** seq, char** aseq, do
 extern int       fastconjuction_target(int* memlist, char** seq, char** aseq, double* peff, double* eff, char* d, double mineff, int* targetmap);
 extern int       fastconjuction_noweight(int* memlist, char** seq, char** aseq, double* peff, char* d);
 extern void      chardelete(char* seq, int d);
-extern int       RootBranchNode(int nseq, int*** topol, int step, int branch);
-extern void      BranchLeafNode(int nseq, int*** topol, int* node, int step, int branch);
-extern void      RootLeafNode(int nseq, int*** topol, int* node);
 extern void      nodeFromABranch(int nseq, int* result, int** pairwisenode, int*** topol, int step, int num);
 extern void      OneClusterAndTheOther_fast(int locnjob, int* memlist1, int* memlist2, int* s1, int* s2, char* pairbuf, int*** topol, int step, int branch, double** smalldistmtx, double* distontree);
 extern void      makeEffMtx(int nseq, double** mtx, double* vec);
@@ -395,16 +392,9 @@ extern void      branchWeightToPairWeight(int locnseq, int*** topol, double** pw
 extern void      weightFromABranch(int nseq, double* result, Node* stopol, int*** topol, int step, int LorR);
 extern void      distFromABranch(int nseq, double* result, Node* stopol, int*** topol, double** len, int step, int LorR);
 extern double    imp_match_out_scD(int i1, int j1);
-extern double    MSalignmm(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, char*, char*, char*, char*, int headgp, int tailgp, double*** cpmxchild0, double*** cpmxchild1, double*** cpmxresult, double orieff1, double orieff2);
-extern double    MSalignmm_variousdist(Context* ctx, double*** matrices, char** seq1, char** seq2, double* eff1, double* eff2, double** eff1s, double** eff2s, int icyc, int jcyc, int alloclen, char*, char*, char*, char*, int headgp, int tailgp);
-extern double    Lalignmm_hmout(Context* ctx, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, char*, char*, char*, double** map);
-extern double    MSalign11(Context* ctx, char** seq1, char** seq2, int alloclen);
 extern double    G__align11_noalign(Context* ctx, double** scoringmtx, int penal, int penal_ex, char** seq1, char** seq2);
-extern void      JTTmtx(double** rsr, double* freq, unsigned char locamino[0x80], char locgrp[0x80], int isTM);
-extern void      BLOSUMmtx(int n, double** matrix, double* freq, unsigned char* amino, char* amino_grp);
 extern void      putlocalhom(char* al1, char* al2, LocalHom* localhompt, int off1, int off2, int opt, int overlapaa, char korh);
 extern void      ErrorExit(char* message);
-extern void      initSignalSM(Context* ctx);
 extern void      readlocalhomtable_half(FILE* fp, int njob, LocalHom** localhomtable, char* kozoarivec);
 extern void      readlocalhomtable_target(FILE* fp, int nt, int njob, LocalHom** localhomtable, char* kozoarivec, int* targetmap);
 extern void      freelocalhom1(LocalHom* lh);

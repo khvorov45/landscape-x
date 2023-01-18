@@ -172,8 +172,6 @@ G__align11(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int al
     double       g;
     double *     currentw, *previousw;
     double       fpenalty = (double)ctx->penalty;
-    double       fpenalty_shift = (double)ctx->penalty_shift;
-    double       fpenalty_tmp;
 #if USE_PENALTY_EX
     double fpenalty_ex = (double)ctx->penalty_ex;
     double fpenalty_ex_i;
@@ -204,17 +202,7 @@ G__align11(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int al
 
     int*    warpis = NULL;
     int*    warpjs = NULL;
-    int*    warpi = NULL;
-    int*    warpj = NULL;
-    int*    prevwarpi = NULL;
-    int*    prevwarpj = NULL;
-    double* wmrecords = NULL;
-    double* prevwmrecords = NULL;
-    int     warpn = 0;
     int     warpbase;
-    double  curm = 0.0;
-    double *wmrecordspt, *wmrecords1pt, *prevwmrecordspt;
-    int *   warpipt, *warpjpt;
 
     if (seq1 == NULL) {
         if (orlgth1 > 0 && orlgth2 > 0) {
@@ -275,41 +263,7 @@ G__align11(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int al
     warpbase = lgth1 + lgth2;
     warpis = NULL;
     warpjs = NULL;
-    warpn = 0;
-    if (ctx->trywarp) {
-        if (headgp == 0 || tailgp == 0) {
-            fprintf(stderr, "At present, headgp and tailgp must be 1.\n");
-            exit(1);
-        }
 
-        wmrecords = AllocateFloatVec(lgth2 + 1);
-        warpi = AllocateIntVec(lgth2 + 1);
-        warpj = AllocateIntVec(lgth2 + 1);
-        prevwmrecords = AllocateFloatVec(lgth2 + 1);
-        prevwarpi = AllocateIntVec(lgth2 + 1);
-        prevwarpj = AllocateIntVec(lgth2 + 1);
-        for (i = 0; i < lgth2 + 1; i++)
-            prevwmrecords[i] = 0.0;
-        for (i = 0; i < lgth2 + 1; i++)
-            wmrecords[i] = 0.0;
-        for (i = 0; i < lgth2 + 1; i++)
-            prevwarpi[i] = -warpbase;
-        for (i = 0; i < lgth2 + 1; i++)
-            prevwarpj[i] = -warpbase;
-        for (i = 0; i < lgth2 + 1; i++)
-            warpi[i] = -warpbase;
-        for (i = 0; i < lgth2 + 1; i++)
-            warpj[i] = -warpbase;
-    }
-
-#if 0
-	if( lgth1 <= 0 || lgth2 <= 0 )
-	{
-		fprintf( stderr, "WARNING (g11): lgth1=%d, lgth2=%d\n", lgth1, lgth2 );
-	}
-#endif
-
-#if 1
     if (lgth1 == 0 && lgth2 == 0)
         return (0.0);
 
@@ -328,7 +282,6 @@ G__align11(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int al
         //		fprintf( stderr, "seq2[0] = %s\n", seq2[0] );
         return (0.0);
     }
-#endif
 
     wm = 0.0;
 
@@ -527,13 +480,6 @@ G__align11(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int al
         prept = previousw;
         curpt = currentw + 1;
         mpjpt = mp + 1;
-        if (ctx->trywarp) {
-            prevwmrecordspt = prevwmrecords;
-            wmrecordspt = wmrecords + 1;
-            wmrecords1pt = wmrecords;
-            warpipt = warpi + 1;
-            warpjpt = warpj + 1;
-        }
 
         if (i < lgth1)
             fpenalty_ex_i = fpenalty_ex;
@@ -565,92 +511,18 @@ G__align11(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int al
 //			mi += fpenalty_ex;
 #endif
 
-#if 0 
-			fprintf( stderr, "%5.0f?", g );
-#endif
             if ((g = *mjpt + fpenalty) > wm) {
                 wm = g;
                 *ijppt = +(i - *mpjpt);
             }
             if ((g = *prept) >= *mjpt)
-            //			if( (g=*prept) > *mjpt )
             {
                 *mjpt = g;
                 *mpjpt = i - 1;
             }
 #if USE_PENALTY_EX
-            if (j < lgth2)  // 2018/May/11
+            if (j < lgth2)
                 m[j] += fpenalty_ex;
-#endif
-#if 1
-            if (ctx->trywarp) {
-                fpenalty_tmp = fpenalty_shift + fpenalty_ex * (i - prevwarpi[j - 1] + j - prevwarpj[j - 1]);
-                //				fprintf( stderr, "fpenalty_shift = %f\n", fpenalty_tmp );
-
-                //				fprintf( stderr, "\n\n\nwarp to %c-%c (%d-%d) from %c-%c (%d-%d) ? prevwmrecords[%d] = %f + %f <- wm = %f\n", seq1[0][prevwarpi[j-1]], seq2[0][prevwarpj[j-1]], prevwarpi[j-1], prevwarpj[j-1], seq1[0][i], seq2[0][j], i, j, j, prevwmrecords[j-1], fpenalty_tmp, wm );
-                //				if( (g=prevwmrecords[j-1] + fpenalty_shift )> wm )
-                if ((g = *prevwmrecordspt++ + fpenalty_tmp) > wm)  // naka ha osokute kamawanai
-                {
-                    //					fprintf( stderr, "Yes! Warp!! from %d-%d (%c-%c) to  %d-%d (%c-%c) fpenalty_tmp = %f! warpn = %d\n", i, j, seq1[0][i], seq2[0][j-1], prevwarpi[j-1], prevwarpj[j-1],seq1[0][prevwarpi[j-1]], seq2[0][prevwarpj[j-1]], fpenalty_tmp, warpn );
-                    if (warpn && prevwarpi[j - 1] == warpis[warpn - 1] && prevwarpj[j - 1] == warpjs[warpn - 1]) {
-                        *ijppt = warpbase + warpn - 1;
-                    } else {
-                        *ijppt = warpbase + warpn;
-                        warpis = realloc(warpis, sizeof(int) * (warpn + 1));
-                        warpjs = realloc(warpjs, sizeof(int) * (warpn + 1));
-                        warpis[warpn] = prevwarpi[j - 1];
-                        warpjs[warpn] = prevwarpj[j - 1];
-                        warpn++;
-                    }
-                    wm = g;
-                } else {
-                }
-
-                curm = *curpt + wm;
-
-                //				fprintf( stderr, "###### curm = %f at %c-%c, i=%d, j=%d\n", curm, seq1[0][i], seq2[0][j], i, j );
-
-                //				fprintf( stderr, "copy from i, j-1? %f > %f?\n", wmrecords[j-1], curm );
-                //				if( wmrecords[j-1] > wmrecords[j] )
-                if (*wmrecords1pt > *wmrecordspt) {
-                    //					fprintf( stderr, "yes\n" );
-                    //					wmrecords[j] = wmrecords[j-1];
-                    *wmrecordspt = *wmrecords1pt;
-                    //					warpi[j] = warpi[j-1];
-                    //					warpj[j] = warpj[j-1];
-                    *warpipt = *(warpipt - 1);
-                    *warpjpt = *(warpjpt - 1);
-                    //					fprintf( stderr, "warpi[j]=%d, warpj[j]=%d wmrecords[j] = %f\n", warpi[j], warpj[j], wmrecords[j] );
-                }
-                //				else
-                //				{
-                //					fprintf( stderr, "no\n" );
-                //				}
-
-                //				fprintf( stderr, " curm = %f at %c-%c\n", curm, seq1[0][i], seq2[0][j] );
-                //				fprintf( stderr, " wmrecords[%d] = %f\n", j, wmrecords[j] );
-                //				fprintf( stderr, "replace?\n" );
-
-                //				if( curm > wmrecords[j] )
-                if (curm > *wmrecordspt) {
-                    //					fprintf( stderr, "yes at %d-%d (%c-%c), replaced warp: warpi[j]=%d, warpj[j]=%d warpn=%d, wmrecords[j] = %f -> %f\n", i, j, seq1[0][i], seq2[0][j], i, j, warpn, wmrecords[j], curm );
-                    //					wmrecords[j] = curm;
-                    *wmrecordspt = curm;
-                    //					warpi[j] = i;
-                    //					warpj[j] = j;
-                    *warpipt = i;
-                    *warpjpt = j;
-                }
-                //				else
-                //				{
-                //					fprintf( stderr, "No! warpi[j]=%d, warpj[j]=%d wmrecords[j] = %f\n", warpi[j], warpj[j], wmrecords[j] );
-                //				}
-                //				fprintf( stderr, "%d-%d (%c-%c) curm = %5.0f, wmrecords[j]=%f\n", i, j, seq1[0][i], seq2[0][j], curm, wmrecords[j] );
-                wmrecordspt++;
-                wmrecords1pt++;
-                warpipt++;
-                warpjpt++;
-            }
 #endif
 
             *curpt++ += wm;
@@ -660,23 +532,6 @@ G__align11(Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int al
             mpjpt++;
         }
         lastverticalw[i] = currentw[lgth2 - 1];  // lgth2==0 no toki error
-
-        if (ctx->trywarp) {
-            fltncpy(prevwmrecords, wmrecords, lastj);
-            intncpy(prevwarpi, warpi, lastj);
-            intncpy(prevwarpj, warpj, lastj);
-        }
-    }
-
-    if (ctx->trywarp) {
-        //		fprintf( stderr, "\nwm = %f\n", wm );
-        //		fprintf( stderr, "warpn = %d\n", warpn );
-        free(wmrecords);
-        free(prevwmrecords);
-        free(warpi);
-        free(warpj);
-        free(prevwarpi);
-        free(prevwarpj);
     }
 
     wmo = Atracking(ctx, currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, tailgp, warpis, warpjs, warpbase);

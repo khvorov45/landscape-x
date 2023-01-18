@@ -14,15 +14,10 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
 
     Context* ctx = aln_arenaAllocStruct(tempArena, Context);
 
-    // TODO(sen) This is 'dna or protein'. Figure out what to do with this
-    // and why this even matters
-    ctx->dorp = 'p';
-
     ctx->RNAscoremtx = 'n';
     ctx->parallelizationstrategy = BAATARI1;
     ctx->newgapstr = "-";
     ctx->nalphabets = 26;
-    ctx->nscoredalphabets = 20;
     ctx->ndistclass = 10;
     ctx->maxdistclass = -1;
     ctx->lhlimit = INT_MAX;
@@ -96,7 +91,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         }
     }
 
-    double** iscore = AllocateFloatHalfMtx(ctx->njob);
     {
         aln_Opts pairLocalAlignOpts = opts;
         pairLocalAlignOpts.ppenalty = -2000;
@@ -106,7 +100,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         aln_assert(ctx->njob >= 2);
 
         constants(pairLocalAlignOpts, ctx);
-        initSignalSM(ctx);
 
         // TODO(sen) Sequence verification?
 
@@ -199,14 +192,15 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
 
     constants(opts, ctx);
 
-    initSignalSM(ctx);
-
     // TODO(sen) Sequence verification?
 
     int***   topol = AllocateIntCub(ctx->njob, 2, 0);
     double** len = AllocateFloatMtx(ctx->njob, 2);
     Treedep* dep = (Treedep*)calloc(ctx->njob, sizeof(Treedep));
-    fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(opts, ctx, ctx->njob, iscore, topol, len, dep, 1, 1);
+    {
+        double** iscore = AllocateFloatHalfMtx(ctx->njob);
+        fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(opts, ctx, ctx->njob, iscore, topol, len, dep, 1, 1);
+    }
 
     int** localmem = AllocateIntMtx(2, ctx->njob + 1);
     localmem[0][0] = -1;

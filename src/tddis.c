@@ -403,48 +403,6 @@ chardelete(char* seq, int d) {
     strcpy(seq + d, b);
 }
 
-int
-RootBranchNode(int nseq, int*** topol, int step, int branch) {
-    int i, j, s1, s2, value;
-
-    value = 1;
-    for (i = step + 1; i < nseq - 2; i++) {
-        for (j = 0; (s1 = topol[i][0][j]) > -1; j++)
-            if (s1 == topol[step][branch][0])
-                value++;
-        for (j = 0; (s2 = topol[i][1][j]) > -1; j++)
-            if (s2 == topol[step][branch][0])
-                value++;
-    }
-    return (value);
-}
-
-void
-BranchLeafNode(int nseq, int*** topol, int* node, int step, int branch) {
-    int i, j, k, s;
-
-    for (i = 0; i < nseq; i++)
-        node[i] = 0;
-    for (i = 0; i < step - 1; i++)
-        for (k = 0; k < 2; k++)
-            for (j = 0; (s = topol[i][k][j]) > -1; j++)
-                node[s]++;
-    for (k = 0; k < branch + 1; k++)
-        for (j = 0; (s = topol[step][k][j]) > -1; j++)
-            node[s]++;
-}
-
-void
-RootLeafNode(int nseq, int*** topol, int* node) {
-    int i, j, k, s;
-    for (i = 0; i < nseq; i++)
-        node[i] = 0;
-    for (i = 0; i < nseq - 2; i++)
-        for (k = 0; k < 2; k++)
-            for (j = 0; (s = topol[i][k][j]) > -1; j++)
-                node[s]++;
-}
-
 void
 nodeFromABranch(int nseq, int* result, int** pairwisenode, int*** topol, int step, int num) {
     int  i, s, count;

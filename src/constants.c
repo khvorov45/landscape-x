@@ -229,464 +229,6 @@ double volume_[] = {
     84.0, /* V */
 };
 
-void
-JTTmtx(double** rsr, double* freq, unsigned char* locamino, char* locgrp, int isTM) {
-    int    i, j;
-    double r[20][20];
-    char   locamino0[] = "ARNDCQEGHILKMFPSTWYVBZX.-J";
-    char   locgrp0[] = {0, 3, 2, 2, 5, 2, 2, 0, 3, 1, 1, 3, 1, 4, 0, 0, 0, 4, 4, 1, 2, 2, 6, 6, 6, 1};
-    double freq0[20] = {0.077, 0.051, 0.043, 0.052, 0.020, 0.041, 0.062, 0.074, 0.023, 0.052, 0.091, 0.059, 0.024, 0.040, 0.051, 0.069, 0.059, 0.014, 0.032, 0.066};
-    double freq0_TM[20] = {0.1051, 0.0157, 0.0185, 0.0089, 0.0219, 0.0141, 0.0097, 0.0758, 0.0168, 0.1188, 0.1635, 0.0112, 0.0333, 0.0777, 0.0260, 0.0568, 0.0523, 0.0223, 0.0324, 0.1195};
-
-    /* Lower triangular is JTT's Accepted point mutations */
-    r[1][0] = 247;
-
-    r[2][0] = 216;
-    r[2][1] = 116;
-
-    r[3][0] = 386;
-    r[3][1] = 48;
-    r[3][2] = 1433;
-
-    r[4][0] = 106;
-    r[4][1] = 125;
-    r[4][2] = 32;
-    r[4][3] = 13;
-
-    r[5][0] = 208;
-    r[5][1] = 750;
-    r[5][2] = 159;
-    r[5][3] = 130;
-    r[5][4] = 9;
-
-    r[6][0] = 600;
-    r[6][1] = 119;
-    r[6][2] = 180;
-    r[6][3] = 2914;
-    r[6][4] = 8;
-    r[6][5] = 1027;
-
-    r[7][0] = 1183;
-    r[7][1] = 614;
-    r[7][2] = 291;
-    r[7][3] = 577;
-    r[7][4] = 98;
-    r[7][5] = 84;
-    r[7][6] = 610;
-
-    r[8][0] = 46;
-    r[8][1] = 446;
-    r[8][2] = 466;
-    r[8][3] = 144;
-    r[8][4] = 40;
-    r[8][5] = 635;
-    r[8][6] = 41;
-    r[8][7] = 41;
-
-    r[9][0] = 173;
-    r[9][1] = 76;
-    r[9][2] = 130;
-    r[9][3] = 37;
-    r[9][4] = 19;
-    r[9][5] = 20;
-    r[9][6] = 43;
-    r[9][7] = 25;
-    r[9][8] = 26;
-
-    r[10][0] = 257;
-    r[10][1] = 205;
-    r[10][2] = 63;
-    r[10][3] = 34;
-    r[10][4] = 36;
-    r[10][5] = 314;
-    r[10][6] = 65;
-    r[10][7] = 56;
-    r[10][8] = 134;
-    r[10][9] = 1324;
-
-    r[11][0] = 200;
-    r[11][1] = 2348;
-    r[11][2] = 758;
-    r[11][3] = 102;
-    r[11][4] = 7;
-    r[11][5] = 858;
-    r[11][6] = 754;
-    r[11][7] = 142;
-    r[11][8] = 85;
-    r[11][9] = 75;
-    r[11][10] = 94;
-
-    r[12][0] = 100;
-    r[12][1] = 61;
-    r[12][2] = 39;
-    r[12][3] = 27;
-    r[12][4] = 23;
-    r[12][5] = 52;
-    r[12][6] = 30;
-    r[12][7] = 27;
-    r[12][8] = 21;
-    r[12][9] = 704;
-    r[12][10] = 974;
-    r[12][11] = 103;
-
-    r[13][0] = 51;
-    r[13][1] = 16;
-    r[13][2] = 15;
-    r[13][3] = 8;
-    r[13][4] = 66;
-    r[13][5] = 9;
-    r[13][6] = 13;
-    r[13][7] = 18;
-    r[13][8] = 50;
-    r[13][9] = 196;
-    r[13][10] = 1093;
-    r[13][11] = 7;
-    r[13][12] = 49;
-
-    r[14][0] = 901;
-    r[14][1] = 217;
-    r[14][2] = 31;
-    r[14][3] = 39;
-    r[14][4] = 15;
-    r[14][5] = 395;
-    r[14][6] = 71;
-    r[14][7] = 93;
-    r[14][8] = 157;
-    r[14][9] = 31;
-    r[14][10] = 578;
-    r[14][11] = 77;
-    r[14][12] = 23;
-    r[14][13] = 36;
-
-    r[15][0] = 2413;
-    r[15][1] = 413;
-    r[15][2] = 1738;
-    r[15][3] = 244;
-    r[15][4] = 353;
-    r[15][5] = 182;
-    r[15][6] = 156;
-    r[15][7] = 1131;
-    r[15][8] = 138;
-    r[15][9] = 172;
-    r[15][10] = 436;
-    r[15][11] = 228;
-    r[15][12] = 54;
-    r[15][13] = 309;
-    r[15][14] = 1138;
-
-    r[16][0] = 2440;
-    r[16][1] = 230;
-    r[16][2] = 693;
-    r[16][3] = 151;
-    r[16][4] = 66;
-    r[16][5] = 149;
-    r[16][6] = 142;
-    r[16][7] = 164;
-    r[16][8] = 76;
-    r[16][9] = 930;
-    r[16][10] = 172;
-    r[16][11] = 398;
-    r[16][12] = 343;
-    r[16][13] = 39;
-    r[16][14] = 412;
-    r[16][15] = 2258;
-
-    r[17][0] = 11;
-    r[17][1] = 109;
-    r[17][2] = 2;
-    r[17][3] = 5;
-    r[17][4] = 38;
-    r[17][5] = 12;
-    r[17][6] = 12;
-    r[17][7] = 69;
-    r[17][8] = 5;
-    r[17][9] = 12;
-    r[17][10] = 82;
-    r[17][11] = 9;
-    r[17][12] = 8;
-    r[17][13] = 37;
-    r[17][14] = 6;
-    r[17][15] = 36;
-    r[17][16] = 8;
-
-    r[18][0] = 41;
-    r[18][1] = 46;
-    r[18][2] = 114;
-    r[18][3] = 89;
-    r[18][4] = 164;
-    r[18][5] = 40;
-    r[18][6] = 15;
-    r[18][7] = 15;
-    r[18][8] = 514;
-    r[18][9] = 61;
-    r[18][10] = 84;
-    r[18][11] = 20;
-    r[18][12] = 17;
-    r[18][13] = 850;
-    r[18][14] = 22;
-    r[18][15] = 164;
-    r[18][16] = 45;
-    r[18][17] = 41;
-
-    r[19][0] = 1766;
-    r[19][1] = 69;
-    r[19][2] = 55;
-    r[19][3] = 127;
-    r[19][4] = 99;
-    r[19][5] = 58;
-    r[19][6] = 226;
-    r[19][7] = 276;
-    r[19][8] = 22;
-    r[19][9] = 3938;
-    r[19][10] = 1261;
-    r[19][11] = 58;
-    r[19][12] = 559;
-    r[19][13] = 189;
-    r[19][14] = 84;
-    r[19][15] = 219;
-    r[19][16] = 526;
-    r[19][17] = 27;
-    r[19][18] = 42;
-
-    /* Upper triangular is JTT's Accepted point mutations for transmembrane */
-    r[0][1] = 21;
-    r[0][2] = 2;
-    r[0][3] = 7;
-    r[0][4] = 13;
-    r[0][5] = 4;
-    r[0][6] = 6;
-    r[0][7] = 160;
-    r[0][8] = 6;
-    r[0][9] = 44;
-    r[0][10] = 43;
-    r[0][11] = 5;
-    r[0][12] = 10;
-    r[0][13] = 21;
-    r[0][14] = 34;
-    r[0][15] = 198;
-    r[0][16] = 202;
-    r[0][17] = 0;
-    r[0][18] = 1;
-    r[0][19] = 292;
-
-    r[1][2] = 0;
-    r[1][3] = 1;
-    r[1][4] = 2;
-    r[1][5] = 21;
-    r[1][6] = 3;
-    r[1][7] = 22;
-    r[1][8] = 21;
-    r[1][9] = 4;
-    r[1][10] = 8;
-    r[1][11] = 53;
-    r[1][12] = 19;
-    r[1][13] = 0;
-    r[1][14] = 1;
-    r[1][15] = 5;
-    r[1][16] = 5;
-    r[1][17] = 28;
-    r[1][18] = 0;
-    r[1][19] = 0;
-
-    r[2][3] = 14;
-    r[2][4] = 1;
-    r[2][5] = 7;
-    r[2][6] = 0;
-    r[2][7] = 0;
-    r[2][8] = 8;
-    r[2][9] = 4;
-    r[2][10] = 5;
-    r[2][11] = 11;
-    r[2][12] = 3;
-    r[2][13] = 1;
-    r[2][14] = 2;
-    r[2][15] = 32;
-    r[2][16] = 19;
-    r[2][17] = 1;
-    r[2][18] = 1;
-    r[2][19] = 2;
-
-    r[3][4] = 0;
-    r[3][5] = 0;
-    r[3][6] = 12;
-    r[3][7] = 15;
-    r[3][8] = 4;
-    r[3][9] = 1;
-    r[3][10] = 0;
-    r[3][11] = 2;
-    r[3][12] = 1;
-    r[3][13] = 0;
-    r[3][14] = 1;
-    r[3][15] = 0;
-    r[3][16] = 6;
-    r[3][17] = 0;
-    r[3][18] = 1;
-    r[3][19] = 4;
-
-    r[4][5] = 0;
-    r[4][6] = 0;
-    r[4][7] = 13;
-    r[4][8] = 2;
-    r[4][9] = 4;
-    r[4][10] = 11;
-    r[4][11] = 0;
-    r[4][12] = 1;
-    r[4][13] = 34;
-    r[4][14] = 0;
-    r[4][15] = 48;
-    r[4][16] = 13;
-    r[4][17] = 8;
-    r[4][18] = 23;
-    r[4][19] = 47;
-
-    r[5][6] = 16;
-    r[5][7] = 1;
-    r[5][8] = 26;
-    r[5][9] = 1;
-    r[5][10] = 16;
-    r[5][11] = 6;
-    r[5][12] = 3;
-    r[5][13] = 0;
-    r[5][14] = 5;
-    r[5][15] = 7;
-    r[5][16] = 2;
-    r[5][17] = 0;
-    r[5][18] = 0;
-    r[5][19] = 0;
-
-    r[6][7] = 21;
-    r[6][8] = 0;
-    r[6][9] = 0;
-    r[6][10] = 0;
-    r[6][11] = 0;
-    r[6][12] = 0;
-    r[6][13] = 0;
-    r[6][14] = 0;
-    r[6][15] = 4;
-    r[6][16] = 2;
-    r[6][17] = 0;
-    r[6][18] = 0;
-    r[6][19] = 7;
-
-    r[7][8] = 1;
-    r[7][9] = 10;
-    r[7][10] = 0;
-    r[7][11] = 0;
-    r[7][12] = 3;
-    r[7][13] = 4;
-    r[7][14] = 7;
-    r[7][15] = 64;
-    r[7][16] = 12;
-    r[7][17] = 5;
-    r[7][18] = 0;
-    r[7][19] = 53;
-
-    r[8][9] = 3;
-    r[8][10] = 2;
-    r[8][11] = 0;
-    r[8][12] = 1;
-    r[8][13] = 0;
-    r[8][14] = 0;
-    r[8][15] = 0;
-    r[8][16] = 4;
-    r[8][17] = 0;
-    r[8][18] = 29;
-    r[8][19] = 2;
-
-    r[9][10] = 273;
-    r[9][11] = 0;
-    r[9][12] = 161;
-    r[9][13] = 66;
-    r[9][14] = 4;
-    r[9][15] = 22;
-    r[9][16] = 150;
-    r[9][17] = 1;
-    r[9][18] = 4;
-    r[9][19] = 883;
-
-    r[10][11] = 1;
-    r[10][12] = 153;
-    r[10][13] = 251;
-    r[10][14] = 37;
-    r[10][15] = 43;
-    r[10][16] = 26;
-    r[10][17] = 20;
-    r[10][18] = 6;
-    r[10][19] = 255;
-
-    r[11][12] = 4;
-    r[11][13] = 0;
-    r[11][14] = 0;
-    r[11][15] = 1;
-    r[11][16] = 2;
-    r[11][17] = 0;
-    r[11][18] = 5;
-    r[11][19] = 1;
-
-    r[12][13] = 8;
-    r[12][14] = 0;
-    r[12][15] = 1;
-    r[12][16] = 32;
-    r[12][17] = 1;
-    r[12][18] = 5;
-    r[12][19] = 89;
-
-    r[13][14] = 0;
-    r[13][15] = 32;
-    r[13][16] = 9;
-    r[13][17] = 2;
-    r[13][18] = 54;
-    r[13][19] = 37;
-
-    r[14][15] = 9;
-    r[14][16] = 10;
-    r[14][17] = 0;
-    r[14][18] = 1;
-    r[14][19] = 1;
-
-    r[15][16] = 134;
-    r[15][17] = 1;
-    r[15][18] = 22;
-    r[15][19] = 13;
-
-    r[16][17] = 1;
-    r[16][18] = 3;
-    r[16][19] = 48;
-
-    r[17][18] = 2;
-    r[17][19] = 18;
-
-    r[18][19] = 2;
-
-    for (i = 0; i < 20; i++)
-        r[i][i] = 0.0;
-    if (isTM) {
-        for (i = 1; i < 20; i++)
-            for (j = 0; j < i; j++) {
-                r[j][i] /= 400.0 * freq0_TM[i] * freq0_TM[j];
-                r[i][j] = r[j][i];
-            }
-        for (i = 0; i < 20; i++)
-            freq[i] = freq0_TM[i];
-    } else {
-        for (i = 1; i < 20; i++)
-            for (j = 0; j < i; j++) {
-                r[i][j] /= 400.0 * freq0[i] * freq0[j];
-                r[j][i] = r[i][j];
-            }
-        for (i = 0; i < 20; i++)
-            freq[i] = freq0[i];
-    }
-
-    for (i = 0; i < 26; i++)
-        locamino[i] = locamino0[i];
-    for (i = 0; i < 26; i++)
-        locgrp[(int)locamino[i]] = locgrp0[i];
-    for (i = 0; i < 20; i++)
-        for (j = 0; j < 20; j++)
-            rsr[i][j] = r[i][j];
-}
-
 int  locpenaltyn = -1750;
 char locaminon[] = "agctuAGCTUnNbdhkmnrsvwyx-O";
 char locgrpn[] = {0, 1, 2, 3, 3, 0, 1, 2, 3, 3, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5};
@@ -880,7 +422,7 @@ int locn_disn[26][26] = {
      };
 //clang-format on
 
-void
+static void
 BLOSUMmtx(int n, double** matrix, double* freq, unsigned char* amino, char* amino_grp) {
     char   locaminod[] = "ARNDCQEGHILKMFPSTWYVBZX.-J";
     char   locgrpd[] = {0, 3, 2, 2, 5, 2, 2, 0, 3, 1, 1, 3, 1, 4, 0, 0, 0, 4, 4, 1, 2, 2, 6, 6, 6, 1};
@@ -1067,8 +609,7 @@ BLOSUMmtx(int n, double** matrix, double* freq, unsigned char* amino, char* amin
     0.1,   -2.0,   -2.2,   -2.9,    0.0,   -1.5,   -1.9,   -3.3,   -2.0,    3.1,    1.8,   -1.7,    1.6,    0.1,   -1.8,   -1.0,    0.0,   -2.6,   -1.1,    3.4};
     // clang-format on
 
-    int     i, j, count;
-    double  av;
+    int     count;
     double* tmpmtx;
 
     switch (n) {
@@ -1086,29 +627,19 @@ BLOSUMmtx(int n, double** matrix, double* freq, unsigned char* amino, char* amin
     }
 
     count = 0;
-    for (i = 0; i < 20; i++) {
-        for (j = 0; j <= i; j++) {
+    for (int i = 0; i < 20; i++) {
+        for (int j = 0; j <= i; j++) {
             matrix[i][j] = matrix[j][i] = (double)tmpmtx[count++];
         }
     }
-    if (n == -1 && tmpmtx[400] != -1.0) {
-        for (i = 0; i < 20; i++)
-            freq[i] = tmpmtx[400 + i];
-        av = 0.0;
-        for (i = 0; i < 20; i++)
-            av += freq[i];
-        for (i = 0; i < 20; i++)
-            freq[i] /= av;
-    } else
-        for (i = 0; i < 20; i++)
-            freq[i] = freqd[i];
 
-    if (n == -1)
-        free(tmpmtx);
+    for (int i = 0; i < 20; i++) {
+        freq[i] = freqd[i];
+    }
 
-    for (i = 0; i < 26; i++)
+    for (int i = 0; i < 26; i++)
         amino[i] = locaminod[i];
-    for (i = 0; i < 26; i++)
+    for (int i = 0; i < 26; i++)
         amino_grp[(int)amino[i]] = locgrpd[i];
 }
 
@@ -1126,362 +657,14 @@ shishagonyuu(double in) {
     return (out);
 }
 
-static void
-ambiguousscore(int* amino_n, int** n_dis) {
-    int i;
-    for (i = 0; i < 26; i++) {
-        n_dis[i][amino_n['r']] = shishagonyuu((double)1 / 2 * (n_dis[amino_n['a']][i] + n_dis[amino_n['g']][i]));
-        n_dis[i][amino_n['y']] = shishagonyuu((double)1 / 2 * (n_dis[amino_n['c']][i] + n_dis[amino_n['t']][i]));
-        n_dis[i][amino_n['k']] = shishagonyuu((double)1 / 2 * (n_dis[amino_n['g']][i] + n_dis[amino_n['t']][i]));
-        n_dis[i][amino_n['m']] = shishagonyuu((double)1 / 2 * (n_dis[amino_n['a']][i] + n_dis[amino_n['c']][i]));
-        n_dis[i][amino_n['s']] = shishagonyuu((double)1 / 2 * (n_dis[amino_n['g']][i] + n_dis[amino_n['c']][i]));
-        n_dis[i][amino_n['w']] = shishagonyuu((double)1 / 2 * (n_dis[amino_n['a']][i] + n_dis[amino_n['t']][i]));
-        n_dis[i][amino_n['b']] = shishagonyuu((double)1 / 3 * (n_dis[amino_n['c']][i] + n_dis[amino_n['g']][i] + n_dis[amino_n['t']][i]));
-        n_dis[i][amino_n['d']] = shishagonyuu((double)1 / 3 * (n_dis[amino_n['a']][i] + n_dis[amino_n['g']][i] + n_dis[amino_n['t']][i]));
-        n_dis[i][amino_n['h']] = shishagonyuu((double)1 / 3 * (n_dis[amino_n['a']][i] + n_dis[amino_n['c']][i] + n_dis[amino_n['t']][i]));
-        n_dis[i][amino_n['v']] = shishagonyuu((double)1 / 3 * (n_dis[amino_n['a']][i] + n_dis[amino_n['c']][i] + n_dis[amino_n['g']][i]));
-
-        n_dis[amino_n['r']][i] = n_dis[i][amino_n['r']];
-        n_dis[amino_n['y']][i] = n_dis[i][amino_n['y']];
-        n_dis[amino_n['k']][i] = n_dis[i][amino_n['k']];
-        n_dis[amino_n['m']][i] = n_dis[i][amino_n['m']];
-        n_dis[amino_n['s']][i] = n_dis[i][amino_n['s']];
-        n_dis[amino_n['w']][i] = n_dis[i][amino_n['w']];
-        n_dis[amino_n['b']][i] = n_dis[i][amino_n['b']];
-        n_dis[amino_n['d']][i] = n_dis[i][amino_n['d']];
-        n_dis[amino_n['h']][i] = n_dis[i][amino_n['h']];
-        n_dis[amino_n['v']][i] = n_dis[i][amino_n['v']];
-    }
-
-    i = amino_n['r'];
-    n_dis[i][i] = shishagonyuu((double)1 / 2 * (n_dis[amino_n['a']][amino_n['a']] + n_dis[amino_n['g']][amino_n['g']]));
-    i = amino_n['y'];
-    n_dis[i][i] = shishagonyuu((double)1 / 2 * (n_dis[amino_n['c']][amino_n['c']] + n_dis[amino_n['t']][amino_n['t']]));
-    i = amino_n['k'];
-    n_dis[i][i] = shishagonyuu((double)1 / 2 * (n_dis[amino_n['g']][amino_n['g']] + n_dis[amino_n['t']][amino_n['t']]));
-    i = amino_n['m'];
-    n_dis[i][i] = shishagonyuu((double)1 / 2 * (n_dis[amino_n['a']][amino_n['a']] + n_dis[amino_n['c']][amino_n['c']]));
-    i = amino_n['s'];
-    n_dis[i][i] = shishagonyuu((double)1 / 2 * (n_dis[amino_n['g']][amino_n['g']] + n_dis[amino_n['c']][amino_n['c']]));
-    i = amino_n['w'];
-    n_dis[i][i] = shishagonyuu((double)1 / 2 * (n_dis[amino_n['a']][amino_n['a']] + n_dis[amino_n['t']][amino_n['t']]));
-    i = amino_n['b'];
-    n_dis[i][i] = shishagonyuu((double)1 / 3 * (n_dis[amino_n['c']][amino_n['c']] + n_dis[amino_n['g']][amino_n['g']] + n_dis[amino_n['t']][amino_n['t']]));
-    i = amino_n['d'];
-    n_dis[i][i] = shishagonyuu((double)1 / 3 * (n_dis[amino_n['a']][amino_n['a']] + n_dis[amino_n['g']][amino_n['g']] + n_dis[amino_n['t']][amino_n['t']]));
-    i = amino_n['h'];
-    n_dis[i][i] = shishagonyuu((double)1 / 3 * (n_dis[amino_n['a']][amino_n['a']] + n_dis[amino_n['c']][amino_n['c']] + n_dis[amino_n['t']][amino_n['t']]));
-    i = amino_n['v'];
-    n_dis[i][i] = shishagonyuu((double)1 / 3 * (n_dis[amino_n['a']][amino_n['a']] + n_dis[amino_n['c']][amino_n['c']] + n_dis[amino_n['g']][amino_n['g']]));
-}
-
-static void
-generatenuc1pam(double** pam1, int kimuraR, double* freq) {
-    int    i, j;
-    double R[4][4], mut[4], total, tmp;
-
-    R[0][0] = 0.0;
-    R[0][1] = kimuraR;
-    R[0][2] = 1.0;
-    R[0][3] = 1.0;
-    R[1][0] = kimuraR;
-    R[1][1] = 0.0;
-    R[1][2] = 1.0;
-    R[1][3] = 1.0;
-    R[2][0] = 1.0;
-    R[2][1] = 1.0;
-    R[2][2] = 0.0;
-    R[2][3] = kimuraR;
-    R[3][0] = 1.0;
-    R[3][1] = 1.0;
-    R[3][2] = kimuraR;
-    R[3][3] = 0.0;
-
-    total = 0.0;
-    for (i = 0; i < 4; i++) {
-        tmp = 0.0;
-        for (j = 0; j < 4; j++)
-            tmp += R[i][j] * freq[j];
-        mut[i] = tmp;
-        total += tmp * freq[i];
-    }
-    for (i = 0; i < 4; i++)
-        for (j = 0; j < 4; j++) {
-            if (i != j)
-                pam1[i][j] = 0.01 / total * R[i][j] * freq[j];
-            else
-                pam1[i][j] = 1.0 - 0.01 / total * mut[i];
-        }
-}
-
 void
 constants(aln_Opts opts, Context* ctx) {
-    int  i, j, x;
-    char shiftmodel[100];
-    int  charsize = 0;
-
-    if (opts.nblosum < 0) {
-        ctx->dorp = 'p';
-    }
-
-    if (opts.penalty_shift_factor >= 10)
-        ctx->trywarp = 0;
-    else
-        ctx->trywarp = 1;
-
-    if (ctx->dorp == 'd') {
-        int      k, m;
-        double   average;
-        double** pamx = AllocateDoubleMtx(11, 11);
-        double** pam1 = AllocateDoubleMtx(4, 4);
-        double*  freq = AllocateDoubleVec(4);
-
-        aln_assert(opts.scoremtx == -1);
-        aln_assert(opts.ppenalty != NOTSPECIFIED);
-        aln_assert(opts.ppenalty_dist != NOTSPECIFIED);
-        aln_assert(opts.poffset != NOTSPECIFIED);
-        aln_assert(opts.ppenalty_ex != NOTSPECIFIED);
-
-        ctx->nalphabets = 26;
-        ctx->nscoredalphabets = 10;
-        charsize = 0x80;
-
+    {
         ctx->n_dis = AllocateIntMtx(ctx->nalphabets, ctx->nalphabets);
         ctx->n_disLN = AllocateDoubleMtx(ctx->nalphabets, ctx->nalphabets);
-
-        if (ctx->RNAppenalty == NOTSPECIFIED)
-            ctx->RNAppenalty = DEFAULTRNAGOP_N;
-        if (ctx->RNAppenalty_ex == NOTSPECIFIED)
-            ctx->RNAppenalty_ex = DEFAULTRNAGEP_N;
-
-        if (ctx->ppenalty_OP == NOTSPECIFIED)
-            ctx->ppenalty_OP = DEFAULTGOP_N;
-
-        if (ctx->ppenalty_EX == NOTSPECIFIED)
-            ctx->ppenalty_EX = DEFAULTGEP_N;
-        if (ctx->RNApthr == NOTSPECIFIED)
-            ctx->RNApthr = DEFAULTRNATHR_N;
-        if (ctx->pamN == NOTSPECIFIED)
-            ctx->pamN = DEFAULTPAMN;
-        if (ctx->kimuraR == NOTSPECIFIED)
-            ctx->kimuraR = 2;
-
-        ctx->RNApenalty = (int)(3 * 600.0 / 1000.0 * ctx->RNAppenalty + 0.5);
-        ctx->RNApenalty_ex = (int)(3 * 600.0 / 1000.0 * ctx->RNAppenalty_ex + 0.5);
-
-        ctx->RNAthr = (int)(3 * 600.0 / 1000.0 * ctx->RNApthr + 0.5);
-        ctx->penalty = (int)(3 * 600.0 / 1000.0 * opts.ppenalty + 0.5);
-        ctx->penalty_dist = (int)(3 * 600.0 / 1000.0 * opts.ppenalty_dist + 0.5);
-        ctx->penalty_shift = (int)(opts.penalty_shift_factor * ctx->penalty);
-        ctx->penalty_OP = (int)(3 * 600.0 / 1000.0 * ctx->ppenalty_OP + 0.5);
-        ctx->penalty_ex = (int)(3 * 600.0 / 1000.0 * opts.ppenalty_ex + 0.5);
-        ctx->penalty_EX = (int)(3 * 600.0 / 1000.0 * ctx->ppenalty_EX + 0.5);
-        ctx->offset = (int)(1 * 600.0 / 1000.0 * opts.poffset + 0.5);
-        ctx->offsetFFT = (int)(1 * 600.0 / 1000.0 * (-0) + 0.5);
-        ctx->offsetLN = (int)(1 * 600.0 / 1000.0 * 100 + 0.5);
-        ctx->penaltyLN = (int)(3 * 600.0 / 1000.0 * -2000 + 0.5);
-        ctx->penalty_exLN = (int)(3 * 600.0 / 1000.0 * -100 + 0.5);
-
-        if (ctx->trywarp)
-            sprintf(shiftmodel, "%4.2f (%4.2f)", -(double)ctx->penalty_shift / 1800, -(double)ctx->penalty_shift / 600);
-        else
-            sprintf(shiftmodel, "noshift");
-
-        for (i = 0; i < 26; i++)
-            ctx->amino[i] = locaminon[i];
-        for (i = 0; i < 0x80; i++)
-            ctx->amino_n[i] = -1;
-        for (i = 0; i < 26; i++)
-            ctx->amino_n[(int)ctx->amino[i]] = i;
-        {
-            freq[0] = 0.25;
-            freq[1] = 0.25;
-            freq[2] = 0.25;
-            freq[3] = 0.25;
-        }
-
-        if (ctx->kimuraR == 9999) {
-            for (i = 0; i < 4; i++)
-                for (j = 0; j < 4; j++)
-                    pamx[i][j] = (double)locn_disn[i][j];
-            average = 0.0;
-            for (i = 0; i < 4; i++)
-                for (j = 0; j < 4; j++)
-                    average += pamx[i][j];
-            average /= 16.0;
-
-            for (i = 0; i < 4; i++)
-                for (j = 0; j < 4; j++)
-                    pamx[i][j] -= average;
-
-            for (i = 0; i < 4; i++)
-                for (j = 0; j < 4; j++)
-                    pamx[i][j] *= 600.0 / average;
-
-            for (i = 0; i < 4; i++)
-                for (j = 0; j < 4; j++)
-                    pamx[i][j] -= ctx->offset;
-        } else {
-            generatenuc1pam(pam1, ctx->kimuraR, freq);
-
-            MtxuntDouble(pamx, 4);
-            for (x = 0; x < ctx->pamN; x++)
-                MtxmltDouble(pamx, pam1, 4);
-
-            for (i = 0; i < 4; i++)
-                for (j = 0; j < 4; j++)
-                    pamx[i][j] /= freq[j];
-
-            for (i = 0; i < 4; i++)
-                for (j = 0; j < 4; j++) {
-                    if (pamx[i][j] == 0.0) {
-                        reporterr("WARNING: pamx[i][j] = 0.0 ?\n");
-                        pamx[i][j] = 0.00001; /* by J. Thompson */
-                    }
-                    pamx[i][j] = log10(pamx[i][j]) * 1000.0;
-                }
-
-            average = 0.0;
-            for (i = 0; i < 4; i++)
-                for (j = 0; j < 4; j++)
-                    average += pamx[i][j] * freq[i] * freq[j];
-            for (i = 0; i < 4; i++)
-                for (j = 0; j < 4; j++)
-                    pamx[i][j] -= average;
-
-            average = 0.0;
-            for (i = 0; i < 4; i++)
-                average += pamx[i][i] * 1.0 / 4.0;
-
-            for (i = 0; i < 4; i++)
-                for (j = 0; j < 4; j++)
-                    pamx[i][j] *= 600.0 / average;
-
-            for (i = 0; i < 4; i++)
-                for (j = 0; j < 4; j++)
-                    pamx[i][j] -= ctx->offset;
-
-            for (i = 0; i < 4; i++)
-                for (j = 0; j < 4; j++)
-                    pamx[i][j] = shishagonyuu(pamx[i][j]);
-        }
-
-        for (i = 0; i < 5; i++) {
-            pamx[4][i] = pamx[3][i];
-            pamx[i][4] = pamx[i][3];
-        }
-
-        for (i = 5; i < 10; i++)
-            for (j = 5; j < 10; j++) {
-                pamx[i][j] = pamx[i - 5][j - 5];
-            }
-
-        for (i = 0; i < 26; i++)
-            ctx->amino[i] = locaminon[i];
-        for (i = 0; i < 26; i++)
-            ctx->amino_grp[(int)ctx->amino[i]] = locgrpn[i];
-        for (i = 0; i < 26; i++)
-            for (j = 0; j < 26; j++)
-                ctx->n_dis[i][j] = 0;
-        for (i = 0; i < 10; i++)
-            for (j = 0; j < 10; j++)
-                ctx->n_dis[i][j] = shishagonyuu(pamx[i][j]);
-
-        ambiguousscore(ctx->amino_n, ctx->n_dis);
-
-        average = 0.0;
-        for (i = 0; i < 4; i++)
-            for (j = 0; j < 4; j++)
-                average += ribosum4[i][j] * freq[i] * freq[j];
-        for (i = 0; i < 4; i++)
-            for (j = 0; j < 4; j++)
-                ribosum4[i][j] -= average;
-
-        average = 0.0;
-        for (i = 0; i < 4; i++)
-            for (j = 0; j < 4; j++)
-                for (k = 0; k < 4; k++)
-                    for (m = 0; m < 4; m++) {
-                        average += ribosum16[i * 4 + j][k * 4 + m] * freq[i] * freq[j] * freq[k] * freq[m];
-                    }
-        for (i = 0; i < 16; i++)
-            for (j = 0; j < 16; j++)
-                ribosum16[i][j] -= average;
-
-        average = 0.0;
-        for (i = 0; i < 4; i++)
-            average += ribosum4[i][i] * freq[i];
-        for (i = 0; i < 4; i++)
-            for (j = 0; j < 4; j++)
-                ribosum4[i][j] *= 600.0 / average;
-
-        average = 0.0;
-        average += ribosum16[0 * 4 + 3][0 * 4 + 3] * freq[0] * freq[3];  // AU
-        average += ribosum16[3 * 4 + 0][3 * 4 + 0] * freq[3] * freq[0];  // UA
-        average += ribosum16[1 * 4 + 2][1 * 4 + 2] * freq[1] * freq[2];  // CG
-        average += ribosum16[2 * 4 + 1][2 * 4 + 1] * freq[2] * freq[1];  // GC
-        average += ribosum16[1 * 4 + 3][1 * 4 + 3] * freq[1] * freq[3];  // GU
-        average += ribosum16[3 * 4 + 1][3 * 4 + 1] * freq[3] * freq[1];  // UG
-        for (i = 0; i < 16; i++)
-            for (j = 0; j < 16; j++)
-                ribosum16[i][j] *= 600.0 / average;
-
-        for (i = 0; i < 4; i++)
-            for (j = 0; j < 4; j++)
-                ribosum4[i][j] -= ctx->offset; /* extending gap cost ?????*/
-        for (i = 0; i < 16; i++)
-            for (j = 0; j < 16; j++)
-                ribosum16[i][j] -= ctx->offset; /* extending gap cost ?????*/
-
-        for (i = 0; i < 4; i++)
-            for (j = 0; j < 4; j++)
-                ribosum4[i][j] = shishagonyuu(ribosum4[i][j]);
-        for (i = 0; i < 16; i++)
-            for (j = 0; j < 16; j++)
-                ribosum16[i][j] = shishagonyuu(ribosum16[i][j]);
-
-        for (i = 0; i < 37; i++)
-            for (j = 0; j < 37; j++)
-                ctx->ribosumdis[i][j] = 0.0;
-        for (m = 0; m < 9; m++)
-            for (i = 0; i < 4; i++)
-                for (k = 0; k < 9; k++)
-                    for (j = 0; j < 4; j++)
-                        ctx->ribosumdis[m * 4 + i][k * 4 + j] = ribosum4[i][j];
-
-        for (i = 0; i < 16; i++)
-            for (j = 0; j < 16; j++)
-                ctx->ribosumdis[i + 4][j + 4] = ribosum16[i][j];  // stem5-stem5
-        for (i = 0; i < 16; i++)
-            for (j = 0; j < 16; j++)
-                ctx->ribosumdis[i + 20][j + 20] = ribosum16[i][j];  // stem5-stem5
-
-        FreeDoubleMtx(pam1);
-        FreeDoubleMtx(pamx);
-        free(freq);
-
-    } else if (ctx->dorp == 'p' && opts.scoremtx == 1) {
-        double*  freq;
-        double*  freq1;
-        double*  datafreq;
-        double   average;
-        double** n_distmp;
-        int      rescale = 1;
-
-        if (opts.nblosum == 0) {
-            reporterr("nblosum=%d??\n", opts.nblosum);
-            exit(1);
-        }
-
-        ctx->nalphabets = 26;
-        ctx->nscoredalphabets = 20;
-        charsize = 0x80;
-
-        ctx->n_dis = AllocateIntMtx(ctx->nalphabets, ctx->nalphabets);
-        ctx->n_disLN = AllocateDoubleMtx(ctx->nalphabets, ctx->nalphabets);
-        n_distmp = AllocateDoubleMtx(20, 20);
-        datafreq = AllocateDoubleVec(20);
-        freq = AllocateDoubleVec(20);
+        double** n_distmp = AllocateDoubleMtx(20, 20);
+        double*  datafreq = AllocateDoubleVec(20);
+        double*  freq = AllocateDoubleVec(20);
 
         aln_assert(opts.ppenalty != NOTSPECIFIED);
         aln_assert(opts.ppenalty_dist != NOTSPECIFIED);
@@ -1496,294 +679,108 @@ constants(aln_Opts opts, Context* ctx) {
             ctx->pamN = 0;
         if (ctx->kimuraR == NOTSPECIFIED)
             ctx->kimuraR = 1;
-        ctx->penalty = (int)(600.0 / 1000.0 * opts.ppenalty + 0.5);
-        ctx->penalty_dist = (int)(600.0 / 1000.0 * opts.ppenalty_dist + 0.5);
+        ctx->penalty = (int)(0.6 * opts.ppenalty + 0.5);
+        ctx->penalty_dist = (int)(0.6 * opts.ppenalty_dist + 0.5);
         ctx->penalty_shift = (int)(opts.penalty_shift_factor * ctx->penalty);
-        ctx->penalty_OP = (int)(600.0 / 1000.0 * ctx->ppenalty_OP + 0.5);
-        ctx->penalty_ex = (int)(600.0 / 1000.0 * opts.ppenalty_ex + 0.5);
-        ctx->penalty_EX = (int)(600.0 / 1000.0 * ctx->ppenalty_EX + 0.5);
-        ctx->offset = (int)(600.0 / 1000.0 * opts.poffset + 0.5);
-        ctx->offsetFFT = (int)(600.0 / 1000.0 * (-0) + 0.5);
-        ctx->offsetLN = (int)(600.0 / 1000.0 * 100 + 0.5);
-        ctx->penaltyLN = (int)(600.0 / 1000.0 * -2000 + 0.5);
-        ctx->penalty_exLN = (int)(600.0 / 1000.0 * -100 + 0.5);
+        ctx->penalty_OP = (int)(0.6 * ctx->ppenalty_OP + 0.5);
+        ctx->penalty_ex = (int)(0.6 * opts.ppenalty_ex + 0.5);
+        ctx->penalty_EX = (int)(0.6 * ctx->ppenalty_EX + 0.5);
+        ctx->offset = (int)(0.6 * opts.poffset + 0.5);
+        ctx->offsetFFT = (int)(0.6 * (-0) + 0.5);
+        ctx->offsetLN = (int)(0.6 * 100 + 0.5);
+        ctx->penaltyLN = (int)(0.6 * -2000 + 0.5);
+        ctx->penalty_exLN = (int)(0.6 * -100 + 0.5);
 
         BLOSUMmtx(opts.nblosum, n_distmp, freq, ctx->amino, ctx->amino_grp);
 
-        reporterr("rescale = %d\n", rescale);
-
-        if (ctx->trywarp)
-            sprintf(shiftmodel, "%4.2f", -(double)ctx->penalty_shift / 600);
-        else
-            sprintf(shiftmodel, "noshift");
-
-        for (i = 0; i < 0x80; i++)
+        for (int i = 0; i < 0x80; i++)
             ctx->amino_n[i] = -1;
-        for (i = 0; i < 26; i++)
+        for (int i = 0; i < 26; i++)
             ctx->amino_n[(int)ctx->amino[i]] = i;
 
-        freq1 = freq;
+        double* freq1 = freq;
 
+        double average = 0.0;
         {
-            average = 0.0;
-            for (i = 0; i < 20; i++)
-                for (j = 0; j < 20; j++)
+            for (int i = 0; i < 20; i++)
+                for (int j = 0; j < 20; j++)
                     average += n_distmp[i][j] * freq1[i] * freq1[j];
         }
 
-        if (rescale) {
-            for (i = 0; i < 20; i++)
-                for (j = 0; j < 20; j++)
+        {
+            for (int i = 0; i < 20; i++)
+                for (int j = 0; j < 20; j++)
                     n_distmp[i][j] -= average;
         }
 
         average = 0.0;
-        for (i = 0; i < 20; i++)
+        for (int i = 0; i < 20; i++)
             average += n_distmp[i][i] * freq1[i];
 
-        if (rescale) {
-            for (i = 0; i < 20; i++)
-                for (j = 0; j < 20; j++)
+        {
+            for (int i = 0; i < 20; i++)
+                for (int j = 0; j < 20; j++)
                     n_distmp[i][j] *= 600.0 / average;
-        } else {
-            for (i = 0; i < 20; i++)
-                for (j = 0; j < 20; j++)
-                    n_distmp[i][j] *= 600.0;
         }
 
-        for (i = 0; i < 20; i++)
-            for (j = 0; j < 20; j++)
+        for (int i = 0; i < 20; i++)
+            for (int j = 0; j < 20; j++)
                 n_distmp[i][j] -= ctx->offset;
 
-        for (i = 0; i < 20; i++)
-            for (j = 0; j < 20; j++)
+        for (int i = 0; i < 20; i++)
+            for (int j = 0; j < 20; j++)
                 n_distmp[i][j] = shishagonyuu(n_distmp[i][j]);
 
-        for (i = 0; i < 26; i++)
-            for (j = 0; j < 26; j++)
+        for (int i = 0; i < 26; i++)
+            for (int j = 0; j < 26; j++)
                 ctx->n_dis[i][j] = 0;
-        for (i = 0; i < 20; i++)
-            for (j = 0; j < 20; j++)
+        for (int i = 0; i < 20; i++)
+            for (int j = 0; j < 20; j++)
                 ctx->n_dis[i][j] = (int)n_distmp[i][j];
 
         FreeDoubleMtx(n_distmp);
         FreeDoubleVec(datafreq);
         FreeDoubleVec(freq);
-
-        //		reporterr(       "done.\n" );
-
-    } else if (ctx->dorp == 'p' && opts.scoremtx == 2) /* Miyata-Yasunaga */
-    {
-        aln_assert(!"not supported");
-    } else /* JTT */
-    {
-        double** rsr;
-        double** pam1;
-        double** pamx;
-        double*  freq;
-        double*  freq1;
-        double*  mutab;
-        double*  datafreq;
-        double   average;
-        double   tmp;
-        double   delta;
-        int      makeaverage0;
-
-        ctx->nalphabets = 26;
-        ctx->nscoredalphabets = 20;
-        charsize = 0x80;
-
-        ctx->n_dis = AllocateIntMtx(ctx->nalphabets, ctx->nalphabets);
-        ctx->n_disLN = AllocateDoubleMtx(ctx->nalphabets, ctx->nalphabets);
-        rsr = AllocateDoubleMtx(20, 20);
-        pam1 = AllocateDoubleMtx(20, 20);
-        pamx = AllocateDoubleMtx(20, 20);
-        freq = AllocateDoubleVec(20);
-        mutab = AllocateDoubleVec(20);
-        datafreq = AllocateDoubleVec(20);
-
-        aln_assert(opts.ppenalty != NOTSPECIFIED);
-        aln_assert(opts.ppenalty_dist != NOTSPECIFIED);
-        aln_assert(opts.poffset != NOTSPECIFIED);
-        aln_assert(opts.ppenalty_ex != NOTSPECIFIED);
-
-        if (ctx->ppenalty_OP == NOTSPECIFIED)
-            ctx->ppenalty_OP = DEFAULTGOP_J;
-        if (ctx->ppenalty_EX == NOTSPECIFIED)
-            ctx->ppenalty_EX = DEFAULTGEP_J;
-        if (ctx->pamN == NOTSPECIFIED)
-            ctx->pamN = DEFAULTPAMN;
-        if (ctx->kimuraR == NOTSPECIFIED)
-            ctx->kimuraR = 1;
-
-        if (ctx->pamN == 0) {
-            reporterr("pamN=%d??\n", ctx->pamN);
-            exit(1);
-        }
-        if (ctx->pamN < 0) {
-            ctx->pamN *= -1;
-            makeaverage0 = 0;
-        } else {
-            makeaverage0 = 1;
-        }
-
-        ctx->penalty = (int)(600.0 / 1000.0 * opts.ppenalty + 0.5);
-        ctx->penalty_dist = (int)(600.0 / 1000.0 * opts.ppenalty_dist + 0.5);
-        ctx->penalty_shift = (int)(opts.penalty_shift_factor * ctx->penalty);
-        ctx->penalty_OP = (int)(600.0 / 1000.0 * ctx->ppenalty_OP + 0.5);
-        ctx->penalty_ex = (int)(600.0 / 1000.0 * opts.ppenalty_ex + 0.5);
-        ctx->penalty_EX = (int)(600.0 / 1000.0 * ctx->ppenalty_EX + 0.5);
-        ctx->offset = (int)(600.0 / 1000.0 * opts.poffset + 0.5);
-        ctx->offsetFFT = (int)(600.0 / 1000.0 * (-0) + 0.5);
-        ctx->offsetLN = (int)(600.0 / 1000.0 * 100 + 0.5);
-        ctx->penaltyLN = (int)(600.0 / 1000.0 * -2000 + 0.5);
-        ctx->penalty_exLN = (int)(600.0 / 1000.0 * -100 + 0.5);
-
-        if (ctx->trywarp)
-            sprintf(shiftmodel, "%4.2f", -(double)ctx->penalty_shift / 600);
-        else
-            sprintf(shiftmodel, "noshift");
-
-        JTTmtx(rsr, freq, ctx->amino, ctx->amino_grp, (int)(ctx->TMorJTT == TM));
-
-        for (i = 0; i < 0x80; i++)
-            ctx->amino_n[i] = -1;
-        for (i = 0; i < 26; i++)
-            ctx->amino_n[(int)ctx->amino[i]] = i;
-
-        freq1 = freq;
-
-        reporterr("generating %dPAM %s scoring matrix for amino acids ... ", ctx->pamN, (ctx->TMorJTT == TM) ? "Transmembrane" : "JTT");
-
-        tmp = 0.0;
-        for (i = 0; i < 20; i++) {
-            mutab[i] = 0.0;
-            for (j = 0; j < 20; j++)
-                mutab[i] += rsr[i][j] * freq1[j];
-            tmp += mutab[i] * freq1[i];
-        }
-
-        delta = 0.01 / tmp;
-        for (i = 0; i < 20; i++) {
-            for (j = 0; j < 20; j++) {
-                if (i != j)
-                    pam1[i][j] = delta * rsr[i][j] * freq1[j];
-                else
-                    pam1[i][j] = 1.0 - delta * mutab[i];
-            }
-        }
-
-        MtxuntDouble(pamx, 20);
-        for (x = 0; x < ctx->pamN; x++)
-            MtxmltDouble(pamx, pam1, 20);
-
-        for (i = 0; i < 20; i++)
-            for (j = 0; j < 20; j++)
-                pamx[i][j] /= freq1[j];
-
-        for (i = 0; i < 20; i++)
-            for (j = 0; j < 20; j++) {
-                if (pamx[i][j] == 0.0) {
-                    reporterr("WARNING: pamx[%d][%d] = 0.0?\n", i, j);
-                    pamx[i][j] = 0.00001; /* by J. Thompson */
-                }
-                pamx[i][j] = log10(pamx[i][j]) * 1000.0;
-            }
-
-        {
-            average = 0.0;
-            for (i = 0; i < 20; i++)
-                for (j = 0; j < 20; j++)
-                    average += pamx[i][j] * freq1[i] * freq1[j];
-        }
-
-        if (makeaverage0) {
-            for (i = 0; i < 20; i++)
-                for (j = 0; j < 20; j++)
-                    pamx[i][j] -= average;
-        }
-
-        average = 0.0;
-        for (i = 0; i < 20; i++)
-            average += pamx[i][i] * freq1[i];
-
-        for (i = 0; i < 20; i++)
-            for (j = 0; j < 20; j++)
-                pamx[i][j] *= 600.0 / average;
-
-        for (i = 0; i < 20; i++)
-            for (j = 0; j < 20; j++)
-                pamx[i][j] -= ctx->offset;
-
-        for (i = 0; i < 20; i++)
-            for (j = 0; j < 20; j++)
-                pamx[i][j] = shishagonyuu(pamx[i][j]);
-
-        for (i = 0; i < 26; i++)
-            for (j = 0; j < 26; j++)
-                ctx->n_dis[i][j] = 0;
-        for (i = 0; i < 20; i++)
-            for (j = 0; j < 20; j++)
-                ctx->n_dis[i][j] = (int)pamx[i][j];
-
-        reporterr("done.\n");
-        FreeDoubleMtx(rsr);
-        FreeDoubleMtx(pam1);
-        FreeDoubleMtx(pamx);
-        FreeDoubleVec(freq);
-        FreeDoubleVec(mutab);
-        FreeDoubleVec(datafreq);
     }
 
+    int charsize = 0x80;
     ctx->amino_dis = AllocateIntMtx(charsize, charsize);
 
-    for (i = 0; i < charsize; i++)
+    for (int i = 0; i < charsize; i++)
         ctx->amino_n[i] = -1;
 
-    for (i = 0; i < ctx->nalphabets; i++)
+    for (int i = 0; i < ctx->nalphabets; i++)
         ctx->amino_n[(int)ctx->amino[i]] = i;
 
-    for (i = 0; i < charsize; i++)
-        for (j = 0; j < charsize; j++)
+    for (int i = 0; i < charsize; i++)
+        for (int j = 0; j < charsize; j++)
             ctx->amino_dis[i][j] = 0;
 
-    for (i = 0; i < ctx->nalphabets; i++)
-        for (j = 0; j < ctx->nalphabets; j++)
+    for (int i = 0; i < ctx->nalphabets; i++)
+        for (int j = 0; j < ctx->nalphabets; j++)
             ctx->n_disLN[i][j] = 0;
 
     ctx->n_dis_consweight_multi = AllocateDoubleMtx(ctx->nalphabets, ctx->nalphabets);
     ctx->n_disFFT = AllocateIntMtx(ctx->nalphabets, ctx->nalphabets);
-    for (i = 0; i < ctx->nalphabets; i++)
-        for (j = 0; j < ctx->nalphabets; j++) {
+    for (int i = 0; i < ctx->nalphabets; i++)
+        for (int j = 0; j < ctx->nalphabets; j++) {
             ctx->amino_dis[(int)ctx->amino[i]][(int)ctx->amino[j]] = ctx->n_dis[i][j];
             ctx->n_dis_consweight_multi[i][j] = (double)ctx->n_dis[i][j] * ctx->consweight_multi;
         }
 
-    if (ctx->dorp == 'd') {
-        for (i = 0; i < 10; i++)
-            for (j = 0; j < 10; j++)
+    {
+        for (int i = 0; i < 20; i++)
+            for (int j = 0; j < 20; j++)
                 ctx->n_disLN[i][j] = (double)ctx->n_dis[i][j] + ctx->offset - ctx->offsetLN;
-        for (i = 0; i < 10; i++)
-            for (j = 0; j < 10; j++)
-                ctx->n_disFFT[i][j] = ctx->n_dis[i][j] + ctx->offset - ctx->offsetFFT;
-    } else {
-        for (i = 0; i < 20; i++)
-            for (j = 0; j < 20; j++)
-                ctx->n_disLN[i][j] = (double)ctx->n_dis[i][j] + ctx->offset - ctx->offsetLN;
-        for (i = 0; i < 20; i++)
-            for (j = 0; j < 20; j++)
+        for (int i = 0; i < 20; i++)
+            for (int j = 0; j < 20; j++)
                 ctx->n_disFFT[i][j] = ctx->n_dis[i][j] + ctx->offset - ctx->offsetFFT;
     }
-
-    ctx->ppid = 0;
 
     if (ctx->fftThreshold == NOTSPECIFIED) {
         ctx->fftThreshold = FFT_THRESHOLD;
     }
     if (ctx->fftWinSize == NOTSPECIFIED) {
-        if (ctx->dorp == 'd')
-            ctx->fftWinSize = FFT_WINSIZE_D;
-        else
-            ctx->fftWinSize = FFT_WINSIZE_P;
+        ctx->fftWinSize = FFT_WINSIZE_P;
     }
 }

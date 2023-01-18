@@ -7,13 +7,6 @@ ErrorExit(char* message) {
 }
 
 void
-initSignalSM(Context* ctx) {
-    if (!ctx->ppid) {
-        ctx->signalSM = NULL;
-    }
-}
-
-void
 initlocalhom1(LocalHom* lh) {
     lh->start1 = -1;
     lh->end1 = -1;

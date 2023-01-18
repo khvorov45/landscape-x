@@ -694,7 +694,6 @@ A__align(aln_Opts opts, Context* ctx, double** n_dynamicmtx, int penalty_l, int 
     static double*  gapfreq2;
     double*         gapfreq2pt;
     double          fpenalty = (double)penalty_l;
-    double          fpenalty_shift = (double)ctx->penalty_shift;
     double*         fgcp2pt;
     double*         ogcp2pt;
     double          fgcp1va;
@@ -708,17 +707,8 @@ A__align(aln_Opts opts, Context* ctx, double** n_dynamicmtx, int penalty_l, int 
 
     int*    warpis = NULL;
     int*    warpjs = NULL;
-    int*    warpi = NULL;
-    int*    warpj = NULL;
-    int*    prevwarpi = NULL;
-    int*    prevwarpj = NULL;
-    double* wmrecords = NULL;
-    double* prevwmrecords = NULL;
-    int     warpn = 0;
+
     int     warpbase;
-    double  curm = 0.0;
-    double *wmrecordspt, *wmrecords1pt, *prevwmrecordspt;
-    int *   warpipt, *warpjpt;
     char *  gt1, *gt2, *gt1bk, *gt2bk;
 
     if (seq1 == NULL) {
@@ -787,32 +777,6 @@ A__align(aln_Opts opts, Context* ctx, double** n_dynamicmtx, int penalty_l, int 
     warpbase = lgth1 + lgth2;
     warpis = NULL;
     warpjs = NULL;
-    warpn = 0;
-
-    if (ctx->trywarp) {
-        if (headgp == 0 || tailgp == 0) {
-            fprintf(stderr, "At present, headgp and tailgp must be 1 to allow shift.\n");
-            exit(1);
-        }
-        wmrecords = AllocateFloatVec(lgth2 + 1);
-        warpi = AllocateIntVec(lgth2 + 1);
-        warpj = AllocateIntVec(lgth2 + 1);
-        prevwmrecords = AllocateFloatVec(lgth2 + 1);
-        prevwarpi = AllocateIntVec(lgth2 + 1);
-        prevwarpj = AllocateIntVec(lgth2 + 1);
-        for (i = 0; i < lgth2 + 1; i++)
-            wmrecords[i] = 0.0;
-        for (i = 0; i < lgth2 + 1; i++)
-            prevwmrecords[i] = 0.0;
-        for (i = 0; i < lgth2 + 1; i++)
-            prevwarpi[i] = -warpbase;
-        for (i = 0; i < lgth2 + 1; i++)
-            prevwarpj[i] = -warpbase;
-        for (i = 0; i < lgth2 + 1; i++)
-            warpi[i] = -warpbase;
-        for (i = 0; i < lgth2 + 1; i++)
-            warpj[i] = -warpbase;
-    }
 
     mseq1 = AllocateCharMtx(icyc, 0);
     mseq2 = AllocateCharMtx(jcyc, 0);
@@ -1285,14 +1249,6 @@ A__align(aln_Opts opts, Context* ctx, double** n_dynamicmtx, int penalty_l, int 
         gf2pt = gapfreq2pt + 1;
         gf2ptpre = gapfreq2pt;
 
-        if (ctx->trywarp) {
-            prevwmrecordspt = prevwmrecords;
-            wmrecordspt = wmrecords + 1;
-            wmrecords1pt = wmrecords;
-            warpipt = warpi + 1;
-            warpjpt = warpj + 1;
-        }
-
         for (j = 1; j < lastj; j++) {
 #ifdef xxxenablemultithread
             //			fprintf( stderr, "chudan = %d, %d\n", *chudanpt, chudanref );
@@ -1347,48 +1303,6 @@ A__align(aln_Opts opts, Context* ctx, double** n_dynamicmtx, int penalty_l, int 
             m[j] += fpenalty_ex;
 #endif
 
-            if (ctx->trywarp) {
-#if USE_PENALTY_EX
-                if ((g = *prevwmrecordspt++ + fpenalty_shift + fpenalty_ex * (i - prevwarpi[j - 1] + j - prevwarpj[j - 1])) > wm)  // naka ha osokute kamawanai
-#else
-                if ((g = *prevwmrecordspt++ + fpenalty_shift) > wm)  // naka ha osokute kamawanai
-#endif
-                {
-                    //					fprintf( stderr, "WARP!!\n" );
-                    if (warpn && prevwarpi[j - 1] == warpis[warpn - 1] && prevwarpj[j - 1] == warpjs[warpn - 1]) {
-                        *ijppt = warpbase + warpn - 1;
-                    } else {
-                        *ijppt = warpbase + warpn;
-                        warpis = realloc(warpis, sizeof(int) * (warpn + 1));
-                        warpjs = realloc(warpjs, sizeof(int) * (warpn + 1));
-                        warpis[warpn] = prevwarpi[j - 1];
-                        warpjs[warpn] = prevwarpj[j - 1];
-                        warpn++;
-                    }
-                    wm = g;
-                }
-
-#if 0
-				fprintf( stderr, "%5.0f ", wm );
-#endif
-                curm = *curpt + wm;
-
-                if (*wmrecords1pt > *wmrecordspt) {
-                    *wmrecordspt = *wmrecords1pt;
-                    *warpipt = *(warpipt - 1);
-                    *warpjpt = *(warpjpt - 1);
-                }
-                if (curm > *wmrecordspt) {
-                    *wmrecordspt = curm;
-                    *warpipt = i;
-                    *warpjpt = j;
-                }
-                wmrecordspt++;
-                wmrecords1pt++;
-                warpipt++;
-                warpjpt++;
-            }
-
             *curpt++ += wm;
             ijppt++;
             mjpt++;
@@ -1400,23 +1314,6 @@ A__align(aln_Opts opts, Context* ctx, double** n_dynamicmtx, int penalty_l, int 
             gf2pt++;
         }
         lastverticalw[i] = currentw[lgth2 - 1];
-
-        if (ctx->trywarp) {
-            fltncpy(prevwmrecords, wmrecords, lastj);
-            intncpy(prevwarpi, warpi, lastj);
-            intncpy(prevwarpj, warpj, lastj);
-        }
-    }
-
-    if (ctx->trywarp) {
-        //		fprintf( stderr, "wm = %f\n", wm );
-        //		fprintf( stderr, "warpn = %d\n", warpn );
-        free(wmrecords);
-        free(prevwmrecords);
-        free(warpi);
-        free(warpj);
-        free(prevwarpi);
-        free(prevwarpj);
     }
 
     gt1 = gt1bk = AllocateCharVec(lgth1 + lgth2 + 1);
