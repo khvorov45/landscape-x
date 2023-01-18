@@ -91,14 +91,11 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         }
     }
 
-    {
-        aln_Opts pairLocalAlignOpts = opts;
-        pairLocalAlignOpts.offset = (int)(0.6 * 100 + 0.5);
-        pairLocalAlignOpts.constraint = 0;
+    constants(opts, ctx);
 
+    {
         aln_assert(ctx->njob >= 2);
 
-        constants(pairLocalAlignOpts, ctx);
 
         // TODO(sen) Sequence verification?
 
@@ -165,10 +162,10 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
                     distseq1[0] = dseq[i];
                     distseq2[0] = dseq[j];
 
-                    pscore = G__align11(pairLocalAlignOpts, ctx, ctx->n_dis_consweight_multi, mseq1, mseq2, alloclen, ctx->outgap, ctx->outgap);
+                    pscore = G__align11(opts, ctx, ctx->n_dis_consweight_multi, mseq1, mseq2, alloclen, ctx->outgap, ctx->outgap);
                     int thereisx = countsOfXs[i] + countsOfXs[j];
                     if (thereisx) {
-                        pscore = G__align11_noalign(ctx, ctx->n_dis_consweight_multi, pairLocalAlignOpts.penalty, ctx->penalty_ex, distseq1, distseq2);
+                        pscore = G__align11_noalign(ctx, ctx->n_dis_consweight_multi, opts.penalty, ctx->penalty_ex, distseq1, distseq2);
                     }
                 }
             }
@@ -188,8 +185,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
             ilim--;
         }
     }
-
-    constants(opts, ctx);
 
     // TODO(sen) Sequence verification?
 

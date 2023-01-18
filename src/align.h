@@ -242,6 +242,7 @@ aln_defaultOpts(void) {
         .ppenalty_dist = 1530,
         .nblosum = 62,
         .scoremtx = 1,
+        .offset = (int)(0.6 * 100 + 0.5),
         .constraint = 2,
         .ppenalty_ex = -100,
         .minimumweight = 0.00001,
