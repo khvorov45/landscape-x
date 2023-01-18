@@ -40,16 +40,18 @@ typedef struct aln_AlignResult {
 // SECTION Private
 //
 
+// clang-format off
 #define aln_max(a, b) (((a) > (b)) ? (a) : (b))
 #define aln_min(a, b) (((a) < (b)) ? (a) : (b))
 #define aln_clamp(x, a, b) (((x) < (a)) ? (a) : (((x) > (b)) ? (b) : (x)))
 #define aln_arrayCount(arr) (int32_t)(sizeof(arr) / sizeof(arr[0]))
 #define aln_arenaAllocArray(arena, type, len) (type*)aln_arenaAllocAndZero(arena, (len) * (int32_t)sizeof(type), alignof(type))
 #define aln_arenaAllocStruct(arena, type) (type*)aln_arenaAllocAndZero(arena, sizeof(type), alignof(type))
+#define aln_arenaAllocMatrix2Int32(arena, rowCount, colCount) (aln_Matrix2Int32) {.ptr = aln_arenaAllocArray(arena, int32_t, rowCount * colCount), .nrow = rowCount, .ncol = colCount}
+#define aln_matrix2get(matrix, row, col) matrix.ptr[((row) * matrix.nrow) + (col)] 
 #define aln_isPowerOf2(x) (((x) > 0) && (((x) & ((x)-1)) == 0))
 #define aln_unused(x) ((x) = (x))
 
-// clang-format off
 // Taken from portable snippets
 // https://github.com/nemequ/portable-snippets/blob/master/debug-trap/debug-trap.h
 #if defined(__has_builtin) && !defined(__ibmxl__)
@@ -112,40 +114,6 @@ typedef struct aln_AlignResult {
 #define aln_PRIVATEAPI static
 #endif
 
-typedef struct aln_Context {
-    int32_t   penalty;
-    int32_t   offset;
-    int32_t   constraint;
-    double    minimumweight;
-    double    fastathreshold;
-    double    sueff_global;
-    char      treemethod;
-    int32_t   njob;
-    int32_t   amino_n[0x100];
-    int32_t** n_dis;
-    double**  n_dis_consweight_multi;
-    uint8_t   amino[0x100];
-    int32_t   penalty_dist;
-    int32_t   penalty_ex;
-    int32_t   outgap;
-    double    consweight_multi;
-    int32_t   commonAlloc1;
-    int32_t   commonAlloc2;
-    int32_t** commonIP;
-    int32_t   nalphabets;
-} aln_Context;
-
-typedef struct aln_LocalHom {
-    struct aln_LocalHom* next;
-    int32_t              start1;
-    int32_t              end1;
-    int32_t              start2;
-    int32_t              end2;
-    double               opt;
-    double               importance;
-    double               rimportance;
-} aln_LocalHom;
-
 typedef struct aln_Arena {
     void*    base;
     intptr_t size;
@@ -158,6 +126,46 @@ typedef struct aln_TempMemory {
     intptr_t   usedAtBegin;
     int32_t    tempCountAtBegin;
 } aln_TempMemory;
+
+typedef struct aln_Matrix2Int32 {
+    int32_t* ptr;
+    int32_t  nrow;
+    int32_t  ncol;
+} aln_Matrix2Int32;
+
+typedef struct aln_Context {
+    int32_t          penalty;
+    int32_t          offset;
+    int32_t          constraint;
+    double           minimumweight;
+    double           fastathreshold;
+    double           sueff_global;
+    char             treemethod;
+    int32_t          njob;
+    int32_t          amino_n[0x100];
+    aln_Matrix2Int32 n_dis;
+    double**         n_dis_consweight_multi;
+    uint8_t          amino[0x100];
+    int32_t          penalty_dist;
+    int32_t          penalty_ex;
+    int32_t          outgap;
+    double           consweight_multi;
+    int32_t          commonAlloc1;
+    int32_t          commonAlloc2;
+    int32_t**        commonIP;
+    int32_t          nalphabets;
+} aln_Context;
+
+typedef struct aln_LocalHom {
+    struct aln_LocalHom* next;
+    int32_t              start1;
+    int32_t              end1;
+    int32_t              start2;
+    int32_t              end2;
+    double               opt;
+    double               importance;
+    double               rimportance;
+} aln_LocalHom;
 
 // TODO(sen) Don't assert on out of memory?
 

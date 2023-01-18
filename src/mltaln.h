@@ -178,7 +178,6 @@ int*      AllocateIntVec(int);
 int*      AllocateIntVecLarge(unsigned long long);
 void      FreeIntVec(int*);
 int**     AllocateIntMtx(int, int);
-int**     AllocateIntMtxLarge(unsigned long long, unsigned long long);
 void      FreeIntMtx(int**);
 char***   AllocateCharCub(int, int, int);
 void      FreeCharCub(char***);

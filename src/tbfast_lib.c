@@ -67,7 +67,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
 
     {
         {
-            ctx->n_dis = AllocateIntMtx(ctx->nalphabets, ctx->nalphabets);
             double** n_distmp = AllocateDoubleMtx(20, 20);
             double*  datafreq = AllocateDoubleVec(20);
             double*  freq = AllocateDoubleVec(20);
@@ -169,12 +168,10 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
                 }
             }
 
-            for (int i = 0; i < 26; i++)
-                for (int j = 0; j < 26; j++)
-                    ctx->n_dis[i][j] = 0;
+            ctx->n_dis = aln_arenaAllocMatrix2Int32(tempArena, ctx->nalphabets, ctx->nalphabets);
             for (int i = 0; i < 20; i++)
                 for (int j = 0; j < 20; j++)
-                    ctx->n_dis[i][j] = (int)n_distmp[i][j];
+                    aln_matrix2get(ctx->n_dis, i, j) = (int)n_distmp[i][j];
 
             FreeDoubleMtx(n_distmp);
             FreeDoubleVec(datafreq);
@@ -192,7 +189,7 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         ctx->n_dis_consweight_multi = AllocateDoubleMtx(ctx->nalphabets, ctx->nalphabets);
         for (int i = 0; i < ctx->nalphabets; i++) {
             for (int j = 0; j < ctx->nalphabets; j++) {
-                ctx->n_dis_consweight_multi[i][j] = (double)ctx->n_dis[i][j] * ctx->consweight_multi;
+                ctx->n_dis_consweight_multi[i][j] = (double)aln_matrix2get(ctx->n_dis, i, j) * ctx->consweight_multi;
             }
         }
     }

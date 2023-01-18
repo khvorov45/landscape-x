@@ -285,43 +285,6 @@ AllocateIntMtx(int ll1, int ll2) {
     return (mtx);
 }
 
-int**
-AllocateIntMtxLarge(unsigned long long ll1, unsigned long long ll2) {
-    unsigned long long i;
-    int**              mtx;
-
-    mtx = (int**)calloc(ll1 + 1, sizeof(int*));
-    if (!mtx) {
-        fprintf(stderr, "Allocation error( %lld x %lld int mtx )\n", ll1, ll2);
-        exit(1);
-    }
-    if (ll2) {
-        for (i = 0; i < ll1; i++)
-            mtx[i] = AllocateIntVecLarge(ll2);
-    } else {
-        for (i = 0; i < ll1; i++)
-            mtx[i] = NULL;
-    }
-    mtx[ll1] = NULL;
-    return (mtx);
-}
-
-/*
-void FreeIntMtx( int **mtx )
-{
-*
-	int **x;
-	x = mtx;
-	while( !*mtx ) free( *mtx++ );
-	free( x );
-*
-	int i;
-	for( i=0; mtx[i] != NULL; i++ ) 
-		free( (char *)mtx[i] );
-	free( (char *)mtx );
-}
-*/
-
 char***
 AllocateCharCub(int ll1, int ll2, int ll3) {
     int     i;

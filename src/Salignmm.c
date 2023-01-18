@@ -834,7 +834,7 @@ A__align(aln_Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_
     else
         reuseprofiles = 0;
 
-    if (ctx->n_dis[0][ctx->amino_n['-']] != 0) {
+    if (aln_matrix2get(ctx->n_dis, 0, ctx->amino_n['-']) != 0) {
         exit(1);
     }
 
