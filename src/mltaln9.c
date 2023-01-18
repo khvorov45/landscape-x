@@ -77,30 +77,20 @@ setnearest(Bchain* acpt, double** eff, double* mindisfrompt, int* nearestpt, int
     double tmpdouble;
     double mindisfrom;
     int    nearest;
-    //	double **effptpt;
     Bchain* acptj;
 
     mindisfrom = 999.9;
     nearest = -1;
 
-    //	printf( "[%d], %f, dist=%d ->", pos, *mindisfrompt, *nearestpt );
-
-    //	if( (acpt+pos)->next ) effpt = eff[pos]+(acpt+pos)->next->pos-pos;
-
-    //	for( j=pos+1; j<nseq; j++ )
     for (acptj = (acpt + pos)->next; acptj != NULL; acptj = acptj->next) {
         j = acptj->pos;
-        //		if( (tmpdouble=*effpt++) < *mindisfrompt )
         if ((tmpdouble = eff[pos][j - pos]) < mindisfrom) {
             mindisfrom = tmpdouble;
             nearest = j;
         }
     }
-    //	effptpt = eff;
-    //	for( j=0; j<pos; j++ )
     for (acptj = acpt; (acptj && acptj->pos != pos); acptj = acptj->next) {
         j = acptj->pos;
-        //		if( (tmpdouble=(*effptpt++)[pos-j]) < *mindisfrompt )
         if ((tmpdouble = eff[j][pos - j]) < mindisfrom) {
             mindisfrom = tmpdouble;
             nearest = j;
@@ -109,18 +99,6 @@ setnearest(Bchain* acpt, double** eff, double* mindisfrompt, int* nearestpt, int
 
     *mindisfrompt = mindisfrom;
     *nearestpt = nearest;
-    //	printf( "%f, %d \n", pos, *mindisfrompt, *nearestpt );
-}
-
-static void
-shufflelennum(Lennum* ary, int size) {
-    int i;
-    for (i = 0; i < size; i++) {
-        int    j = rand() % size;
-        Lennum t = ary[i];  // kouzoutai dainyu?
-        ary[i] = ary[j];
-        ary[j] = t;
-    }
 }
 
 void
@@ -132,50 +110,6 @@ stringshuffle(int* ary, int size) {
         ary[i] = ary[j];
         ary[j] = t;
     }
-}
-
-static int
-compfunc(const void* p, const void* q) {
-    return (((Lennum*)q)->len - ((Lennum*)p)->len);
-}
-
-void
-limitlh(int* uselh, Lennum* in, int size, int limit) {
-    int i;
-
-    qsort(in, size, sizeof(Lennum), compfunc);
-    shufflelennum(in, size / 2);
-    shufflelennum(in + size / 2, size - size / 2);
-
-    if (limit > size)
-        limit = size;
-
-    for (i = 0; i < limit; i++)
-        uselh[in[i].num] = 1;
-    for (i = limit; i < size; i++)
-        uselh[in[i].num] = 0;
-}
-
-void
-sortbylength(int* uselh, Lennum* in, int size, unsigned long long numpairs) {
-    int                i;
-    unsigned long long nn;
-    int                n;
-
-    qsort(in, size, sizeof(Lennum), compfunc);
-
-    nn = ((unsigned long long)sqrt(1 + 8 * numpairs) + 1) / 2;
-    if (nn > INT_MAX)
-        nn = INT_MAX;
-
-    n = (int)nn;
-    if (n > size)
-        n = size;
-
-    for (i = 0; i < n; i++)
-        uselh[in[i].num] = 1;
-    for (i = n; i < size; i++)
-        uselh[in[i].num] = 0;
 }
 
 typedef struct _TopDep {
@@ -673,9 +607,7 @@ calcimportance_half(int nseq, double* eff, char** seq, aln_LocalHom** localhom, 
                     }
 
                     tmpdouble /= (double)len;
-
                     tmpptr->importance = tmpdouble * tmpptr->opt;
-                    //					tmpptr->fimportance = (double)tmpptr->importance;
                 }
             } else {
                 if (localhom[j][i - j].opt == -1.0)
@@ -1091,7 +1023,6 @@ movereg(char* seq1, char* seq2, aln_LocalHom* tmpptr, int* start1pt, int* start2
         *end1pt = *start1pt;
     else {
         while (*pt != 0) {
-            //			fprintf( stderr, "tmpint = %d, end1 = %d pos = %d\n", tmpint, tmpptr->end1, pt-seq1[i] );
             if (*pt++ != '-')
                 tmpint++;
             if (tmpint == tmpptr->end1)
@@ -1173,9 +1104,9 @@ movereg_swap(char* seq1, char* seq2, aln_LocalHom* tmpptr, int* start1pt, int* s
 }
 
 void
-fillimp(aln_Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, aln_LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2) {
+fillimp(aln_Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, aln_LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2) {
     int       i, j, k1, k2, start1, start2, end1, end2;
-    double    effij, effijx, effij_kozo;
+    double    effij, effijx;
     char *    pt1, *pt2;
     aln_LocalHom* tmpptr;
     void (*movefunc)(char*, char*, aln_LocalHom*, int*, int*, int*, int*);
@@ -1198,23 +1129,10 @@ fillimp(aln_Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int 
                     movefunc = movereg;
             }
 
-            //			effij = eff1[i] * eff2[j] * effijx;
             effij = eff1[i] * eff2[j] * effijx;
-            effij_kozo = eff1_kozo[i] * eff2_kozo[j] * effijx;
             tmpptr = localhom[i][j];
             while (tmpptr) {
-                //				fprintf( stderr, "start1 = %d\n", tmpptr->start1 );
-                //				fprintf( stderr, "end1   = %d\n", tmpptr->end1   );
-                //				fprintf( stderr, "i = %d, seq1 = \n%s\n", i, seq1[i] );
-                //				fprintf( stderr, "j = %d, seq2 = \n%s\n", j, seq2[j] );
-
                 movefunc(seq1[i], seq2[j], tmpptr, &start1, &start2, &end1, &end2);
-
-                //				fprintf( stderr, "start1 = %d (%c), end1 = %d (%c), start2 = %d (%c), end2 = %d (%c)\n", start1, seq1[i][start1], end1, seq1[i][end1], start2, seq2[j][start2], end2, seq2[j][end2] );
-                //				fprintf( stderr, "step 0\n" );
-                if (end1 - start1 != end2 - start2) {
-                    //					fprintf( stderr, "CHUUI!!, start1 = %d, end1 = %d, start2 = %d, end2 = %d\n", start1, end1, start2, end2 );
-                }
 
                 k1 = start1;
                 k2 = start2;
@@ -1222,26 +1140,18 @@ fillimp(aln_Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int 
                 pt2 = seq2[j] + k2;
                 while (*pt1 && *pt2) {
                     if (*pt1 != '-' && *pt2 != '-') {
-                        if (tmpptr->korh == 'k')
-                            impmtx[k1][k2] += tmpptr->importance * effij_kozo;
-                        else
-                            impmtx[k1][k2] += tmpptr->importance * effij;
-                        //						fprintf( stderr, "k1=%d, k2=%d, impalloclen=%d\n", k1, k2, impalloclen );
-                        //						fprintf( stderr, "mark, %d (%c) - %d (%c) \n", k1, *pt1, k2, *pt2 );
+                        impmtx[k1][k2] += tmpptr->importance * effij;
                         k1++;
                         k2++;
                         pt1++;
                         pt2++;
                     } else if (*pt1 != '-' && *pt2 == '-') {
-                        //						fprintf( stderr, "skip, %d (%c) - %d (%c) \n", k1, *pt1, k2, *pt2 );
                         k2++;
                         pt2++;
                     } else if (*pt1 == '-' && *pt2 != '-') {
-                        //						fprintf( stderr, "skip, %d (%c) - %d (%c) \n", k1, *pt1, k2, *pt2 );
                         k1++;
                         pt1++;
                     } else if (*pt1 == '-' && *pt2 == '-') {
-                        //						fprintf( stderr, "skip, %d (%c) - %d (%c) \n", k1, *pt1, k2, *pt2 );
                         k1++;
                         pt1++;
                         k2++;

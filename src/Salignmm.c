@@ -26,7 +26,7 @@ imp_match_out_vead_tate(double* imp, int j1, int lgth1) {
 }
 
 void
-imp_match_init_strict(aln_Context* ctx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, aln_LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2) {
+imp_match_init_strict(aln_Context* ctx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, aln_LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2) {
     if (seq1 == NULL) {
         if (impmtx)
             FreeFloatMtx(impmtx);
@@ -42,7 +42,7 @@ imp_match_init_strict(aln_Context* ctx, int clus1, int clus2, int lgth1, int lgt
         impmtx = AllocateFloatMtx(impalloclen, impalloclen);
     }
 
-    fillimp(ctx, impmtx, clus1, clus2, lgth1, lgth2, seq1, seq2, eff1, eff2, eff1_kozo, eff2_kozo, localhom, swaplist, orinum1, orinum2);  // uselh -> target -> localhomtable. seedinlh12 -> localhom ni haitteiru.
+    fillimp(ctx, impmtx, clus1, clus2, lgth1, lgth2, seq1, seq2, eff1, eff2, localhom, swaplist, orinum1, orinum2);
 }
 
 static void
@@ -652,7 +652,7 @@ A__align(aln_Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_
             orlgth1 = 0;
             orlgth2 = 0;
 
-            imp_match_init_strict(ctx, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+            imp_match_init_strict(ctx, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
             FreeFloatVec(w1);
             FreeFloatVec(w2);

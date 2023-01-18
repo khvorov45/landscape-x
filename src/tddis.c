@@ -520,7 +520,7 @@ msshrinklocalhom_fast_target(int* memlist1, int* memlist2, aln_LocalHom** localh
                     continue;
                 }
 
-                t1 = targetmap[m2];  // start1 <-> start2, end1 <-> end2
+                t1 = targetmap[m2];
                 i2 = m1;
 
                 if (localhom[t1][i2].opt == -1)
@@ -699,25 +699,19 @@ fastshrinklocalhom_target(int* mem1, int* mem2, aln_LocalHom** localhom, aln_Loc
     for (intpt1 = mem1, k1 = 0; *intpt1 != -1; intpt1++, k1++) {
         if (targetmap[*intpt1] == -1) {
             swaplist[k1] = 1;
-            //			swaplist[k1] = 0; // DAME!!!
             for (intpt2 = mem2, k2 = 0; *intpt2 != -1; intpt2++, k2++) {
                 if (targetmap[*intpt2] == -1) {
                     localhomshrink[k1][k2] = NULL;
                     continue;
                 }
 
-                t1 = targetmap[*intpt2];  // end1<->end2, start1<->start2
+                t1 = targetmap[*intpt2];
                 i2 = *intpt1;
 
                 if (localhom[t1][i2].opt == -1)
                     localhomshrink[k1][k2] = NULL;
                 else
                     localhomshrink[k1][k2] = localhom[t1] + i2;
-
-                //				if( localhomshrink[k1][k2] != NULL )
-                //					printf( "localhomshrink[%d][%d].opt = %f\n", k1, k2, localhomshrink[k1][k2]->opt );
-                //				else
-                //					printf( "localhomshrink[%d][%d] = NULL\n", k1, k2 );
             }
         } else {
             swaplist[k1] = 0;

@@ -243,14 +243,10 @@ extern void      treeCnv(Node* stopol, int locnseq, int*** topol, double** len, 
 extern int       isLeaf(Node node);
 extern double    syntheticLength(Node* ob, Node* oppositeNode);
 extern double    calcW(Node* ob, Node* op);
-extern void      calcBranchWeight(double** bw, int locnseq, Node* stopol, int*** topol);
 extern void      branchWeightToPairWeight(int locnseq, int*** topol, double** pw, double** bw);
 extern void      weightFromABranch(int nseq, double* result, Node* stopol, int*** topol, int step, int LorR);
 extern void      distFromABranch(int nseq, double* result, Node* stopol, int*** topol, double** len, int step, int LorR);
 extern double    G__align11_noalign(aln_Context* ctx, double** scoringmtx, int penal, int penal_ex, char** seq1, char** seq2);
-extern void      putlocalhom(char* al1, char* al2, aln_LocalHom* localhompt, int off1, int off2, int opt, int overlapaa, char korh);
-extern void      readlocalhomtable_half(FILE* fp, int njob, aln_LocalHom** localhomtable, char* kozoarivec);
-extern void      readlocalhomtable_target(FILE* fp, int nt, int njob, aln_LocalHom** localhomtable, char* kozoarivec, int* targetmap);
 
 extern void gapireru(char* res, char* ori, char* gt);
 extern int  seqlen(char* seq, char gap);
@@ -264,7 +260,7 @@ extern void getGapPattern(double* fgcp, int clus, char** seq, double* eff, int l
 extern void getkyokaigap(char* g, char** s, int pos, int n);
 void        makegrouprna(RNApair*** group, RNApair*** all, int* memlist);
 extern void fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(aln_Context* ctx, int nseq, double** eff, int*** topol, double** len, Treedep*, int efffree);
-extern void imp_match_init_strict(aln_Context* ctx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1kozo, double* eff2kozo, aln_LocalHom*** localhom, char* swaplist, int* memlist1, int* memlist2);
+extern void imp_match_init_strict(aln_Context* ctx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, aln_LocalHom*** localhom, char* swaplist, int* memlist1, int* memlist2);
 extern void cpmx_ribosum(aln_Context* ctx, char** seq, char** seqr, char* dir, double** cpmx, double* eff, int lgth, int clus);
 extern void assignstrweight(int nseq, double* strweight, Node* stopol, int*** topol, int step, int LorR, char* kozoari, double* seqweight);
 extern void intcpy(int* s1, int* s2);
@@ -276,12 +272,5 @@ extern void gapcountadd(double* freq, char** seq, int nseq, double* eff, int lgt
 extern void outgapcount(double* freq, int nseq, char* gappat, double* eff);
 extern void makedynamicmtx(aln_Context* ctx, double** out, double** in, double offset);
 
-extern int  deletenewinsertions_difflist(int on, int an, char** oseq, char** aseq, GapPos** difflist);
-extern void topolorder(int* order, int* posinorder, int*** topol, Treedep* dep, int pos, int child);
 extern int* topolorderz(int* order, int*** topol, Treedep* dep, int pos, int nchild);
-extern int* topolordery(int* order, int*** topol, Treedep* dep, int pos, int nchild);
-extern void fillimp(aln_Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, aln_LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2);
-extern int  pairlocalalign(aln_Context* ctx, char** seqgui);
-extern void use_getrusage(void);
-extern void sortbylength(int* uselh, Lennum* in, int size, unsigned long long numpairs);
-extern void limitlh(int* uselh, Lennum* in, int size, int limit);
+extern void fillimp(aln_Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, aln_LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2);

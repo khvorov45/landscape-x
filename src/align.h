@@ -137,18 +137,13 @@ typedef struct aln_Context {
 
 typedef struct aln_LocalHom {
     struct aln_LocalHom* next;
-    struct aln_LocalHom* last;
     int32_t              start1;
     int32_t              end1;
     int32_t              start2;
     int32_t              end2;
     double               opt;
-    int32_t              overlapaa;
-    int32_t              extended;
     double               importance;
     double               rimportance;
-    char                 korh;
-    int32_t              nokori;
 } aln_LocalHom;
 
 typedef struct aln_Arena {

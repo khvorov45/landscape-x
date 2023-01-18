@@ -57,14 +57,9 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
                 localhomtable[i][j].end1 = -1;
                 localhomtable[i][j].start2 = -1;
                 localhomtable[i][j].end2 = -1;
-                localhomtable[i][j].overlapaa = -1.0;
                 localhomtable[i][j].opt = -1.0;
                 localhomtable[i][j].importance = -1.0;
                 localhomtable[i][j].next = 0;
-                localhomtable[i][j].nokori = 0;
-                localhomtable[i][j].extended = -1;
-                localhomtable[i][j].last = localhomtable[i] + j;
-                localhomtable[i][j].korh = 'h';
             }
             ilim--;
         }
@@ -324,8 +319,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         int**     localmem = calloc(sizeof(int*), 2);
         double*** cpmxhist = (double***)calloc(ctx->njob - 1, sizeof(double**));
         int**     memhist = (int**)calloc(ctx->njob - 1, sizeof(int*));
-        double*   effarr1_kozo = AllocateDoubleVec(ctx->njob);
-        double*   effarr2_kozo = AllocateDoubleVec(ctx->njob);
 
         aln_LocalHom*** localhomshrink = (aln_LocalHom***)calloc(ctx->njob, sizeof(aln_LocalHom**));
         for (int i = 0; i < ctx->njob; i++) {
@@ -414,8 +407,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
                 mseq2,
                 effarr1,
                 effarr2,
-                effarr1_kozo,
-                effarr2_kozo,
                 localhomshrink,
                 swaplist,
                 localmem[0],
