@@ -28,26 +28,37 @@ typedef struct aln_Str {
     intptr_t len;
 } aln_Str;
 
-typedef struct aln_Opts {
-    int32_t penalty;
-    int32_t ppenalty_dist;
-    int32_t offset;
-    int32_t constraint;
-    int32_t ppenalty_ex;
-    double  minimumweight;
-    double  fastathreshold;
-    double  sueff_global;
-    char    treemethod;
-    char    gap;
-} aln_Opts;
+typedef struct aln_Context {
+    int32_t  penalty;
+    int32_t  ppenalty_dist;
+    int32_t  offset;
+    int32_t  constraint;
+    int32_t  ppenalty_ex;
+    double   minimumweight;
+    double   fastathreshold;
+    double   sueff_global;
+    char     treemethod;
+    char     gap;
+    int      njob;
+    int      amino_n[0x100];
+    int**    n_dis;
+    double** n_dis_consweight_multi;
+    uint8_t  amino[0x100];
+    int      penalty_dist;
+    int      penalty_ex;
+    int      outgap;
+    double   consweight_multi;
+    int      commonAlloc1;
+    int      commonAlloc2;
+    int**    commonIP;
+    int      nalphabets;
+} aln_Context;
 
 typedef struct aln_AlignResult {
     aln_Str* seqs;
     intptr_t seqCount;
     intptr_t bytesWritten;
 } aln_AlignResult;
-
-aln_PUBLICAPI aln_Opts aln_defaultOpts(void);
 
 // TODO(sen) Remove private forward decls once we pull everything into 1 TU
 
@@ -152,7 +163,7 @@ aln_PRIVATEAPI void           aln_arenaChangeUsed(aln_Arena* arena, intptr_t byt
 aln_PRIVATEAPI aln_TempMemory aln_beginTempMemory(aln_Arena* arena);
 aln_PRIVATEAPI void           aln_endTempMemory(aln_TempMemory temp);
 
-#endif // aln_HEADER
+#endif  // aln_HEADER
 
 #ifdef aln_IMPLEMENTATION
 
@@ -229,24 +240,6 @@ aln_strGetNullTerminated(aln_Arena* arena, aln_Str str) {
         buf[ind] = str.ptr[ind];
     }
     return buf;
-}
-
-aln_PUBLICAPI aln_Opts 
-aln_defaultOpts(void) {
-    aln_Opts opts = {
-        .penalty = (int)(0.6 * (-1530.0) + 0.5),
-        .ppenalty_dist = 1530,
-        .offset = (int)(0.6 * 100 + 0.5),
-        .constraint = 2,
-        .ppenalty_ex = -100,
-        .minimumweight = 0.00001,
-        .fastathreshold = 2.7,
-        .sueff_global = 0.1,
-        .treemethod = 'X',
-        .gap = '-',
-    };
-
-    return opts;
 }
 
 #endif  // aln_IMPLEMENTATION

@@ -17,12 +17,12 @@ match_calc_mtx(double** mtx, double* match, char** s1, char** s2, int i1, int lg
 }
 
 static double
-Atracking(aln_Opts opts, Context* ctx, double* lasthorizontalw, double* lastverticalw, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int tailgp, int* warpis, int* warpjs, int warpbase) {
+Atracking(aln_Context* ctx, double* lasthorizontalw, double* lastverticalw, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int tailgp, int* warpis, int* warpjs, int warpbase) {
     int   i, j, l, iin, jin, ifi, jfi, lgth1, lgth2, k, limk;
     lgth1 = strlen(seq1[0]);
     lgth2 = strlen(seq2[0]);
     double wm, g;
-    double fpenalty = (double)opts.penalty;
+    double fpenalty = (double)ctx->penalty;
     double fpenalty_ex = (double)ctx->penalty_ex;
 
     for (i = 0; i < lgth1 + 1; i++) {
@@ -88,12 +88,12 @@ Atracking(aln_Opts opts, Context* ctx, double* lasthorizontalw, double* lastvert
             l = iin;
             while (--l >= 0) {
                 *--mseq1[0] = seq1[0][l];
-                *--mseq2[0] = opts.gap;
+                *--mseq2[0] = ctx->gap;
                 k++;
             }
             l = jin;
             while (--l >= 0) {
-                *--mseq1[0] = opts.gap;
+                *--mseq1[0] = ctx->gap;
                 *--mseq2[0] = seq2[0][l];
                 k++;
             }
@@ -102,12 +102,12 @@ Atracking(aln_Opts opts, Context* ctx, double* lasthorizontalw, double* lastvert
             l = iin - ifi;
             while (--l > 0) {
                 *--mseq1[0] = seq1[0][ifi + l];
-                *--mseq2[0] = opts.gap;
+                *--mseq2[0] = ctx->gap;
                 k++;
             }
             l = jin - jfi;
             while (--l > 0) {
-                *--mseq1[0] = opts.gap;
+                *--mseq1[0] = ctx->gap;
                 *--mseq2[0] = seq2[0][jfi + l];
                 k++;
             }
@@ -125,7 +125,7 @@ Atracking(aln_Opts opts, Context* ctx, double* lasthorizontalw, double* lastvert
 }
 
 double
-G__align11(aln_Opts opts, Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int alloclen, int headgp, int tailgp) {
+G__align11(aln_Context* ctx, double** n_dynamicmtx, char** seq1, char** seq2, int alloclen, int headgp, int tailgp) {
     register int i, j;
     int          lasti;
     int          lastj;
@@ -134,7 +134,7 @@ G__align11(aln_Opts opts, Context* ctx, double** n_dynamicmtx, char** seq1, char
     double       wm, wmo;
     double       g;
     double *     currentw, *previousw;
-    double       fpenalty = (double)opts.penalty;
+    double       fpenalty = (double)ctx->penalty;
 #if USE_PENALTY_EX
     double fpenalty_ex = (double)ctx->penalty_ex;
     double fpenalty_ex_i;
@@ -233,14 +233,14 @@ G__align11(aln_Opts opts, Context* ctx, double** n_dynamicmtx, char** seq1, char
     if (lgth1 == 0) {
         seq1[0][lgth2] = 0;
         while (lgth2)
-            seq1[0][--lgth2] = opts.gap;
+            seq1[0][--lgth2] = ctx->gap;
         return (0.0);
     }
 
     if (lgth2 == 0) {
         seq2[0][lgth1] = 0;
         while (lgth1)
-            seq2[0][--lgth1] = opts.gap;
+            seq2[0][--lgth1] = ctx->gap;
         return (0.0);
     }
 
@@ -290,10 +290,6 @@ G__align11(aln_Opts opts, Context* ctx, double** n_dynamicmtx, char** seq1, char
         intwork = AllocateIntMtx(ctx->nalphabets, MAX(ll1, ll2) + 2);
         amino_dynamicmtx = AllocateDoubleMtx(0x100, 0x100);
 
-#if DEBUG
-        fprintf(stderr, "succeeded\n");
-#endif
-
         orlgth1 = ll1 - 100;
         orlgth2 = ll2 - 100;
     }
@@ -314,25 +310,12 @@ G__align11(aln_Opts opts, Context* ctx, double** n_dynamicmtx, char** seq1, char
         ll1 = MAX(orlgth1, ctx->commonAlloc1);
         ll2 = MAX(orlgth2, ctx->commonAlloc2);
 
-#if DEBUG
-        fprintf(stderr, "\n\ntrying to allocate %dx%d matrices ... ", ll1 + 1, ll2 + 1);
-#endif
-
         ctx->commonIP = AllocateIntMtx(ll1 + 10, ll2 + 10);
-
-#if DEBUG
-        fprintf(stderr, "succeeded\n\n");
-#endif
 
         ctx->commonAlloc1 = ll1;
         ctx->commonAlloc2 = ll2;
     }
     ijp = ctx->commonIP;
-
-#if 0
-	for( i=0; i<lgth1; i++ ) 
-		fprintf( stderr, "ogcp1[%d]=%f\n", i, ogcp1[i] );
-#endif
 
     currentw = w1;
     previousw = w2;
@@ -343,24 +326,15 @@ G__align11(aln_Opts opts, Context* ctx, double** n_dynamicmtx, char** seq1, char
     if (headgp == 1) {
         for (i = 1; i < lgth1 + 1; i++) {
             initverticalw[i] += fpenalty;
-#if USE_PENALTY_EX
-//			initverticalw[i] += fpenalty_ex * i; // ato de fukkatsu
-//			reporterr( "added _ex\n" );
-#endif
         }
         for (j = 1; j < lgth2 + 1; j++) {
             currentw[j] += fpenalty;
-#if USE_PENALTY_EX
-//			currentw[j] += fpenalty_ex * j; // ato de fukkatsu
-//			reporterr( "added _ex\n" );
-#endif
         }
     } else {
         for (i = 1; i < lgth1 + 1; i++) {
             initverticalw[i] += fpenalty * TERMGAPFAC;
-#if USE_PENALTY_EX  // 2018/Apr/22
+#if USE_PENALTY_EX
             initverticalw[i] += fpenalty_ex * i * TERMGAPFAC_EX;
-//			reporterr( "added _ex\n" );
 #endif
         }
         for (j = 1; j < lgth2 + 1; j++) {
@@ -487,14 +461,13 @@ G__align11(aln_Opts opts, Context* ctx, double** n_dynamicmtx, char** seq1, char
             prept++;
             mpjpt++;
         }
-        lastverticalw[i] = currentw[lgth2 - 1];  // lgth2==0 no toki error
+        lastverticalw[i] = currentw[lgth2 - 1];
     }
 
-    wmo = Atracking(opts, ctx, currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, tailgp, warpis, warpjs, warpbase);
+    wmo = Atracking(ctx, currentw, lastverticalw, seq1, seq2, mseq1, mseq2, ijp, tailgp, warpis, warpjs, warpbase);
     if (!tailgp)
         wm = wmo;
 
-    //	reporterr( "wm (after tracking) = %f\n", wm );
     if (warpis)
         free(warpis);
     if (warpjs)
@@ -516,7 +489,7 @@ G__align11(aln_Opts opts, Context* ctx, double** n_dynamicmtx, char** seq1, char
 }
 
 double
-G__align11_noalign(Context* ctx, double** n_dynamicmtx, int penal, int penal_ex, char** seq1, char** seq2)
+G__align11_noalign(aln_Context* ctx, double** n_dynamicmtx, int penal, int penal_ex, char** seq1, char** seq2)
 {
     register int i, j;
     int          lasti;

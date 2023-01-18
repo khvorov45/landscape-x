@@ -26,7 +26,7 @@ imp_match_out_vead_tate(double* imp, int j1, int lgth1) {
 }
 
 void
-imp_match_init_strict(aln_Opts opts, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2) {
+imp_match_init_strict(aln_Context* ctx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2) {
     if (seq1 == NULL) {
         if (impmtx)
             FreeFloatMtx(impmtx);
@@ -42,11 +42,11 @@ imp_match_init_strict(aln_Opts opts, int clus1, int clus2, int lgth1, int lgth2,
         impmtx = AllocateFloatMtx(impalloclen, impalloclen);
     }
 
-    fillimp(opts, impmtx, clus1, clus2, lgth1, lgth2, seq1, seq2, eff1, eff2, eff1_kozo, eff2_kozo, localhom, swaplist, orinum1, orinum2);  // uselh -> target -> localhomtable. seedinlh12 -> localhom ni haitteiru.
+    fillimp(ctx, impmtx, clus1, clus2, lgth1, lgth2, seq1, seq2, eff1, eff2, eff1_kozo, eff2_kozo, localhom, swaplist, orinum1, orinum2);  // uselh -> target -> localhomtable. seedinlh12 -> localhom ni haitteiru.
 }
 
 static void
-match_calc(Context* ctx, double** n_dynamicmtx, double* match, double** cpmx1, double** cpmx2, int i1, int lgth2, double** doublework, int** intwork, int initialize) {
+match_calc(aln_Context* ctx, double** n_dynamicmtx, double* match, double** cpmx1, double** cpmx2, int i1, int lgth2, double** doublework, int** intwork, int initialize) {
     int      j, l;
     double** cpmxpd = doublework;
     int**    cpmxpdn = intwork;
@@ -91,7 +91,7 @@ match_calc(Context* ctx, double** n_dynamicmtx, double* match, double** cpmx1, d
 }
 
 static void
-Atracking_localhom(aln_Opts opts, double* impwmpt, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int icyc, int jcyc, int* warpis, int* warpjs, int warpbase, int* ngap1, int* ngap2, int reuseprofiles, char** gt1, char** gt2) {
+Atracking_localhom(aln_Context* ctx, double* impwmpt, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int icyc, int jcyc, int* warpis, int* warpjs, int warpbase, int* ngap1, int* ngap2, int reuseprofiles, char** gt1, char** gt2) {
     int   i, j, l, iin, jin, ifi, jfi, lgth1, lgth2, k, limk;
     char *gaptable1, *gt1bk;
     char *gaptable2, *gt2bk;
@@ -204,7 +204,7 @@ Atracking_localhom(aln_Opts opts, double* impwmpt, char** seq1, char** seq2, cha
         }
     } else {
         for (i = 0; i < icyc; i++)
-            gapireru(opts, mseq1[i], seq1[i], gaptable1);
+            gapireru(ctx, mseq1[i], seq1[i], gaptable1);
     }
 
     if (*ngap2 == 0 && reuseprofiles)
@@ -217,7 +217,7 @@ Atracking_localhom(aln_Opts opts, double* impwmpt, char** seq1, char** seq2, cha
         }
     } else {
         for (j = 0; j < jcyc; j++)
-            gapireru(opts, mseq2[j], seq2[j], gaptable2);
+            gapireru(ctx, mseq2[j], seq2[j], gaptable2);
     }
 
     if (gt1 == NULL) {
@@ -230,7 +230,7 @@ Atracking_localhom(aln_Opts opts, double* impwmpt, char** seq1, char** seq2, cha
 }
 
 static void
-createcpmxresult(Context* ctx, double** cpmxresult, int limk, double eff1, double eff2, double*** cpmx1, double*** cpmx2, char* gaptable1, char* gaptable2, int usehist1, int usehist2) {
+createcpmxresult(aln_Context* ctx, double** cpmxresult, int limk, double eff1, double eff2, double*** cpmx1, double*** cpmx2, char* gaptable1, char* gaptable2, int usehist1, int usehist2) {
     int i, j, p;
     int alen = strlen(gaptable1);
 
@@ -425,7 +425,7 @@ createfgresult(double** gapfresult, int limk, double eff1, double eff2, double* 
 }
 
 static double
-Atracking(aln_Opts opts, double* lasthorizontalw, double* lastverticalw, double fpenalty, double fpenalty_ex, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int icyc, int jcyc, int tailgp, int* warpis, int* warpjs, int warpbase, int* ngap1, int* ngap2, int reuseprofiles, char** gt1, char** gt2) {
+Atracking(aln_Context* ctx, double* lasthorizontalw, double* lastverticalw, double fpenalty, double fpenalty_ex, char** seq1, char** seq2, char** mseq1, char** mseq2, int** ijp, int icyc, int jcyc, int tailgp, int* warpis, int* warpjs, int warpbase, int* ngap1, int* ngap2, int reuseprofiles, char** gt1, char** gt2) {
     int    i, j, l, iin, jin, ifi, jfi, lgth1, lgth2, k, limk;
     double wm;
     char * gaptable1, *gt1bk;
@@ -591,7 +591,7 @@ Atracking(aln_Opts opts, double* lasthorizontalw, double* lastverticalw, double 
         }
     } else {
         for (i = 0; i < icyc; i++)
-            gapireru(opts, mseq1[i], seq1[i], gaptable1);
+            gapireru(ctx, mseq1[i], seq1[i], gaptable1);
     }
 
     if (*ngap2 == 0 && reuseprofiles)
@@ -604,7 +604,7 @@ Atracking(aln_Opts opts, double* lasthorizontalw, double* lastverticalw, double 
         }
     } else {
         for (j = 0; j < jcyc; j++)
-            gapireru(opts, mseq2[j], seq2[j], gaptable2);
+            gapireru(ctx, mseq2[j], seq2[j], gaptable2);
     }
 
     if (gt1 == NULL) {
@@ -619,13 +619,13 @@ Atracking(aln_Opts opts, double* lasthorizontalw, double* lastverticalw, double 
 }
 
 double
-A__align(aln_Opts opts, Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_l, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, char* sgap1, char* sgap2, char* egap1, char* egap2, int headgp, int tailgp, int firstmem, int calledbyfulltreebase, double*** cpmxchild0, double*** cpmxchild1, double*** cpmxresult, double orieff1, double orieff2) {
-    int        reuseprofiles;
-    static int previousfirstlen;
-    static int previousicyc;
-    static int previousfirstmem;
-    static int previouscall;
-    int        ngap1, ngap2;
+A__align(aln_Context* ctx, double** n_dynamicmtx, int penalty_l, int penalty_ex_l, char** seq1, char** seq2, double* eff1, double* eff2, int icyc, int jcyc, int alloclen, int constraint, double* impmatch, char* sgap1, char* sgap2, char* egap1, char* egap2, int headgp, int tailgp, int firstmem, int calledbyfulltreebase, double*** cpmxchild0, double*** cpmxchild1, double*** cpmxresult, double orieff1, double orieff2) {
+    int          reuseprofiles;
+    static int   previousfirstlen;
+    static int   previousicyc;
+    static int   previousfirstmem;
+    static int   previouscall;
+    int          ngap1, ngap2;
     register int i, j;
     int          lasti, lastj;
     int          lgth1, lgth2;
@@ -692,7 +692,7 @@ A__align(aln_Opts opts, Context* ctx, double** n_dynamicmtx, int penalty_l, int 
             orlgth1 = 0;
             orlgth2 = 0;
 
-            imp_match_init_strict(opts, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+            imp_match_init_strict(ctx, 0, 0, 0, 0, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL);
 
             FreeFloatVec(w1);
             FreeFloatVec(w2);
@@ -735,7 +735,7 @@ A__align(aln_Opts opts, Context* ctx, double** n_dynamicmtx, int penalty_l, int 
             j = lgth2;
             seq1[i][j] = 0;
             while (j)
-                seq1[i][--j] = opts.gap;
+                seq1[i][--j] = ctx->gap;
         }
         return (0.0);
     }
@@ -745,7 +745,7 @@ A__align(aln_Opts opts, Context* ctx, double** n_dynamicmtx, int penalty_l, int 
             j = lgth1;
             seq2[i][j] = 0;
             while (j)
-                seq2[i][--j] = opts.gap;
+                seq2[i][--j] = ctx->gap;
         }
         return (0.0);
     }
@@ -1288,9 +1288,9 @@ A__align(aln_Opts opts, Context* ctx, double** n_dynamicmtx, int penalty_l, int 
     gt2 = gt2bk = AllocateCharVec(lgth1 + lgth2 + 1);
 
     if (constraint) {
-        Atracking_localhom(opts, impmatch, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, warpis, warpjs, warpbase, &ngap1, &ngap2, reuseprofiles, &gt1, &gt2);
+        Atracking_localhom(ctx, impmatch, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, warpis, warpjs, warpbase, &ngap1, &ngap2, reuseprofiles, &gt1, &gt2);
     } else {
-        wmo = Atracking(opts, currentw, lastverticalw, fpenalty, fpenalty_ex, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, tailgp, warpis, warpjs, warpbase, &ngap1, &ngap2, reuseprofiles, &gt1, &gt2);
+        wmo = Atracking(ctx, currentw, lastverticalw, fpenalty, fpenalty_ex, seq1, seq2, mseq1, mseq2, ijp, icyc, jcyc, tailgp, warpis, warpjs, warpbase, &ngap1, &ngap2, reuseprofiles, &gt1, &gt2);
         if (!tailgp)
             wm = wmo;
     }

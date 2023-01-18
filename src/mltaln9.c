@@ -260,7 +260,7 @@ cluster_minimum_double(double d1, double d2) {
 }
 
 void
-fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(aln_Opts opts, Context* ctx, int nseq, double** eff, int*** topol, double** len, Treedep* dep, int progressout, int efffree) {
+fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(aln_Context* ctx, int nseq, double** eff, int*** topol, double** len, Treedep* dep, int progressout, int efffree) {
     int     i, j, k, miniim, maxiim, minijm, maxijm;
     int*    intpt;
     double  tmpdouble;
@@ -280,16 +280,16 @@ fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(aln_Opts opts, Context* ctx
     double* mindisfrom = NULL;  // by Mathog, a guess
     double (*clusterfuncpt[1])(double, double);
 
-    sueff1 = 1 - (double)opts.sueff_global;
-    sueff05 = (double)opts.sueff_global * 0.5;
-    if (opts.treemethod == 'X')
+    sueff1 = 1 - (double)ctx->sueff_global;
+    sueff05 = (double)ctx->sueff_global * 0.5;
+    if (ctx->treemethod == 'X')
         clusterfuncpt[0] = cluster_mix_double;
-    else if (opts.treemethod == 'E')
+    else if (ctx->treemethod == 'E')
         clusterfuncpt[0] = cluster_average_double;
-    else if (opts.treemethod == 'q')
+    else if (ctx->treemethod == 'q')
         clusterfuncpt[0] = cluster_minimum_double;
     else {
-        reporterr("Unknown treemethod, %c\n", opts.treemethod);
+        reporterr("Unknown treemethod, %c\n", ctx->treemethod);
         exit(1);
     }
 
@@ -449,7 +449,7 @@ fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(aln_Opts opts, Context* ctx
 #else
                     (clusterfuncpt[0])(eff0, eff1);
 #endif
-                if (tmpdouble < mindisfrom[i]) {
+                    if (tmpdouble < mindisfrom[i]) {
                     mindisfrom[i] = tmpdouble;
                     nearest[i] = im;
                 }
@@ -629,7 +629,7 @@ copyWithNoGaps(char* aseq, const char* seq) {
 #define SEGMENTSIZE 150
 
 void
-calcimportance_half(aln_Opts opts, int nseq, double* eff, char** seq, LocalHom** localhom, int alloclen) {
+calcimportance_half(aln_Context* ctx, int nseq, double* eff, char** seq, LocalHom** localhom, int alloclen) {
     int       i, j, pos, len;
     double*   importance;
     double    tmpdouble;
@@ -644,7 +644,7 @@ calcimportance_half(aln_Opts opts, int nseq, double* eff, char** seq, LocalHom**
 
     totaleff = 0.0;
     for (i = 0; i < nseq; i++) {
-        nogaplen[i] = seqlen(seq[i], opts.gap);
+        nogaplen[i] = seqlen(seq[i], ctx->gap);
         if (nogaplen[i] == 0)
             ieff[i] = 0.0;
         else
@@ -844,9 +844,9 @@ exit( 1 );
 }
 
 void
-gapireru(aln_Opts opts, char* res, char* ori, char* gt) {
+gapireru(aln_Context* ctx, char* res, char* ori, char* gt) {
     char g = 0;
-    char gapchar = opts.gap;
+    char gapchar = ctx->gap;
     while ((g = *gt++)) {
         if (g == '-') {
             *res++ = gapchar;
@@ -859,37 +859,12 @@ gapireru(aln_Opts opts, char* res, char* ori, char* gt) {
 
 void
 getkyokaigap(char* g, char** s, int pos, int n) {
-    //	char *bk = g;
-    //	while( n-- ) *g++ = '-';
     while (n--)
         *g++ = (*s++)[pos];
-
-    //	reporterr(       "bk = %s\n", bk );
 }
 
 void
-new_OpeningGapCount(double* ogcp, int clus, char** seq, double* eff, int len, char* sgappat)
-#if 0
-{
-	int i, j, gc, gb; 
-	double feff;
-
-	
-	for( i=0; i<len+1; i++ ) ogcp[i] = 0.0;
-	for( j=0; j<clus; j++ ) 
-	{
-		feff = (double)eff[j];
-		gc = ( sgappat[j] == '-' );
-		for( i=0; i<len; i++ ) 
-		{
-			gb = gc;
-			gc = ( seq[j][i] == '-' );
-			if( !gb *  gc ) ogcp[i] += feff;
-		}
-	}
-}
-#else
-{
+new_OpeningGapCount(double* ogcp, int clus, char** seq, double* eff, int len, char* sgappat) {
     int     i, j, gc, gb;
     double  feff;
     double* fpt;
@@ -916,166 +891,9 @@ new_OpeningGapCount(double* ogcp, int clus, char** seq, double* eff, int len, ch
         }
     }
 }
-#endif
-void
-new_OpeningGapCount_zure(double* ogcp, int clus, char** seq, double* eff, int len, char* sgappat, char* egappat)
-#if 0
-{
-	int i, j, gc, gb; 
-	double feff;
-
-	
-	for( i=0; i<len+1; i++ ) ogcp[i] = 0.0;
-	for( j=0; j<clus; j++ ) 
-	{
-		feff = (double)eff[j];
-		gc = ( sgappat[j] == '-' );
-		for( i=0; i<len; i++ ) 
-		{
-			gb = gc;
-			gc = ( seq[j][i] == '-' );
-			if( !gb *  gc ) ogcp[i] += feff;
-		}
-		{
-			gb = gc;
-			gc = ( egappat[j] == '-' );
-			if( !gb *  gc ) ogcp[i] += feff;
-		}
-	}
-}
-#else
-{
-    int     i, j, gc, gb;
-    double  feff;
-    double* fpt;
-    char*   spt;
-
-    fpt = ogcp;
-    i = len + 2;
-    while (i--)
-        *fpt++ = 0.0;
-    for (j = 0; j < clus; j++) {
-        feff = (double)eff[j];
-        spt = seq[j];
-        fpt = ogcp;
-        gc = (sgappat[j] == '-');
-        i = len;
-        while (i--) {
-            gb = gc;
-            gc = (*spt++ == '-');
-            {
-                if (!gb * gc)
-                    *fpt += feff;
-                fpt++;
-            }
-        }
-        {
-            gb = gc;
-            gc = (egappat[j] == '-');
-            if (!gb * gc)
-                *fpt += feff;
-        }
-    }
-}
-#endif
 
 void
-new_FinalGapCount_zure(double* fgcp, int clus, char** seq, double* eff, int len, char* sgappat, char* egappat)
-#if 0
-{
-	int i, j, gc, gb; 
-	double feff;
-	
-	for( i=0; i<len+1; i++ ) fgcp[i] = 0.0;
-	for( j=0; j<clus; j++ ) 
-	{
-		feff = (double)eff[j];
-		gc = ( sgappat[j] == '-' );
-		for( i=0; i<len; i++ ) 
-		{
-			gb = gc;
-			gc = ( seq[j][i] == '-' );
-			{
-				if( gb * !gc ) fgcp[i] += feff;
-			}
-		}
-		{
-			gb = gc;
-			gc = ( egappat[j] == '-' );
-			{
-				if( gb * !gc ) fgcp[len] += feff;
-			}
-		}
-	}
-}
-#else
-{
-    int     i, j, gc, gb;
-    double  feff;
-    double* fpt;
-    char*   spt;
-
-    fpt = fgcp;
-    i = len + 2;
-    while (i--)
-        *fpt++ = 0.0;
-    for (j = 0; j < clus; j++) {
-        feff = (double)eff[j];
-        fpt = fgcp;
-        spt = seq[j];
-        gc = (sgappat[j] == '-');
-        i = len;
-        while (i--) {
-            gb = gc;
-            gc = (*spt++ == '-');
-            {
-                if (gb * !gc)
-                    *fpt += feff;
-                fpt++;
-            }
-        }
-        {
-            gb = gc;
-            gc = (egappat[j] == '-');
-            {
-                if (gb * !gc)
-                    *fpt += feff;
-            }
-        }
-    }
-}
-#endif
-void
-new_FinalGapCount(double* fgcp, int clus, char** seq, double* eff, int len, char* egappat)
-#if 0
-{
-	int i, j, gc, gb; 
-	double feff;
-	
-	for( i=0; i<len; i++ ) fgcp[i] = 0.0;
-	for( j=0; j<clus; j++ ) 
-	{
-		feff = (double)eff[j];
-		gc = ( seq[j][0] == '-' );
-		for( i=1; i<len; i++ ) 
-		{
-			gb = gc;
-			gc = ( seq[j][i] == '-' );
-			{
-				if( gb * !gc ) fgcp[i-1] += feff;
-			}
-		}
-		{
-			gb = gc;
-			gc = ( egappat[j] == '-' );
-			{
-				if( gb * !gc ) fgcp[len-1] += feff;
-			}
-		}
-	}
-}
-#else
-{
+new_FinalGapCount(double* fgcp, int clus, char** seq, double* eff, int len, char* egappat) {
     int     i, j, gc, gb;
     double  feff;
     double* fpt;
@@ -1110,7 +928,6 @@ new_FinalGapCount(double* fgcp, int clus, char** seq, double* eff, int len, char
         }
     }
 }
-#endif
 
 void
 st_OpeningGapAdd(double* ogcp, int clus, char** seq, double* eff, int len) {
@@ -1122,12 +939,7 @@ st_OpeningGapAdd(double* ogcp, int clus, char** seq, double* eff, int len) {
     double  orieff = 1.0 - neweff;
     double  feff;
 
-    //	fpt = ogcp;
-    //	i = len;
-    //	while( i-- ) *fpt++ = 0.0;
-
     j = clus - 1;
-    //	for( j=0; j<clus; j++ )
     {
         feff = (double)eff[j];
         spt = seq[j];
@@ -1144,14 +956,6 @@ st_OpeningGapAdd(double* ogcp, int clus, char** seq, double* eff, int len) {
         }
     }
     ogcp[len] = 0.0;
-
-#if 0
-	for( i=0; i<len; i++ )
-		reporterr( "ogcp[%d]=%f\n", i, ogcp[i] );
-	for( i=0; i<clus; i++ )
-		reporterr( "%s\n", seq[i] );
-	exit( 1 );
-#endif
 }
 
 void
@@ -1186,45 +990,6 @@ st_OpeningGapCount(double* ogcp, int clus, char** seq, double* eff, int len) {
 }
 
 void
-st_FinalGapCount_zure(double* fgcp, int clus, char** seq, double* eff, int len) {
-    int     i, j, gc, gb;
-    double  feff;
-    double* fpt;
-    char*   spt;
-
-    fpt = fgcp;
-    i = len + 1;
-    while (i--)
-        *fpt++ = 0.0;
-    for (j = 0; j < clus; j++) {
-        feff = (double)eff[j];
-        fpt = fgcp + 1;
-        spt = seq[j];
-        gc = (*spt == '-');
-        i = len;
-        //		for( i=1; i<len; i++ )
-        while (i--) {
-            gb = gc;
-            gc = (*++spt == '-');
-            {
-                if (gb * !gc)
-                    *fpt += feff;
-                fpt++;
-            }
-        }
-        {
-            gb = gc;
-            gc = 0;
-            //			gc = 1;
-            {
-                if (gb * !gc)
-                    *fpt += feff;
-            }
-        }
-    }
-}
-
-void
 st_FinalGapAdd(double* fgcp, int clus, char** seq, double* eff, int len) {
     int     i, j, gc, gb;
     double* fpt;
@@ -1233,10 +998,6 @@ st_FinalGapAdd(double* fgcp, int clus, char** seq, double* eff, int len) {
     double  neweff = eff[newmem];
     double  orieff = 1.0 - neweff;
     double  feff;
-
-    //	fpt = fgcp;
-    //	i = len;
-    //	while( i-- ) *fpt++ = 0.0;
 
     j = clus - 1;
     //	for( j=0; j<clus; j++ )
@@ -1351,273 +1112,6 @@ getGapPattern(double* fgcp, int clus, char** seq, double* eff, int len) {
 }
 
 void
-getdigapfreq_st(double* freq, int clus, char** seq, double* eff, int len) {
-    int    i, j;
-    double feff;
-    for (i = 0; i < len + 1; i++)
-        freq[i] = 0.0;
-    for (i = 0; i < clus; i++) {
-        feff = eff[i];
-        if (0 && seq[i][0] == '-')  // machigai kamo
-            freq[0] += feff;
-        for (j = 1; j < len; j++) {
-            if (seq[i][j] == '-' && seq[i][j - 1] == '-')
-                freq[j] += feff;
-        }
-        if (0 && seq[i][len - 1] == '-')
-            freq[len] += feff;
-    }
-    //	reporterr(       "\ndigapf = \n" );
-    //	for( i=0; i<len+1; i++ ) reporterr(       "%5.3f ", freq[i] );
-}
-
-void
-getdiaminofreq_x(double* freq, int clus, char** seq, double* eff, int len) {
-    int    i, j;
-    double feff;
-    for (i = 0; i < len + 2; i++)
-        freq[i] = 0.0;
-    for (i = 0; i < clus; i++) {
-        feff = eff[i];
-        if (seq[i][0] != '-')  // tadashii
-            freq[0] += feff;
-        for (j = 1; j < len; j++) {
-            if (seq[i][j] != '-' && seq[i][j - 1] != '-')
-                freq[j] += feff;
-        }
-        if (1 && seq[i][len - 1] != '-')  // xxx wo tsukawanaitoki [len-1] nomi
-            freq[len] += feff;
-    }
-    //	reporterr(       "\ndiaaf = \n" );
-    //	for( i=0; i<len+1; i++ ) reporterr(       "%5.3f ", freq[i] );
-}
-
-void
-getdiaminofreq_st(double* freq, int clus, char** seq, double* eff, int len) {
-    int    i, j;
-    double feff;
-    for (i = 0; i < len + 1; i++)
-        freq[i] = 0.0;
-    for (i = 0; i < clus; i++) {
-        feff = eff[i];
-        if (seq[i][0] != '-')
-            freq[0] += feff;
-        for (j = 1; j < len; j++) {
-            if (seq[i][j] != '-' && seq[i][j - 1] != '-')
-                freq[j] += feff;
-        }
-        //		if( 1 && seq[i][len-1] != '-' ) // xxx wo tsukawanaitoki [len-1] nomi
-        freq[len] += feff;
-    }
-    //	reporterr(       "\ndiaaf = \n" );
-    //	for( i=0; i<len+1; i++ ) reporterr(       "%5.3f ", freq[i] );
-}
-
-void
-getdigapfreq_part(double* freq, int clus, char** seq, double* eff, int len, char* sgappat, char* egappat) {
-    int    i, j;
-    double feff;
-    for (i = 0; i < len + 2; i++)
-        freq[i] = 0.0;
-    for (i = 0; i < clus; i++) {
-        feff = eff[i];
-        //		if( seq[i][0] == '-' )
-        if (seq[i][0] == '-' && sgappat[i] == '-')
-            freq[0] += feff;
-        for (j = 1; j < len; j++) {
-            if (seq[i][j] == '-' && seq[i][j - 1] == '-')
-                freq[j] += feff;
-        }
-        //		if( seq[i][len] == '-' && seq[i][len-1] == '-' ) // xxx wo tsukawanaitoki arienai
-        if (egappat[i] == '-' && seq[i][len - 1] == '-')
-            freq[len] += feff;
-    }
-    //	reporterr(       "\ndigapf = \n" );
-    //	for( i=0; i<len+1; i++ ) reporterr(       "%5.3f ", freq[i] );
-}
-
-void
-getdiaminofreq_part(double* freq, int clus, char** seq, double* eff, int len, char* sgappat, char* egappat) {
-    int    i, j;
-    double feff;
-    for (i = 0; i < len + 2; i++)
-        freq[i] = 0.0;
-    for (i = 0; i < clus; i++) {
-        feff = eff[i];
-        if (seq[i][0] != '-' && sgappat[i] != '-')
-            freq[0] += feff;
-        for (j = 1; j < len; j++) {
-            if (seq[i][j] != '-' && seq[i][j - 1] != '-')
-                freq[j] += feff;
-        }
-        //		if( 1 && seq[i][len-1] != '-' ) // xxx wo tsukawanaitoki [len-1] nomi
-        if (egappat[i] != '-' && seq[i][len - 1] != '-')  // xxx wo tsukawanaitoki [len-1] nomi
-            freq[len] += feff;
-    }
-    //	reporterr(       "\ndiaaf = \n" );
-    //	for( i=0; i<len+1; i++ ) reporterr(       "%5.3f ", freq[i] );
-}
-
-void
-getgapfreq_zure_part(double* freq, int clus, char** seq, double* eff, int len, char* sgap) {
-    int    i, j;
-    double feff;
-    for (i = 0; i < len + 2; i++)
-        freq[i] = 0.0;
-    for (i = 0; i < clus; i++) {
-        feff = eff[i];
-        if (sgap[i] == '-')
-            freq[0] += feff;
-        for (j = 0; j < len; j++) {
-            if (seq[i][j] == '-')
-                freq[j + 1] += feff;
-        }
-        //		if( egap[i] == '-' )
-        //			freq[len+1] += feff;
-    }
-    //	reporterr(       "\ngapf = \n" );
-    //	for( i=0; i<len+1; i++ ) reporterr(       "%5.3f ", freq[i] );
-}
-
-void
-getgapfreq_zure(double* freq, int clus, char** seq, double* eff, int len) {
-    int    i, j;
-    double feff;
-    for (i = 0; i < len + 1; i++)
-        freq[i] = 0.0;
-    for (i = 0; i < clus; i++) {
-        feff = eff[i];
-        for (j = 0; j < len; j++) {
-            if (seq[i][j] == '-')
-                freq[j + 1] += feff;
-        }
-    }
-    freq[len + 1] = 0.0;
-    //	reporterr(       "\ngapf = \n" );
-    //	for( i=0; i<len+1; i++ ) reporterr(       "%5.3f ", freq[i] );
-}
-
-void
-getgapfreq(double* freq, int clus, char** seq, double* eff, int len) {
-    int    i, j;
-    double feff;
-    for (i = 0; i < len + 1; i++)
-        freq[i] = 0.0;
-    for (i = 0; i < clus; i++) {
-        feff = eff[i];
-        for (j = 0; j < len; j++) {
-            if (seq[i][j] == '-')
-                freq[j] += feff;
-        }
-    }
-    freq[len] = 0.0;
-    //	reporterr(       "\ngapf = \n" );
-    //	for( i=0; i<len+1; i++ ) reporterr(       "%5.3f ", freq[i] );
-}
-
-void
-st_getGapPattern(Gappat** pat, int clus, char** seq, double* eff, int len) {
-    int      i, j, k, gb, gc;
-    int      known;
-    double   feff;
-    Gappat** fpt;
-    char*    spt;
-    int      gaplen;
-
-    fpt = pat;
-    i = len + 1;
-    while (i--) {
-        if (*fpt)
-            free(*fpt);
-        *fpt++ = NULL;
-    }
-
-    for (j = 0; j < clus; j++) {
-        //		reporterr(       "seq[%d] = %s\n", j, seq[j] );
-        feff = (double)eff[j];
-
-        fpt = pat;
-        *fpt = NULL;  // Falign.c kara yobareru tokiha chigau.
-        spt = seq[j];
-        gc = 0;
-        gaplen = 0;
-
-        for (i = 0; i < len + 1; i++)
-        //		while( i-- )
-        {
-            //			reporterr(       "i=%d, gaplen = %d\n", i, gaplen );
-            gb = gc;
-            gc = (i != len && *spt++ == '-');
-            if (gc)
-                gaplen++;
-            else {
-                if (gb && gaplen) {
-                    k = 1;
-                    known = 0;
-                    if (*fpt)
-                        for (; (*fpt)[k].len != -1; k++) {
-                            if ((*fpt)[k].len == gaplen) {
-                                //							reporterr(       "known\n" );
-                                known = 1;
-                                break;
-                            }
-                        }
-
-                    if (known == 0) {
-                        *fpt = (Gappat*)realloc(*fpt, (k + 3) * sizeof(Gappat));  // mae1 (total), ato2 (len0), term
-                        if (!*fpt) {
-                            reporterr("Cannot allocate gappattern!'n");
-                            reporterr("Use an approximate method, with the --mafft5 option.\n");
-                            exit(1);
-                        }
-                        (*fpt)[k].freq = 0.0;
-                        (*fpt)[k].len = gaplen;
-                        (*fpt)[k + 1].len = -1;
-                        (*fpt)[k + 1].freq = 0.0;  // iranai
-                        //						reporterr(       "gaplen=%d, Unknown, %f\n", gaplen, (*fpt)[k].freq );
-                    }
-
-                    //					reporterr(       "adding pos %d, len=%d, k=%d, freq=%f->", i, gaplen, k, (*fpt)[k].freq );
-                    (*fpt)[k].freq += feff;
-                    //					reporterr(       "%f\n", (*fpt)[k].freq );
-                    gaplen = 0;
-                }
-            }
-            fpt++;
-        }
-    }
-#if 1
-    for (j = 0; j < len + 1; j++) {
-        if (pat[j]) {
-            //			reporterr(       "j=%d\n", j );
-            //			for( i=1; pat[j][i].len!=-1; i++ )
-            //				reporterr(       "pos=%d, i=%d, len=%d, freq=%f\n", j, i, pat[j][i].len, pat[j][i].freq );
-
-            pat[j][0].len = 0;  // iminashi
-            pat[j][0].freq = 0.0;
-            for (i = 1; pat[j][i].len != -1; i++) {
-                pat[j][0].freq += pat[j][i].freq;
-                //				reporterr(       "totaling, i=%d, result = %f\n", i, pat[j][0].freq );
-            }
-            //			reporterr(       "totaled, result = %f\n", pat[j][0].freq );
-
-            pat[j][i].freq = 1.0 - pat[j][0].freq;
-            pat[j][i].len = 0;  // imiari
-            pat[j][i + 1].len = -1;
-        } else {
-            pat[j] = (Gappat*)calloc(3, sizeof(Gappat));
-            pat[j][0].freq = 0.0;
-            pat[j][0].len = 0;  // iminashi
-
-            pat[j][1].freq = 1.0 - pat[j][0].freq;
-            pat[j][1].len = 0;  // imiari
-            pat[j][2].len = -1;
-        }
-    }
-#endif
-}
-
-void
 gapcountadd(double* freq, char** seq, int nseq, double* eff, int lgth) {
     int    i;
     int    j = nseq - 1;
@@ -1670,7 +1164,7 @@ dist2offset(double dist) {
 }
 
 void
-makedynamicmtx(Context* ctx, double** out, double** in, double offset) {
+makedynamicmtx(aln_Context* ctx, double** out, double** in, double offset) {
     int    i, j, ii, jj;
     double av;
 
@@ -1924,7 +1418,7 @@ movereg_swap(char* seq1, char* seq2, LocalHom* tmpptr, int* start1pt, int* start
 }
 
 void
-fillimp(aln_Opts opts, double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2) {
+fillimp(aln_Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, double* eff1_kozo, double* eff2_kozo, LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2) {
     int       i, j, k1, k2, start1, start2, end1, end2;
     double    effij, effijx, effij_kozo;
     char *    pt1, *pt2;
@@ -1934,7 +1428,7 @@ fillimp(aln_Opts opts, double** impmtx, int clus1, int clus2, int lgth1, int lgt
     for (i = 0; i < lgth1; i++)
         for (j = 0; j < lgth2; j++)
             impmtx[i][j] = 0.0;
-    effijx = 1.0 * opts.fastathreshold;
+    effijx = 1.0 * ctx->fastathreshold;
     for (i = 0; i < clus1; i++) {
         if (swaplist && swaplist[i])
             movefunc = movereg_swap;

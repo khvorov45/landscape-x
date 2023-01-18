@@ -4,7 +4,7 @@
 #define USEDISTONTREE 1
 
 void
-cpmx_calc(Context* ctx, char** seq, double** cpmx, double* eff, int lgth, int clus) {
+cpmx_calc(aln_Context* ctx, char** seq, double** cpmx, double* eff, int lgth, int clus) {
     int    i, j, k;
     double totaleff = 0.0;
 
@@ -19,7 +19,7 @@ cpmx_calc(Context* ctx, char** seq, double** cpmx, double* eff, int lgth, int cl
 }
 
 void
-cpmx_calc_add(Context* ctx, char** seq, double** cpmx, double* eff, int lgth, int clus) {
+cpmx_calc_add(aln_Context* ctx, char** seq, double** cpmx, double* eff, int lgth, int clus) {
     double neweff, orieff;
     int    newmem, i, j;
 
@@ -34,7 +34,7 @@ cpmx_calc_add(Context* ctx, char** seq, double** cpmx, double* eff, int lgth, in
 }
 
 void
-cpmx_calc_new(Context* ctx, char** seq, double** cpmx, double* eff, int lgth, int clus) {
+cpmx_calc_new(aln_Context* ctx, char** seq, double** cpmx, double* eff, int lgth, int clus) {
     int     i, j, k;
     double  feff;
     double *cpmxpt, **cpmxptpt;
@@ -59,7 +59,7 @@ cpmx_calc_new(Context* ctx, char** seq, double** cpmx, double* eff, int lgth, in
 }
 
 void
-MScpmx_calc_new(Context* ctx, char** seq, double** cpmx, double* eff, int lgth, int clus) {
+MScpmx_calc_new(aln_Context* ctx, char** seq, double** cpmx, double* eff, int lgth, int clus) {
     int      i, j, k;
     double   feff;
     double **cpmxptpt, *cpmxpt;
@@ -84,7 +84,7 @@ MScpmx_calc_new(Context* ctx, char** seq, double** cpmx, double* eff, int lgth, 
 }
 
 void
-cpmx_ribosum(Context* ctx, char** seq, char** seqr, char* dir, double** cpmx, double* eff, int lgth, int clus) {
+cpmx_ribosum(aln_Context* ctx, char** seq, char** seqr, char* dir, double** cpmx, double* eff, int lgth, int clus) {
     int      i, j, k;
     double   feff;
     double **cpmxptpt, *cpmxpt;

@@ -111,7 +111,7 @@ alignWithMafft(prb_Arena* arena, prb_Str mafftExe, prb_Str inputPath, prb_Str ma
     return mafftAlignedSeqs;
 }
 
-aln_AlignResult tbfast_main(aln_Str* strings, int32_t stringsCount, void* out, intptr_t outBytes, aln_Opts opts);
+aln_AlignResult tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outBytes);
 
 int
 main() {
@@ -172,7 +172,7 @@ main() {
     prb_assert(prb_setWorkingDir(arena, tempDir));
     intptr_t        outBytes = prb_arenaFreeSize(arena);
     void*           outBuf = prb_arenaFreePtr(arena);
-    aln_AlignResult myAlignResult = tbfast_main((aln_Str*)genSeq.seqs, genSeq.seqCount, outBuf, outBytes, aln_defaultOpts());
+    aln_AlignResult myAlignResult = tbfast_main((aln_Str*)genSeq.seqs, genSeq.seqCount, outBuf, outBytes);
     prb_arenaChangeUsed(arena, myAlignResult.bytesWritten);
     prb_assert(prb_setWorkingDir(arena, cwd));
 

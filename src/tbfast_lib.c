@@ -5,15 +5,25 @@
 #include "mltaln.h"
 
 aln_AlignResult
-tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outBytes, aln_Opts opts) {
+tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outBytes) {
     aln_Arena permArena_ = {.base = out, .size = outBytes / 4};
     aln_Arena tempArena_ = {.base = (uint8_t*)out + permArena_.size, .size = outBytes - permArena_.size};
 
     aln_Arena* permArena = &permArena_;
     aln_Arena* tempArena = &tempArena_;
 
-    Context* ctx = aln_arenaAllocStruct(tempArena, Context);
+    aln_Context* ctx = aln_arenaAllocStruct(tempArena, aln_Context);
 
+    ctx->penalty = (int)(0.6 * (-1530.0) + 0.5);
+    ctx->ppenalty_dist = 1530;
+    ctx->offset = (int)(0.6 * 100 + 0.5);
+    ctx->constraint = 2;
+    ctx->ppenalty_ex = -100;
+    ctx->minimumweight = 0.00001;
+    ctx->fastathreshold = 2.7;
+    ctx->sueff_global = 0.1;
+    ctx->treemethod = 'X';
+    ctx->gap = '-';
     ctx->nalphabets = 26;
     ctx->njob = stringsCount;
     ctx->outgap = 1;
@@ -80,11 +90,11 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
             double*  datafreq = AllocateDoubleVec(20);
             double*  freq = AllocateDoubleVec(20);
 
-            aln_assert(opts.ppenalty_dist != NOTSPECIFIED);
-            aln_assert(opts.ppenalty_ex != NOTSPECIFIED);
+            aln_assert(ctx->ppenalty_dist != NOTSPECIFIED);
+            aln_assert(ctx->ppenalty_ex != NOTSPECIFIED);
 
-            ctx->penalty_dist = (int)(0.6 * opts.ppenalty_dist + 0.5);
-            ctx->penalty_ex = (int)(0.6 * opts.ppenalty_ex + 0.5);
+            ctx->penalty_dist = (int)(0.6 * ctx->ppenalty_dist + 0.5);
+            ctx->penalty_ex = (int)(0.6 * ctx->ppenalty_ex + 0.5);
 
             {
                 char   locaminod[] = "ARNDCQEGHILKMFPSTWYVBZX.-J";
@@ -163,7 +173,7 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
 
             for (int i = 0; i < 20; i++)
                 for (int j = 0; j < 20; j++)
-                    n_distmp[i][j] -= opts.offset;
+                    n_distmp[i][j] -= ctx->offset;
 
             for (int i = 0; i < 20; i++) {
                 for (int j = 0; j < 20; j++) {
@@ -269,10 +279,10 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
                     distseq1[0] = dseq[i];
                     distseq2[0] = dseq[j];
 
-                    G__align11(opts, ctx, ctx->n_dis_consweight_multi, mseq1, mseq2, alloclen, ctx->outgap, ctx->outgap);
+                    G__align11(ctx, ctx->n_dis_consweight_multi, mseq1, mseq2, alloclen, ctx->outgap, ctx->outgap);
                     int thereisx = countsOfXs[i] + countsOfXs[j];
                     if (thereisx) {
-                        G__align11_noalign(ctx, ctx->n_dis_consweight_multi, opts.penalty, ctx->penalty_ex, distseq1, distseq2);
+                        G__align11_noalign(ctx, ctx->n_dis_consweight_multi, ctx->penalty, ctx->penalty_ex, distseq1, distseq2);
                     }
                 }
             }
@@ -300,7 +310,7 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     Treedep* dep = (Treedep*)calloc(ctx->njob, sizeof(Treedep));
     {
         double** iscore = AllocateFloatHalfMtx(ctx->njob);
-        fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(opts, ctx, ctx->njob, iscore, topol, len, dep, 1, 1);
+        fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(ctx, ctx->njob, iscore, topol, len, dep, 1, 1);
     }
 
     int** localmem = AllocateIntMtx(2, ctx->njob + 1);
@@ -356,7 +366,7 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         for (int l = 0; l < ctx->njob; l++)
             fftlog[l] = 1;
 
-        calcimportance_half(opts, ctx->njob, eff, bseq, localhomtable, alloclen);
+        calcimportance_half(ctx, ctx->njob, eff, bseq, localhomtable, alloclen);
 
         char** mseq1 = AllocateCharMtx(ctx->njob, 0);
         char** mseq2 = AllocateCharMtx(ctx->njob, 0);
@@ -414,13 +424,13 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
             // TODO(sen) Out of memory error?
             aln_assert(alloclen >= len1 + len2);
 
-            clus1 = fastconjuction_noname(localmem[0], bseq, mseq1, effarr1, eff, indication1, opts.minimumweight, &orieff1);
-            clus2 = fastconjuction_noname(localmem[1], bseq, mseq2, effarr2, eff, indication2, opts.minimumweight, &orieff2);
+            clus1 = fastconjuction_noname(localmem[0], bseq, mseq1, effarr1, eff, indication1, ctx->minimumweight, &orieff1);
+            clus2 = fastconjuction_noname(localmem[1], bseq, mseq2, effarr2, eff, indication2, ctx->minimumweight, &orieff2);
 
             fastshrinklocalhom_half(localmem[0], localmem[1], localhomtable, localhomshrink);
 
             imp_match_init_strict(
-                opts,
+                ctx,
                 clus1,
                 clus2,
                 strlen(mseq1[0]),
@@ -438,10 +448,9 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
             );
 
             A__align(
-                opts,
                 ctx,
                 dynamicmtx,
-                opts.penalty,
+                ctx->penalty,
                 ctx->penalty_ex,
                 mseq1,
                 mseq2,
@@ -450,7 +459,7 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
                 clus1,
                 clus2,
                 alloclen,
-                opts.constraint,
+                ctx->constraint,
                 &dumdb,
                 NULL,
                 NULL,
