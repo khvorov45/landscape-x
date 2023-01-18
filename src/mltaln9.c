@@ -958,16 +958,16 @@ dist2offset(double dist) {
 }
 
 void
-makedynamicmtx(aln_Context* ctx, double** out, double** in, double offset) {
+makedynamicmtx(aln_Context* ctx, double** out, double offset) {
     int    i, j, ii, jj;
-    double av;
 
     offset = dist2offset(offset * 2.0);  // offset 0..1 -> 0..2
 
     for (i = 0; i < ctx->nalphabets; i++)
         for (j = 0; j < ctx->nalphabets; j++) {
-            out[i][j] = in[i][j];
+            out[i][j] = aln_matrix2get(ctx->n_dis_consweight_multi, i, j);
         }
+
     if (offset == 0.0)
         return;
 
@@ -979,29 +979,11 @@ makedynamicmtx(aln_Context* ctx, double** out, double** in, double offset) {
             jj = (int)ctx->amino[j];
             if (jj == '-')
                 continue;  // text no toki arieru
-            out[i][j] = in[i][j] + offset * 600;
+            out[i][j] = aln_matrix2get(ctx->n_dis_consweight_multi, i, j) + offset * 600;
         }
     }
 
     return;
-
-    av = 0.0;
-    for (i = 0; i < ctx->nalphabets; i++) {
-        if (ii == '-')
-            continue;  // text no toki arieru
-        av += out[i][i];
-    }
-    av /= (double)ctx->nalphabets;
-
-    for (i = 0; i < ctx->nalphabets; i++) {
-        if (ctx->amino[i] == '-')
-            continue;  // text no toki arieru
-        for (j = 0; j < ctx->nalphabets; j++) {
-            if (ctx->amino[j] == '-')
-                continue;  // text no toki arieru
-            out[i][j] = out[i][j] * 600 / av;
-        }
-    }
 }
 
 static void

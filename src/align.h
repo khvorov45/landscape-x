@@ -135,32 +135,32 @@ typedef struct aln_Matrix2I32 {
 } aln_Matrix2I32;
 
 typedef struct aln_Matrix2F32 {
-    float* ptr;
-    int32_t  nrow;
-    int32_t  ncol;
+    float*  ptr;
+    int32_t nrow;
+    int32_t ncol;
 } aln_Matrix2F32;
 
 typedef struct aln_Context {
-    int32_t          penalty;
-    int32_t          offset;
-    int32_t          constraint;
-    double           minimumweight;
-    double           fastathreshold;
-    double           sueff_global;
-    char             treemethod;
-    int32_t          njob;
-    int32_t          amino_n[256];
+    int32_t        penalty;
+    int32_t        offset;
+    int32_t        constraint;
+    float          minimumweight;
+    float          fastathreshold;
+    float          sueff_global;
+    char           treemethod;
+    int32_t        njob;
+    int32_t        amino_n[256];
     aln_Matrix2I32 n_dis;
-    double**         n_dis_consweight_multi;
-    uint8_t          amino[256];
-    int32_t          penalty_dist;
-    int32_t          penalty_ex;
-    int32_t          outgap;
-    double           consweight_multi;
-    int32_t          commonAlloc1;
-    int32_t          commonAlloc2;
-    int32_t**        commonIP;
-    int32_t          nalphabets;
+    aln_Matrix2F32 n_dis_consweight_multi;
+    uint8_t        amino[256];
+    int32_t        penalty_dist;
+    int32_t        penalty_ex;
+    int32_t        outgap;
+    float          consweight_multi;
+    int32_t        commonAlloc1;
+    int32_t        commonAlloc2;
+    int32_t**      commonIP;
+    int32_t        nalphabets;
 } aln_Context;
 
 typedef struct aln_LocalHom {

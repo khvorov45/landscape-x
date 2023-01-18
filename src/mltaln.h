@@ -269,7 +269,7 @@ extern void intcat(int* s1, int* s2);
 extern void gapcountf(double* freq, char** seq, int nseq, double* eff, int lgth);
 extern void gapcountadd(double* freq, char** seq, int nseq, double* eff, int lgth);
 extern void outgapcount(double* freq, int nseq, char* gappat, double* eff);
-extern void makedynamicmtx(aln_Context* ctx, double** out, double** in, double offset);
+extern void makedynamicmtx(aln_Context* ctx, double** out, double offset);
 
 extern int* topolorderz(int* order, int*** topol, Treedep* dep, int pos, int nchild);
 extern void fillimp(aln_Context* ctx, double** impmtx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, aln_LocalHom*** localhom, char* swaplist, int* orinum1, int* orinum2);

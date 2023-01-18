@@ -295,7 +295,7 @@ G__align11(aln_Context* ctx, char** seq1, char** seq2, int alloclen) {
     }
     for (i = 0; i < ctx->nalphabets; i++)
         for (j = 0; j < ctx->nalphabets; j++)
-            amino_dynamicmtx[(uint8_t)ctx->amino[i]][(uint8_t)ctx->amino[j]] = (double)ctx->n_dis_consweight_multi[i][j];
+            amino_dynamicmtx[(uint8_t)ctx->amino[i]][(uint8_t)ctx->amino[j]] = aln_matrix2get(ctx->n_dis_consweight_multi, i, j);
 
     mseq1[0] = mseq[0];
     mseq2[0] = mseq[1];
@@ -588,7 +588,7 @@ G__align11_noalign(aln_Context* ctx, char** seq1, char** seq2)
 
     for (i = 0; i < ctx->nalphabets; i++)
         for (j = 0; j < ctx->nalphabets; j++)
-            amino_dynamicmtx[(int)ctx->amino[i]][(int)ctx->amino[j]] = (double)ctx->n_dis_consweight_multi[i][j];
+            amino_dynamicmtx[(int)ctx->amino[i]][(int)ctx->amino[j]] = aln_matrix2get(ctx->n_dis_consweight_multi, i, j);
 
 #if 0
 	for( i=0; i<lgth1; i++ ) 
