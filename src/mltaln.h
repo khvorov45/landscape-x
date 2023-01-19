@@ -247,7 +247,6 @@ extern void      weightFromABranch(int nseq, double* result, Node* stopol, int**
 extern void      distFromABranch(int nseq, double* result, Node* stopol, int*** topol, double** len, int step, int LorR);
 
 extern void gapireru(char* res, char* ori, char* gt);
-extern int  seqlen(char* seq, char gap);
 extern void st_FinalGapCount(double* fgcp, int clus, char** seq, double* eff, int len);
 extern void st_FinalGapAdd(double* fgcp, int clus, char** seq, double* eff, int len);
 extern void st_OpeningGapCount(double* ogcp, int clus, char** seq, double* eff, int len);
@@ -257,14 +256,11 @@ extern void new_OpeningGapCount(double* ogcp, int clus, char** seq, double* eff,
 extern void getGapPattern(double* fgcp, int clus, char** seq, double* eff, int len);
 extern void getkyokaigap(char* g, char** s, int pos, int n);
 void        makegrouprna(RNApair*** group, RNApair*** all, int* memlist);
-extern void fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(aln_Context* ctx, int nseq, double** eff, int*** topol, double** len, Treedep*, int efffree);
+extern void fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(aln_Context* ctx, double** eff, int*** topol, double** len, Treedep*);
 extern void imp_match_init_strict(aln_Context* ctx, int clus1, int clus2, int lgth1, int lgth2, char** seq1, char** seq2, double* eff1, double* eff2, aln_LocalHom*** localhom, char* swaplist, int* memlist1, int* memlist2);
 extern void cpmx_ribosum(aln_Context* ctx, char** seq, char** seqr, char* dir, double** cpmx, double* eff, int lgth, int clus);
 extern void assignstrweight(int nseq, double* strweight, Node* stopol, int*** topol, int step, int LorR, char* kozoari, double* seqweight);
 extern void intcpy(int* s1, int* s2);
-extern void intncpy(int* s1, int* s2, int n);
-extern void fltncpy(double* s1, double* s2, int n);
-extern void intcat(int* s1, int* s2);
 extern void gapcountf(double* freq, char** seq, int nseq, double* eff, int lgth);
 extern void gapcountadd(double* freq, char** seq, int nseq, double* eff, int lgth);
 extern void outgapcount(double* freq, int nseq, char* gappat, double* eff);

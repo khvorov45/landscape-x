@@ -30,7 +30,6 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     ctx->minimumweight = 0.00001;
     ctx->fastathreshold = 2.7;
     ctx->sueff_global = 0.1;
-    ctx->treemethod = 'X';
     ctx->nalphabets = 26;
     ctx->njob = stringsCount;
     ctx->outgap = 1;
@@ -207,7 +206,7 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
     Treedep* dep = (Treedep*)calloc(ctx->njob, sizeof(Treedep));
     {
         double** iscore = AllocateFloatHalfMtx(ctx->njob);
-        fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(ctx, ctx->njob, iscore, topol, len, dep, 1);
+        fixed_musclesupg_double_realloc_nobk_halfmtx_memsave(ctx, iscore, topol, len, dep);
     }
 
     int** localmem = AllocateIntMtx(2, ctx->njob + 1);
@@ -220,7 +219,8 @@ tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outByte
         eff[i] /= (double)100;
     }
 
-    int    alloclen = maxInputSeqLen * 2 + 1;
+    // TODO(sen) Figure out what to do when running out here
+    int    alloclen = maxInputSeqLen * 4 + 1;
     char** bseq = AllocateCharMtx(ctx->njob, alloclen);
 
     for (int i = 0; i < ctx->njob; i++) {
