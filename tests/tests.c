@@ -1,6 +1,8 @@
 #include "../cbuild.h"
 
 #define aln_assert(condition) prb_assert(condition)
+#define aln_PUBLICAPI static
+#define aln_IMPLEMENTATION
 #include "../src/align.h"
 
 #define function static
@@ -70,6 +72,7 @@ generateSequences(prb_Arena* arena, prb_Rng* rng, char* choices, i32 choicesCoun
     return result;
 }
 
+#if 0
 function prb_Str*
 getSeqsFromFile(prb_Arena* arena, prb_Str filepath) {
     prb_Str*                 seqs = 0;
@@ -114,6 +117,7 @@ alignWithMafft(prb_Arena* arena, prb_Str mafftExe, prb_Str inputPath, prb_Str ma
 }
 
 aln_AlignResult tbfast_main(aln_Str* strings, intptr_t stringsCount, void* out, intptr_t outBytes);
+#endif 
 
 int
 main() {
@@ -122,8 +126,6 @@ main() {
     prb_Arena*    arena = &arena_;
     prb_Rng       rng_ = prb_createRng(1);
     prb_Rng*      rng = &rng_;
-    prb_Str       testsDir = prb_getParentDir(arena, prb_STR(__FILE__));
-    prb_Str       rootDir = prb_getParentDir(arena, testsDir);
 
     GenerateSequencesResult genSeq = {};
     {
@@ -136,6 +138,10 @@ main() {
             prb_writelnToStdout(arena, genSeq.seqs[seqIndex]);
         }
     }
+
+#if 0
+    prb_Str       testsDir = prb_getParentDir(arena, prb_STR(__FILE__));
+    prb_Str       rootDir = prb_getParentDir(arena, testsDir);
 
     prb_Str fastaOutputPath = prb_pathJoin(arena, testsDir, prb_STR("testseqs.fasta"));
     {
@@ -186,6 +192,10 @@ main() {
         // prb_writelnToStdout(arena, mafftAlignedSeqs[seqIndex]);
         // prb_assert(prb_streq(mafftAlignedSeqs[seqIndex], myStrPrb));
     }
+#endif
+
+    aln_AlignResult alnResult = aln_align((aln_Str*)genSeq.seqs, genSeq.seqCount, prb_arenaFreePtr(arena), 20 * prb_MEGABYTE);
+    prb_arenaChangeUsed(arena, alnResult.bytesWritten);
 
     prb_writelnToStdout(arena, prb_fmt(arena, "tests took %.2fms", prb_getMsFrom(testsStart)));
     return 0;

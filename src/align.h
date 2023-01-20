@@ -34,6 +34,8 @@ typedef struct aln_AlignResult {
     intptr_t bytesWritten;
 } aln_AlignResult;
 
+aln_PUBLICAPI aln_AlignResult aln_align(aln_Str* strings, intptr_t stringCount, void* mem, intptr_t memBytes);
+
 // TODO(sen) Remove private forward decls once we pull everything into 1 TU
 
 //
@@ -144,6 +146,20 @@ aln_PRIVATEAPI void           aln_endTempMemory(aln_TempMemory temp);
 #endif  // aln_HEADER
 
 #ifdef aln_IMPLEMENTATION
+
+aln_PUBLICAPI aln_AlignResult
+aln_align(aln_Str* strings, intptr_t stringCount, void* mem, intptr_t memBytes) {
+    aln_Arena outputArena = {.base = mem, .size = memBytes / 4};
+    aln_Arena arena_ = {.base = (uint8_t*)outputArena.base + outputArena.size, .size = memBytes - outputArena.size};
+    aln_Arena* arena = &arena_;
+
+    aln_unused(arena);
+    aln_unused(strings);
+    aln_unused(stringCount);
+
+    aln_AlignResult result = {};
+    return result;
+}
 
 aln_PRIVATEAPI int32_t
 aln_getOffsetForAlignment(void* ptr, int32_t align) {

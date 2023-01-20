@@ -1,1 +1,1 @@
-clang -g -Wall -Wextra -Werror -Wfatal-errors ./tests/tests.c ./build-debug/src/align.a -o ./tests/tests.bin -lpthread -lm && ./tests/tests.bin
+clang -g -Wall -Wextra -Werror -Wfatal-errors ./tests/tests.c -o ./tests/tests.bin && ./tests/tests.bin
