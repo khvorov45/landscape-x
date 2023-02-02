@@ -1,4 +1,4 @@
 ## usethis namespace: start
-#' @useDynLib sequencebox, sequencebox_c
+#' @useDynLib sequencebox, align_c
 ## usethis namespace: end
 "_PACKAGE"

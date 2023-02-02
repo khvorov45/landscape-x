@@ -1,3 +1,4 @@
 test_that("sequencebox", {
-    expect_equal(0, sequencebox())
+    ref <- "GTCCG"
+    expect_equal(align(ref, c("TCC", "GTC")), c("-TCC-", "GTC--"))
 })

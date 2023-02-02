@@ -3,12 +3,13 @@
 #pragma clang diagnostic ignored "-Wunused-function"
 #endif
 
+#ifdef __GNUC__
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-function"
+#endif
+
 #ifndef aln_HEADER
 #define aln_HEADER
-
-//
-// SECTION Alignment
-//
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -31,10 +32,10 @@ typedef struct aln_Str {
 typedef struct aln_AlignResult {
     aln_Str* seqs;
     intptr_t seqCount;
-    intptr_t bytesWritten;
+    intptr_t bytesWrittenToOutput;
 } aln_AlignResult;
 
-aln_PUBLICAPI aln_AlignResult aln_align(aln_Str* strings, intptr_t stringCount, void* mem, intptr_t memBytes);
+aln_PUBLICAPI aln_AlignResult aln_align(aln_Str* strings, intptr_t stringCount, void* outmem, intptr_t outmemBytes, void* tempmem, intptr_t tempmemBytes);
 
 #endif  // aln_HEADER
 
@@ -56,7 +57,7 @@ aln_PUBLICAPI aln_AlignResult aln_align(aln_Str* strings, intptr_t stringCount, 
 #define aln_unused(x) ((x) = (x))
 
 #ifndef aln_assert
-#define aln_assert(condition) do {if (condition) {} else {__builtin_debugtrap();}} while(0)
+#define aln_assert(condition)
 #endif
 // clang-format on
 
@@ -154,16 +155,24 @@ aln_strGetNullTerminated(aln_Arena* arena, aln_Str str) {
 }
 
 aln_PUBLICAPI aln_AlignResult
-aln_align(aln_Str* strings, intptr_t stringCount, void* mem, intptr_t memBytes) {
-    aln_Arena  outputArena = {.base = mem, .size = memBytes / 4};
-    aln_Arena  arena_ = {.base = (uint8_t*)outputArena.base + outputArena.size, .size = memBytes - outputArena.size};
+aln_align(aln_Str* strings, intptr_t stringCount, void* outmem, intptr_t outmemBytes, void* tempmem, intptr_t tempmemBytes) {
+    aln_Arena  arena_ = {.base = tempmem, .size = tempmemBytes};
     aln_Arena* arena = &arena_;
 
     aln_unused(arena);
-    aln_unused(strings);
-    aln_unused(stringCount);
 
-    aln_AlignResult result = {};
+    aln_Arena outputArena = {.base = outmem, .size = outmemBytes};
+    aln_Str*  alignedSeqs = aln_arenaAllocArray(&outputArena, aln_Str, stringCount);
+    for (intptr_t strInd = 0; strInd < stringCount; strInd++) {
+        aln_Str ogstr = strings[strInd];
+        char* alignedSeq = aln_arenaAllocArray(&outputArena, char, ogstr.len);
+        for (intptr_t charInd = 0; charInd < ogstr.len; charInd++) {
+            alignedSeq[charInd] = ogstr.ptr[charInd];
+        }
+        alignedSeqs[strInd] = (aln_Str) {alignedSeq, ogstr.len};
+    }
+
+    aln_AlignResult result = {.bytesWrittenToOutput = outputArena.used, .seqs = alignedSeqs, .seqCount = stringCount};
     return result;
 }
 
@@ -171,4 +180,8 @@ aln_align(aln_Str* strings, intptr_t stringCount, void* mem, intptr_t memBytes) 
 
 #ifdef __clang__
 #pragma clang diagnostic pop
+#endif
+
+#ifdef __GNUC__
+#pragma GCC diagnostic pop
 #endif
