@@ -19,6 +19,9 @@
 #define aln_PUBLICAPI
 #endif
 
+#define aln_matrix2index(matrix, row, col) (((row)*matrix.width) + (col))
+#define aln_matrix2get(matrix, row, col) matrix.ptr[aln_matrix2index(matrix, row, col)]
+
 typedef enum aln_Status {
     aln_Failure,
     aln_Success,
@@ -29,13 +32,40 @@ typedef struct aln_Str {
     intptr_t len;
 } aln_Str;
 
+typedef struct aln_Config {
+    void*    outmem;
+    intptr_t outmemBytes;
+    void*    tempmem;
+    intptr_t tempmemBytes;
+    bool     storeFinalMatrices;
+} aln_Config;
+
+typedef enum aln_CameFromDir {
+    aln_CameFromDir_TopLeft,
+    aln_CameFromDir_Top,
+    aln_CameFromDir_Left,
+} aln_CameFromDir;
+
+// Entry in a Needleman–Wunsch alignment matrix
+typedef struct aln_NWEntry {
+    float           score;
+    aln_CameFromDir cameFromDir;
+} aln_NWEntry;
+
+typedef struct aln_Matrix2NW {
+    aln_NWEntry* ptr;
+    intptr_t     width;
+    intptr_t     height;
+} aln_Matrix2NW;
+
 typedef struct aln_AlignResult {
-    aln_Str* seqs;
-    intptr_t seqCount;
-    intptr_t bytesWrittenToOutput;
+    aln_Str*       strs;
+    intptr_t       strCount;
+    aln_Matrix2NW* matrices;
+    intptr_t       bytesWrittenToOutput;
 } aln_AlignResult;
 
-aln_PUBLICAPI aln_AlignResult aln_align(aln_Str* strings, intptr_t stringCount, void* outmem, intptr_t outmemBytes, void* tempmem, intptr_t tempmemBytes);
+aln_PUBLICAPI aln_AlignResult aln_align(aln_Str reference, aln_Str* strings, intptr_t stringCount, aln_Config config);
 
 #endif  // aln_HEADER
 
@@ -49,12 +79,9 @@ aln_PUBLICAPI aln_AlignResult aln_align(aln_Str* strings, intptr_t stringCount, 
 #define aln_arenaAllocArray(arena, type, len) (type*)aln_arenaAllocAndZero(arena, (len) * (intptr_t)sizeof(type), alignof(type))
 #define aln_arenaAllocStruct(arena, type) (type*)aln_arenaAllocAndZero(arena, sizeof(type), alignof(type))
 #define aln_arenaAllocMatrix2(matrixType, dataType, arena, width_, height_) (matrixType) {.ptr = aln_arenaAllocArray(arena, dataType, width_ * height_), .width = width_, .height = height_}
-#define aln_arenaAllocMatrix2I32(arena, width, height) aln_arenaAllocMatrix2(aln_Matrix2I32, intptr_t, arena, width, height)
-#define aln_arenaAllocMatrix2F32(arena, width, height) aln_arenaAllocMatrix2(aln_Matrix2F32, float, arena, width, height)
-#define aln_arenaAllocMatrix2U8(arena, width, height) aln_arenaAllocMatrix2(aln_Matrix2U8, uint8_t, arena, width, height)
-#define aln_matrix2get(matrix, row, col) matrix.ptr[((row) * matrix.width) + (col)] 
 #define aln_isPowerOf2(x) (((x) > 0) && (((x) & ((x)-1)) == 0))
 #define aln_unused(x) ((x) = (x))
+#define aln_STR(x) (aln_Str) {x, aln_strlen(x)}
 
 #ifndef aln_assert
 #define aln_assert(condition)
@@ -64,6 +91,15 @@ aln_PUBLICAPI aln_AlignResult aln_align(aln_Str* strings, intptr_t stringCount, 
 #ifndef aln_PRIVATEAPI
 #define aln_PRIVATEAPI static
 #endif
+
+aln_PRIVATEAPI intptr_t
+aln_strlen(char* str) {
+    intptr_t result = 0;
+    while (str[result] != '\0') {
+        result += 1;
+    }
+    return result;
+}
 
 aln_PRIVATEAPI intptr_t
 aln_getOffsetForAlignment(void* ptr, intptr_t align) {
@@ -155,24 +191,131 @@ aln_strGetNullTerminated(aln_Arena* arena, aln_Str str) {
 }
 
 aln_PUBLICAPI aln_AlignResult
-aln_align(aln_Str* strings, intptr_t stringCount, void* outmem, intptr_t outmemBytes, void* tempmem, intptr_t tempmemBytes) {
-    aln_Arena  arena_ = {.base = tempmem, .size = tempmemBytes};
-    aln_Arena* arena = &arena_;
-
-    aln_unused(arena);
-
-    aln_Arena outputArena = {.base = outmem, .size = outmemBytes};
-    aln_Str*  alignedSeqs = aln_arenaAllocArray(&outputArena, aln_Str, stringCount);
+aln_align(aln_Str reference, aln_Str* strings, intptr_t stringCount, aln_Config config) {
+    aln_assert(reference.ptr && reference.len > 0);
+    aln_assert(strings);
+    aln_assert(stringCount > 0);
+    aln_assert(config.outmem);
+    aln_assert(config.outmemBytes > 0);
+    aln_assert(config.tempmem);
+    aln_assert(config.tempmemBytes > 0);
     for (intptr_t strInd = 0; strInd < stringCount; strInd++) {
         aln_Str ogstr = strings[strInd];
-        char* alignedSeq = aln_arenaAllocArray(&outputArena, char, ogstr.len);
-        for (intptr_t charInd = 0; charInd < ogstr.len; charInd++) {
-            alignedSeq[charInd] = ogstr.ptr[charInd];
-        }
-        alignedSeqs[strInd] = (aln_Str) {alignedSeq, ogstr.len};
+        aln_assert(ogstr.ptr && ogstr.len > 0);
     }
 
-    aln_AlignResult result = {.bytesWrittenToOutput = outputArena.used, .seqs = alignedSeqs, .seqCount = stringCount};
+    aln_Arena  outputArena_ = {.base = config.outmem, .size = config.outmemBytes};
+    aln_Arena* outputArena = &outputArena_;
+    aln_Arena  arena_ = {.base = config.tempmem, .size = config.tempmemBytes};
+    aln_Arena* arena = &arena_;
+
+    intptr_t longestInputLen = reference.len;
+    for (intptr_t strInd = 0; strInd < stringCount; strInd++) {
+        longestInputLen = aln_max(longestInputLen, strings[strInd].len);
+    }
+
+    aln_Matrix2NW maxGrid = aln_arenaAllocMatrix2(aln_Matrix2NW, aln_NWEntry, arena, reference.len + 1, longestInputLen + 1);
+
+    aln_Matrix2NW* storedMatrices = 0;
+    if (config.storeFinalMatrices) {
+        storedMatrices = aln_arenaAllocArray(outputArena, aln_Matrix2NW, stringCount);
+    }
+
+    aln_Str* alignedSeqs = aln_arenaAllocArray(outputArena, aln_Str, stringCount);
+    for (intptr_t strInd = 0; strInd < stringCount; strInd++) {
+        aln_Str ogstr = strings[strInd];
+
+        aln_Matrix2NW thisGrid = maxGrid;
+        thisGrid.height = ogstr.len + 1;
+        aln_assert(thisGrid.height <= maxGrid.height);
+
+        aln_matrix2get(thisGrid, 0, 0).score = 0;
+        for (intptr_t colIndex = 1; colIndex < thisGrid.width; colIndex++) {
+            aln_matrix2get(thisGrid, 0, colIndex) = (aln_NWEntry) {-(float)colIndex, aln_CameFromDir_Left};
+        }
+        for (intptr_t rowIndex = 1; rowIndex < thisGrid.height; rowIndex++) {
+            aln_matrix2get(thisGrid, rowIndex, 0) = (aln_NWEntry) {-(float)rowIndex, aln_CameFromDir_Top};
+        }
+
+        intptr_t thisGridMaxScoreIndex = 0;
+        float    thisGridMaxScore = 0;
+        for (intptr_t rowIndex = 1; rowIndex < thisGrid.height; rowIndex++) {
+            for (intptr_t colIndex = 1; colIndex < thisGrid.width; colIndex++) {
+                intptr_t topleftIndex = aln_matrix2index(thisGrid, rowIndex - 1, colIndex - 1);
+                intptr_t topIndex = aln_matrix2index(thisGrid, rowIndex - 1, colIndex);
+                intptr_t leftIndex = aln_matrix2index(thisGrid, rowIndex, colIndex - 1);
+
+                float alignScore = 1.0f;
+                {
+                    char chRef = reference.ptr[colIndex - 1];
+                    char chStr = ogstr.ptr[rowIndex - 1];
+                    if (chRef != chStr) {
+                        alignScore = -1.0f;
+                    }
+                }
+
+                float indelScore = -1.0f;
+
+                float scoreTopleft = thisGrid.ptr[topleftIndex].score + alignScore;
+                float scoreTop = thisGrid.ptr[topIndex].score + indelScore;
+                float scoreLeft = thisGrid.ptr[leftIndex].score + indelScore;
+
+                float           maxScore = scoreTopleft;
+                aln_CameFromDir cameFrom = aln_CameFromDir_TopLeft;
+                if (maxScore < scoreTop) {
+                    maxScore = scoreTop;
+                    cameFrom = aln_CameFromDir_Top;
+                }
+                if (maxScore < scoreLeft) {
+                    maxScore = scoreLeft;
+                    cameFrom = aln_CameFromDir_Left;
+                }
+
+                aln_matrix2get(thisGrid, rowIndex, colIndex) = (aln_NWEntry) {maxScore, cameFrom};
+
+                if (thisGridMaxScore < maxScore) {
+                    thisGridMaxScore = maxScore;
+                    thisGridMaxScoreIndex = aln_matrix2index(thisGrid, rowIndex, colIndex);
+                }
+            }  // for mat col
+        }  // for mat row
+
+        if (config.storeFinalMatrices) {
+            aln_Matrix2NW matCopy = aln_arenaAllocMatrix2(aln_Matrix2NW, aln_NWEntry, outputArena, thisGrid.width, thisGrid.height);
+            for (intptr_t matIndex = 0; matIndex < matCopy.width * matCopy.height; matIndex++) {
+                matCopy.ptr[matIndex] = thisGrid.ptr[matIndex];
+            }
+            storedMatrices[strInd] = matCopy;
+        }
+
+        aln_Str  alignedStr = {aln_arenaAllocArray(outputArena, char, reference.len), reference.len};
+        intptr_t alignedStrIndex = (thisGridMaxScoreIndex % thisGrid.width) - 1;
+        for (intptr_t matInd = thisGridMaxScoreIndex; matInd > 0 && alignedStrIndex >= 0;) {
+            aln_NWEntry entry = thisGrid.ptr[matInd];
+
+            switch (entry.cameFromDir) {
+                case aln_CameFromDir_TopLeft: {
+                    intptr_t row = matInd / thisGrid.width;
+                    alignedStr.ptr[alignedStrIndex] = ogstr.ptr[row - 1];
+                    matInd -= (thisGrid.width + 1);
+                } break;
+                case aln_CameFromDir_Top: {
+                    alignedStr.ptr[alignedStrIndex] = '-';
+                    matInd -= thisGrid.width;
+                } break;
+                case aln_CameFromDir_Left: {
+                    alignedStr.ptr[alignedStrIndex] = '!';
+                    matInd -= 1;
+                } break;
+            }
+
+            alignedStrIndex -= 1;
+        }
+
+        alignedSeqs[strInd] = alignedStr;
+    }  // for str
+
+    aln_AlignResult result = {.bytesWrittenToOutput = outputArena->used, .strs = alignedSeqs, .strCount = stringCount, .matrices = storedMatrices};
     return result;
 }
 
