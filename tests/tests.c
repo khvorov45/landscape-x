@@ -7,7 +7,80 @@
 #include "../src/align.h"
 // clang-format on
 
+#define function static
+
 typedef intptr_t isize;
+
+typedef struct MatrixStr {
+    prb_Str str;
+    isize   charPitch;
+    isize   width;
+    isize   height;
+    isize   cellWidth;
+    isize   cellHeight;
+} MatrixStr;
+
+function MatrixStr
+createMatrixStr(prb_Arena* arena, isize width, isize height) {
+    isize cellWidth = 3;
+    isize cellHeight = 2;
+    isize charCols = width * cellWidth;
+    isize charRows = height * cellHeight;
+    isize charPitch = charCols + 1;  // NOTE(sen) +1 for newlines
+    isize bytes = charPitch * charRows;
+    char* buf = prb_arenaFreePtr(arena);
+    prb_arenaChangeUsed(arena, bytes);
+    for (isize byteIndex = 0; byteIndex < bytes; byteIndex++) {
+        buf[byteIndex] = ' ';
+    }
+    for (isize rowEndIndex = charCols; rowEndIndex < bytes; rowEndIndex += charCols + 1) {
+        buf[rowEndIndex] = '\n';
+    }
+    MatrixStr result = {{buf, bytes}, charPitch, width, height, cellWidth, cellHeight};
+    return result;
+}
+
+function isize
+getTopleftBufInd(MatrixStr* matStr, isize row, isize col) {
+    prb_assert(row < matStr->height);
+    prb_assert(col < matStr->width);
+    isize cellLeft = col * matStr->cellWidth;
+    isize cellTop = row * matStr->cellHeight;
+    isize topleftBufInd = cellTop * matStr->charPitch + cellLeft;
+    return topleftBufInd;
+}
+
+function void
+addCellBottomRight(prb_Arena* arena, MatrixStr* matStr, isize row, isize col, float number) {
+    isize   topleftBufInd = getTopleftBufInd(matStr, row, col);
+    isize   bottomrightBufInd = topleftBufInd + (matStr->cellWidth - 1) + ((matStr->cellHeight - 1) * matStr->charPitch);
+    prb_Str numStr = prb_fmt(arena, "%.0f", number);
+    isize bottomrightOffset = 0;
+    for (isize strind = prb_min(1, numStr.len - 1); strind >= 0; strind--) {
+        ((char*)matStr->str.ptr)[bottomrightBufInd + bottomrightOffset] = numStr.ptr[strind];
+        bottomrightOffset -= 1;
+    }
+}
+
+function void
+addCellTopRight(MatrixStr* matStr, isize row, isize col, char ch) {
+    isize topleftBufInd = getTopleftBufInd(matStr, row, col);
+    isize topcenterBufInd = topleftBufInd + matStr->cellWidth - 1;
+    ((char*)matStr->str.ptr)[topcenterBufInd] = ch;
+}
+
+function void
+addCellBottomLeft(MatrixStr* matStr, isize row, isize col, char ch) {
+    isize topleftBufInd = getTopleftBufInd(matStr, row, col);
+    isize bottomleftBufInd = topleftBufInd + (matStr->cellHeight - 1) * matStr->charPitch;
+    ((char*)matStr->str.ptr)[bottomleftBufInd] = ch;
+}
+
+function void
+addCellTopleft(MatrixStr* matStr, isize row, isize col, char ch) {
+    isize topleftBufInd = getTopleftBufInd(matStr, row, col);
+    ((char*)matStr->str.ptr)[topleftBufInd] = ch;
+}
 
 int
 main() {
@@ -35,52 +108,34 @@ main() {
         aln_Str       ogstr = seqs[seqInd];
         aln_Matrix2NW mat = alignResult.matrices[seqInd];
 
-        prb_GrowingStr matStrBuilder = prb_beginStr(arena);
+        {
+            MatrixStr matStr = createMatrixStr(arena, reference.len + 1, ogstr.len + 1);
+            addCellBottomRight(arena, &matStr, 0, 0, 0.0f);
 
-        // NOTE(sen) First row with referece seq
-        prb_addStrSegment(&matStrBuilder, "     ");
-        for (isize colIndex = 1; colIndex < mat.width; colIndex++) {
-            prb_addStrSegment(&matStrBuilder, " %c ", reference.ptr[colIndex - 1]);
-        }
-        prb_addStrSegment(&matStrBuilder, "\n");
+            for (isize refInd = 0; refInd < reference.len; refInd++) {
+                addCellTopRight(&matStr, 0, refInd + 1, reference.ptr[refInd]);
+                addCellBottomRight(arena, &matStr, 0, refInd + 1, -(float)(refInd + 1));
+            }
 
-        for (isize rowIndex = 0; rowIndex < mat.height; rowIndex++) {
-            if (rowIndex > 0) {
-                prb_addStrSegment(&matStrBuilder, "    ");
+            for (isize ogInd = 0; ogInd < ogstr.len; ogInd++) {
+                addCellBottomLeft(&matStr, ogInd + 1, 0, ogstr.ptr[ogInd]);
+                addCellBottomRight(arena, &matStr, ogInd + 1, 0, -(float)(ogInd + 1));
+            }
+
+            for (isize rowIndex = 1; rowIndex < mat.height; rowIndex++) {
                 for (isize colIndex = 1; colIndex < mat.width; colIndex++) {
-                    aln_CameFromDir cameFrom = aln_matrix2get(mat, rowIndex, colIndex).cameFromDir;
-                    switch (cameFrom) {
-                        case aln_CameFromDir_TopLeft: prb_addStrSegment(&matStrBuilder, "↖  "); break;
-                        case aln_CameFromDir_Top: prb_addStrSegment(&matStrBuilder, "  ↑"); break;
-                        case aln_CameFromDir_Left: prb_addStrSegment(&matStrBuilder, "   "); break;
+                    aln_NWEntry entry = aln_matrix2get(mat, rowIndex, colIndex);
+                    addCellBottomRight(arena, &matStr, rowIndex, colIndex, entry.score);
+                    switch (entry.cameFromDir) {
+                        case aln_CameFromDir_TopLeft: addCellTopleft(&matStr, rowIndex, colIndex, '\\'); break;
+                        case aln_CameFromDir_Top: addCellTopRight(&matStr, rowIndex, colIndex, '^'); break;
+                        case aln_CameFromDir_Left: addCellBottomLeft(&matStr, rowIndex, colIndex, '<'); break;
                     }
                 }
-                prb_addStrSegment(&matStrBuilder, "\n%c", ogstr.ptr[rowIndex - 1]);
-            } else {
-                prb_addStrSegment(&matStrBuilder, " ");
             }
 
-            for (isize colIndex = 0; colIndex < mat.width; colIndex++) {
-                aln_NWEntry     entry = aln_matrix2get(mat, rowIndex, colIndex);
-                aln_CameFromDir cameFrom = entry.cameFromDir;
-                if (cameFrom == aln_CameFromDir_Left && colIndex > 0 && rowIndex > 0) {
-                    prb_addStrSegment(&matStrBuilder, "←");
-                } else {
-                    prb_addStrSegment(&matStrBuilder, " ");
-                }
-
-                if (entry.score >= 0) {
-                    prb_addStrSegment(&matStrBuilder, " ");
-                }
-                prb_addStrSegment(&matStrBuilder, "%.0f", entry.score);
-            }
-
-            prb_addStrSegment(&matStrBuilder, "\n");
-        }  // for row
-        prb_addStrSegment(&matStrBuilder, "\n");
-
-        prb_Str matStr = prb_endStr(&matStrBuilder);
-        prb_writeToStdout(matStr);
+            prb_writeToStdout(matStr.str);
+        }
 
         aln_Str alignedStr = alignResult.strs[seqInd];
         prb_writelnToStdout(arena, (prb_Str) {alignedStr.ptr, alignedStr.len});

@@ -290,6 +290,11 @@ aln_align(aln_Str reference, aln_Str* strings, intptr_t stringCount, aln_Config 
 
         aln_Str  alignedStr = {aln_arenaAllocArray(outputArena, char, reference.len), reference.len};
         intptr_t alignedStrIndex = (thisGridMaxScoreIndex % thisGrid.width) - 1;
+
+        for (intptr_t padIndex = alignedStrIndex + 1; padIndex < reference.len; padIndex++) {
+            alignedStr.ptr[padIndex] = '-';
+        }
+
         for (intptr_t matInd = thisGridMaxScoreIndex; matInd > 0 && alignedStrIndex >= 0;) {
             aln_NWEntry entry = thisGrid.ptr[matInd];
 
@@ -300,11 +305,11 @@ aln_align(aln_Str reference, aln_Str* strings, intptr_t stringCount, aln_Config 
                     matInd -= (thisGrid.width + 1);
                 } break;
                 case aln_CameFromDir_Top: {
-                    alignedStr.ptr[alignedStrIndex] = '-';
+                    alignedStr.ptr[alignedStrIndex] = '!';
                     matInd -= thisGrid.width;
                 } break;
                 case aln_CameFromDir_Left: {
-                    alignedStr.ptr[alignedStrIndex] = '!';
+                    alignedStr.ptr[alignedStrIndex] = '-';
                     matInd -= 1;
                 } break;
             }
