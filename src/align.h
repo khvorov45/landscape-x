@@ -19,8 +19,7 @@
 #define aln_PUBLICAPI
 #endif
 
-#define aln_matrix2index(matrix, row, col) (((row)*matrix.width) + (col))
-#define aln_matrix2get(matrix, row, col) matrix.ptr[aln_matrix2index(matrix, row, col)]
+#define aln_matrix2get(matrix, row, col) matrix.ptr[aln_matrix2index(matrix.width, matrix.height, row, col)]
 
 typedef enum aln_Status {
     aln_Failure,
@@ -65,6 +64,7 @@ typedef struct aln_AlignResult {
     intptr_t       bytesWrittenToOutput;
 } aln_AlignResult;
 
+aln_PUBLICAPI intptr_t        aln_matrix2index(intptr_t matrixWidth, intptr_t matrixHeight, intptr_t row, intptr_t col);
 aln_PUBLICAPI aln_AlignResult aln_align(aln_Str reference, aln_Str* strings, intptr_t stringCount, aln_Config config);
 
 #endif  // aln_HEADER
@@ -190,6 +190,24 @@ aln_strGetNullTerminated(aln_Arena* arena, aln_Str str) {
     return buf;
 }
 
+aln_PUBLICAPI intptr_t
+aln_matrix2index(intptr_t matrixWidth, intptr_t matrixHeight, intptr_t row, intptr_t col) {
+    // TODO(sen) Enable
+    #if 0 
+    // NOTE(sen) Diagonal-first storage. Diagonals start in the top-left corner and are oriented bottomleft to topright.
+    intptr_t topleftRect = (row + 1) * col;
+    intptr_t toprightTriangleColCount = aln_min(row, matrixWidth - col - 1);
+    intptr_t toprightTriangle = toprightTriangleColCount * (row + (row - toprightTriangleColCount + 1)) / 2;
+    intptr_t bottomleftTriangleColCount = aln_min(col, matrixHeight - row - 1);
+    intptr_t bottomleftTriangle = bottomleftTriangleColCount * (col + (col - bottomleftTriangleColCount + 1)) / 2;
+    intptr_t result = topleftRect + toprightTriangle + bottomleftTriangle;
+    #else
+    aln_unused(matrixHeight);
+    intptr_t result = row * matrixWidth + col;
+    #endif
+    return result;
+}
+
 aln_PUBLICAPI aln_AlignResult
 aln_align(aln_Str reference, aln_Str* strings, intptr_t stringCount, aln_Config config) {
     aln_assert(reference.ptr && reference.len > 0);
@@ -239,11 +257,13 @@ aln_align(aln_Str reference, aln_Str* strings, intptr_t stringCount, aln_Config 
 
         intptr_t thisGridMaxScoreIndex = 0;
         float    thisGridMaxScore = 0;
+
+        // TODO(khvorov) This would need to go by diagonal rather than row/column
         for (intptr_t rowIndex = 1; rowIndex < thisGrid.height; rowIndex++) {
             for (intptr_t colIndex = 1; colIndex < thisGrid.width; colIndex++) {
-                intptr_t topleftIndex = aln_matrix2index(thisGrid, rowIndex - 1, colIndex - 1);
-                intptr_t topIndex = aln_matrix2index(thisGrid, rowIndex - 1, colIndex);
-                intptr_t leftIndex = aln_matrix2index(thisGrid, rowIndex, colIndex - 1);
+                intptr_t topleftIndex = aln_matrix2index(thisGrid.width, thisGrid.height, rowIndex - 1, colIndex - 1);
+                intptr_t topIndex = aln_matrix2index(thisGrid.width, thisGrid.height, rowIndex - 1, colIndex);
+                intptr_t leftIndex = aln_matrix2index(thisGrid.width, thisGrid.height, rowIndex, colIndex - 1);
 
                 float alignScore = 1.0f;
                 {
@@ -275,7 +295,7 @@ aln_align(aln_Str reference, aln_Str* strings, intptr_t stringCount, aln_Config 
 
                 if (thisGridMaxScore < maxScore) {
                     thisGridMaxScore = maxScore;
-                    thisGridMaxScoreIndex = aln_matrix2index(thisGrid, rowIndex, colIndex);
+                    thisGridMaxScoreIndex = aln_matrix2index(thisGrid.width, thisGrid.height, rowIndex, colIndex);
                 }
             }  // for mat col
         }  // for mat row
@@ -288,6 +308,7 @@ aln_align(aln_Str reference, aln_Str* strings, intptr_t stringCount, aln_Config 
             storedMatrices[strInd] = matCopy;
         }
 
+        // TODO(khvorov) This reconstruction would have to go by diagonal as well
         aln_Str  alignedStr = {aln_arenaAllocArray(outputArena, char, reference.len), reference.len};
         intptr_t alignedStrIndex = (thisGridMaxScoreIndex % thisGrid.width) - 1;
 
