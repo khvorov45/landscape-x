@@ -74,6 +74,7 @@ aln_PUBLICAPI aln_AlignResult aln_align(aln_Str reference, aln_Str* strings, int
 // clang-format off
 #define aln_max(a, b) (((a) > (b)) ? (a) : (b))
 #define aln_min(a, b) (((a) < (b)) ? (a) : (b))
+#define aln_abs(a) (((a) < (0)) ? (-(a)) : (a))
 #define aln_clamp(x, a, b) (((x) < (a)) ? (a) : (((x) > (b)) ? (b) : (x)))
 #define aln_arrayCount(arr) (intptr_t)(sizeof(arr) / sizeof(arr[0]))
 #define aln_arenaAllocArray(arena, type, len) (type*)aln_arenaAllocAndZero(arena, (len) * (intptr_t)sizeof(type), alignof(type))
@@ -192,8 +193,8 @@ aln_strGetNullTerminated(aln_Arena* arena, aln_Str str) {
 
 aln_PUBLICAPI intptr_t
 aln_matrix2index(intptr_t matrixWidth, intptr_t matrixHeight, intptr_t row, intptr_t col) {
-    // TODO(sen) Enable
-    #if 0 
+// TODO(sen) Enable
+#if 0 
     // NOTE(sen) Diagonal-first storage. Diagonals start in the top-left corner and are oriented bottomleft to topright.
     intptr_t topleftRect = (row + 1) * col;
     intptr_t toprightTriangleColCount = aln_min(row, matrixWidth - col - 1);
@@ -201,10 +202,10 @@ aln_matrix2index(intptr_t matrixWidth, intptr_t matrixHeight, intptr_t row, intp
     intptr_t bottomleftTriangleColCount = aln_min(col, matrixHeight - row - 1);
     intptr_t bottomleftTriangle = bottomleftTriangleColCount * (col + (col - bottomleftTriangleColCount + 1)) / 2;
     intptr_t result = topleftRect + toprightTriangle + bottomleftTriangle;
-    #else
+#else
     aln_unused(matrixHeight);
     intptr_t result = row * matrixWidth + col;
-    #endif
+#endif
     return result;
 }
 
@@ -257,6 +258,16 @@ aln_align(aln_Str reference, aln_Str* strings, intptr_t stringCount, aln_Config 
 
         intptr_t thisGridMaxScoreIndex = 0;
         float    thisGridMaxScore = 0;
+
+        for (intptr_t diagonalIndex = 2; diagonalIndex < thisGrid.width + thisGrid.height - 1; diagonalIndex++) {
+            intptr_t entriesInDiagonal = 0;
+            if (diagonalIndex < thisGrid.height) {
+                entriesInDiagonal = aln_min(diagonalIndex + 1, thisGrid.width);
+            } else {
+                entriesInDiagonal = aln_min(thisGrid.width - (diagonalIndex - thisGrid.height + 1), thisGrid.height);
+            }
+            aln_unused(entriesInDiagonal);
+        }
 
         // TODO(khvorov) This would need to go by diagonal rather than row/column
         for (intptr_t rowIndex = 1; rowIndex < thisGrid.height; rowIndex++) {
@@ -337,6 +348,8 @@ aln_align(aln_Str reference, aln_Str* strings, intptr_t stringCount, aln_Config 
 
             alignedStrIndex -= 1;
         }
+
+        // TODO(khvorov) Handle reference being shorter than input string
 
         alignedSeqs[strInd] = alignedStr;
     }  // for str

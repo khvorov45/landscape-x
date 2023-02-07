@@ -88,7 +88,7 @@ main() {
     prb_Arena* arena = &arena_;
 
     aln_Str reference = aln_STR("GTCCG");
-    aln_Str seqs[] = {aln_STR("TCC"), aln_STR("GTCC")};
+    aln_Str seqs[] = {aln_STR("AGTCCG"), aln_STR("TCC"), aln_STR("GTCC")};
 
     prb_Arena       alnOut = prb_createArenaFromArena(arena, 20 * prb_MEGABYTE);
     aln_AlignResult alignResult = aln_align(
