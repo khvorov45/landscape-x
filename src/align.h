@@ -57,11 +57,24 @@ typedef struct aln_Matrix2NW {
     intptr_t     height;
 } aln_Matrix2NW;
 
+typedef enum aln_AlignAction {
+    aln_AlignAction_Match,
+    aln_AlignAction_GapStr,
+    aln_AlignAction_GapRef,
+} aln_AlignAction;
+
+typedef struct aln_AlignedStr {
+    aln_AlignAction* actions;
+    intptr_t         actionCount;
+    intptr_t         strFirstIndex;
+    intptr_t         refFirstIndex;
+} aln_AlignedStr;
+
 typedef struct aln_AlignResult {
-    aln_Str*       strs;
-    intptr_t       strCount;
-    aln_Matrix2NW* matrices;
-    intptr_t       bytesWrittenToOutput;
+    aln_AlignedStr* strs;
+    intptr_t        strCount;
+    aln_Matrix2NW*  matrices;
+    intptr_t        bytesWrittenToOutput;
 } aln_AlignResult;
 
 aln_PUBLICAPI intptr_t        aln_matrix2index(intptr_t matrixWidth, intptr_t matrixHeight, intptr_t row, intptr_t col);
@@ -240,7 +253,7 @@ aln_align(aln_Str reference, aln_Str* strings, intptr_t stringCount, aln_Config 
         storedMatrices = aln_arenaAllocArray(outputArena, aln_Matrix2NW, stringCount);
     }
 
-    aln_Str* alignedSeqs = aln_arenaAllocArray(outputArena, aln_Str, stringCount);
+    aln_AlignedStr* alignedSeqs = aln_arenaAllocArray(outputArena, aln_AlignedStr, stringCount);
     for (intptr_t strInd = 0; strInd < stringCount; strInd++) {
         aln_Str ogstr = strings[strInd];
 
@@ -257,7 +270,7 @@ aln_align(aln_Str reference, aln_Str* strings, intptr_t stringCount, aln_Config 
         }
 
         intptr_t thisGridMaxScoreIndex = 0;
-        float    thisGridMaxScore = 0;
+        float    thisGridMaxScore = -1;
 
         for (intptr_t diagonalIndex = 2; diagonalIndex < thisGrid.width + thisGrid.height - 1; diagonalIndex++) {
             intptr_t entriesInDiagonal = 0;
@@ -320,36 +333,48 @@ aln_align(aln_Str reference, aln_Str* strings, intptr_t stringCount, aln_Config 
         }
 
         // TODO(khvorov) This reconstruction would have to go by diagonal as well
-        aln_Str  alignedStr = {aln_arenaAllocArray(outputArena, char, reference.len), reference.len};
-        intptr_t alignedStrIndex = (thisGridMaxScoreIndex % thisGrid.width) - 1;
+        intptr_t       maxScoreCol = thisGridMaxScoreIndex % thisGrid.width;
+        intptr_t       maxScoreRow = thisGridMaxScoreIndex / thisGrid.width;
+        intptr_t       maxActionCount = maxScoreRow + maxScoreCol;
+        aln_AlignedStr alignedStr = {aln_arenaAllocArray(outputArena, aln_AlignAction, maxActionCount)};
 
-        for (intptr_t padIndex = alignedStrIndex + 1; padIndex < reference.len; padIndex++) {
-            alignedStr.ptr[padIndex] = '-';
-        }
-
-        for (intptr_t matInd = thisGridMaxScoreIndex; matInd > 0 && alignedStrIndex >= 0;) {
+        intptr_t matInd = thisGridMaxScoreIndex;
+        intptr_t entryCol = matInd % thisGrid.width;
+        intptr_t entryRow = matInd / thisGrid.width;
+        for (intptr_t actionIndex = maxActionCount - 1; matInd > 0 && entryCol > 0 && entryRow > 0; actionIndex--) {
+            aln_assert(actionIndex >= 0);
             aln_NWEntry entry = thisGrid.ptr[matInd];
 
             switch (entry.cameFromDir) {
                 case aln_CameFromDir_TopLeft: {
-                    intptr_t row = matInd / thisGrid.width;
-                    alignedStr.ptr[alignedStrIndex] = ogstr.ptr[row - 1];
+                    alignedStr.actions[actionIndex] = aln_AlignAction_Match;
                     matInd -= (thisGrid.width + 1);
+                    entryCol -= 1;
+                    entryRow -= 1;
                 } break;
                 case aln_CameFromDir_Top: {
-                    alignedStr.ptr[alignedStrIndex] = '!';
+                    alignedStr.actions[actionIndex] = aln_AlignAction_GapRef;
                     matInd -= thisGrid.width;
+                    entryRow -= 1;
                 } break;
                 case aln_CameFromDir_Left: {
-                    alignedStr.ptr[alignedStrIndex] = '-';
+                    alignedStr.actions[actionIndex] = aln_AlignAction_GapStr;
                     matInd -= 1;
+                    entryCol -= 1;
                 } break;
             }
 
-            alignedStrIndex -= 1;
+            alignedStr.actionCount += 1;            
         }
 
-        // TODO(khvorov) Handle reference being shorter than input string
+        {
+            intptr_t actionsEmpty = maxActionCount - alignedStr.actionCount;
+            aln_assert(actionsEmpty);
+            alignedStr.actions += actionsEmpty;
+        }
+
+        alignedStr.refFirstIndex = entryCol;
+        alignedStr.strFirstIndex = entryRow;
 
         alignedSeqs[strInd] = alignedStr;
     }  // for str

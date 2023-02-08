@@ -88,7 +88,7 @@ main() {
     prb_Arena* arena = &arena_;
 
     aln_Str reference = aln_STR("GTCCG");
-    aln_Str seqs[] = {aln_STR("AGTCCG"), aln_STR("TCC"), aln_STR("GTCC")};
+    aln_Str seqs[] = {aln_STR("CCBA")};
 
     prb_Arena       alnOut = prb_createArenaFromArena(arena, 20 * prb_MEGABYTE);
     aln_AlignResult alignResult = aln_align(
@@ -137,8 +137,15 @@ main() {
             prb_writeToStdout(matStr.str);
         }
 
-        aln_Str alignedStr = alignResult.strs[seqInd];
-        prb_writelnToStdout(arena, (prb_Str) {alignedStr.ptr, alignedStr.len});
+        aln_AlignedStr alignedStr = alignResult.strs[seqInd];
+        for (isize )
+        for (isize actionIndex = 0; actionIndex < alignedStr.actionCount; actionIndex++) {
+            switch(alignedStr.actions[actionIndex]) {
+                case aln_AlignAction_Match: prb_writeToStdout(prb_STR("m")); break;
+                case aln_AlignAction_GapRef: prb_writeToStdout(prb_STR("r")); break;
+                case aln_AlignAction_GapStr: prb_writeToStdout(prb_STR("s")); break;
+            }
+        }
     }
 
     return 0;
