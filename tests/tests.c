@@ -55,7 +55,7 @@ addCellBottomRight(prb_Arena* arena, MatrixStr* matStr, isize row, isize col, fl
     isize   topleftBufInd = getTopleftBufInd(matStr, row, col);
     isize   bottomrightBufInd = topleftBufInd + (matStr->cellWidth - 1) + ((matStr->cellHeight - 1) * matStr->charPitch);
     prb_Str numStr = prb_fmt(arena, "%.0f", number);
-    isize bottomrightOffset = 0;
+    isize   bottomrightOffset = 0;
     for (isize strind = prb_min(1, numStr.len - 1); strind >= 0; strind--) {
         ((char*)matStr->str.ptr)[bottomrightBufInd + bottomrightOffset] = numStr.ptr[strind];
         bottomrightOffset -= 1;
@@ -87,8 +87,8 @@ main() {
     prb_Arena  arena_ = prb_createArenaFromVmem(1 * prb_GIGABYTE);
     prb_Arena* arena = &arena_;
 
-    aln_Str reference = aln_STR("GTCCG");
-    aln_Str seqs[] = {aln_STR("CCBA")};
+    aln_Str reference = aln_STR("QAGTCCGA");
+    aln_Str seqs[] = {aln_STR("AATCGAB")};
 
     prb_Arena       alnOut = prb_createArenaFromArena(arena, 20 * prb_MEGABYTE);
     aln_AlignResult alignResult = aln_align(
@@ -138,14 +138,63 @@ main() {
         }
 
         aln_AlignedStr alignedStr = alignResult.strs[seqInd];
-        for (isize )
+        prb_GrowingStr outStrBuilder = prb_beginStr(arena);
+
+        isize initGap = alignedStr.strFirstIndex - alignedStr.refFirstIndex;
+        isize refCloseGap = ogstr.len - alignedStr.strLastIndex - 1;
+        isize strCloseGap = reference.len - alignedStr.refLastIndex - 1;
+        isize closeGap = refCloseGap - strCloseGap;
+
+        while (initGap > 0) {
+            prb_addStrSegment(&outStrBuilder, "-");
+            initGap -= 1;
+        }
+
+        prb_addStrSegment(&outStrBuilder, "%.*s", (int)alignedStr.refFirstIndex, reference.ptr);
+        isize currentRefIndex = alignedStr.refFirstIndex;
         for (isize actionIndex = 0; actionIndex < alignedStr.actionCount; actionIndex++) {
-            switch(alignedStr.actions[actionIndex]) {
-                case aln_AlignAction_Match: prb_writeToStdout(prb_STR("m")); break;
-                case aln_AlignAction_GapRef: prb_writeToStdout(prb_STR("r")); break;
-                case aln_AlignAction_GapStr: prb_writeToStdout(prb_STR("s")); break;
+            prb_assert(currentRefIndex < reference.len);
+            switch (alignedStr.actions[actionIndex]) {
+                case aln_AlignAction_Match: prb_addStrSegment(&outStrBuilder, "%c", reference.ptr[currentRefIndex++]); break;
+                case aln_AlignAction_GapRef: prb_addStrSegment(&outStrBuilder, "-"); break;
+                case aln_AlignAction_GapStr: break;
             }
         }
+        prb_addStrSegment(&outStrBuilder, "%.*s", (int)(reference.len - currentRefIndex), reference.ptr + currentRefIndex);
+
+        while (closeGap > 0) {
+            prb_addStrSegment(&outStrBuilder, "-");
+            closeGap -= 1;
+        }
+
+        prb_addStrSegment(&outStrBuilder, "\n");
+
+        while (initGap < 0) {
+            prb_addStrSegment(&outStrBuilder, "-");
+            initGap += 1;
+        }
+
+        prb_addStrSegment(&outStrBuilder, "%.*s", (int)alignedStr.strFirstIndex, ogstr.ptr);
+        isize currentStrIndex = alignedStr.strFirstIndex;
+        for (isize actionIndex = 0; actionIndex < alignedStr.actionCount; actionIndex++) {
+            prb_assert(currentStrIndex < ogstr.len);
+            switch (alignedStr.actions[actionIndex]) {
+                case aln_AlignAction_Match: prb_addStrSegment(&outStrBuilder, "%c", ogstr.ptr[currentStrIndex++]); break;
+                case aln_AlignAction_GapRef: break;
+                case aln_AlignAction_GapStr: prb_addStrSegment(&outStrBuilder, "-"); break;
+            }
+        }
+        prb_addStrSegment(&outStrBuilder, "%.*s", (int)(ogstr.len - currentStrIndex), ogstr.ptr + currentStrIndex);
+
+        while (closeGap < 0) {
+            prb_addStrSegment(&outStrBuilder, "-");
+            closeGap += 1;
+        }
+
+        prb_addStrSegment(&outStrBuilder, "\n");
+
+        prb_Str outStr = prb_endStr(&outStrBuilder);
+        prb_writeToStdout(outStr);
     }
 
     return 0;

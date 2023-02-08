@@ -67,7 +67,9 @@ typedef struct aln_AlignedStr {
     aln_AlignAction* actions;
     intptr_t         actionCount;
     intptr_t         strFirstIndex;
+    intptr_t         strLastIndex;
     intptr_t         refFirstIndex;
+    intptr_t         refLastIndex;
 } aln_AlignedStr;
 
 typedef struct aln_AlignResult {
@@ -336,7 +338,7 @@ aln_align(aln_Str reference, aln_Str* strings, intptr_t stringCount, aln_Config 
         intptr_t       maxScoreCol = thisGridMaxScoreIndex % thisGrid.width;
         intptr_t       maxScoreRow = thisGridMaxScoreIndex / thisGrid.width;
         intptr_t       maxActionCount = maxScoreRow + maxScoreCol;
-        aln_AlignedStr alignedStr = {aln_arenaAllocArray(outputArena, aln_AlignAction, maxActionCount)};
+        aln_AlignedStr alignedStr = {aln_arenaAllocArray(outputArena, aln_AlignAction, maxActionCount), .strLastIndex = maxScoreRow - 1, .refLastIndex = maxScoreCol - 1};
 
         intptr_t matInd = thisGridMaxScoreIndex;
         intptr_t entryCol = matInd % thisGrid.width;
@@ -364,7 +366,7 @@ aln_align(aln_Str reference, aln_Str* strings, intptr_t stringCount, aln_Config 
                 } break;
             }
 
-            alignedStr.actionCount += 1;            
+            alignedStr.actionCount += 1;
         }
 
         {
