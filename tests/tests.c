@@ -82,13 +82,60 @@ addCellTopleft(MatrixStr* matStr, isize row, isize col, char ch) {
     ((char*)matStr->str.ptr)[topleftBufInd] = ch;
 }
 
-int
-main() {
-    prb_Arena  arena_ = prb_createArenaFromVmem(1 * prb_GIGABYTE);
-    prb_Arena* arena = &arena_;
+function void
+printMatrix(prb_Arena* arena, aln_Matrix2NW mat, aln_Str reference, aln_Str ogstr) {
+    prb_TempMemory temp = prb_beginTempMemory(arena);
 
-    aln_Str reference = aln_STR("QAGTCCGA");
-    aln_Str seqs[] = {aln_STR("AATCGAB")};
+    MatrixStr matStr = createMatrixStr(arena, reference.len + 1, ogstr.len + 1);
+    addCellBottomRight(arena, &matStr, 0, 0, 0.0f);
+
+    for (isize refInd = 0; refInd < reference.len; refInd++) {
+        addCellTopRight(&matStr, 0, refInd + 1, reference.ptr[refInd]);
+        addCellBottomRight(arena, &matStr, 0, refInd + 1, -(float)(refInd + 1));
+    }
+
+    for (isize ogInd = 0; ogInd < ogstr.len; ogInd++) {
+        addCellBottomLeft(&matStr, ogInd + 1, 0, ogstr.ptr[ogInd]);
+        addCellBottomRight(arena, &matStr, ogInd + 1, 0, -(float)(ogInd + 1));
+    }
+
+    for (isize rowIndex = 1; rowIndex < mat.height; rowIndex++) {
+        for (isize colIndex = 1; colIndex < mat.width; colIndex++) {
+            aln_NWEntry entry = aln_matrix2get(mat, rowIndex, colIndex);
+            addCellBottomRight(arena, &matStr, rowIndex, colIndex, entry.score);
+            switch (entry.cameFromDir) {
+                case aln_CameFromDir_TopLeft: addCellTopleft(&matStr, rowIndex, colIndex, '\\'); break;
+                case aln_CameFromDir_Top: addCellTopRight(&matStr, rowIndex, colIndex, '^'); break;
+                case aln_CameFromDir_Left: addCellBottomLeft(&matStr, rowIndex, colIndex, '<'); break;
+            }
+        }
+    }
+
+    prb_writeToStdout(matStr.str);
+    prb_endTempMemory(temp);
+}
+
+function void
+streq(prb_Arena* arena, aln_Str str1, aln_Str str2) {
+    bool result = false;
+    if (str1.len == str2.len) {
+        result = prb_memeq(str1.ptr, str2.ptr, str1.len);
+    }
+    if (!result) {
+        prb_writeToStdout(prb_fmt(arena, "expected: %.*s\nactual: %.*s\n", prb_LIT(str1), prb_LIT(str2)));
+        prb_assert(!"failed");
+    }
+}
+
+function void
+test_alignAndReconstruct(prb_Arena* arena) {
+    prb_TempMemory temp = prb_beginTempMemory(arena);
+
+    aln_Str reference = aln_STR("ABC");
+    aln_Str seqs[] = {aln_STR("ABC"), aln_STR("BC"), aln_STR("AB"), aln_STR("B"), aln_STR("DABC"), aln_STR("ABCD"), aln_STR("DABCD")};
+
+    aln_Str expectedRefs[] = {aln_STR("ABC"), aln_STR("ABC"), aln_STR("ABC"), aln_STR("ABC"), aln_STR("-ABC"), aln_STR("ABC-"), aln_STR("-ABC-")};
+    aln_Str expectedSeqs[] = {aln_STR("ABC"), aln_STR("-BC"), aln_STR("AB-"), aln_STR("-B-"), aln_STR("DABC"), aln_STR("ABCD"), aln_STR("DABCD")};
 
     prb_Arena       alnOut = prb_createArenaFromArena(arena, 20 * prb_MEGABYTE);
     aln_AlignResult alignResult = aln_align(
@@ -106,96 +153,31 @@ main() {
 
     for (isize seqInd = 0; seqInd < prb_arrayCount(seqs); seqInd++) {
         aln_Str       ogstr = seqs[seqInd];
-        aln_Matrix2NW mat = alignResult.matrices[seqInd];
+        aln_Alignment alignedStr = alignResult.strs[seqInd];
 
-        {
-            MatrixStr matStr = createMatrixStr(arena, reference.len + 1, ogstr.len + 1);
-            addCellBottomRight(arena, &matStr, 0, 0, 0.0f);
-
-            for (isize refInd = 0; refInd < reference.len; refInd++) {
-                addCellTopRight(&matStr, 0, refInd + 1, reference.ptr[refInd]);
-                addCellBottomRight(arena, &matStr, 0, refInd + 1, -(float)(refInd + 1));
-            }
-
-            for (isize ogInd = 0; ogInd < ogstr.len; ogInd++) {
-                addCellBottomLeft(&matStr, ogInd + 1, 0, ogstr.ptr[ogInd]);
-                addCellBottomRight(arena, &matStr, ogInd + 1, 0, -(float)(ogInd + 1));
-            }
-
-            for (isize rowIndex = 1; rowIndex < mat.height; rowIndex++) {
-                for (isize colIndex = 1; colIndex < mat.width; colIndex++) {
-                    aln_NWEntry entry = aln_matrix2get(mat, rowIndex, colIndex);
-                    addCellBottomRight(arena, &matStr, rowIndex, colIndex, entry.score);
-                    switch (entry.cameFromDir) {
-                        case aln_CameFromDir_TopLeft: addCellTopleft(&matStr, rowIndex, colIndex, '\\'); break;
-                        case aln_CameFromDir_Top: addCellTopRight(&matStr, rowIndex, colIndex, '^'); break;
-                        case aln_CameFromDir_Left: addCellBottomLeft(&matStr, rowIndex, colIndex, '<'); break;
-                    }
-                }
-            }
-
-            prb_writeToStdout(matStr.str);
+        bool printMats = false;
+        if (printMats) {
+            printMatrix(arena, alignResult.matrices[seqInd], reference, ogstr);
         }
 
-        aln_AlignedStr alignedStr = alignResult.strs[seqInd];
-        prb_GrowingStr outStrBuilder = prb_beginStr(arena);
+        aln_Str refReconstructed = aln_reconstruct(alignedStr, aln_Reconstruct_Ref, reference, ogstr, prb_arenaFreePtr(arena), prb_arenaFreeSize(arena));
+        prb_arenaChangeUsed(arena, refReconstructed.len);
+        streq(arena, refReconstructed, expectedRefs[seqInd]);
 
-        isize initGap = alignedStr.strFirstIndex - alignedStr.refFirstIndex;
-        isize refCloseGap = ogstr.len - alignedStr.strLastIndex - 1;
-        isize strCloseGap = reference.len - alignedStr.refLastIndex - 1;
-        isize closeGap = refCloseGap - strCloseGap;
-
-        while (initGap > 0) {
-            prb_addStrSegment(&outStrBuilder, "-");
-            initGap -= 1;
-        }
-
-        prb_addStrSegment(&outStrBuilder, "%.*s", (int)alignedStr.refFirstIndex, reference.ptr);
-        isize currentRefIndex = alignedStr.refFirstIndex;
-        for (isize actionIndex = 0; actionIndex < alignedStr.actionCount; actionIndex++) {
-            prb_assert(currentRefIndex < reference.len);
-            switch (alignedStr.actions[actionIndex]) {
-                case aln_AlignAction_Match: prb_addStrSegment(&outStrBuilder, "%c", reference.ptr[currentRefIndex++]); break;
-                case aln_AlignAction_GapRef: prb_addStrSegment(&outStrBuilder, "-"); break;
-                case aln_AlignAction_GapStr: break;
-            }
-        }
-        prb_addStrSegment(&outStrBuilder, "%.*s", (int)(reference.len - currentRefIndex), reference.ptr + currentRefIndex);
-
-        while (closeGap > 0) {
-            prb_addStrSegment(&outStrBuilder, "-");
-            closeGap -= 1;
-        }
-
-        prb_addStrSegment(&outStrBuilder, "\n");
-
-        while (initGap < 0) {
-            prb_addStrSegment(&outStrBuilder, "-");
-            initGap += 1;
-        }
-
-        prb_addStrSegment(&outStrBuilder, "%.*s", (int)alignedStr.strFirstIndex, ogstr.ptr);
-        isize currentStrIndex = alignedStr.strFirstIndex;
-        for (isize actionIndex = 0; actionIndex < alignedStr.actionCount; actionIndex++) {
-            prb_assert(currentStrIndex < ogstr.len);
-            switch (alignedStr.actions[actionIndex]) {
-                case aln_AlignAction_Match: prb_addStrSegment(&outStrBuilder, "%c", ogstr.ptr[currentStrIndex++]); break;
-                case aln_AlignAction_GapRef: break;
-                case aln_AlignAction_GapStr: prb_addStrSegment(&outStrBuilder, "-"); break;
-            }
-        }
-        prb_addStrSegment(&outStrBuilder, "%.*s", (int)(ogstr.len - currentStrIndex), ogstr.ptr + currentStrIndex);
-
-        while (closeGap < 0) {
-            prb_addStrSegment(&outStrBuilder, "-");
-            closeGap += 1;
-        }
-
-        prb_addStrSegment(&outStrBuilder, "\n");
-
-        prb_Str outStr = prb_endStr(&outStrBuilder);
-        prb_writeToStdout(outStr);
+        aln_Str strReconstructed = aln_reconstruct(alignedStr, aln_Reconstruct_Str, reference, ogstr, prb_arenaFreePtr(arena), prb_arenaFreeSize(arena));
+        prb_arenaChangeUsed(arena, strReconstructed.len);
+        streq(arena, strReconstructed, expectedSeqs[seqInd]);
     }
+
+    prb_endTempMemory(temp);
+}
+
+int
+main() {
+    prb_Arena  arena_ = prb_createArenaFromVmem(1 * prb_GIGABYTE);
+    prb_Arena* arena = &arena_;
+
+    test_alignAndReconstruct(arena);
 
     return 0;
 }
