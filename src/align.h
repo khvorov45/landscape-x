@@ -84,9 +84,20 @@ typedef enum aln_Reconstruct {
     aln_Reconstruct_Str,
 } aln_Reconstruct;
 
-aln_PUBLICAPI aln_AlignResult aln_align(aln_Str* references, intptr_t refCount, aln_Str* strings, intptr_t stringCount, aln_Config config);
-aln_PUBLICAPI aln_Str         aln_reconstruct(aln_Alignment aligned, aln_Reconstruct which, aln_Str reference, aln_Str ogstr, void* buf, intptr_t bufBytes);
-aln_PUBLICAPI intptr_t        aln_matrix2index(intptr_t matrixWidth, intptr_t matrixHeight, intptr_t row, intptr_t col);
+typedef struct aln_ReconstructToCommonRefResult {
+    aln_Str  commonRef;
+    aln_Str* strs;
+    intptr_t strCount;
+    intptr_t bytesWritten;
+} aln_ReconstructToCommonRefResult;
+
+// TODO(sen) StringArray?
+// TODO(sen) Pass arenas instead of buffers and have some helpers to create the arenas?
+
+aln_PUBLICAPI aln_AlignResult                  aln_align(aln_Str* references, intptr_t refCount, aln_Str* strings, intptr_t stringCount, aln_Config config);
+aln_PUBLICAPI intptr_t                         aln_matrix2index(intptr_t matrixWidth, intptr_t matrixHeight, intptr_t row, intptr_t col);
+aln_PUBLICAPI aln_Str                          aln_reconstruct(aln_Alignment aligned, aln_Reconstruct which, aln_Str reference, aln_Str ogstr, void* buf, intptr_t bufBytes);
+aln_PUBLICAPI aln_ReconstructToCommonRefResult aln_reconstructToCommonRef(aln_Alignment* alignments, intptr_t alignmentsCount, aln_Str reference, aln_Str* strings, intptr_t stringCount, void* buf, intptr_t bufBytes);
 
 #endif  // aln_HEADER
 
@@ -228,81 +239,6 @@ aln_matrix2index(intptr_t matrixWidth, intptr_t matrixHeight, intptr_t row, intp
     intptr_t result = row * matrixWidth + col;
 #endif
     return result;
-}
-
-typedef struct aln_StrBuilder {
-    aln_Str  str;
-    intptr_t capacity;
-} aln_StrBuilder;
-
-aln_PRIVATEAPI void
-aln_strBuilderAddChar(aln_StrBuilder* builder, char ch) {
-    aln_assert(builder->capacity > builder->str.len);
-    builder->str.ptr[builder->str.len++] = ch;
-}
-
-aln_PUBLICAPI aln_Str
-aln_reconstruct(aln_Alignment aligned, aln_Reconstruct which, aln_Str reference, aln_Str ogstr, void* buf, intptr_t bufBytes) {
-    aln_StrBuilder builder = {{buf}, bufBytes};
-
-    {
-        intptr_t initGap = aligned.strFirstIndex - aligned.refFirstIndex;
-        while (which == aln_Reconstruct_Ref && initGap > 0) {
-            aln_strBuilderAddChar(&builder, '-');
-            initGap -= 1;
-        }
-        while (which == aln_Reconstruct_Str && initGap < 0) {
-            aln_strBuilderAddChar(&builder, '-');
-            initGap += 1;
-        }
-    }
-
-    aln_Str  target = which == aln_Reconstruct_Ref ? reference : ogstr;
-    intptr_t targetFirstIndex = which == aln_Reconstruct_Ref ? aligned.refFirstIndex : aligned.strFirstIndex;
-
-    {
-        intptr_t cur = 0;
-        intptr_t head = targetFirstIndex;
-        while (cur < head) {
-            aln_assert(cur < target.len);
-            aln_strBuilderAddChar(&builder, target.ptr[cur]);
-            cur += 1;
-        }
-    }
-
-    {
-        intptr_t cur = targetFirstIndex;
-        for (intptr_t actionIndex = 0; actionIndex < aligned.actionCount; actionIndex++) {
-            aln_assert(cur < target.len);
-            aln_AlignAction targetAction = which == aln_Reconstruct_Ref ? aln_AlignAction_GapRef : aln_AlignAction_GapStr;
-            aln_AlignAction thisAction = aligned.actions[actionIndex];
-            if (thisAction == aln_AlignAction_Match) {
-                aln_strBuilderAddChar(&builder, target.ptr[cur++]);
-            } else if (thisAction == targetAction) {
-                aln_strBuilderAddChar(&builder, '-');
-            }
-        }
-
-        while (cur < target.len) {
-            aln_assert(cur < target.len);
-            aln_strBuilderAddChar(&builder, target.ptr[cur]);
-            cur += 1;
-        }
-    }
-
-    intptr_t refCloseGap = ogstr.len - aligned.strLastIndex - 1;
-    intptr_t strCloseGap = reference.len - aligned.refLastIndex - 1;
-    intptr_t closeGap = refCloseGap - strCloseGap;
-    while (which == aln_Reconstruct_Ref && closeGap > 0) {
-        aln_strBuilderAddChar(&builder, '-');
-        closeGap -= 1;
-    }
-    while (which == aln_Reconstruct_Str && closeGap < 0) {
-        aln_strBuilderAddChar(&builder, '-');
-        closeGap += 1;
-    }
-
-    return builder.str;
 }
 
 aln_PUBLICAPI aln_AlignResult
@@ -485,6 +421,92 @@ aln_align(aln_Str* references, intptr_t refCount, aln_Str* strings, intptr_t str
     }  // for str
 
     aln_AlignResult result = {.bytesWrittenToOutput = outputArena->used, .strs = alignedSeqs, .strCount = stringCount, .matrices = storedMatrices};
+    return result;
+}
+
+typedef struct aln_StrBuilder {
+    aln_Str  str;
+    intptr_t capacity;
+} aln_StrBuilder;
+
+aln_PRIVATEAPI void
+aln_strBuilderAddChar(aln_StrBuilder* builder, char ch) {
+    aln_assert(builder->capacity > builder->str.len);
+    builder->str.ptr[builder->str.len++] = ch;
+}
+
+aln_PUBLICAPI aln_Str
+aln_reconstruct(aln_Alignment aligned, aln_Reconstruct which, aln_Str reference, aln_Str ogstr, void* buf, intptr_t bufBytes) {
+    aln_StrBuilder builder = {{buf}, bufBytes};
+
+    {
+        intptr_t initGap = aligned.strFirstIndex - aligned.refFirstIndex;
+        while (which == aln_Reconstruct_Ref && initGap > 0) {
+            aln_strBuilderAddChar(&builder, '-');
+            initGap -= 1;
+        }
+        while (which == aln_Reconstruct_Str && initGap < 0) {
+            aln_strBuilderAddChar(&builder, '-');
+            initGap += 1;
+        }
+    }
+
+    aln_Str  target = which == aln_Reconstruct_Ref ? reference : ogstr;
+    intptr_t targetFirstIndex = which == aln_Reconstruct_Ref ? aligned.refFirstIndex : aligned.strFirstIndex;
+
+    {
+        intptr_t cur = 0;
+        intptr_t head = targetFirstIndex;
+        while (cur < head) {
+            aln_assert(cur < target.len);
+            aln_strBuilderAddChar(&builder, target.ptr[cur]);
+            cur += 1;
+        }
+    }
+
+    {
+        intptr_t cur = targetFirstIndex;
+        for (intptr_t actionIndex = 0; actionIndex < aligned.actionCount; actionIndex++) {
+            aln_assert(cur < target.len);
+            aln_AlignAction targetAction = which == aln_Reconstruct_Ref ? aln_AlignAction_GapRef : aln_AlignAction_GapStr;
+            aln_AlignAction thisAction = aligned.actions[actionIndex];
+            if (thisAction == aln_AlignAction_Match) {
+                aln_strBuilderAddChar(&builder, target.ptr[cur++]);
+            } else if (thisAction == targetAction) {
+                aln_strBuilderAddChar(&builder, '-');
+            }
+        }
+
+        while (cur < target.len) {
+            aln_assert(cur < target.len);
+            aln_strBuilderAddChar(&builder, target.ptr[cur]);
+            cur += 1;
+        }
+    }
+
+    intptr_t refCloseGap = ogstr.len - aligned.strLastIndex - 1;
+    intptr_t strCloseGap = reference.len - aligned.refLastIndex - 1;
+    intptr_t closeGap = refCloseGap - strCloseGap;
+    while (which == aln_Reconstruct_Ref && closeGap > 0) {
+        aln_strBuilderAddChar(&builder, '-');
+        closeGap -= 1;
+    }
+    while (which == aln_Reconstruct_Str && closeGap < 0) {
+        aln_strBuilderAddChar(&builder, '-');
+        closeGap += 1;
+    }
+
+    return builder.str;
+}
+
+aln_PUBLICAPI aln_ReconstructToCommonRefResult
+aln_reconstructToCommonRef(aln_Alignment* alignments, intptr_t alignmentsCount, aln_Str reference, aln_Str* strings, intptr_t stringCount, void* buf, intptr_t bufBytes) {
+    aln_Arena arena_ = {.base = buf, .size = bufBytes};
+    aln_Arena* arena = &arena_;
+
+    // TODO(sen) Implement
+
+    aln_ReconstructToCommonRefResult result = {.bytesWritten = arena->used};
     return result;
 }
 

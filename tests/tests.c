@@ -200,11 +200,11 @@ test_alignAndReconstruct(prb_Arena* arena) {
     }
 
     {
-        aln_Str references[] = {aln_STR("ABC"), aln_STR("DEFABCTYU")};
-        aln_Str seqs[] = {aln_STR("ABC"), aln_STR("FABSTY")};
+        aln_Str references[] = {aln_STR("ABC"), aln_STR("DEFABCTYU"), aln_STR("ABCDEFGH")};
+        aln_Str seqs[] = {aln_STR("ABC"), aln_STR("FABSTY"), aln_STR("ABCFGH")};
 
-        aln_Str expectedRefs[] = {aln_STR("ABC"), aln_STR("DEFABCTYU")};
-        aln_Str expectedSeqs[] = {aln_STR("ABC"), aln_STR("--FABSTY-")};
+        aln_Str expectedRefs[] = {aln_STR("ABC"), aln_STR("DEFABCTYU"), aln_STR("ABCDEFGH")};
+        aln_Str expectedSeqs[] = {aln_STR("ABC"), aln_STR("--FABSTY-"), aln_STR("ABC--FGH")};
 
         alignAndReconstruct(
             arena,
