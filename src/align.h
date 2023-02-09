@@ -84,7 +84,7 @@ typedef enum aln_Reconstruct {
     aln_Reconstruct_Str,
 } aln_Reconstruct;
 
-aln_PUBLICAPI aln_AlignResult aln_align(aln_Str reference, aln_Str* strings, intptr_t stringCount, aln_Config config);
+aln_PUBLICAPI aln_AlignResult aln_align(aln_Str* references, intptr_t refCount, aln_Str* strings, intptr_t stringCount, aln_Config config);
 aln_PUBLICAPI aln_Str         aln_reconstruct(aln_Alignment aligned, aln_Reconstruct which, aln_Str reference, aln_Str ogstr, void* buf, intptr_t bufBytes);
 aln_PUBLICAPI intptr_t        aln_matrix2index(intptr_t matrixWidth, intptr_t matrixHeight, intptr_t row, intptr_t col);
 
@@ -257,7 +257,7 @@ aln_reconstruct(aln_Alignment aligned, aln_Reconstruct which, aln_Str reference,
         }
     }
 
-    aln_Str target = which == aln_Reconstruct_Ref ? reference : ogstr;
+    aln_Str  target = which == aln_Reconstruct_Ref ? reference : ogstr;
     intptr_t targetFirstIndex = which == aln_Reconstruct_Ref ? aligned.refFirstIndex : aligned.strFirstIndex;
 
     {
@@ -306,17 +306,25 @@ aln_reconstruct(aln_Alignment aligned, aln_Reconstruct which, aln_Str reference,
 }
 
 aln_PUBLICAPI aln_AlignResult
-aln_align(aln_Str reference, aln_Str* strings, intptr_t stringCount, aln_Config config) {
-    aln_assert(reference.ptr && reference.len > 0);
-    aln_assert(strings);
-    aln_assert(stringCount > 0);
-    aln_assert(config.outmem);
-    aln_assert(config.outmemBytes > 0);
-    aln_assert(config.tempmem);
-    aln_assert(config.tempmemBytes > 0);
-    for (intptr_t strInd = 0; strInd < stringCount; strInd++) {
-        aln_Str ogstr = strings[strInd];
-        aln_assert(ogstr.ptr && ogstr.len > 0);
+aln_align(aln_Str* references, intptr_t refCount, aln_Str* strings, intptr_t stringCount, aln_Config config) {
+    // NOTE(sen) Input validation
+    {
+        aln_assert(strings);
+        aln_assert(stringCount > 0);
+        aln_assert(references);
+        aln_assert(refCount == 1 || refCount == stringCount);
+        aln_assert(config.outmem);
+        aln_assert(config.outmemBytes > 0);
+        aln_assert(config.tempmem);
+        aln_assert(config.tempmemBytes > 0);
+        for (intptr_t strInd = 0; strInd < stringCount; strInd++) {
+            aln_Str ogstr = strings[strInd];
+            aln_assert(ogstr.ptr && ogstr.len > 0);
+        }
+        for (intptr_t refInd = 0; refInd < refCount; refInd++) {
+            aln_Str ref = references[refInd];
+            aln_assert(ref.ptr && ref.len > 0);
+        }
     }
 
     aln_Arena  outputArena_ = {.base = config.outmem, .size = config.outmemBytes};
@@ -324,12 +332,20 @@ aln_align(aln_Str reference, aln_Str* strings, intptr_t stringCount, aln_Config 
     aln_Arena  arena_ = {.base = config.tempmem, .size = config.tempmemBytes};
     aln_Arena* arena = &arena_;
 
-    intptr_t longestInputLen = reference.len;
-    for (intptr_t strInd = 0; strInd < stringCount; strInd++) {
-        longestInputLen = aln_max(longestInputLen, strings[strInd].len);
-    }
+    aln_Matrix2NW maxGrid = {.ptr = 0, .width = 0, .height = 0};
+    {
+        intptr_t longestInputLen = 0;
+        for (intptr_t strInd = 0; strInd < stringCount; strInd++) {
+            longestInputLen = aln_max(longestInputLen, strings[strInd].len);
+        }
 
-    aln_Matrix2NW maxGrid = aln_arenaAllocMatrix2(aln_Matrix2NW, aln_NWEntry, arena, reference.len + 1, longestInputLen + 1);
+        intptr_t longestRefLen = 0;
+        for (intptr_t refInd = 0; refInd < refCount; refInd++) {
+            longestRefLen = aln_max(longestRefLen, references[refInd].len);
+        }
+
+        maxGrid = aln_arenaAllocMatrix2(aln_Matrix2NW, aln_NWEntry, arena, longestRefLen + 1, longestInputLen + 1);
+    }
 
     aln_Matrix2NW* storedMatrices = 0;
     if (config.storeFinalMatrices) {
@@ -339,9 +355,15 @@ aln_align(aln_Str reference, aln_Str* strings, intptr_t stringCount, aln_Config 
     aln_Alignment* alignedSeqs = aln_arenaAllocArray(outputArena, aln_Alignment, stringCount);
     for (intptr_t strInd = 0; strInd < stringCount; strInd++) {
         aln_Str ogstr = strings[strInd];
+        aln_Str thisRef = references[0];
+        if (refCount > 1) {
+            thisRef = references[strInd];
+        }
 
         aln_Matrix2NW thisGrid = maxGrid;
+        thisGrid.width = thisRef.len + 1;
         thisGrid.height = ogstr.len + 1;
+        aln_assert(thisGrid.width <= maxGrid.width);
         aln_assert(thisGrid.height <= maxGrid.height);
 
         aln_matrix2get(thisGrid, 0, 0).score = 0;
@@ -374,7 +396,7 @@ aln_align(aln_Str reference, aln_Str* strings, intptr_t stringCount, aln_Config 
 
                 float alignScore = 1.0f;
                 {
-                    char chRef = reference.ptr[colIndex - 1];
+                    char chRef = thisRef.ptr[colIndex - 1];
                     char chStr = ogstr.ptr[rowIndex - 1];
                     if (chRef != chStr) {
                         alignScore = -1.0f;

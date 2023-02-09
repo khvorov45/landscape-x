@@ -128,20 +128,23 @@ streq(prb_Arena* arena, aln_Str str1, aln_Str str2) {
 }
 
 function void
-test_alignAndReconstruct(prb_Arena* arena) {
+alignAndReconstruct(
+    prb_Arena* arena,
+    aln_Str*   refs,
+    intptr_t   refCount,
+    aln_Str*   strs,
+    intptr_t   strsCount,
+    aln_Str*   expectedRefs,
+    aln_Str*   expectedStrs
+) {
     prb_TempMemory temp = prb_beginTempMemory(arena);
-
-    aln_Str reference = aln_STR("ABC");
-    aln_Str seqs[] = {aln_STR("ABC"), aln_STR("BC"), aln_STR("AB"), aln_STR("B"), aln_STR("DABC"), aln_STR("ABCD"), aln_STR("DABCD")};
-
-    aln_Str expectedRefs[] = {aln_STR("ABC"), aln_STR("ABC"), aln_STR("ABC"), aln_STR("ABC"), aln_STR("-ABC"), aln_STR("ABC-"), aln_STR("-ABC-")};
-    aln_Str expectedSeqs[] = {aln_STR("ABC"), aln_STR("-BC"), aln_STR("AB-"), aln_STR("-B-"), aln_STR("DABC"), aln_STR("ABCD"), aln_STR("DABCD")};
 
     prb_Arena       alnOut = prb_createArenaFromArena(arena, 20 * prb_MEGABYTE);
     aln_AlignResult alignResult = aln_align(
-        reference,
-        seqs,
-        prb_arrayCount(seqs),
+        refs,
+        refCount,
+        strs,
+        strsCount,
         (aln_Config) {
             .outmem = alnOut.base,
             .outmemBytes = alnOut.size,
@@ -151,8 +154,12 @@ test_alignAndReconstruct(prb_Arena* arena) {
         }
     );
 
-    for (isize seqInd = 0; seqInd < prb_arrayCount(seqs); seqInd++) {
-        aln_Str       ogstr = seqs[seqInd];
+    for (isize seqInd = 0; seqInd < strsCount; seqInd++) {
+        aln_Str ogstr = strs[seqInd];
+        aln_Str reference = refs[0];
+        if (refCount > 1) {
+            reference = refs[seqInd];
+        }
         aln_Alignment alignedStr = alignResult.strs[seqInd];
 
         bool printMats = false;
@@ -166,10 +173,49 @@ test_alignAndReconstruct(prb_Arena* arena) {
 
         aln_Str strReconstructed = aln_reconstruct(alignedStr, aln_Reconstruct_Str, reference, ogstr, prb_arenaFreePtr(arena), prb_arenaFreeSize(arena));
         prb_arenaChangeUsed(arena, strReconstructed.len);
-        streq(arena, strReconstructed, expectedSeqs[seqInd]);
+        streq(arena, strReconstructed, expectedStrs[seqInd]);
     }
 
     prb_endTempMemory(temp);
+}
+
+function void
+test_alignAndReconstruct(prb_Arena* arena) {
+    {
+        aln_Str reference = aln_STR("ABC");
+        aln_Str seqs[] = {aln_STR("ABC"), aln_STR("BC"), aln_STR("AB"), aln_STR("B"), aln_STR("DABC"), aln_STR("ABCD"), aln_STR("DABCD")};
+
+        aln_Str expectedRefs[] = {aln_STR("ABC"), aln_STR("ABC"), aln_STR("ABC"), aln_STR("ABC"), aln_STR("-ABC"), aln_STR("ABC-"), aln_STR("-ABC-")};
+        aln_Str expectedSeqs[] = {aln_STR("ABC"), aln_STR("-BC"), aln_STR("AB-"), aln_STR("-B-"), aln_STR("DABC"), aln_STR("ABCD"), aln_STR("DABCD")};
+
+        alignAndReconstruct(
+            arena,
+            &reference,
+            1,
+            seqs,
+            prb_arrayCount(seqs),
+            expectedRefs,
+            expectedSeqs
+        );
+    }
+
+    {
+        aln_Str references[] = {aln_STR("ABC"), aln_STR("DEFABCTYU")};
+        aln_Str seqs[] = {aln_STR("ABC"), aln_STR("FABSTY")};
+
+        aln_Str expectedRefs[] = {aln_STR("ABC"), aln_STR("DEFABCTYU")};
+        aln_Str expectedSeqs[] = {aln_STR("ABC"), aln_STR("--FABSTY-")};
+
+        alignAndReconstruct(
+            arena,
+            references,
+            prb_arrayCount(references),
+            seqs,
+            prb_arrayCount(seqs),
+            expectedRefs,
+            expectedSeqs
+        );
+    }
 }
 
 int

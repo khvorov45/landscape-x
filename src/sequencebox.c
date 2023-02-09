@@ -8,26 +8,36 @@
 #include "align.h"
 // clang-format on
 
+static aln_Str*
+rStrArrayToAlnStrArray(aln_Arena* arena, SEXP strs, int strsCount) {
+    aln_Str* alnStrings = aln_arenaAllocArray(arena, aln_Str, strsCount);
+    for (int strIndex = 0; strIndex < strsCount; strIndex++) {
+        SEXP rSeq = STRING_ELT(strs, strIndex);
+        alnStrings[strIndex] = (aln_Str) {(char*)CHAR(rSeq), LENGTH(rSeq)};
+    }
+    return alnStrings;
+}
+
 SEXP
-align_c(SEXP reference, SEXP sequences) {
-    int  sequencesCount = LENGTH(sequences);
+align_c(SEXP references, SEXP sequences) {
+    int referenceCount = LENGTH(references);
+    int sequencesCount = LENGTH(sequences);
+    if (referenceCount != 1 && referenceCount != sequencesCount) {
+        error("reference count (%d) should be either 1 or the same as sequence count (%d)", referenceCount, sequencesCount);
+    }
+
     SEXP result = PROTECT(allocVector(STRSXP, sequencesCount));
 
     intptr_t  totalMemoryBytes = 20 * 1024 * 1024;
     aln_Arena arena = {.base = R_alloc(totalMemoryBytes, 1), .size = totalMemoryBytes};
     if (arena.base) {
-        SEXP    rRef = STRING_ELT(reference, 0);
-        aln_Str alnRef = (aln_Str) {(char*)CHAR(rRef), LENGTH(rRef)};
-
-        aln_Str* alnStrings = aln_arenaAllocArray(&arena, aln_Str, sequencesCount);
-        for (int seqIndex = 0; seqIndex < sequencesCount; seqIndex++) {
-            SEXP rSeq = STRING_ELT(sequences, seqIndex);
-            alnStrings[seqIndex] = (aln_Str) {(char*)CHAR(rSeq), LENGTH(rSeq)};
-        }
+        aln_Str* alnRefs = rStrArrayToAlnStrArray(&arena, references, referenceCount);
+        aln_Str* alnStrings = rStrArrayToAlnStrArray(&arena, sequences, sequencesCount);
 
         aln_Arena       alnOutput = aln_createArenaFromArena(&arena, aln_arenaFreeSize(&arena) / 4);
         aln_AlignResult alnResult = aln_align(
-            alnRef,
+            alnRefs,
+            referenceCount,
             alnStrings,
             sequencesCount,
             (aln_Config) {
@@ -42,7 +52,11 @@ align_c(SEXP reference, SEXP sequences) {
         if (alnResult.strCount == sequencesCount) {
             for (int seqIndex = 0; seqIndex < alnResult.strCount; seqIndex++) {
                 aln_Alignment alignment = alnResult.strs[seqIndex];
-                aln_Str alnStr = aln_reconstruct(alignment, aln_Reconstruct_Str, alnRef, alnStrings[seqIndex], aln_arenaFreePtr(&arena), aln_arenaFreeSize(&arena));
+                aln_Str thisRef = alnRefs[0];
+                if (referenceCount > 1) {
+                    thisRef = alnRefs[seqIndex];
+                }
+                aln_Str       alnStr = aln_reconstruct(alignment, aln_Reconstruct_Str, thisRef, alnStrings[seqIndex], aln_arenaFreePtr(&arena), aln_arenaFreeSize(&arena));
                 SET_STRING_ELT(result, seqIndex, mkCharLen(alnStr.ptr, (int)alnStr.len));
             }
         } else {
