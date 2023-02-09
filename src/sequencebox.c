@@ -26,11 +26,23 @@ align_c(SEXP reference, SEXP sequences) {
         }
 
         aln_Arena       alnOutput = aln_createArenaFromArena(&arena, aln_arenaFreeSize(&arena) / 4);
-        aln_Arena       alnTemp = aln_createArenaFromArena(&arena, aln_arenaFreeSize(&arena));
-        aln_AlignResult alnResult = aln_align(alnRef, alnStrings, sequencesCount, alnOutput.base, alnOutput.size, alnTemp.base, alnTemp.size);
-        if (alnResult.seqCount == sequencesCount) {
-            for (int seqIndex = 0; seqIndex < alnResult.seqCount; seqIndex++) {
-                aln_Str alnStr = alnResult.seqs[seqIndex];
+        aln_AlignResult alnResult = aln_align(
+            alnRef,
+            alnStrings,
+            sequencesCount,
+            (aln_Config) {
+                .outmem = alnOutput.base,
+                .outmemBytes = alnOutput.size,
+                .tempmem = aln_arenaFreePtr(&arena),
+                .tempmemBytes = aln_arenaFreeSize(&arena),
+            }
+        );
+        aln_arenaChangeUsed(&arena, alnOutput.size - alnResult.bytesWrittenToOutput);
+
+        if (alnResult.strCount == sequencesCount) {
+            for (int seqIndex = 0; seqIndex < alnResult.strCount; seqIndex++) {
+                aln_Alignment alignment = alnResult.strs[seqIndex];
+                aln_Str alnStr = aln_reconstruct(alignment, aln_Reconstruct_Str, alnRef, alnStrings[seqIndex], aln_arenaFreePtr(&arena), aln_arenaFreeSize(&arena));
                 SET_STRING_ELT(result, seqIndex, mkCharLen(alnStr.ptr, (int)alnStr.len));
             }
         } else {

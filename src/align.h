@@ -273,7 +273,7 @@ aln_reconstruct(aln_Alignment aligned, aln_Reconstruct which, aln_Str reference,
     {
         intptr_t cur = targetFirstIndex;
         for (intptr_t actionIndex = 0; actionIndex < aligned.actionCount; actionIndex++) {
-            prb_assert(cur < target.len);
+            aln_assert(cur < target.len);
             aln_AlignAction targetAction = which == aln_Reconstruct_Ref ? aln_AlignAction_GapRef : aln_AlignAction_GapStr;
             aln_AlignAction thisAction = aligned.actions[actionIndex];
             if (thisAction == aln_AlignAction_Match) {
@@ -284,7 +284,7 @@ aln_reconstruct(aln_Alignment aligned, aln_Reconstruct which, aln_Str reference,
         }
 
         while (cur < target.len) {
-            prb_assert(cur < target.len);
+            aln_assert(cur < target.len);
             aln_strBuilderAddChar(&builder, target.ptr[cur]);
             cur += 1;
         }
