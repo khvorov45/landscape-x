@@ -8,3 +8,5 @@ tmp
 temp*
 mafft
 *.exe
+*.fasta
+*.out
