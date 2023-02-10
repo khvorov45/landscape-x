@@ -66,10 +66,6 @@ typedef enum aln_AlignAction {
 typedef struct aln_Alignment {
     aln_AlignAction* actions;
     intptr_t         actionCount;
-    intptr_t         strFirstIndex;
-    intptr_t         strLastIndex;
-    intptr_t         refFirstIndex;
-    intptr_t         refLastIndex;
 } aln_Alignment;
 
 typedef struct aln_AlignResult {
@@ -310,9 +306,7 @@ aln_align(aln_Str* references, intptr_t refCount, aln_Str* strings, intptr_t str
             aln_matrix2get(thisGrid, rowIndex, 0) = (aln_NWEntry) {-(float)rowIndex, aln_CameFromDir_Top};
         }
 
-        intptr_t thisGridMaxScoreIndex = 0;
-        float    thisGridMaxScore = -1;
-
+        // TODO(khvorov) Diagonal iteration
         for (intptr_t diagonalIndex = 2; diagonalIndex < thisGrid.width + thisGrid.height - 1; diagonalIndex++) {
             intptr_t entriesInDiagonal = 0;
             if (diagonalIndex < thisGrid.height) {
@@ -357,11 +351,6 @@ aln_align(aln_Str* references, intptr_t refCount, aln_Str* strings, intptr_t str
                 }
 
                 aln_matrix2get(thisGrid, rowIndex, colIndex) = (aln_NWEntry) {maxScore, cameFrom};
-
-                if (thisGridMaxScore < maxScore) {
-                    thisGridMaxScore = maxScore;
-                    thisGridMaxScoreIndex = aln_matrix2index(thisGrid.width, thisGrid.height, rowIndex, colIndex);
-                }
             }  // for mat col
         }  // for mat row
 
@@ -374,15 +363,11 @@ aln_align(aln_Str* references, intptr_t refCount, aln_Str* strings, intptr_t str
         }
 
         // TODO(khvorov) This reconstruction would have to go by diagonal as well
-        intptr_t      maxScoreCol = thisGridMaxScoreIndex % thisGrid.width;
-        intptr_t      maxScoreRow = thisGridMaxScoreIndex / thisGrid.width;
-        intptr_t      maxActionCount = maxScoreRow + maxScoreCol;
-        aln_Alignment alignedStr = {aln_arenaAllocArray(outputArena, aln_AlignAction, maxActionCount), .strLastIndex = maxScoreRow - 1, .refLastIndex = maxScoreCol - 1};
+        intptr_t      maxActionCount = (thisGrid.width - 1) + (thisGrid.height - 1);
+        aln_Alignment alignedStr = {aln_arenaAllocArray(outputArena, aln_AlignAction, maxActionCount)};
 
-        intptr_t matInd = thisGridMaxScoreIndex;
-        intptr_t entryCol = matInd % thisGrid.width;
-        intptr_t entryRow = matInd / thisGrid.width;
-        for (intptr_t actionIndex = maxActionCount - 1; matInd > 0 && entryCol > 0 && entryRow > 0; actionIndex--) {
+        intptr_t matInd = thisGrid.width * thisGrid.height - 1;
+        for (intptr_t actionIndex = maxActionCount - 1; matInd > 0; actionIndex--) {
             aln_assert(actionIndex >= 0);
             aln_NWEntry entry = thisGrid.ptr[matInd];
 
@@ -390,18 +375,14 @@ aln_align(aln_Str* references, intptr_t refCount, aln_Str* strings, intptr_t str
                 case aln_CameFromDir_TopLeft: {
                     alignedStr.actions[actionIndex] = aln_AlignAction_Match;
                     matInd -= (thisGrid.width + 1);
-                    entryCol -= 1;
-                    entryRow -= 1;
                 } break;
                 case aln_CameFromDir_Top: {
                     alignedStr.actions[actionIndex] = aln_AlignAction_GapRef;
                     matInd -= thisGrid.width;
-                    entryRow -= 1;
                 } break;
                 case aln_CameFromDir_Left: {
                     alignedStr.actions[actionIndex] = aln_AlignAction_GapStr;
                     matInd -= 1;
-                    entryCol -= 1;
                 } break;
             }
 
@@ -413,9 +394,6 @@ aln_align(aln_Str* references, intptr_t refCount, aln_Str* strings, intptr_t str
             aln_assert(actionsEmpty);
             alignedStr.actions += actionsEmpty;
         }
-
-        alignedStr.refFirstIndex = entryCol;
-        alignedStr.strFirstIndex = entryRow;
 
         alignedSeqs[strInd] = alignedStr;
     }  // for str
@@ -439,35 +417,11 @@ aln_PUBLICAPI aln_Str
 aln_reconstruct(aln_Alignment aligned, aln_Reconstruct which, aln_Str reference, aln_Str ogstr, void* buf, intptr_t bufBytes) {
     aln_StrBuilder builder = {{buf}, bufBytes};
 
-    {
-        intptr_t initGap = aligned.strFirstIndex - aligned.refFirstIndex;
-        while (which == aln_Reconstruct_Ref && initGap > 0) {
-            aln_strBuilderAddChar(&builder, '-');
-            initGap -= 1;
-        }
-        while (which == aln_Reconstruct_Str && initGap < 0) {
-            aln_strBuilderAddChar(&builder, '-');
-            initGap += 1;
-        }
-    }
-
-    aln_Str  target = which == aln_Reconstruct_Ref ? reference : ogstr;
-    intptr_t targetFirstIndex = which == aln_Reconstruct_Ref ? aligned.refFirstIndex : aligned.strFirstIndex;
+    aln_Str target = which == aln_Reconstruct_Ref ? reference : ogstr;
 
     {
         intptr_t cur = 0;
-        intptr_t head = targetFirstIndex;
-        while (cur < head) {
-            aln_assert(cur < target.len);
-            aln_strBuilderAddChar(&builder, target.ptr[cur]);
-            cur += 1;
-        }
-    }
-
-    {
-        intptr_t cur = targetFirstIndex;
         for (intptr_t actionIndex = 0; actionIndex < aligned.actionCount; actionIndex++) {
-            aln_assert(cur < target.len);
             aln_AlignAction targetAction = which == aln_Reconstruct_Ref ? aln_AlignAction_GapRef : aln_AlignAction_GapStr;
             aln_AlignAction thisAction = aligned.actions[actionIndex];
             if (thisAction == aln_AlignAction_Match) {
@@ -484,29 +438,120 @@ aln_reconstruct(aln_Alignment aligned, aln_Reconstruct which, aln_Str reference,
         }
     }
 
-    intptr_t refCloseGap = ogstr.len - aligned.strLastIndex - 1;
-    intptr_t strCloseGap = reference.len - aligned.refLastIndex - 1;
-    intptr_t closeGap = refCloseGap - strCloseGap;
-    while (which == aln_Reconstruct_Ref && closeGap > 0) {
-        aln_strBuilderAddChar(&builder, '-');
-        closeGap -= 1;
-    }
-    while (which == aln_Reconstruct_Str && closeGap < 0) {
-        aln_strBuilderAddChar(&builder, '-');
-        closeGap += 1;
-    }
-
     return builder.str;
 }
 
 aln_PUBLICAPI aln_ReconstructToCommonRefResult
 aln_reconstructToCommonRef(aln_Alignment* alignments, intptr_t alignmentsCount, aln_Str reference, aln_Str* strings, intptr_t stringCount, void* buf, intptr_t bufBytes) {
-    aln_Arena arena_ = {.base = buf, .size = bufBytes};
+    aln_assert(alignmentsCount == stringCount);
+
+    aln_Arena  arena_ = {.base = buf, .size = bufBytes};
     aln_Arena* arena = &arena_;
 
-    // TODO(sen) Implement
+    // TODO(sen) Temp arena
+    intptr_t* refGaps = aln_arenaAllocArray(arena, intptr_t, reference.len + 1);
 
-    aln_ReconstructToCommonRefResult result = {.bytesWritten = arena->used};
+    for (intptr_t alnIndex = 0; alnIndex < alignmentsCount; alnIndex++) {
+        aln_Alignment aligned = alignments[alnIndex];
+
+        {
+            intptr_t cur = 0;
+            intptr_t curGaps = 0;
+            for (intptr_t actionIndex = 0; actionIndex < aligned.actionCount; actionIndex++) {
+                aln_AlignAction thisAction = aligned.actions[actionIndex];
+                switch (thisAction) {
+                    case aln_AlignAction_Match:
+                    case aln_AlignAction_GapStr:
+                        refGaps[cur] = aln_max(refGaps[cur], curGaps);
+                        cur += 1;
+                        curGaps = 0;
+                        break;
+                    case aln_AlignAction_GapRef:
+                        curGaps += 1;
+                        break;
+                }
+            }
+            // TODO(sen) Do something about this repetition
+            refGaps[cur] = aln_max(refGaps[cur], curGaps);
+        }
+    }
+
+    aln_Str* reconStrs = aln_arenaAllocArray(arena, aln_Str, stringCount);
+    for (intptr_t alnIndex = 0; alnIndex < alignmentsCount; alnIndex++) {
+        aln_Alignment aligned = alignments[alnIndex];
+        aln_Str       thisStr = strings[alnIndex];
+
+        aln_StrBuilder builder = {.str.ptr = aln_arenaFreePtr(arena), .capacity = aln_arenaFreeSize(arena)};
+
+        {
+            intptr_t curStr = 0;
+            intptr_t curRef = 0;
+            intptr_t curGapsInRef = 0;
+            for (intptr_t actionIndex = 0; actionIndex < aligned.actionCount; actionIndex++) {
+                aln_AlignAction thisAction = aligned.actions[actionIndex];
+                switch (thisAction) {
+                    case aln_AlignAction_Match:
+                    case aln_AlignAction_GapStr: {
+                        intptr_t extraGaps = refGaps[curRef] - curGapsInRef;
+                        while (extraGaps > 0) {
+                            aln_strBuilderAddChar(&builder, '-');
+                            extraGaps -= 1;
+                        }
+                        while (curGapsInRef > 0) {
+                            aln_assert(curStr < thisStr.len);
+                            aln_strBuilderAddChar(&builder, thisStr.ptr[curStr++]);
+                            curGapsInRef -= 1;
+                        }
+                        curRef += 1;
+
+                        char ch = '-';
+                        if (thisAction == aln_AlignAction_Match) {
+                            aln_assert(curStr < thisStr.len);
+                            ch = thisStr.ptr[curStr++];
+                        }
+                        aln_strBuilderAddChar(&builder, ch);
+                    } break;
+                    case aln_AlignAction_GapRef:
+                        curGapsInRef += 1;
+                        break;
+                }
+            }
+            // TODO(sen) Do something about this repetition
+            intptr_t extraGaps = refGaps[curRef] - curGapsInRef;
+            while (extraGaps > 0) {
+                aln_strBuilderAddChar(&builder, '-');
+                extraGaps -= 1;
+            }
+            while (curGapsInRef > 0) {
+                aln_assert(curStr < thisStr.len);
+                aln_strBuilderAddChar(&builder, thisStr.ptr[curStr++]);
+                curGapsInRef -= 1;
+            }
+        }
+
+        aln_arenaChangeUsed(arena, builder.str.len);
+        reconStrs[alnIndex] = builder.str;
+    }
+
+    aln_Str commonRef = {.ptr = 0, .len = 0};
+    {
+        aln_StrBuilder builder = {.str.ptr = aln_arenaFreePtr(arena), .capacity = aln_arenaFreeSize(arena)};
+
+        for (intptr_t refGapIndex = 0; refGapIndex < reference.len + 1; refGapIndex++) {
+            while (refGaps[refGapIndex]) {
+                aln_strBuilderAddChar(&builder, '-');
+                refGaps[refGapIndex] -= 1;
+            }
+            if (refGapIndex < reference.len) {
+                aln_strBuilderAddChar(&builder, reference.ptr[refGapIndex]);
+            }
+        }
+
+        aln_arenaChangeUsed(arena, builder.str.len);
+        commonRef = builder.str;
+    }
+
+    aln_ReconstructToCommonRefResult result = {.bytesWritten = arena->used, .commonRef = commonRef, .strs = reconStrs, .strCount = stringCount};
     return result;
 }
 

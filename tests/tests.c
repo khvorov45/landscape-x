@@ -122,7 +122,7 @@ streq(prb_Arena* arena, aln_Str str1, aln_Str str2) {
         result = prb_memeq(str1.ptr, str2.ptr, str1.len);
     }
     if (!result) {
-        prb_writeToStdout(prb_fmt(arena, "expected: %.*s\nactual: %.*s\n", prb_LIT(str1), prb_LIT(str2)));
+        prb_writeToStdout(prb_fmt(arena, "expected: `%.*s`\nactual: `%.*s`\n", prb_LIT(str1), prb_LIT(str2)));
         prb_assert(!"failed");
     }
 }
@@ -169,11 +169,58 @@ alignAndReconstruct(
 
         aln_Str refReconstructed = aln_reconstruct(alignedStr, aln_Reconstruct_Ref, reference, ogstr, prb_arenaFreePtr(arena), prb_arenaFreeSize(arena));
         prb_arenaChangeUsed(arena, refReconstructed.len);
-        streq(arena, refReconstructed, expectedRefs[seqInd]);
+        streq(arena, expectedRefs[seqInd], refReconstructed);
 
         aln_Str strReconstructed = aln_reconstruct(alignedStr, aln_Reconstruct_Str, reference, ogstr, prb_arenaFreePtr(arena), prb_arenaFreeSize(arena));
         prb_arenaChangeUsed(arena, strReconstructed.len);
-        streq(arena, strReconstructed, expectedStrs[seqInd]);
+        streq(arena, expectedStrs[seqInd], strReconstructed);
+    }
+
+    prb_endTempMemory(temp);
+}
+
+function void
+alignAndReconstructToCommon(
+    prb_Arena* arena,
+    aln_Str    ref,
+    aln_Str*   strs,
+    intptr_t   strsCount,
+    aln_Str    expectedRef,
+    aln_Str*   expectedStrs
+) {
+    prb_TempMemory temp = prb_beginTempMemory(arena);
+
+    prb_Arena       alnOut = prb_createArenaFromArena(arena, 20 * prb_MEGABYTE);
+    aln_AlignResult alignResult = aln_align(
+        &ref,
+        1,
+        strs,
+        strsCount,
+        (aln_Config) {
+            .outmem = alnOut.base,
+            .outmemBytes = alnOut.size,
+            .tempmem = prb_arenaFreePtr(arena),
+            .tempmemBytes = prb_arenaFreeSize(arena),
+            .storeFinalMatrices = true,
+        }
+    );
+    prb_arenaChangeUsed(&alnOut, alignResult.bytesWrittenToOutput);
+
+    aln_ReconstructToCommonRefResult reconstruction =
+        aln_reconstructToCommonRef(alignResult.strs, alignResult.strCount, ref, strs, strsCount, prb_arenaFreePtr(&alnOut), prb_arenaFreeSize(&alnOut));
+    prb_arenaChangeUsed(&alnOut, reconstruction.bytesWritten);
+    streq(arena, expectedRef, reconstruction.commonRef);
+    prb_assert(reconstruction.strCount == strsCount);
+    for (isize strInd = 0; strInd < strsCount; strInd++) {
+        aln_Str str = reconstruction.strs[strInd];
+        aln_Str strExpected = expectedStrs[strInd];
+        
+        bool printMats = false;
+        if (printMats) {
+            printMatrix(arena, alignResult.matrices[strInd], ref, strs[strInd]);
+        }
+
+        streq(arena, strExpected, str);
     }
 
     prb_endTempMemory(temp);
@@ -183,10 +230,10 @@ function void
 test_alignAndReconstruct(prb_Arena* arena) {
     {
         aln_Str reference = aln_STR("ABC");
-        aln_Str seqs[] = {aln_STR("ABC"), aln_STR("BC"), aln_STR("AB"), aln_STR("B"), aln_STR("DABC"), aln_STR("ABCD"), aln_STR("DABCD")};
+        aln_Str seqs[] = {aln_STR("ABC"), aln_STR("BC"), aln_STR("AB"), aln_STR("B"), aln_STR("DDABC"), aln_STR("ABCD"), aln_STR("DABCD"), aln_STR("AB12C")};
 
-        aln_Str expectedRefs[] = {aln_STR("ABC"), aln_STR("ABC"), aln_STR("ABC"), aln_STR("ABC"), aln_STR("-ABC"), aln_STR("ABC-"), aln_STR("-ABC-")};
-        aln_Str expectedSeqs[] = {aln_STR("ABC"), aln_STR("-BC"), aln_STR("AB-"), aln_STR("-B-"), aln_STR("DABC"), aln_STR("ABCD"), aln_STR("DABCD")};
+        aln_Str expectedRefs[] = {aln_STR("ABC"), aln_STR("ABC"), aln_STR("ABC"), aln_STR("ABC"), aln_STR("--ABC"), aln_STR("ABC-"), aln_STR("-ABC-"), aln_STR("AB--C")};
+        aln_Str expectedSeqs[] = {aln_STR("ABC"), aln_STR("-BC"), aln_STR("AB-"), aln_STR("-B-"), aln_STR("DDABC"), aln_STR("ABCD"), aln_STR("DABCD"), aln_STR("AB12C")};
 
         alignAndReconstruct(
             arena,
@@ -196,6 +243,18 @@ test_alignAndReconstruct(prb_Arena* arena) {
             prb_arrayCount(seqs),
             expectedRefs,
             expectedSeqs
+        );
+
+        aln_Str expectedCommonRef = aln_STR("--AB--C-");
+        aln_Str expectedCommonSeqs[] = {aln_STR("--AB--C-"), aln_STR("---B--C-"), aln_STR("--AB----"), aln_STR("---B----"), aln_STR("DDAB--C-"), aln_STR("--AB--CD"), aln_STR("-DAB--CD"), aln_STR("--AB12C-")};
+
+        alignAndReconstructToCommon(
+            arena,
+            reference,
+            seqs,
+            prb_arrayCount(seqs),
+            expectedCommonRef,
+            expectedCommonSeqs
         );
     }
 
