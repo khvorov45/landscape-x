@@ -26,6 +26,19 @@ typedef enum aln_Status {
     aln_Success,
 } aln_Status;
 
+typedef struct aln_Arena {
+    void*    base;
+    intptr_t size;
+    intptr_t used;
+    intptr_t tempCount;
+    bool     lockedForStr;
+} aln_Arena;
+
+typedef struct aln_Memory {
+    aln_Arena perm;
+    aln_Arena temp;
+} aln_Memory;
+
 typedef struct aln_Str {
     char*    ptr;
     intptr_t len;
@@ -37,11 +50,7 @@ typedef struct aln_StrArray {
 } aln_StrArray;
 
 typedef struct aln_Config {
-    void*    outmem;
-    intptr_t outmemBytes;
-    void*    tempmem;
-    intptr_t tempmemBytes;
-    bool     storeFinalMatrices;
+    bool storeFinalMatrices;
 } aln_Config;
 
 typedef enum aln_CameFromDir {
@@ -86,7 +95,6 @@ typedef struct aln_AlignmentArray {
 typedef struct aln_AlignResult {
     aln_AlignmentArray alignments;
     aln_Matrix2NWArray matrices;
-    intptr_t           bytesWrittenToOutput;
 } aln_AlignResult;
 
 typedef enum aln_Reconstruct {
@@ -97,15 +105,13 @@ typedef enum aln_Reconstruct {
 typedef struct aln_ReconstructToCommonRefResult {
     aln_Str      commonRef;
     aln_StrArray alignedStrs;
-    intptr_t     bytesWritten;
 } aln_ReconstructToCommonRefResult;
 
-// TODO(sen) Pass arenas instead of buffers and have some helpers to create the arenas?
-
-aln_PUBLICAPI aln_AlignResult                  aln_align(aln_StrArray references, aln_StrArray strings, aln_Config config);
+aln_PUBLICAPI aln_Memory                       aln_createMemory(void* base, intptr_t totalSize, intptr_t permSize);
+aln_PUBLICAPI aln_AlignResult                  aln_align(aln_StrArray references, aln_StrArray strings, aln_Config config, aln_Memory* memory);
+aln_PUBLICAPI aln_Str                          aln_reconstruct(aln_Alignment aligned, aln_Reconstruct which, aln_Str reference, aln_Str ogstr, aln_Arena* arena);
+aln_PUBLICAPI aln_ReconstructToCommonRefResult aln_reconstructToCommonRef(aln_AlignmentArray alignments, aln_Str reference, aln_StrArray strings, aln_Memory* memory);
 aln_PUBLICAPI intptr_t                         aln_matrix2index(intptr_t matrixWidth, intptr_t matrixHeight, intptr_t row, intptr_t col);
-aln_PUBLICAPI aln_Str                          aln_reconstruct(aln_Alignment aligned, aln_Reconstruct which, aln_Str reference, aln_Str ogstr, void* buf, intptr_t bufBytes);
-aln_PUBLICAPI aln_ReconstructToCommonRefResult aln_reconstructToCommonRef(aln_AlignmentArray alignments, aln_Str reference, aln_StrArray strings, void* buf, intptr_t bufBytes);
 
 #endif  // aln_HEADER
 
@@ -151,14 +157,6 @@ aln_getOffsetForAlignment(void* ptr, intptr_t align) {
     aln_assert(diff < align && diff >= 0);
     return (intptr_t)diff;
 }
-
-// TODO(sen) Don't assert on out of memory?
-typedef struct aln_Arena {
-    void*    base;
-    intptr_t size;
-    intptr_t used;
-    intptr_t tempCount;
-} aln_Arena;
 
 typedef struct aln_TempMemory {
     aln_Arena* arena;
@@ -231,36 +229,29 @@ aln_strGetNullTerminated(aln_Arena* arena, aln_Str str) {
     return buf;
 }
 
-aln_PUBLICAPI intptr_t
-aln_matrix2index(intptr_t matrixWidth, intptr_t matrixHeight, intptr_t row, intptr_t col) {
-// TODO(sen) Enable
-#if 0 
-    // NOTE(sen) Diagonal-first storage. Diagonals start in the top-left corner and are oriented bottomleft to topright.
-    intptr_t topleftRect = (row + 1) * col;
-    intptr_t toprightTriangleColCount = aln_min(row, matrixWidth - col - 1);
-    intptr_t toprightTriangle = toprightTriangleColCount * (row + (row - toprightTriangleColCount + 1)) / 2;
-    intptr_t bottomleftTriangleColCount = aln_min(col, matrixHeight - row - 1);
-    intptr_t bottomleftTriangle = bottomleftTriangleColCount * (col + (col - bottomleftTriangleColCount + 1)) / 2;
-    intptr_t result = topleftRect + toprightTriangle + bottomleftTriangle;
-#else
-    aln_unused(matrixHeight);
-    intptr_t result = row * matrixWidth + col;
-#endif
-    return result;
+aln_PRIVATEAPI aln_Arena
+aln_createArena(void* base, intptr_t size) {
+    aln_Arena arena = {.base = base, .size = size};
+    return arena;
+}
+
+aln_PUBLICAPI aln_Memory
+aln_createMemory(void* base, intptr_t totalSize, intptr_t permSize) {
+    aln_Arena  total = aln_createArena(base, totalSize);
+    aln_Arena  perm = aln_createArenaFromArena(&total, permSize);
+    aln_Arena  temp = aln_createArena(aln_arenaFreePtr(&total), aln_arenaFreeSize(&total));
+    aln_Memory memory = {perm, temp};
+    return memory;
 }
 
 aln_PUBLICAPI aln_AlignResult
-aln_align(aln_StrArray references, aln_StrArray strings, aln_Config config) {
+aln_align(aln_StrArray references, aln_StrArray strings, aln_Config config, aln_Memory* memory) {
     // NOTE(sen) Input validation
     {
         aln_assert(strings.ptr);
         aln_assert(strings.len > 0);
         aln_assert(references.ptr);
         aln_assert(references.len == 1 || references.len == strings.len);
-        aln_assert(config.outmem);
-        aln_assert(config.outmemBytes > 0);
-        aln_assert(config.tempmem);
-        aln_assert(config.tempmemBytes > 0);
         for (intptr_t strInd = 0; strInd < strings.len; strInd++) {
             aln_Str ogstr = strings.ptr[strInd];
             aln_assert(ogstr.ptr && ogstr.len > 0);
@@ -271,10 +262,7 @@ aln_align(aln_StrArray references, aln_StrArray strings, aln_Config config) {
         }
     }
 
-    aln_Arena  outputArena_ = {.base = config.outmem, .size = config.outmemBytes};
-    aln_Arena* outputArena = &outputArena_;
-    aln_Arena  arena_ = {.base = config.tempmem, .size = config.tempmemBytes};
-    aln_Arena* arena = &arena_;
+    aln_TempMemory temp = aln_beginTempMemory(&memory->temp);
 
     aln_Matrix2NW maxGrid = {.ptr = 0, .width = 0, .height = 0};
     {
@@ -288,15 +276,15 @@ aln_align(aln_StrArray references, aln_StrArray strings, aln_Config config) {
             longestRefLen = aln_max(longestRefLen, references.ptr[refInd].len);
         }
 
-        maxGrid = aln_arenaAllocMatrix2(aln_Matrix2NW, aln_NWEntry, arena, longestRefLen + 1, longestInputLen + 1);
+        maxGrid = aln_arenaAllocMatrix2(aln_Matrix2NW, aln_NWEntry, &memory->temp, longestRefLen + 1, longestInputLen + 1);
     }
 
     aln_Matrix2NW* storedMatrices = 0;
     if (config.storeFinalMatrices) {
-        storedMatrices = aln_arenaAllocArray(outputArena, aln_Matrix2NW, strings.len);
+        storedMatrices = aln_arenaAllocArray(&memory->perm, aln_Matrix2NW, strings.len);
     }
 
-    aln_Alignment* alignedSeqs = aln_arenaAllocArray(outputArena, aln_Alignment, strings.len);
+    aln_Alignment* alignedSeqs = aln_arenaAllocArray(&memory->perm, aln_Alignment, strings.len);
     for (intptr_t strInd = 0; strInd < strings.len; strInd++) {
         aln_Str ogstr = strings.ptr[strInd];
         aln_Str thisRef = references.ptr[0];
@@ -367,7 +355,7 @@ aln_align(aln_StrArray references, aln_StrArray strings, aln_Config config) {
         }  // for mat row
 
         if (config.storeFinalMatrices) {
-            aln_Matrix2NW matCopy = aln_arenaAllocMatrix2(aln_Matrix2NW, aln_NWEntry, outputArena, thisGrid.width, thisGrid.height);
+            aln_Matrix2NW matCopy = aln_arenaAllocMatrix2(aln_Matrix2NW, aln_NWEntry, &memory->perm, thisGrid.width, thisGrid.height);
             for (intptr_t matIndex = 0; matIndex < matCopy.width * matCopy.height; matIndex++) {
                 matCopy.ptr[matIndex] = thisGrid.ptr[matIndex];
             }
@@ -376,7 +364,7 @@ aln_align(aln_StrArray references, aln_StrArray strings, aln_Config config) {
 
         // TODO(khvorov) This reconstruction would have to go by diagonal as well
         intptr_t      maxActionCount = (thisGrid.width - 1) + (thisGrid.height - 1);
-        aln_Alignment alignedStr = {aln_arenaAllocArray(outputArena, aln_AlignAction, maxActionCount)};
+        aln_Alignment alignedStr = {aln_arenaAllocArray(&memory->perm, aln_AlignAction, maxActionCount)};
 
         intptr_t matInd = thisGrid.width * thisGrid.height - 1;
         for (intptr_t actionIndex = maxActionCount - 1; matInd > 0; actionIndex--) {
@@ -410,8 +398,8 @@ aln_align(aln_StrArray references, aln_StrArray strings, aln_Config config) {
         alignedSeqs[strInd] = alignedStr;
     }  // for str
 
+    aln_endTempMemory(temp);
     aln_AlignResult result = {
-        .bytesWrittenToOutput = outputArena->used,
         .alignments = {alignedSeqs, strings.len},
         .matrices = {storedMatrices, config.storeFinalMatrices ? strings.len : 0},
     };
@@ -419,19 +407,34 @@ aln_align(aln_StrArray references, aln_StrArray strings, aln_Config config) {
 }
 
 typedef struct aln_StrBuilder {
-    aln_Str  str;
-    intptr_t capacity;
+    aln_Str    str;
+    aln_Arena* arena;
 } aln_StrBuilder;
+
+aln_PRIVATEAPI aln_StrBuilder
+aln_strBegin(aln_Arena* arena) {
+    aln_assert(!arena->lockedForStr);
+    arena->lockedForStr = true;
+    aln_StrBuilder builder = {{aln_arenaFreePtr(arena)}, arena};
+    return builder;
+}
 
 aln_PRIVATEAPI void
 aln_strBuilderAddChar(aln_StrBuilder* builder, char ch) {
-    aln_assert(builder->capacity > builder->str.len);
+    aln_arenaChangeUsed(builder->arena, 1);
     builder->str.ptr[builder->str.len++] = ch;
 }
 
+aln_PRIVATEAPI aln_Str
+aln_strEnd(aln_StrBuilder* builder) {
+    aln_assert(builder->arena->lockedForStr);
+    builder->arena->lockedForStr = false;
+    return builder->str;
+}
+
 aln_PUBLICAPI aln_Str
-aln_reconstruct(aln_Alignment aligned, aln_Reconstruct which, aln_Str reference, aln_Str ogstr, void* buf, intptr_t bufBytes) {
-    aln_StrBuilder builder = {{buf}, bufBytes};
+aln_reconstruct(aln_Alignment aligned, aln_Reconstruct which, aln_Str reference, aln_Str ogstr, aln_Arena* arena) {
+    aln_StrBuilder builder = aln_strBegin(arena);
 
     aln_Str target = which == aln_Reconstruct_Ref ? reference : ogstr;
 
@@ -454,18 +457,16 @@ aln_reconstruct(aln_Alignment aligned, aln_Reconstruct which, aln_Str reference,
         }
     }
 
-    return builder.str;
+    aln_Str result = aln_strEnd(&builder);
+    return result;
 }
 
 aln_PUBLICAPI aln_ReconstructToCommonRefResult
-aln_reconstructToCommonRef(aln_AlignmentArray alignments, aln_Str reference, aln_StrArray strings, void* buf, intptr_t bufBytes) {
+aln_reconstructToCommonRef(aln_AlignmentArray alignments, aln_Str reference, aln_StrArray strings, aln_Memory* memory) {
     aln_assert(alignments.len == strings.len);
+    aln_TempMemory temp = aln_beginTempMemory(&memory->temp);
 
-    aln_Arena  arena_ = {.base = buf, .size = bufBytes};
-    aln_Arena* arena = &arena_;
-
-    // TODO(sen) Temp arena
-    intptr_t* refGaps = aln_arenaAllocArray(arena, intptr_t, reference.len + 1);
+    intptr_t* refGaps = aln_arenaAllocArray(&memory->temp, intptr_t, reference.len + 1);
 
     for (intptr_t alnIndex = 0; alnIndex < alignments.len; alnIndex++) {
         aln_Alignment aligned = alignments.ptr[alnIndex];
@@ -492,12 +493,12 @@ aln_reconstructToCommonRef(aln_AlignmentArray alignments, aln_Str reference, aln
         }
     }
 
-    aln_Str* reconStrs = aln_arenaAllocArray(arena, aln_Str, strings.len);
+    aln_Str* reconStrs = aln_arenaAllocArray(&memory->perm, aln_Str, strings.len);
     for (intptr_t alnIndex = 0; alnIndex < alignments.len; alnIndex++) {
         aln_Alignment aligned = alignments.ptr[alnIndex];
         aln_Str       thisStr = strings.ptr[alnIndex];
 
-        aln_StrBuilder builder = {.str.ptr = aln_arenaFreePtr(arena), .capacity = aln_arenaFreeSize(arena)};
+        aln_StrBuilder builder = aln_strBegin(&memory->perm);
 
         {
             intptr_t curStr = 0;
@@ -545,13 +546,12 @@ aln_reconstructToCommonRef(aln_AlignmentArray alignments, aln_Str reference, aln
             }
         }
 
-        aln_arenaChangeUsed(arena, builder.str.len);
-        reconStrs[alnIndex] = builder.str;
+        reconStrs[alnIndex] = aln_strEnd(&builder);
     }
 
     aln_Str commonRef = {.ptr = 0, .len = 0};
     {
-        aln_StrBuilder builder = {.str.ptr = aln_arenaFreePtr(arena), .capacity = aln_arenaFreeSize(arena)};
+        aln_StrBuilder builder = aln_strBegin(&memory->perm);
 
         for (intptr_t refGapIndex = 0; refGapIndex < reference.len + 1; refGapIndex++) {
             while (refGaps[refGapIndex]) {
@@ -563,11 +563,29 @@ aln_reconstructToCommonRef(aln_AlignmentArray alignments, aln_Str reference, aln
             }
         }
 
-        aln_arenaChangeUsed(arena, builder.str.len);
-        commonRef = builder.str;
+        commonRef = aln_strEnd(&builder);
     }
 
-    aln_ReconstructToCommonRefResult result = {.bytesWritten = arena->used, .commonRef = commonRef, .alignedStrs = {reconStrs, strings.len}};
+    aln_endTempMemory(temp);
+    aln_ReconstructToCommonRefResult result = {.commonRef = commonRef, .alignedStrs = {reconStrs, strings.len}};
+    return result;
+}
+
+aln_PUBLICAPI intptr_t
+aln_matrix2index(intptr_t matrixWidth, intptr_t matrixHeight, intptr_t row, intptr_t col) {
+// TODO(sen) Enable
+#if 0 
+    // NOTE(sen) Diagonal-first storage. Diagonals start in the top-left corner and are oriented bottomleft to topright.
+    intptr_t topleftRect = (row + 1) * col;
+    intptr_t toprightTriangleColCount = aln_min(row, matrixWidth - col - 1);
+    intptr_t toprightTriangle = toprightTriangleColCount * (row + (row - toprightTriangleColCount + 1)) / 2;
+    intptr_t bottomleftTriangleColCount = aln_min(col, matrixHeight - row - 1);
+    intptr_t bottomleftTriangle = bottomleftTriangleColCount * (col + (col - bottomleftTriangleColCount + 1)) / 2;
+    intptr_t result = topleftRect + toprightTriangle + bottomleftTriangle;
+#else
+    aln_unused(matrixHeight);
+    intptr_t result = row * matrixWidth + col;
+#endif
     return result;
 }
 

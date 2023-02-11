@@ -139,20 +139,8 @@ alignAndReconstruct(
     prb_assert(strs.len == expectedRefs.len);
     prb_assert(expectedRefs.len == expectedStrs.len);
 
-    prb_TempMemory temp = prb_beginTempMemory(arena);
-
-    prb_Arena       alnOut = prb_createArenaFromArena(arena, 20 * prb_MEGABYTE);
-    aln_AlignResult alignResult = aln_align(
-        refs,
-        strs,
-        (aln_Config) {
-            .outmem = alnOut.base,
-            .outmemBytes = alnOut.size,
-            .tempmem = prb_arenaFreePtr(arena),
-            .tempmemBytes = prb_arenaFreeSize(arena),
-            .storeFinalMatrices = true,
-        }
-    );
+    aln_Memory alnMem = aln_createMemory(prb_arenaFreePtr(arena), prb_arenaFreeSize(arena), 20 * prb_MEGABYTE);
+    aln_AlignResult alignResult = aln_align(refs, strs, (aln_Config) {.storeFinalMatrices = true}, &alnMem);
 
     prb_assert(alignResult.alignments.len == strs.len);
     prb_assert(alignResult.matrices.len == strs.len);
@@ -170,16 +158,12 @@ alignAndReconstruct(
             printMatrix(arena, alignResult.matrices.ptr[seqInd], reference, ogstr);
         }
 
-        aln_Str refReconstructed = aln_reconstruct(alignedStr, aln_Reconstruct_Ref, reference, ogstr, prb_arenaFreePtr(arena), prb_arenaFreeSize(arena));
-        prb_arenaChangeUsed(arena, refReconstructed.len);
+        aln_Str refReconstructed = aln_reconstruct(alignedStr, aln_Reconstruct_Ref, reference, ogstr, &alnMem.perm);
         streq(arena, expectedRefs.ptr[seqInd], refReconstructed);
 
-        aln_Str strReconstructed = aln_reconstruct(alignedStr, aln_Reconstruct_Str, reference, ogstr, prb_arenaFreePtr(arena), prb_arenaFreeSize(arena));
-        prb_arenaChangeUsed(arena, strReconstructed.len);
+        aln_Str strReconstructed = aln_reconstruct(alignedStr, aln_Reconstruct_Str, reference, ogstr, &alnMem.perm);
         streq(arena, expectedStrs.ptr[seqInd], strReconstructed);
     }
-
-    prb_endTempMemory(temp);
 }
 
 function void
@@ -192,25 +176,10 @@ alignAndReconstructToCommon(
 ) {
     prb_assert(strs.len == expectedStrs.len);
 
-    prb_TempMemory temp = prb_beginTempMemory(arena);
+    aln_Memory alnMem = aln_createMemory(prb_arenaFreePtr(arena), prb_arenaFreeSize(arena), 20 * prb_MEGABYTE);
+    aln_AlignResult alignResult = aln_align((aln_StrArray) {&ref, 1}, strs, (aln_Config) {.storeFinalMatrices = true}, &alnMem);
 
-    prb_Arena       alnOut = prb_createArenaFromArena(arena, 20 * prb_MEGABYTE);
-    aln_AlignResult alignResult = aln_align(
-        (aln_StrArray) {&ref, 1},
-        strs,
-        (aln_Config) {
-            .outmem = alnOut.base,
-            .outmemBytes = alnOut.size,
-            .tempmem = prb_arenaFreePtr(arena),
-            .tempmemBytes = prb_arenaFreeSize(arena),
-            .storeFinalMatrices = true,
-        }
-    );
-    prb_arenaChangeUsed(&alnOut, alignResult.bytesWrittenToOutput);
-
-    aln_ReconstructToCommonRefResult reconstruction =
-        aln_reconstructToCommonRef(alignResult.alignments, ref, strs, prb_arenaFreePtr(&alnOut), prb_arenaFreeSize(&alnOut));
-    prb_arenaChangeUsed(&alnOut, reconstruction.bytesWritten);
+    aln_ReconstructToCommonRefResult reconstruction = aln_reconstructToCommonRef(alignResult.alignments, ref, strs, &alnMem);
     streq(arena, expectedRef, reconstruction.commonRef);
     prb_assert(reconstruction.alignedStrs.len == strs.len);
     for (isize strInd = 0; strInd < strs.len; strInd++) {
@@ -224,8 +193,6 @@ alignAndReconstructToCommon(
 
         streq(arena, strExpected, str);
     }
-
-    prb_endTempMemory(temp);
 }
 
 function void
