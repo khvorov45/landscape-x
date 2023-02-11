@@ -129,22 +129,22 @@ streq(prb_Arena* arena, aln_Str str1, aln_Str str2) {
 
 function void
 alignAndReconstruct(
-    prb_Arena* arena,
-    aln_Str*   refs,
-    intptr_t   refCount,
-    aln_Str*   strs,
-    intptr_t   strsCount,
-    aln_Str*   expectedRefs,
-    aln_Str*   expectedStrs
+    prb_Arena*   arena,
+    aln_StrArray refs,
+    aln_StrArray strs,
+    aln_StrArray expectedRefs,
+    aln_StrArray expectedStrs
 ) {
+    prb_assert(refs.len == 1 || refs.len == strs.len);
+    prb_assert(strs.len == expectedRefs.len);
+    prb_assert(expectedRefs.len == expectedStrs.len);
+
     prb_TempMemory temp = prb_beginTempMemory(arena);
 
     prb_Arena       alnOut = prb_createArenaFromArena(arena, 20 * prb_MEGABYTE);
     aln_AlignResult alignResult = aln_align(
         refs,
-        refCount,
         strs,
-        strsCount,
         (aln_Config) {
             .outmem = alnOut.base,
             .outmemBytes = alnOut.size,
@@ -154,26 +154,29 @@ alignAndReconstruct(
         }
     );
 
-    for (isize seqInd = 0; seqInd < strsCount; seqInd++) {
-        aln_Str ogstr = strs[seqInd];
-        aln_Str reference = refs[0];
-        if (refCount > 1) {
-            reference = refs[seqInd];
+    prb_assert(alignResult.alignments.len == strs.len);
+    prb_assert(alignResult.matrices.len == strs.len);
+
+    for (isize seqInd = 0; seqInd < strs.len; seqInd++) {
+        aln_Str ogstr = strs.ptr[seqInd];
+        aln_Str reference = refs.ptr[0];
+        if (refs.len > 1) {
+            reference = refs.ptr[seqInd];
         }
-        aln_Alignment alignedStr = alignResult.strs[seqInd];
+        aln_Alignment alignedStr = alignResult.alignments.ptr[seqInd];
 
         bool printMats = false;
         if (printMats) {
-            printMatrix(arena, alignResult.matrices[seqInd], reference, ogstr);
+            printMatrix(arena, alignResult.matrices.ptr[seqInd], reference, ogstr);
         }
 
         aln_Str refReconstructed = aln_reconstruct(alignedStr, aln_Reconstruct_Ref, reference, ogstr, prb_arenaFreePtr(arena), prb_arenaFreeSize(arena));
         prb_arenaChangeUsed(arena, refReconstructed.len);
-        streq(arena, expectedRefs[seqInd], refReconstructed);
+        streq(arena, expectedRefs.ptr[seqInd], refReconstructed);
 
         aln_Str strReconstructed = aln_reconstruct(alignedStr, aln_Reconstruct_Str, reference, ogstr, prb_arenaFreePtr(arena), prb_arenaFreeSize(arena));
         prb_arenaChangeUsed(arena, strReconstructed.len);
-        streq(arena, expectedStrs[seqInd], strReconstructed);
+        streq(arena, expectedStrs.ptr[seqInd], strReconstructed);
     }
 
     prb_endTempMemory(temp);
@@ -181,21 +184,20 @@ alignAndReconstruct(
 
 function void
 alignAndReconstructToCommon(
-    prb_Arena* arena,
-    aln_Str    ref,
-    aln_Str*   strs,
-    intptr_t   strsCount,
-    aln_Str    expectedRef,
-    aln_Str*   expectedStrs
+    prb_Arena*   arena,
+    aln_Str      ref,
+    aln_StrArray strs,
+    aln_Str      expectedRef,
+    aln_StrArray expectedStrs
 ) {
+    prb_assert(strs.len == expectedStrs.len);
+
     prb_TempMemory temp = prb_beginTempMemory(arena);
 
     prb_Arena       alnOut = prb_createArenaFromArena(arena, 20 * prb_MEGABYTE);
     aln_AlignResult alignResult = aln_align(
-        &ref,
-        1,
+        (aln_StrArray) {&ref, 1},
         strs,
-        strsCount,
         (aln_Config) {
             .outmem = alnOut.base,
             .outmemBytes = alnOut.size,
@@ -207,17 +209,17 @@ alignAndReconstructToCommon(
     prb_arenaChangeUsed(&alnOut, alignResult.bytesWrittenToOutput);
 
     aln_ReconstructToCommonRefResult reconstruction =
-        aln_reconstructToCommonRef(alignResult.strs, alignResult.strCount, ref, strs, strsCount, prb_arenaFreePtr(&alnOut), prb_arenaFreeSize(&alnOut));
+        aln_reconstructToCommonRef(alignResult.alignments, ref, strs, prb_arenaFreePtr(&alnOut), prb_arenaFreeSize(&alnOut));
     prb_arenaChangeUsed(&alnOut, reconstruction.bytesWritten);
     streq(arena, expectedRef, reconstruction.commonRef);
-    prb_assert(reconstruction.strCount == strsCount);
-    for (isize strInd = 0; strInd < strsCount; strInd++) {
-        aln_Str str = reconstruction.strs[strInd];
-        aln_Str strExpected = expectedStrs[strInd];
-        
+    prb_assert(reconstruction.alignedStrs.len == strs.len);
+    for (isize strInd = 0; strInd < strs.len; strInd++) {
+        aln_Str str = reconstruction.alignedStrs.ptr[strInd];
+        aln_Str strExpected = expectedStrs.ptr[strInd];
+
         bool printMats = false;
         if (printMats) {
-            printMatrix(arena, alignResult.matrices[strInd], ref, strs[strInd]);
+            printMatrix(arena, alignResult.matrices.ptr[strInd], ref, strs.ptr[strInd]);
         }
 
         streq(arena, strExpected, str);
@@ -237,12 +239,10 @@ test_alignAndReconstruct(prb_Arena* arena) {
 
         alignAndReconstruct(
             arena,
-            &reference,
-            1,
-            seqs,
-            prb_arrayCount(seqs),
-            expectedRefs,
-            expectedSeqs
+            (aln_StrArray) {&reference, 1},
+            (aln_StrArray) {seqs, prb_arrayCount(seqs)},
+            (aln_StrArray) {expectedRefs, prb_arrayCount(expectedRefs)},
+            (aln_StrArray) {expectedSeqs, prb_arrayCount(expectedSeqs)}
         );
 
         aln_Str expectedCommonRef = aln_STR("--AB--C-");
@@ -251,10 +251,9 @@ test_alignAndReconstruct(prb_Arena* arena) {
         alignAndReconstructToCommon(
             arena,
             reference,
-            seqs,
-            prb_arrayCount(seqs),
+            (aln_StrArray) {seqs, prb_arrayCount(seqs)},
             expectedCommonRef,
-            expectedCommonSeqs
+            (aln_StrArray) {expectedCommonSeqs, prb_arrayCount(expectedCommonSeqs)}
         );
     }
 
@@ -267,12 +266,10 @@ test_alignAndReconstruct(prb_Arena* arena) {
 
         alignAndReconstruct(
             arena,
-            references,
-            prb_arrayCount(references),
-            seqs,
-            prb_arrayCount(seqs),
-            expectedRefs,
-            expectedSeqs
+            (aln_StrArray) {references, prb_arrayCount(references)},
+            (aln_StrArray) {seqs, prb_arrayCount(seqs)},
+            (aln_StrArray) {expectedRefs, prb_arrayCount(expectedRefs)},
+            (aln_StrArray) {expectedSeqs, prb_arrayCount(expectedSeqs)}
         );
     }
 }
