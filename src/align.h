@@ -474,22 +474,15 @@ aln_reconstructToCommonRef(aln_AlignmentArray alignments, aln_Str reference, aln
         {
             intptr_t cur = 0;
             intptr_t curGaps = 0;
-            for (intptr_t actionIndex = 0; actionIndex < aligned.actionCount; actionIndex++) {
-                aln_AlignAction thisAction = aligned.actions[actionIndex];
-                switch (thisAction) {
-                    case aln_AlignAction_Match:
-                    case aln_AlignAction_GapStr:
-                        refGaps[cur] = aln_max(refGaps[cur], curGaps);
-                        cur += 1;
-                        curGaps = 0;
-                        break;
-                    case aln_AlignAction_GapRef:
-                        curGaps += 1;
-                        break;
+            for (intptr_t actionIndex = 0; actionIndex < aligned.actionCount + 1; actionIndex++) {
+                if (actionIndex == aligned.actionCount || aligned.actions[actionIndex] != aln_AlignAction_GapRef) {
+                    refGaps[cur] = aln_max(refGaps[cur], curGaps);
+                    cur += 1;
+                    curGaps = 0;
+                } else {
+                    curGaps += 1;
                 }
             }
-            // TODO(sen) Do something about this repetition
-            refGaps[cur] = aln_max(refGaps[cur], curGaps);
         }
     }
 
@@ -504,45 +497,31 @@ aln_reconstructToCommonRef(aln_AlignmentArray alignments, aln_Str reference, aln
             intptr_t curStr = 0;
             intptr_t curRef = 0;
             intptr_t curGapsInRef = 0;
-            for (intptr_t actionIndex = 0; actionIndex < aligned.actionCount; actionIndex++) {
-                aln_AlignAction thisAction = aligned.actions[actionIndex];
-                switch (thisAction) {
-                    case aln_AlignAction_Match:
-                    case aln_AlignAction_GapStr: {
-                        intptr_t extraGaps = refGaps[curRef] - curGapsInRef;
-                        while (extraGaps > 0) {
-                            aln_strBuilderAddChar(&builder, '-');
-                            extraGaps -= 1;
-                        }
-                        while (curGapsInRef > 0) {
-                            aln_assert(curStr < thisStr.len);
-                            aln_strBuilderAddChar(&builder, thisStr.ptr[curStr++]);
-                            curGapsInRef -= 1;
-                        }
-                        curRef += 1;
+            for (intptr_t actionIndex = 0; actionIndex < aligned.actionCount + 1; actionIndex++) {
+                if (actionIndex == aligned.actionCount || aligned.actions[actionIndex] != aln_AlignAction_GapRef) {
+                    intptr_t extraGaps = refGaps[curRef] - curGapsInRef;
+                    while (extraGaps > 0) {
+                        aln_strBuilderAddChar(&builder, '-');
+                        extraGaps -= 1;
+                    }
+                    while (curGapsInRef > 0) {
+                        aln_assert(curStr < thisStr.len);
+                        aln_strBuilderAddChar(&builder, thisStr.ptr[curStr++]);
+                        curGapsInRef -= 1;
+                    }
+                    curRef += 1;
 
+                    if (actionIndex < aligned.actionCount) {
                         char ch = '-';
-                        if (thisAction == aln_AlignAction_Match) {
+                        if (aligned.actions[actionIndex] == aln_AlignAction_Match) {
                             aln_assert(curStr < thisStr.len);
                             ch = thisStr.ptr[curStr++];
                         }
                         aln_strBuilderAddChar(&builder, ch);
-                    } break;
-                    case aln_AlignAction_GapRef:
-                        curGapsInRef += 1;
-                        break;
+                    }
+                } else {
+                    curGapsInRef += 1;
                 }
-            }
-            // TODO(sen) Do something about this repetition
-            intptr_t extraGaps = refGaps[curRef] - curGapsInRef;
-            while (extraGaps > 0) {
-                aln_strBuilderAddChar(&builder, '-');
-                extraGaps -= 1;
-            }
-            while (curGapsInRef > 0) {
-                aln_assert(curStr < thisStr.len);
-                aln_strBuilderAddChar(&builder, thisStr.ptr[curStr++]);
-                curGapsInRef -= 1;
             }
         }
 
