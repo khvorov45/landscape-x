@@ -5,6 +5,8 @@
 #define aln_PUBLICAPI static
 #define aln_assert(cond) prb_assert(cond)
 #include "../src/align.h"
+
+#define aln_STR(x) (aln_Str) {x, sizeof(x) - 1}
 // clang-format on
 
 #define function static

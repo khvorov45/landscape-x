@@ -29,34 +29,26 @@ align_c(SEXP references, SEXP sequences) {
     SEXP result = PROTECT(allocVector(STRSXP, sequencesCount));
 
     intptr_t  totalMemoryBytes = 20 * 1024 * 1024;
-    aln_Arena arena = {.base = R_alloc(totalMemoryBytes, 1), .size = totalMemoryBytes};
-    if (arena.base) {
-        aln_Str* alnRefs = rStrArrayToAlnStrArray(&arena, references, referenceCount);
-        aln_Str* alnStrings = rStrArrayToAlnStrArray(&arena, sequences, sequencesCount);
+    aln_Memory alnMem = aln_createMemory(R_alloc(totalMemoryBytes, 1), totalMemoryBytes, totalMemoryBytes / 4);
+    if (alnMem.perm.base) {
+        aln_Str* alnRefs = rStrArrayToAlnStrArray(&alnMem.perm, references, referenceCount);
+        aln_Str* alnStrings = rStrArrayToAlnStrArray(&alnMem.perm, sequences, sequencesCount);
 
-        aln_Arena       alnOutput = aln_createArenaFromArena(&arena, aln_arenaFreeSize(&arena) / 4);
         aln_AlignResult alnResult = aln_align(
-            alnRefs,
-            referenceCount,
-            alnStrings,
-            sequencesCount,
-            (aln_Config) {
-                .outmem = alnOutput.base,
-                .outmemBytes = alnOutput.size,
-                .tempmem = aln_arenaFreePtr(&arena),
-                .tempmemBytes = aln_arenaFreeSize(&arena),
-            }
+            (aln_StrArray) {alnRefs, referenceCount},
+            (aln_StrArray) {alnStrings, sequencesCount},
+            (aln_Config) { .storeFinalMatrices = false},
+            &alnMem
         );
-        aln_arenaChangeUsed(&arena, alnOutput.size - alnResult.bytesWrittenToOutput);
 
-        if (alnResult.strCount == sequencesCount) {
-            for (int seqIndex = 0; seqIndex < alnResult.strCount; seqIndex++) {
-                aln_Alignment alignment = alnResult.strs[seqIndex];
+        if (alnResult.alignments.len == sequencesCount) {
+            for (int seqIndex = 0; seqIndex < alnResult.alignments.len; seqIndex++) {
+                aln_Alignment alignment = alnResult.alignments.ptr[seqIndex];
                 aln_Str thisRef = alnRefs[0];
                 if (referenceCount > 1) {
                     thisRef = alnRefs[seqIndex];
                 }
-                aln_Str       alnStr = aln_reconstruct(alignment, aln_Reconstruct_Str, thisRef, alnStrings[seqIndex], aln_arenaFreePtr(&arena), aln_arenaFreeSize(&arena));
+                aln_Str       alnStr = aln_reconstruct(alignment, aln_Reconstruct_Str, thisRef, alnStrings[seqIndex], &alnMem.perm);
                 SET_STRING_ELT(result, seqIndex, mkCharLen(alnStr.ptr, (int)alnStr.len));
             }
         } else {

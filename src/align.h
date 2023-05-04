@@ -108,6 +108,7 @@ typedef struct aln_ReconstructToCommonRefResult {
 } aln_ReconstructToCommonRefResult;
 
 aln_PUBLICAPI aln_Memory                       aln_createMemory(void* base, intptr_t totalSize, intptr_t permSize);
+aln_PUBLICAPI aln_Memory                       aln_createMemory2(void* permBase, intptr_t permSize, void* tempBase, intptr_t tempSize);
 aln_PUBLICAPI aln_AlignResult                  aln_align(aln_StrArray references, aln_StrArray strings, aln_Config config, aln_Memory* memory);
 aln_PUBLICAPI aln_Str                          aln_reconstruct(aln_Alignment aligned, aln_Reconstruct which, aln_Str reference, aln_Str ogstr, aln_Arena* arena);
 aln_PUBLICAPI aln_ReconstructToCommonRefResult aln_reconstructToCommonRef(aln_AlignmentArray alignments, aln_Str reference, aln_StrArray strings, aln_Memory* memory);
@@ -128,7 +129,6 @@ aln_PUBLICAPI intptr_t                         aln_matrix2index(intptr_t matrixW
 #define aln_arenaAllocMatrix2(matrixType, dataType, arena, width_, height_) (matrixType) {.ptr = aln_arenaAllocArray(arena, dataType, width_ * height_), .width = width_, .height = height_}
 #define aln_isPowerOf2(x) (((x) > 0) && (((x) & ((x)-1)) == 0))
 #define aln_unused(x) ((x) = (x))
-#define aln_STR(x) (aln_Str) {x, aln_strlen(x)}
 
 #ifndef aln_assert
 #define aln_assert(condition)
@@ -138,15 +138,6 @@ aln_PUBLICAPI intptr_t                         aln_matrix2index(intptr_t matrixW
 #ifndef aln_PRIVATEAPI
 #define aln_PRIVATEAPI static
 #endif
-
-aln_PRIVATEAPI intptr_t
-aln_strlen(char* str) {
-    intptr_t result = 0;
-    while (str[result] != '\0') {
-        result += 1;
-    }
-    return result;
-}
 
 aln_PRIVATEAPI intptr_t
 aln_getOffsetForAlignment(void* ptr, intptr_t align) {
@@ -244,6 +235,14 @@ aln_createMemory(void* base, intptr_t totalSize, intptr_t permSize) {
     return memory;
 }
 
+aln_PUBLICAPI aln_Memory
+aln_createMemory2(void* permBase, intptr_t permSize, void* tempBase, intptr_t tempSize) {
+    aln_Arena  perm = aln_createArena(permBase, permSize);
+    aln_Arena  temp = aln_createArena(tempBase, tempSize);
+    aln_Memory memory = {perm, temp};
+    return memory;
+}
+
 aln_PUBLICAPI aln_AlignResult
 aln_align(aln_StrArray references, aln_StrArray strings, aln_Config config, aln_Memory* memory) {
     // NOTE(sen) Input validation
@@ -306,7 +305,8 @@ aln_align(aln_StrArray references, aln_StrArray strings, aln_Config config, aln_
             aln_matrix2get(thisGrid, rowIndex, 0) = (aln_NWEntry) {-(float)rowIndex, aln_CameFromDir_Top};
         }
 
-        // TODO(khvorov) Diagonal iteration
+// TODO(khvorov) Diagonal iteration (start of)
+#if 0
         for (intptr_t diagonalIndex = 2; diagonalIndex < thisGrid.width + thisGrid.height - 1; diagonalIndex++) {
             intptr_t entriesInDiagonal = 0;
             if (diagonalIndex < thisGrid.height) {
@@ -316,6 +316,7 @@ aln_align(aln_StrArray references, aln_StrArray strings, aln_Config config, aln_
             }
             aln_unused(entriesInDiagonal);
         }
+#endif
 
         // TODO(khvorov) This would need to go by diagonal rather than row/column
         for (intptr_t rowIndex = 1; rowIndex < thisGrid.height; rowIndex++) {
