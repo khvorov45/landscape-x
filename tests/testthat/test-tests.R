@@ -1,3 +1,5 @@
-test_that("sequencebox", {
-    expect_equal(align(c("GTCCG"), c("TCC", "GTCC")), c("-TCC-", "GTCC-"))
+test_that("align", {
+    result <- align(c("GTCCG"), c("TCC", "GTCC", "AGTCCG"))
+    expect_equal(result$sequences, c("-TCC-", "GTCC-", "AGTCCG"))
+    expect_equal(result$references, c("GTCCG", "GTCCG", "-GTCCG"))
 })

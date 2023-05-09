@@ -141,6 +141,7 @@ alignAndReconstruct(
     prb_assert(strs.len == expectedRefs.len);
     prb_assert(expectedRefs.len == expectedStrs.len);
 
+    // TODO(khvorov) Update the arena so we don't overwrite things
     aln_Memory alnMem = aln_createMemory(prb_arenaFreePtr(arena), prb_arenaFreeSize(arena), 20 * prb_MEGABYTE);
     aln_AlignResult alignResult = aln_align(refs, strs, (aln_Config) {.storeFinalMatrices = true}, &alnMem);
 
@@ -227,11 +228,12 @@ test_alignAndReconstruct(prb_Arena* arena) {
     }
 
     {
-        aln_Str references[] = {aln_STR("ABC"), aln_STR("DEFABCTYU"), aln_STR("ABCDEFGH")};
-        aln_Str seqs[] = {aln_STR("ABC"), aln_STR("FABSTY"), aln_STR("ABCFGH")};
+        aln_Str references[] = {aln_STR("ABC"), aln_STR("DEFABCTYU"), aln_STR("ABCDEFGH"), aln_STR("ABCDEFGH")};
+        aln_Str seqs[] = {aln_STR("ABC"), aln_STR("FABSTY"), aln_STR("ABCFGH"), aln_STR("ABCDEA")};
 
-        aln_Str expectedRefs[] = {aln_STR("ABC"), aln_STR("DEFABCTYU"), aln_STR("ABCDEFGH")};
-        aln_Str expectedSeqs[] = {aln_STR("ABC"), aln_STR("--FABSTY-"), aln_STR("ABC--FGH")};
+        // TODO(khvorov) Figure out the last case here
+        aln_Str expectedRefs[] = {aln_STR("ABC"), aln_STR("DEFABCTYU"), aln_STR("ABCDEFGH"), aln_STR("ABCDEFGH")};
+        aln_Str expectedSeqs[] = {aln_STR("ABC"), aln_STR("--FABSTY-"), aln_STR("ABC--FGH"), aln_STR("ABCDEA--")};
 
         alignAndReconstruct(
             arena,
