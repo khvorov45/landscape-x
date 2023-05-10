@@ -4,17 +4,19 @@
 \alias{align}
 \title{Align sequences}
 \usage{
-align(reference, sequences)
+align(reference, sequences, mode = "individual")
 }
 \arguments{
-\item{reference}{Reference sequence}
+\item{reference}{Reference sequence or an array of reference sequences (array is only allowed if mode is 'individual')}
 
-\item{sequences}{An array of sequences to be plotted}
+\item{sequences}{An array of sequences to be aligned to the reference(s)}
+
+\item{mode}{'individual' to align strings to reference(s) individually or 'common' to align to one common reference.}
 }
 \description{
 Align a list of sequences to a reference
 }
 \examples{
-align("ABCDEFGH", c("AAACEF", "ABCDEA"))
+align("ABCDEFGH", c("AAACEF", "ABCDEA"), "common")
 
 }

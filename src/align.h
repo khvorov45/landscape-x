@@ -129,6 +129,7 @@ aln_PUBLICAPI intptr_t                         aln_matrix2index(intptr_t matrixW
 #define aln_arenaAllocMatrix2(matrixType, dataType, arena, width_, height_) (matrixType) {.ptr = aln_arenaAllocArray(arena, dataType, width_ * height_), .width = width_, .height = height_}
 #define aln_isPowerOf2(x) (((x) > 0) && (((x) & ((x)-1)) == 0))
 #define aln_unused(x) ((x) = (x))
+#define aln_STR(x) (aln_Str) {x, sizeof(x) - 1}
 
 #ifndef aln_assert
 #define aln_assert(condition)
@@ -138,6 +139,29 @@ aln_PUBLICAPI intptr_t                         aln_matrix2index(intptr_t matrixW
 #ifndef aln_PRIVATEAPI
 #define aln_PRIVATEAPI static
 #endif
+
+aln_PRIVATEAPI bool
+aln_memeq(void* ptr1, void* ptr2, intptr_t len) {
+    bool result = true;
+    for (intptr_t ind = 0; ind < len; ind++) {
+        uint8_t b1 = ((uint8_t*)ptr1)[ind];
+        uint8_t b2 = ((uint8_t*)ptr2)[ind];
+        if (b1 != b2) {
+            result = false;
+            break;
+        }
+    }
+    return result;
+}
+
+aln_PRIVATEAPI bool
+aln_streq(aln_Str str1, aln_Str str2) {
+    bool result = false;
+    if (str1.len == str2.len) {
+        result = aln_memeq(str1.ptr, str2.ptr, str1.len);
+    }
+    return result;
+}
 
 aln_PRIVATEAPI intptr_t
 aln_getOffsetForAlignment(void* ptr, intptr_t align) {
@@ -300,10 +324,10 @@ aln_align(aln_StrArray references, aln_StrArray strings, aln_Config config, aln_
         aln_matrix2get(thisGrid, 0, 0).score = 0;
         float edgeIndelScore = -0.5f;
         for (intptr_t colIndex = 1; colIndex < thisGrid.width; colIndex++) {
-            aln_matrix2get(thisGrid, 0, colIndex) = (aln_NWEntry) {(float)(colIndex) * edgeIndelScore, aln_CameFromDir_Left};
+            aln_matrix2get(thisGrid, 0, colIndex) = (aln_NWEntry) {(float)(colIndex)*edgeIndelScore, aln_CameFromDir_Left};
         }
         for (intptr_t rowIndex = 1; rowIndex < thisGrid.height; rowIndex++) {
-            aln_matrix2get(thisGrid, rowIndex, 0) = (aln_NWEntry) {(float)(rowIndex) * edgeIndelScore, aln_CameFromDir_Top};
+            aln_matrix2get(thisGrid, rowIndex, 0) = (aln_NWEntry) {(float)(rowIndex)*edgeIndelScore, aln_CameFromDir_Top};
         }
 
 // TODO(khvorov) Diagonal iteration (start of)

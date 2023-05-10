@@ -19,9 +19,28 @@ rStrArrayToAlnStrArray(aln_Arena* arena, SEXP strs, int strsCount) {
 }
 
 SEXP
-align_c(SEXP references, SEXP sequences) {
+align_c(SEXP references, SEXP sequences, SEXP mode) {
+    bool reconstructToCommon = false;
+    {
+        if (LENGTH(mode) != 1) {
+            error("mode should be of length 1, not length %d", LENGTH(mode));
+        }
+        SEXP    mode0 = STRING_ELT(mode, 0);
+        aln_Str modechar = {(char*)CHAR(mode0), LENGTH(mode0)};
+        bool    indiv = aln_streq(modechar, aln_STR("individual"));
+        reconstructToCommon = aln_streq(modechar, aln_STR("common"));
+        if (!indiv && !reconstructToCommon) {
+            error("mode should be either 'individual' or 'common'");
+        }
+    }
+
     int referenceCount = LENGTH(references);
     int sequencesCount = LENGTH(sequences);
+
+    if (reconstructToCommon && referenceCount != 1) {
+        error("reference count should be 1, not %d", referenceCount);
+    }
+
     if (referenceCount != 1 && referenceCount != sequencesCount) {
         error("reference count (%d) should be either 1 or the same as sequence count (%d)", referenceCount, sequencesCount);
     }
@@ -52,16 +71,20 @@ align_c(SEXP references, SEXP sequences) {
         );
 
         if (alnResult.alignments.len == sequencesCount) {
-            for (int seqIndex = 0; seqIndex < alnResult.alignments.len; seqIndex++) {
-                aln_Alignment alignment = alnResult.alignments.ptr[seqIndex];
-                aln_Str       thisRef = alnRefs[0];
-                if (referenceCount > 1) {
-                    thisRef = alnRefs[seqIndex];
+            if (reconstructToCommon) {
+                error("mode 'common' is unimplemented");
+            } else {
+                for (int seqIndex = 0; seqIndex < alnResult.alignments.len; seqIndex++) {
+                    aln_Alignment alignment = alnResult.alignments.ptr[seqIndex];
+                    aln_Str       thisRef = alnRefs[0];
+                    if (referenceCount > 1) {
+                        thisRef = alnRefs[seqIndex];
+                    }
+                    aln_Str alnStr = aln_reconstruct(alignment, aln_Reconstruct_Str, thisRef, alnStrings[seqIndex], &alnMem.perm);
+                    SET_STRING_ELT(resultSeqs, seqIndex, mkCharLen(alnStr.ptr, (int)alnStr.len));
+                    aln_Str alnRef = aln_reconstruct(alignment, aln_Reconstruct_Ref, thisRef, alnStrings[seqIndex], &alnMem.perm);
+                    SET_STRING_ELT(resultRefs, seqIndex, mkCharLen(alnRef.ptr, (int)alnRef.len));
                 }
-                aln_Str alnStr = aln_reconstruct(alignment, aln_Reconstruct_Str, thisRef, alnStrings[seqIndex], &alnMem.perm);
-                SET_STRING_ELT(resultSeqs, seqIndex, mkCharLen(alnStr.ptr, (int)alnStr.len));
-                aln_Str alnRef = aln_reconstruct(alignment, aln_Reconstruct_Ref, thisRef, alnStrings[seqIndex], &alnMem.perm);
-                SET_STRING_ELT(resultRefs, seqIndex, mkCharLen(alnRef.ptr, (int)alnRef.len));
             }
         } else {
             error("unexpected alignment result");

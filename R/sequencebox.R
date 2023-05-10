@@ -2,17 +2,18 @@
 #'
 #' Align a list of sequences to a reference
 #'
-#' @param reference Reference sequence
-#' @param sequences An array of sequences to be plotted
+#' @param reference Reference sequence or an array of reference sequences (array is only allowed if mode is 'individual')
+#' @param sequences An array of sequences to be aligned to the reference(s)
+#' @param mode 'individual' to align strings to reference(s) individually or 'common' to align to one common reference.
 #'
 #' @examples
-#' align("ABCDEFGH", c("AAACEF", "ABCDEA"))
+#' align("ABCDEFGH", c("AAACEF", "ABCDEA"), "common")
 #' 
 #' @import grid
 #' 
 #' @export
-align <- function(reference, sequences) {
-    .Call("align_c", reference, sequences)
+align <- function(reference, sequences, mode = "individual") {
+    .Call("align_c", reference, sequences, mode)
 }
 
 #' Plot sequences 
