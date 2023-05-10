@@ -93,16 +93,14 @@ printMatrix(prb_Arena* arena, aln_Matrix2NW mat, aln_Str reference, aln_Str ogst
 
     for (isize refInd = 0; refInd < reference.len; refInd++) {
         addCellTopRight(&matStr, 0, refInd + 1, reference.ptr[refInd]);
-        addCellBottomRight(arena, &matStr, 0, refInd + 1, -(float)(refInd + 1));
     }
 
     for (isize ogInd = 0; ogInd < ogstr.len; ogInd++) {
         addCellBottomLeft(&matStr, ogInd + 1, 0, ogstr.ptr[ogInd]);
-        addCellBottomRight(arena, &matStr, ogInd + 1, 0, -(float)(ogInd + 1));
     }
 
-    for (isize rowIndex = 1; rowIndex < mat.height; rowIndex++) {
-        for (isize colIndex = 1; colIndex < mat.width; colIndex++) {
+    for (isize rowIndex = 0; rowIndex < mat.height; rowIndex++) {
+        for (isize colIndex = 0; colIndex < mat.width; colIndex++) {
             aln_NWEntry entry = aln_matrix2get(mat, rowIndex, colIndex);
             addCellBottomRight(arena, &matStr, rowIndex, colIndex, entry.score);
             switch (entry.cameFromDir) {
@@ -141,9 +139,9 @@ alignAndReconstruct(
     prb_assert(strs.len == expectedRefs.len);
     prb_assert(expectedRefs.len == expectedStrs.len);
 
-    // TODO(khvorov) Update the arena so we don't overwrite things
-    aln_Memory alnMem = aln_createMemory(prb_arenaFreePtr(arena), prb_arenaFreeSize(arena), 20 * prb_MEGABYTE);
+    aln_Memory      alnMem = aln_createMemory(prb_arenaFreePtr(arena), prb_arenaFreeSize(arena), 20 * prb_MEGABYTE);
     aln_AlignResult alignResult = aln_align(refs, strs, (aln_Config) {.storeFinalMatrices = true}, &alnMem);
+    prb_arenaChangeUsed(arena, alnMem.perm.used);
 
     prb_assert(alignResult.alignments.len == strs.len);
     prb_assert(alignResult.matrices.len == strs.len);
@@ -156,7 +154,7 @@ alignAndReconstruct(
         }
         aln_Alignment alignedStr = alignResult.alignments.ptr[seqInd];
 
-        bool printMats = false;
+        bool printMats = true;
         if (printMats) {
             printMatrix(arena, alignResult.matrices.ptr[seqInd], reference, ogstr);
         }
@@ -179,17 +177,19 @@ alignAndReconstructToCommon(
 ) {
     prb_assert(strs.len == expectedStrs.len);
 
-    aln_Memory alnMem = aln_createMemory(prb_arenaFreePtr(arena), prb_arenaFreeSize(arena), 20 * prb_MEGABYTE);
+    aln_Memory      alnMem = aln_createMemory(prb_arenaFreePtr(arena), prb_arenaFreeSize(arena), 20 * prb_MEGABYTE);
     aln_AlignResult alignResult = aln_align((aln_StrArray) {&ref, 1}, strs, (aln_Config) {.storeFinalMatrices = true}, &alnMem);
 
     aln_ReconstructToCommonRefResult reconstruction = aln_reconstructToCommonRef(alignResult.alignments, ref, strs, &alnMem);
     streq(arena, expectedRef, reconstruction.commonRef);
     prb_assert(reconstruction.alignedStrs.len == strs.len);
+
+    prb_arenaChangeUsed(arena, alnMem.perm.used);
     for (isize strInd = 0; strInd < strs.len; strInd++) {
         aln_Str str = reconstruction.alignedStrs.ptr[strInd];
         aln_Str strExpected = expectedStrs.ptr[strInd];
 
-        bool printMats = false;
+        bool printMats = true;
         if (printMats) {
             printMatrix(arena, alignResult.matrices.ptr[strInd], ref, strs.ptr[strInd]);
         }
@@ -204,7 +204,7 @@ test_alignAndReconstruct(prb_Arena* arena) {
         aln_Str reference = aln_STR("ABC");
         aln_Str seqs[] = {aln_STR("ABC"), aln_STR("BC"), aln_STR("AB"), aln_STR("B"), aln_STR("DDABC"), aln_STR("ABCD"), aln_STR("DABCD"), aln_STR("AB12C")};
 
-        aln_Str expectedRefs[] = {aln_STR("ABC"), aln_STR("ABC"), aln_STR("ABC"), aln_STR("ABC"), aln_STR("--ABC"), aln_STR("ABC-"), aln_STR("-ABC-"), aln_STR("AB--C")};
+        aln_Str expectedRefs[] = {aln_STR("ABC"), aln_STR("ABC"), aln_STR("ABC"), aln_STR("ABC"), aln_STR("--ABC"), aln_STR("ABC-"), aln_STR("-ABC-"), aln_STR("ABC--")};
         aln_Str expectedSeqs[] = {aln_STR("ABC"), aln_STR("-BC"), aln_STR("AB-"), aln_STR("-B-"), aln_STR("DDABC"), aln_STR("ABCD"), aln_STR("DABCD"), aln_STR("AB12C")};
 
         alignAndReconstruct(
@@ -215,8 +215,8 @@ test_alignAndReconstruct(prb_Arena* arena) {
             (aln_StrArray) {expectedSeqs, prb_arrayCount(expectedSeqs)}
         );
 
-        aln_Str expectedCommonRef = aln_STR("--AB--C-");
-        aln_Str expectedCommonSeqs[] = {aln_STR("--AB--C-"), aln_STR("---B--C-"), aln_STR("--AB----"), aln_STR("---B----"), aln_STR("DDAB--C-"), aln_STR("--AB--CD"), aln_STR("-DAB--CD"), aln_STR("--AB12C-")};
+        aln_Str expectedCommonRef = aln_STR("--ABC--");
+        aln_Str expectedCommonSeqs[] = {aln_STR("--ABC--"), aln_STR("---BC--"), aln_STR("--AB---"), aln_STR("---B---"), aln_STR("DDABC--"), aln_STR("--ABCD-"), aln_STR("-DABCD-"), aln_STR("--AB12C")};
 
         alignAndReconstructToCommon(
             arena,
@@ -228,12 +228,11 @@ test_alignAndReconstruct(prb_Arena* arena) {
     }
 
     {
-        aln_Str references[] = {aln_STR("ABC"), aln_STR("DEFABCTYU"), aln_STR("ABCDEFGH"), aln_STR("ABCDEFGH")};
-        aln_Str seqs[] = {aln_STR("ABC"), aln_STR("FABSTY"), aln_STR("ABCFGH"), aln_STR("ABCDEA")};
+        aln_Str references[] = {aln_STR("ABC"), aln_STR("DEFABCTYU"), aln_STR("ABCDEFGH"), aln_STR("ABCDEFGH"), aln_STR("ABCDEFGH")};
+        aln_Str seqs[] = {aln_STR("ABC"), aln_STR("FABSTY"), aln_STR("ABCFGH"), aln_STR("AAACEF"), aln_STR("DEGH12")};
 
-        // TODO(khvorov) Figure out the last case here
-        aln_Str expectedRefs[] = {aln_STR("ABC"), aln_STR("DEFABCTYU"), aln_STR("ABCDEFGH"), aln_STR("ABCDEFGH")};
-        aln_Str expectedSeqs[] = {aln_STR("ABC"), aln_STR("--FABSTY-"), aln_STR("ABC--FGH"), aln_STR("ABCDEA--")};
+        aln_Str expectedRefs[] = {aln_STR("ABC"), aln_STR("DEFABCTYU"), aln_STR("ABCDEFGH"), aln_STR("-ABCDEFGH"), aln_STR("ABCDEFGH--")};
+        aln_Str expectedSeqs[] = {aln_STR("ABC"), aln_STR("--FABSTY-"), aln_STR("ABC--FGH"), aln_STR("AAAC-EF--"), aln_STR("---DE-GH12")};
 
         alignAndReconstruct(
             arena,

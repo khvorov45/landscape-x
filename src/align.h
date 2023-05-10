@@ -298,11 +298,12 @@ aln_align(aln_StrArray references, aln_StrArray strings, aln_Config config, aln_
         aln_assert(thisGrid.height <= maxGrid.height);
 
         aln_matrix2get(thisGrid, 0, 0).score = 0;
+        float edgeIndelScore = -0.5f;
         for (intptr_t colIndex = 1; colIndex < thisGrid.width; colIndex++) {
-            aln_matrix2get(thisGrid, 0, colIndex) = (aln_NWEntry) {-(float)colIndex, aln_CameFromDir_Left};
+            aln_matrix2get(thisGrid, 0, colIndex) = (aln_NWEntry) {(float)(colIndex) * edgeIndelScore, aln_CameFromDir_Left};
         }
         for (intptr_t rowIndex = 1; rowIndex < thisGrid.height; rowIndex++) {
-            aln_matrix2get(thisGrid, rowIndex, 0) = (aln_NWEntry) {-(float)rowIndex, aln_CameFromDir_Top};
+            aln_matrix2get(thisGrid, rowIndex, 0) = (aln_NWEntry) {(float)(rowIndex) * edgeIndelScore, aln_CameFromDir_Top};
         }
 
 // TODO(khvorov) Diagonal iteration (start of)
@@ -334,7 +335,10 @@ aln_align(aln_StrArray references, aln_StrArray strings, aln_Config config, aln_
                     }
                 }
 
-                float indelScore = -1.0f;
+                float indelScore = -2.0f;
+                if (rowIndex == thisGrid.height - 1 || colIndex == thisGrid.width - 1) {
+                    indelScore = edgeIndelScore;
+                }
 
                 float scoreTopleft = thisGrid.ptr[topleftIndex].score + alignScore;
                 float scoreTop = thisGrid.ptr[topIndex].score + indelScore;
@@ -442,11 +446,12 @@ aln_reconstruct(aln_Alignment aligned, aln_Reconstruct which, aln_Str reference,
     {
         intptr_t cur = 0;
         for (intptr_t actionIndex = 0; actionIndex < aligned.actionCount; actionIndex++) {
-            aln_AlignAction targetAction = which == aln_Reconstruct_Ref ? aln_AlignAction_GapRef : aln_AlignAction_GapStr;
+            aln_AlignAction targetGapAction = which == aln_Reconstruct_Ref ? aln_AlignAction_GapRef : aln_AlignAction_GapStr;
+            aln_AlignAction nontargetGapAction = which == aln_Reconstruct_Ref ? aln_AlignAction_GapStr : aln_AlignAction_GapRef;
             aln_AlignAction thisAction = aligned.actions[actionIndex];
-            if (thisAction == aln_AlignAction_Match) {
+            if (thisAction == aln_AlignAction_Match || thisAction == nontargetGapAction) {
                 aln_strBuilderAddChar(&builder, target.ptr[cur++]);
-            } else if (thisAction == targetAction) {
+            } else if (thisAction == targetGapAction) {
                 aln_strBuilderAddChar(&builder, '-');
             }
         }
@@ -477,6 +482,7 @@ aln_reconstructToCommonRef(aln_AlignmentArray alignments, aln_Str reference, aln
             intptr_t curGaps = 0;
             for (intptr_t actionIndex = 0; actionIndex < aligned.actionCount + 1; actionIndex++) {
                 if (actionIndex == aligned.actionCount || aligned.actions[actionIndex] != aln_AlignAction_GapRef) {
+                    aln_assert(cur < reference.len + 1);
                     refGaps[cur] = aln_max(refGaps[cur], curGaps);
                     cur += 1;
                     curGaps = 0;
@@ -501,15 +507,27 @@ aln_reconstructToCommonRef(aln_AlignmentArray alignments, aln_Str reference, aln
             for (intptr_t actionIndex = 0; actionIndex < aligned.actionCount + 1; actionIndex++) {
                 if (actionIndex == aligned.actionCount || aligned.actions[actionIndex] != aln_AlignAction_GapRef) {
                     intptr_t extraGaps = refGaps[curRef] - curGapsInRef;
-                    while (extraGaps > 0) {
-                        aln_strBuilderAddChar(&builder, '-');
-                        extraGaps -= 1;
+
+                    if (actionIndex < aligned.actionCount) {
+                        while (extraGaps > 0) {
+                            aln_strBuilderAddChar(&builder, '-');
+                            extraGaps -= 1;
+                        }
                     }
+
                     while (curGapsInRef > 0) {
                         aln_assert(curStr < thisStr.len);
                         aln_strBuilderAddChar(&builder, thisStr.ptr[curStr++]);
                         curGapsInRef -= 1;
                     }
+
+                    if (actionIndex == aligned.actionCount) {
+                        while (extraGaps > 0) {
+                            aln_strBuilderAddChar(&builder, '-');
+                            extraGaps -= 1;
+                        }
+                    }
+
                     curRef += 1;
 
                     if (actionIndex < aligned.actionCount) {
