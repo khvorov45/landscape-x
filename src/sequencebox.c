@@ -18,8 +18,19 @@ rStrArrayToAlnStrArray(aln_Arena* arena, SEXP strs, int strsCount) {
     return alnStrings;
 }
 
+static SEXP
+createRMatrix(int rows, int cols, int type) {
+    SEXP matrix = PROTECT(allocVector(type, rows * cols));
+    SEXP dim = PROTECT(allocVector(INTSXP, 2));
+    SET_INTEGER_ELT(dim, 0, rows);
+    SET_INTEGER_ELT(dim, 1, cols);
+    setAttrib(matrix, R_DimSymbol, dim);
+    UNPROTECT(2);
+    return matrix;
+}
+
 SEXP
-align_c(SEXP references, SEXP sequences, SEXP mode) {
+align_c(SEXP references, SEXP sequences, SEXP mode, SEXP matrices) {
     bool reconstructToCommon = false;
     {
         if (LENGTH(mode) != 1) {
@@ -32,6 +43,14 @@ align_c(SEXP references, SEXP sequences, SEXP mode) {
         if (!indiv && !reconstructToCommon) {
             error("mode should be either 'individual' or 'common'");
         }
+    }
+
+    bool returnMatrices = false;
+    {
+        if (LENGTH(matrices) != 1) {
+            error("matrices should be of length 1, not length %d", LENGTH(matrices));
+        }
+        returnMatrices = LOGICAL_ELT(matrices, 0);
     }
 
     int referenceCount = LENGTH(references);
@@ -53,13 +72,27 @@ align_c(SEXP references, SEXP sequences, SEXP mode) {
         resultRefs = PROTECT(allocVector(STRSXP, sequencesCount));
     }
 
-    SEXP result = PROTECT(allocVector(VECSXP, 2));
+    SEXP resultScores = 0;
+    SEXP resultDirections = 0;
+    if (returnMatrices) {
+        resultScores = PROTECT(allocVector(VECSXP, sequencesCount));
+        resultDirections = PROTECT(allocVector(VECSXP, sequencesCount));
+    }
+
+    int  resultEntryCount = 2 + ((int)returnMatrices * 2);
+    SEXP result = PROTECT(allocVector(VECSXP, resultEntryCount));
     SET_VECTOR_ELT(result, 0, resultSeqs);
     SET_VECTOR_ELT(result, 1, resultRefs);
 
-    SEXP resultNames = PROTECT(allocVector(STRSXP, 2));
+    SEXP resultNames = PROTECT(allocVector(STRSXP, resultEntryCount));
     SET_STRING_ELT(resultNames, 0, mkChar("sequences"));
     SET_STRING_ELT(resultNames, 1, mkChar("references"));
+    if (returnMatrices) {
+        SET_VECTOR_ELT(result, 2, resultScores);
+        SET_VECTOR_ELT(result, 3, resultDirections);
+        SET_STRING_ELT(resultNames, 2, mkChar("scores"));
+        SET_STRING_ELT(resultNames, 3, mkChar("directions"));
+    }
     setAttrib(result, R_NamesSymbol, resultNames);
 
     intptr_t   totalMemoryBytes = 20 * 1024 * 1024;
@@ -71,7 +104,7 @@ align_c(SEXP references, SEXP sequences, SEXP mode) {
         aln_AlignResult alnResult = aln_align(
             (aln_StrArray) {alnRefs, referenceCount},
             (aln_StrArray) {alnStrings, sequencesCount},
-            (aln_Config) {.storeFinalMatrices = false},
+            (aln_Config) {.storeFinalMatrices = returnMatrices},
             &alnMem
         );
 
@@ -97,6 +130,30 @@ align_c(SEXP references, SEXP sequences, SEXP mode) {
                     SET_STRING_ELT(resultRefs, seqIndex, mkCharLen(alnRef.ptr, (int)alnRef.len));
                 }
             }
+
+            if (returnMatrices) {
+                aln_assert(alnResult.alignments.len == alnResult.matrices.len);
+                for (int matIndex = 0; matIndex < alnResult.matrices.len; matIndex++) {
+                    aln_Matrix2NW mat = alnResult.matrices.ptr[matIndex];
+                    int           rwidth = mat.height;
+                    int           rheight = mat.width;
+                    SEXP          rmatScores = PROTECT(createRMatrix(rwidth, rheight, REALSXP));
+                    SEXP          rmatDirs = PROTECT(createRMatrix(rwidth, rheight, INTSXP));
+                    for (int row = 0; row < mat.height; row++) {
+                        for (int col = 0; col < mat.width; col++) {
+                            aln_NWEntry entry = aln_matrix2get(mat, row, col);
+                            int         rrow = col;
+                            int         rcol = row;
+                            int         rindex = rrow * rwidth + rcol;
+                            SET_REAL_ELT(rmatScores, rindex, entry.score);
+                            SET_INTEGER_ELT(rmatDirs, rindex, (int)entry.cameFromDir);
+                        }
+                    }
+                    SET_VECTOR_ELT(resultScores, matIndex, rmatScores);
+                    SET_VECTOR_ELT(resultDirections, matIndex, rmatDirs);
+                    UNPROTECT(2);
+                }
+            }
         } else {
             error("unexpected alignment result");
         }
@@ -104,6 +161,6 @@ align_c(SEXP references, SEXP sequences, SEXP mode) {
         error("could not allocate memory");
     }
 
-    UNPROTECT(4);
+    UNPROTECT(2 + resultEntryCount);
     return result;
 }

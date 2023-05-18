@@ -4,7 +4,7 @@
 \alias{align}
 \title{Align sequences}
 \usage{
-align(reference, sequences, mode = "individual")
+align(reference, sequences, mode = "individual", matrices = FALSE)
 }
 \arguments{
 \item{reference}{Reference sequence or an array of reference sequences (array is only allowed if mode is 'individual')}
@@ -12,6 +12,8 @@ align(reference, sequences, mode = "individual")
 \item{sequences}{An array of sequences to be aligned to the reference(s)}
 
 \item{mode}{'individual' to align strings to reference(s) individually or 'common' to align to one common reference.}
+
+\item{matrices}{Return alignment matrices}
 }
 \description{
 Align a list of sequences to a reference
