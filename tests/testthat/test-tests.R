@@ -12,8 +12,8 @@ test_that("align", {
     }
 
     {
-        result <- align("GTCCG", c("TCC", "GTCC"), "common")
-        expect_equal(result$sequences,  c("-TCC-", "GTCC-"))
-        expect_equal(result$references, c("GTCCG"))
+        result <- align("GTCCG", c("TCC", "GTCC", "AGTC", "CCGA", "GTACCG"), "common")
+        expect_equal(result$sequences,  c("--T-CC--", "-GT-CC--", "AGT-C---", "----CCGA", "-GTACCG-"))
+        expect_equal(result$references, c("-GT-CCG-"))
     }
 })

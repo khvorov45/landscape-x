@@ -84,6 +84,7 @@ plot_sequences <- function(reference, sequences) {
         }
     }
 
+    # TODO(sen) Probably hide this behind an option
     grid.newpage()
     grid.draw(grobs)
 

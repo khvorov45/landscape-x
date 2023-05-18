@@ -46,7 +46,12 @@ align_c(SEXP references, SEXP sequences, SEXP mode) {
     }
 
     SEXP resultSeqs = PROTECT(allocVector(STRSXP, sequencesCount));
-    SEXP resultRefs = PROTECT(allocVector(STRSXP, sequencesCount));
+    SEXP resultRefs = 0;
+    if (reconstructToCommon) {
+        resultRefs = PROTECT(allocVector(STRSXP, 1));
+    } else {
+        resultRefs = PROTECT(allocVector(STRSXP, sequencesCount));
+    }
 
     SEXP result = PROTECT(allocVector(VECSXP, 2));
     SET_VECTOR_ELT(result, 0, resultSeqs);
@@ -72,7 +77,13 @@ align_c(SEXP references, SEXP sequences, SEXP mode) {
 
         if (alnResult.alignments.len == sequencesCount) {
             if (reconstructToCommon) {
-                error("mode 'common' is unimplemented");
+                aln_ReconstructToCommonRefResult reconstructResult = aln_reconstructToCommonRef(alnResult.alignments, alnRefs[0], (aln_StrArray) {alnStrings, sequencesCount}, &alnMem);
+                SET_STRING_ELT(resultRefs, 0, mkCharLen(reconstructResult.commonRef.ptr, (int)reconstructResult.commonRef.len));
+                aln_assert(reconstructResult.alignedStrs.len == sequencesCount);
+                for (int seqIndex = 0; seqIndex < sequencesCount; seqIndex++) {
+                    aln_Str alnStr = reconstructResult.alignedStrs.ptr[seqIndex];
+                    SET_STRING_ELT(resultSeqs, seqIndex, mkCharLen(alnStr.ptr, (int)alnStr.len));
+                }
             } else {
                 for (int seqIndex = 0; seqIndex < alnResult.alignments.len; seqIndex++) {
                     aln_Alignment alignment = alnResult.alignments.ptr[seqIndex];
