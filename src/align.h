@@ -113,6 +113,15 @@ typedef struct aln_Rng {
     uint64_t inc;
 } aln_Rng;
 
+typedef struct aln_StrModSpec {
+    float   trimStartMaxProp;
+    float   trimEndMaxProp;
+    float   mutationProb;
+    float   deletionProb;
+    float   insertionProb;
+    aln_Str insertionSrc;
+} aln_StrModSpec;
+
 aln_PUBLICAPI aln_Memory aln_createMemory(void* base, intptr_t totalSize, intptr_t permSize);
 aln_PUBLICAPI aln_Memory aln_createMemory2(void* permBase, intptr_t permSize, void* tempBase, intptr_t tempSize);
 
@@ -123,7 +132,9 @@ aln_PUBLICAPI aln_ReconstructToCommonRefResult aln_reconstructToCommonRef(aln_Al
 aln_PUBLICAPI aln_Rng  aln_createRng(uint32_t seed);
 aln_PUBLICAPI uint32_t aln_randomU32(aln_Rng* rng);
 aln_PUBLICAPI uint32_t aln_randomU32Bound(aln_Rng* rng, uint32_t max);
+aln_PUBLICAPI float    aln_randomF3201(aln_Rng* rng);
 aln_PUBLICAPI aln_Str  aln_randomString(aln_Rng* rng, aln_Str src, intptr_t len, aln_Arena* arena);
+aln_PUBLICAPI aln_Str  aln_randomStringMod(aln_Rng* rng, aln_Str src, aln_StrModSpec spec, aln_Arena* arena);
 
 aln_PUBLICAPI intptr_t aln_matrix2index(intptr_t matrixWidth, intptr_t matrixHeight, intptr_t row, intptr_t col);
 
@@ -678,6 +689,15 @@ aln_randomU32Bound(aln_Rng* rng, uint32_t max) {
     return result;
 }
 
+aln_PUBLICAPI float
+aln_randomF3201(aln_Rng* rng) {
+    uint32_t randomU32 = aln_randomU32(rng);
+    float    randomF32 = (float)randomU32;
+    float    onePastMaxRandomU32 = (float)(1ULL << 32ULL);
+    float    result = randomF32 / onePastMaxRandomU32;
+    return result;
+}
+
 aln_PUBLICAPI aln_Str
 aln_randomString(aln_Rng* rng, aln_Str src, intptr_t len, aln_Arena* arena) {
     char* ptr = aln_arenaAllocArrayNoZero(arena, char, len);
@@ -686,6 +706,42 @@ aln_randomString(aln_Rng* rng, aln_Str src, intptr_t len, aln_Arena* arena) {
         ptr[ind] = src.ptr[index];
     }
     aln_Str result = {ptr, len};
+    return result;
+}
+
+aln_PUBLICAPI aln_Str
+aln_randomStringMod(aln_Rng* rng, aln_Str src, aln_StrModSpec spec, aln_Arena* arena) {
+    intptr_t trimStartMax = (intptr_t)(spec.trimStartMaxProp * (float)src.len + 0.5f);
+    intptr_t trimStart = aln_randomU32Bound(rng, trimStartMax + 1);
+
+    intptr_t trimEndMax = (intptr_t)(spec.trimEndMaxProp * (float)src.len + 0.5f);
+    intptr_t trimEnd = aln_randomU32Bound(rng, trimEndMax + 1);
+
+    aln_StrBuilder builder = aln_strBegin(arena);
+
+    for (intptr_t ind = trimStart; ind < src.len - trimEnd; ind++) {
+        float r01 = aln_randomF3201(rng);
+
+        bool mutate = false;
+        bool delete = false;
+        bool insert = false;
+        if (r01 < spec.mutationProb) {
+            mutate = true;
+        } else if (r01 >= spec.mutationProb && r01 < spec.mutationProb + spec.deletionProb) {
+            delete = true;
+        } else if (r01 >= spec.mutationProb + spec.deletionProb && r01 < spec.mutationProb + spec.deletionProb + spec.insertionProb) {
+            insert = true;
+        }
+
+        if (mutate || insert) {
+            uint32_t insertionCharInd = aln_randomU32Bound(rng, spec.insertionSrc.len);
+            aln_strBuilderAddChar(&builder, spec.insertionSrc.ptr[insertionCharInd]);
+        } else if (!delete) {
+            aln_strBuilderAddChar(&builder, src.ptr[ind]);
+        }
+    }
+
+    aln_Str result = aln_strEnd(&builder);
     return result;
 }
 

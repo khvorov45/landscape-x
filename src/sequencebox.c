@@ -30,13 +30,53 @@ createRMatrix(int rows, int cols, int type) {
     return matrix;
 }
 
+static void
+assertLen(char* name, SEXP obj, int len) {
+    if (LENGTH(obj) != len) {
+        error("%s should be length 1, not length %d", name, LENGTH(obj));
+    }
+}
+
+static void
+assertType(char* name, SEXP obj, int type, char* typename) {
+    if (TYPEOF(obj) != type) {
+        error("%s should be of type %s", name, typename);
+    }
+}
+
+static void
+assertLenAndType(char* name, SEXP obj, int len, int type, char* typename) {
+    assertLen(name, obj, len);
+    assertType(name, obj, type, typename);
+}
+
+static aln_Rng
+alnRngFromR(void) {
+    GetRNGstate();
+    aln_Rng rng = aln_createRng((uint32_t)(unif_rand() * (double)UINT32_MAX));
+    PutRNGstate();
+    return rng;
+}
+
+static aln_Str
+alnStrFromRstrArray(SEXP rstr) {
+    SEXP    rstr0 = STRING_ELT(rstr, 0);
+    aln_Str result = {(char*)CHAR(rstr0), LENGTH(rstr0)};
+    return result;
+}
+
 SEXP
 align_c(SEXP references, SEXP sequences, SEXP mode, SEXP matrices) {
+    assertType("references", references, STRSXP, "string");
+    assertType("sequences", sequences, STRSXP, "string");
+    assertLenAndType("mode", mode, 1, STRSXP, "string");
+    assertLenAndType("matrices", matrices, 1, LGLSXP, "boolean");
+
+    int referenceCount = LENGTH(references);
+    int sequencesCount = LENGTH(sequences);
+
     bool reconstructToCommon = false;
     {
-        if (LENGTH(mode) != 1) {
-            error("mode should be of length 1, not length %d", LENGTH(mode));
-        }
         SEXP    mode0 = STRING_ELT(mode, 0);
         aln_Str modechar = {(char*)CHAR(mode0), LENGTH(mode0)};
         bool    indiv = aln_streq(modechar, aln_STR("individual"));
@@ -46,24 +86,15 @@ align_c(SEXP references, SEXP sequences, SEXP mode, SEXP matrices) {
         }
     }
 
-    bool returnMatrices = false;
-    {
-        if (LENGTH(matrices) != 1) {
-            error("matrices should be of length 1, not length %d", LENGTH(matrices));
-        }
-        returnMatrices = LOGICAL_ELT(matrices, 0);
-    }
-
-    int referenceCount = LENGTH(references);
-    int sequencesCount = LENGTH(sequences);
-
-    if (reconstructToCommon && referenceCount != 1) {
-        error("reference count should be 1, not %d", referenceCount);
+    if (reconstructToCommon) {
+        assertLen("references", references, 1);
     }
 
     if (referenceCount != 1 && referenceCount != sequencesCount) {
         error("reference count (%d) should be either 1 or the same as sequence count (%d)", referenceCount, sequencesCount);
     }
+
+    bool returnMatrices = LOGICAL_ELT(matrices, 0);
 
     SEXP resultSeqs = PROTECT(allocVector(STRSXP, sequencesCount));
     SEXP resultRefs = 0;
@@ -168,12 +199,8 @@ align_c(SEXP references, SEXP sequences, SEXP mode, SEXP matrices) {
 
 SEXP
 generate_random_sequence_c(SEXP src, SEXP len) {
-    if (LENGTH(len) != 1) {
-        error("length should be of length 1, not length %d", LENGTH(len));
-    }
-    if (LENGTH(src) != 1) {
-        error("src should be of length 1, not length %d", LENGTH(src));
-    }
+    assertLenAndType("src", src, 1, STRSXP, "string");
+    assertLen("len", len, 1);
 
     int lenInt = 0;
     switch (TYPEOF(len)) {
@@ -189,30 +216,57 @@ generate_random_sequence_c(SEXP src, SEXP len) {
         default: error("length should be a number"); break;
     }
 
-    aln_Str alnSrc = {.ptr = 0, .len = 0};
-
-    switch (TYPEOF(src)) {
-        case STRSXP: {
-            SEXP src0 = STRING_ELT(src, 0);
-            alnSrc = (aln_Str) {(char*)CHAR(src0), LENGTH(src0)};
-        } break;
-
-        case CHARSXP: {
-            alnSrc = (aln_Str) {(char*)CHAR(src), LENGTH(src)};
-        } break;
-
-        default: error("src should be a string"); break;
-    }
+    aln_Str alnSrc = alnStrFromRstrArray(src);
 
     void*     mem = R_alloc(lenInt, 1);
     aln_Arena arena = {mem, lenInt};
 
-    GetRNGstate();
-    aln_Rng rng = aln_createRng((uint32_t)(unif_rand() * (double)UINT32_MAX));
-    PutRNGstate();
+    aln_Rng rng = alnRngFromR();
 
     aln_Str alnStr = aln_randomString(&rng, alnSrc, lenInt, &arena);
     SEXP    result = allocVector(STRSXP, 1);
     SET_STRING_ELT(result, 0, mkCharLen(alnStr.ptr, (int)alnStr.len));
+    return result;
+}
+
+SEXP
+random_sequence_mod_c(
+    SEXP src,
+    SEXP trim_start_max,
+    SEXP trim_end_max,
+    SEXP mutation,
+    SEXP deletion,
+    SEXP insertion,
+    SEXP insertion_src
+) {
+    assertLenAndType("src", src, 1, STRSXP, "string");
+    assertLenAndType("trim_start_max", trim_start_max, 1, REALSXP, "real number");
+    assertLenAndType("trim_end_max", trim_end_max, 1, REALSXP, "real number");
+    assertLenAndType("mutation", mutation, 1, REALSXP, "real number");
+    assertLenAndType("deletion", deletion, 1, REALSXP, "real number");
+    assertLenAndType("insertion", insertion, 1, REALSXP, "real number");
+    assertLenAndType("insertion_src", insertion_src, 1, STRSXP, "string");
+
+    aln_Rng rng = alnRngFromR();
+
+    aln_Str alnSrc = alnStrFromRstrArray(src);
+    aln_Str alnInsertionSrc = alnStrFromRstrArray(insertion_src);
+
+    intptr_t  memsize = alnSrc.len * 2;
+    void*     mem = R_alloc(memsize, 1);
+    aln_Arena arena = {mem, memsize};
+
+    aln_StrModSpec spec = {
+        .trimStartMaxProp = REAL_ELT(trim_start_max, 0),
+        .trimEndMaxProp = REAL_ELT(trim_end_max, 0),
+        .mutationProb = REAL_ELT(mutation, 0),
+        .deletionProb = REAL_ELT(deletion, 0),
+        .insertionProb = REAL_ELT(insertion, 0),
+        .insertionSrc = alnInsertionSrc,
+    };
+
+    aln_Str alnMod = aln_randomStringMod(&rng, alnSrc, spec, &arena);
+    SEXP    result = allocVector(STRSXP, 1);
+    SET_STRING_ELT(result, 0, mkCharLen(alnMod.ptr, (int)alnMod.len));
     return result;
 }

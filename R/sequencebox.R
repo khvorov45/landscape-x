@@ -219,3 +219,35 @@ plot_alignment_matrix <- function(score, direction, ref, seq) {
 generate_random_sequence <- function(src, len) {
     .Call("generate_random_sequence_c", src, len)
 }
+
+#' Generate random sequence
+#'
+#' @param src Source string to get characters out of
+#' @param len Length of the random sequences
+#' 
+#' @examples
+#' seq <- generate_random_sequence("ATGC", 30)
+#' print(seq)
+#' random_sequence_mod(seq)
+#'
+#' @export
+random_sequence_mod <- function(
+    src, 
+    trim_start_max = 0.1,
+    trim_end_max = 0.1,
+    mutation = 0.1,
+    deletion = 0.1,
+    insertion = 0.1,
+    insertion_src = "ATGC"
+) {
+    .Call(
+        "random_sequence_mod_c",
+        src,
+        trim_start_max,
+        trim_end_max,
+        mutation,
+        deletion,
+        insertion,
+        insertion_src
+    )
+}
