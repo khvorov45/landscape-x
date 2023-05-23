@@ -9,14 +9,16 @@
 #include "align.h"
 // clang-format on
 
-static aln_Str*
-rStrArrayToAlnStrArray(aln_Arena* arena, SEXP strs, int strsCount) {
+static aln_StrArray
+rStrArrayToAlnStrArray(aln_Arena* arena, SEXP strs) {
+    intptr_t strsCount = LENGTH(strs);
     aln_Str* alnStrings = aln_arenaAllocArray(arena, aln_Str, strsCount);
     for (int strIndex = 0; strIndex < strsCount; strIndex++) {
         SEXP rSeq = STRING_ELT(strs, strIndex);
         alnStrings[strIndex] = (aln_Str) {(char*)CHAR(rSeq), LENGTH(rSeq)};
     }
-    return alnStrings;
+    aln_StrArray result = {alnStrings, strsCount};
+    return result;
 }
 
 static SEXP
@@ -62,6 +64,31 @@ static aln_Str
 alnStrFromRstrArray(SEXP rstr) {
     SEXP    rstr0 = STRING_ELT(rstr, 0);
     aln_Str result = {(char*)CHAR(rstr0), LENGTH(rstr0)};
+    return result;
+}
+
+static aln_Arena
+arenaFromR(intptr_t size) {
+    void* mem = R_alloc(size, 1);
+    aln_assert(mem);
+    aln_Arena arena = {mem, size};
+    return arena;
+}
+
+static intptr_t
+intFromRNumber(char* name, SEXP rnumber) {
+    assertLen(name, rnumber, 1);
+    intptr_t result = 0;
+    switch (TYPEOF(rnumber)) {
+        case REALSXP: {
+            double dbl = REAL_ELT(rnumber, 0);
+            result = (intptr_t)dbl;
+        } break;
+        case INTSXP: {
+            result = INTEGER_ELT(rnumber, 0);
+        } break;
+        default: error("%s should be a number", name); break;
+    }
     return result;
 }
 
@@ -130,19 +157,19 @@ align_c(SEXP references, SEXP sequences, SEXP mode, SEXP matrices) {
     intptr_t   totalMemoryBytes = 20 * 1024 * 1024;
     aln_Memory alnMem = aln_createMemory(R_alloc(totalMemoryBytes, 1), totalMemoryBytes, totalMemoryBytes / 4);
     if (alnMem.perm.base) {
-        aln_Str* alnRefs = rStrArrayToAlnStrArray(&alnMem.perm, references, referenceCount);
-        aln_Str* alnStrings = rStrArrayToAlnStrArray(&alnMem.perm, sequences, sequencesCount);
+        aln_StrArray alnRefs = rStrArrayToAlnStrArray(&alnMem.perm, references);
+        aln_StrArray alnStrings = rStrArrayToAlnStrArray(&alnMem.perm, sequences);
 
         aln_AlignResult alnResult = aln_align(
-            (aln_StrArray) {alnRefs, referenceCount},
-            (aln_StrArray) {alnStrings, sequencesCount},
+            alnRefs,
+            alnStrings,
             (aln_Config) {.storeFinalMatrices = returnMatrices},
             &alnMem
         );
 
         if (alnResult.alignments.len == sequencesCount) {
             if (reconstructToCommon) {
-                aln_ReconstructToCommonRefResult reconstructResult = aln_reconstructToCommonRef(alnResult.alignments, alnRefs[0], (aln_StrArray) {alnStrings, sequencesCount}, &alnMem);
+                aln_ReconstructToCommonRefResult reconstructResult = aln_reconstructToCommonRef(alnResult.alignments, alnRefs.ptr[0], alnStrings, &alnMem);
                 SET_STRING_ELT(resultRefs, 0, mkCharLen(reconstructResult.commonRef.ptr, (int)reconstructResult.commonRef.len));
                 aln_assert(reconstructResult.alignedStrs.len == sequencesCount);
                 for (int seqIndex = 0; seqIndex < sequencesCount; seqIndex++) {
@@ -152,13 +179,13 @@ align_c(SEXP references, SEXP sequences, SEXP mode, SEXP matrices) {
             } else {
                 for (int seqIndex = 0; seqIndex < alnResult.alignments.len; seqIndex++) {
                     aln_Alignment alignment = alnResult.alignments.ptr[seqIndex];
-                    aln_Str       thisRef = alnRefs[0];
+                    aln_Str       thisRef = alnRefs.ptr[0];
                     if (referenceCount > 1) {
-                        thisRef = alnRefs[seqIndex];
+                        thisRef = alnRefs.ptr[seqIndex];
                     }
-                    aln_Str alnStr = aln_reconstruct(alignment, aln_Reconstruct_Str, thisRef, alnStrings[seqIndex], &alnMem.perm);
+                    aln_Str alnStr = aln_reconstruct(alignment, aln_Reconstruct_Str, thisRef, alnStrings.ptr[seqIndex], &alnMem.perm);
                     SET_STRING_ELT(resultSeqs, seqIndex, mkCharLen(alnStr.ptr, (int)alnStr.len));
-                    aln_Str alnRef = aln_reconstruct(alignment, aln_Reconstruct_Ref, thisRef, alnStrings[seqIndex], &alnMem.perm);
+                    aln_Str alnRef = aln_reconstruct(alignment, aln_Reconstruct_Ref, thisRef, alnStrings.ptr[seqIndex], &alnMem.perm);
                     SET_STRING_ELT(resultRefs, seqIndex, mkCharLen(alnRef.ptr, (int)alnRef.len));
                 }
             }
@@ -200,28 +227,11 @@ align_c(SEXP references, SEXP sequences, SEXP mode, SEXP matrices) {
 SEXP
 generate_random_sequence_c(SEXP src, SEXP len) {
     assertLenAndType("src", src, 1, STRSXP, "string");
-    assertLen("len", len, 1);
 
-    int lenInt = 0;
-    switch (TYPEOF(len)) {
-        case REALSXP: {
-            double lenDouble = REAL_ELT(len, 0);
-            lenInt = (int)lenDouble;
-        } break;
-
-        case INTSXP: {
-            lenInt = INTEGER_ELT(len, 0);
-        } break;
-
-        default: error("length should be a number"); break;
-    }
-
-    aln_Str alnSrc = alnStrFromRstrArray(src);
-
-    void*     mem = R_alloc(lenInt, 1);
-    aln_Arena arena = {mem, lenInt};
-
-    aln_Rng rng = alnRngFromR();
+    int       lenInt = intFromRNumber("length", len);
+    aln_Str   alnSrc = alnStrFromRstrArray(src);
+    aln_Arena arena = arenaFromR(lenInt);
+    aln_Rng   rng = alnRngFromR();
 
     aln_Str alnStr = aln_randomString(&rng, alnSrc, lenInt, &arena);
     SEXP    result = allocVector(STRSXP, 1);
@@ -232,6 +242,7 @@ generate_random_sequence_c(SEXP src, SEXP len) {
 SEXP
 random_sequence_mod_c(
     SEXP src,
+    SEXP n_mods_per_seq,
     SEXP trim_start_max,
     SEXP trim_end_max,
     SEXP mutation,
@@ -239,7 +250,8 @@ random_sequence_mod_c(
     SEXP insertion,
     SEXP insertion_src
 ) {
-    assertLenAndType("src", src, 1, STRSXP, "string");
+    assertType("src", src, STRSXP, "string");
+    assertLen("n_mods_per_seq", n_mods_per_seq, 1);
     assertLenAndType("trim_start_max", trim_start_max, 1, REALSXP, "real number");
     assertLenAndType("trim_end_max", trim_end_max, 1, REALSXP, "real number");
     assertLenAndType("mutation", mutation, 1, REALSXP, "real number");
@@ -247,14 +259,10 @@ random_sequence_mod_c(
     assertLenAndType("insertion", insertion, 1, REALSXP, "real number");
     assertLenAndType("insertion_src", insertion_src, 1, STRSXP, "string");
 
-    aln_Rng rng = alnRngFromR();
-
-    aln_Str alnSrc = alnStrFromRstrArray(src);
-    aln_Str alnInsertionSrc = alnStrFromRstrArray(insertion_src);
-
-    intptr_t  memsize = alnSrc.len * 2;
-    void*     mem = R_alloc(memsize, 1);
-    aln_Arena arena = {mem, memsize};
+    aln_Rng      rng = alnRngFromR();
+    aln_Arena    arena = arenaFromR(20 * 1024 * 1024);
+    aln_StrArray alnStrings = rStrArrayToAlnStrArray(&arena, src);
+    aln_Str      alnInsertionSrc = alnStrFromRstrArray(insertion_src);
 
     aln_StrModSpec spec = {
         .trimStartMaxProp = REAL_ELT(trim_start_max, 0),
@@ -265,8 +273,17 @@ random_sequence_mod_c(
         .insertionSrc = alnInsertionSrc,
     };
 
-    aln_Str alnMod = aln_randomStringMod(&rng, alnSrc, spec, &arena);
-    SEXP    result = allocVector(STRSXP, 1);
-    SET_STRING_ELT(result, 0, mkCharLen(alnMod.ptr, (int)alnMod.len));
+    intptr_t modsPerSeq = intFromRNumber("n_mods_per_seq", n_mods_per_seq);
+
+    SEXP result = PROTECT(allocVector(STRSXP, alnStrings.len * modsPerSeq));
+    for (intptr_t ind = 0; ind < alnStrings.len; ind++) {
+        for (intptr_t modInd = 0; modInd < modsPerSeq; modInd++) {
+            aln_Str alnSrc = alnStrings.ptr[ind];
+            aln_Str alnMod = aln_randomStringMod(&rng, alnSrc, spec, &arena);
+            SET_STRING_ELT(result, ind * modsPerSeq + modInd, mkCharLen(alnMod.ptr, (int)alnMod.len));
+        }
+    }
+
+    UNPROTECT(1);
     return result;
 }

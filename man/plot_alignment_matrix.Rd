@@ -20,8 +20,8 @@ Plot a Needleman–Wunsch alignment matrix. Consists of 2 parts -
 a score matrix and a direction matrix.
 }
 \examples{
-ref <- "ABCD"
-seq <- "ACC"
+ref <- generate_random_sequence("ATGC", 10)
+seq <- random_sequence_mod(ref)
 align_result <- align(ref, seq, matrices = TRUE)
 plot_alignment_matrix(align_result$scores[[1]], align_result$directions[[1]], ref, seq)
 

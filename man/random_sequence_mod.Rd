@@ -2,29 +2,42 @@
 % Please edit documentation in R/sequencebox.R
 \name{random_sequence_mod}
 \alias{random_sequence_mod}
-\title{Generate random sequence}
+\title{Randomly modify sequence}
 \usage{
 random_sequence_mod(
   src,
+  n_mods_per_seq = 1,
   trim_start_max = 0.1,
   trim_end_max = 0.1,
-  mutation = 0.1,
+  substitution = 0.1,
   deletion = 0.1,
   insertion = 0.1,
   insertion_src = "ATGC"
 )
 }
 \arguments{
-\item{src}{Source string to get characters out of}
+\item{src}{Sequences to modify}
 
-\item{len}{Length of the random sequences}
+\item{n_mods_per_seq}{Number of modified sequences to return per input sequence}
+
+\item{trim_start_max}{Max proportion of length of \code{src} to trim from the start}
+
+\item{trim_end_max}{Max proportion of length of \code{src} to trim from the end}
+
+\item{substitution}{Probablitiy of substitution per site}
+
+\item{deletion}{Probability of deletion per site}
+
+\item{insertion}{Probability of insertion per site}
+
+\item{insertion_src}{Source of characters for insertions and substitutions}
 }
 \description{
-Generate random sequence
+Randomly modify sequence
 }
 \examples{
 seq <- generate_random_sequence("ATGC", 30)
 print(seq)
-random_sequence_mod(seq)
+random_sequence_mod(seq, 3)
 
 }

@@ -19,6 +19,8 @@ align(reference, sequences, mode = "individual", matrices = FALSE)
 Align a list of sequences to a reference
 }
 \examples{
-align("ABCDEFGH", c("AAACEF", "ABCDEA"), "common")
+ref <- generate_random_sequence("ATGC", 10)
+seqs <- random_sequence_mod(ref, 10)
+align(ref, seqs, mode = "common")
 
 }

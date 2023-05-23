@@ -8,9 +8,9 @@
 #' @param matrices Return alignment matrices
 #'
 #' @examples
-#' align("ABCDEFGH", c("AAACEF", "ABCDEA"), "common")
-#'
-#' @import grid
+#' ref <- generate_random_sequence("ATGC", 10)
+#' seqs <- random_sequence_mod(ref, 10)
+#' align(ref, seqs, mode = "common")
 #'
 #' @export
 align <- function(reference, sequences, mode = "individual", matrices = FALSE) {
@@ -25,7 +25,10 @@ align <- function(reference, sequences, mode = "individual", matrices = FALSE) {
 #' @param sequences An array of sequences to be plotted
 #'
 #' @examples
-#' plot_sequences("ABCDEFGH", c("AAACEF", "ABCDEA"))
+#' ref <- generate_random_sequence("ATGC", 10)
+#' seqs <- random_sequence_mod(ref, 10)
+#' seqs_aligned <- align(ref, seqs, mode = "common")
+#' plot_sequences(ref, seqs_aligned$sequences)
 #'
 #' @import grid
 #'
@@ -65,7 +68,7 @@ plot_sequences <- function(reference, sequences) {
         index <- 0
         for (char in splt) {
             fill <- "white"
-            if (index + 1 < length(reference_split)) {
+            if (index < length(reference_split)) {
                 refchar <- reference_split[[index + 1]]
                 if (char != refchar) {
                     fill <- "gray90"
@@ -104,8 +107,8 @@ plot_sequences <- function(reference, sequences) {
 #' @param seq Sequence that was aligned
 #'
 #' @examples
-#' ref <- "ABCD"
-#' seq <- "ACC"
+#' ref <- generate_random_sequence("ATGC", 10)
+#' seq <- random_sequence_mod(ref)
 #' align_result <- align(ref, seq, matrices = TRUE)
 #' plot_alignment_matrix(align_result$scores[[1]], align_result$directions[[1]], ref, seq)
 #'
@@ -220,22 +223,29 @@ generate_random_sequence <- function(src, len) {
     .Call("generate_random_sequence_c", src, len)
 }
 
-#' Generate random sequence
+#' Randomly modify sequence
 #'
-#' @param src Source string to get characters out of
-#' @param len Length of the random sequences
+#' @param src Sequences to modify
+#' @param n_mods_per_seq Number of modified sequences to return per input sequence
+#' @param trim_start_max Max proportion of length of `src` to trim from the start
+#' @param trim_end_max Max proportion of length of `src` to trim from the end
+#' @param substitution Probablitiy of substitution per site
+#' @param deletion Probability of deletion per site
+#' @param insertion Probability of insertion per site
+#' @param insertion_src Source of characters for insertions and substitutions
 #' 
 #' @examples
 #' seq <- generate_random_sequence("ATGC", 30)
 #' print(seq)
-#' random_sequence_mod(seq)
+#' random_sequence_mod(seq, 3)
 #'
 #' @export
 random_sequence_mod <- function(
     src, 
+    n_mods_per_seq = 1,
     trim_start_max = 0.1,
     trim_end_max = 0.1,
-    mutation = 0.1,
+    substitution = 0.1,
     deletion = 0.1,
     insertion = 0.1,
     insertion_src = "ATGC"
@@ -243,9 +253,10 @@ random_sequence_mod <- function(
     .Call(
         "random_sequence_mod_c",
         src,
+        n_mods_per_seq,
         trim_start_max,
         trim_end_max,
-        mutation,
+        substitution,
         deletion,
         insertion,
         insertion_src

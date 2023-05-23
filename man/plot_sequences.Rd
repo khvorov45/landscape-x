@@ -15,6 +15,9 @@ plot_sequences(reference, sequences)
 Plot a list of sequences coloring each letter accoring to the reference.
 }
 \examples{
-plot_sequences("ABCDEFGH", c("AAACEF", "ABCDEA"))
+ref <- generate_random_sequence("ATGC", 10)
+seqs <- random_sequence_mod(ref, 10)
+seqs_aligned <- align(ref, seqs, mode = "common")
+plot_sequences(ref, seqs_aligned$sequences)
 
 }
