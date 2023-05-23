@@ -107,12 +107,25 @@ typedef struct aln_ReconstructToCommonRefResult {
     aln_StrArray alignedStrs;
 } aln_ReconstructToCommonRefResult;
 
-aln_PUBLICAPI aln_Memory                       aln_createMemory(void* base, intptr_t totalSize, intptr_t permSize);
-aln_PUBLICAPI aln_Memory                       aln_createMemory2(void* permBase, intptr_t permSize, void* tempBase, intptr_t tempSize);
+typedef struct aln_Rng {
+    uint64_t state;
+    // Must be odd
+    uint64_t inc;
+} aln_Rng;
+
+aln_PUBLICAPI aln_Memory aln_createMemory(void* base, intptr_t totalSize, intptr_t permSize);
+aln_PUBLICAPI aln_Memory aln_createMemory2(void* permBase, intptr_t permSize, void* tempBase, intptr_t tempSize);
+
 aln_PUBLICAPI aln_AlignResult                  aln_align(aln_StrArray references, aln_StrArray strings, aln_Config config, aln_Memory* memory);
 aln_PUBLICAPI aln_Str                          aln_reconstruct(aln_Alignment aligned, aln_Reconstruct which, aln_Str reference, aln_Str ogstr, aln_Arena* arena);
 aln_PUBLICAPI aln_ReconstructToCommonRefResult aln_reconstructToCommonRef(aln_AlignmentArray alignments, aln_Str reference, aln_StrArray strings, aln_Memory* memory);
-aln_PUBLICAPI intptr_t                         aln_matrix2index(intptr_t matrixWidth, intptr_t matrixHeight, intptr_t row, intptr_t col);
+
+aln_PUBLICAPI aln_Rng  aln_createRng(uint32_t seed);
+aln_PUBLICAPI uint32_t aln_randomU32(aln_Rng* rng);
+aln_PUBLICAPI uint32_t aln_randomU32Bound(aln_Rng* rng, uint32_t max);
+aln_PUBLICAPI aln_Str  aln_randomString(aln_Rng* rng, aln_Str src, intptr_t len, aln_Arena* arena);
+
+aln_PUBLICAPI intptr_t aln_matrix2index(intptr_t matrixWidth, intptr_t matrixHeight, intptr_t row, intptr_t col);
 
 #endif  // aln_HEADER
 
@@ -125,7 +138,7 @@ aln_PUBLICAPI intptr_t                         aln_matrix2index(intptr_t matrixW
 #define aln_clamp(x, a, b) (((x) < (a)) ? (a) : (((x) > (b)) ? (b) : (x)))
 #define aln_arrayCount(arr) (intptr_t)(sizeof(arr) / sizeof(arr[0]))
 #define aln_arenaAllocArray(arena, type, len) (type*)aln_arenaAllocAndZero(arena, (len) * (intptr_t)sizeof(type), alignof(type))
-#define aln_arenaAllocStruct(arena, type) (type*)aln_arenaAllocAndZero(arena, sizeof(type), alignof(type))
+#define aln_arenaAllocArrayNoZero(arena, type, len) (type*)aln_arenaAllocNoZero(arena, (len) * (intptr_t)sizeof(type), alignof(type))
 #define aln_arenaAllocMatrix2(matrixType, dataType, arena, width_, height_) (matrixType) {.ptr = aln_arenaAllocArray(arena, dataType, width_ * height_), .width = width_, .height = height_}
 #define aln_isPowerOf2(x) (((x) > 0) && (((x) & ((x)-1)) == 0))
 #define aln_unused(x) ((x) = (x))
@@ -211,10 +224,16 @@ aln_createArenaFromArena(aln_Arena* parent, intptr_t bytes) {
 }
 
 aln_PRIVATEAPI void*
-aln_arenaAllocAndZero(aln_Arena* arena, intptr_t size, intptr_t align) {
+aln_arenaAllocNoZero(aln_Arena* arena, intptr_t size, intptr_t align) {
     aln_arenaAlignFreePtr(arena, align);
     void* result = aln_arenaFreePtr(arena);
     aln_arenaChangeUsed(arena, size);
+    return result;
+}
+
+aln_PRIVATEAPI void*
+aln_arenaAllocAndZero(aln_Arena* arena, intptr_t size, intptr_t align) {
+    void* result = aln_arenaAllocNoZero(arena, size, align);
     for (intptr_t ind = 0; ind < size; ind++) {
         ((uint8_t*)result)[ind] = 0;
     }
@@ -241,6 +260,7 @@ aln_strGetNullTerminated(aln_Arena* arena, aln_Str str) {
     for (intptr_t ind = 0; ind < str.len; ind++) {
         buf[ind] = str.ptr[ind];
     }
+    buf[str.len] = 0;
     return buf;
 }
 
@@ -608,6 +628,64 @@ aln_matrix2index(intptr_t matrixWidth, intptr_t matrixHeight, intptr_t row, intp
     aln_unused(matrixHeight);
     intptr_t result = row * matrixWidth + col;
 #endif
+    return result;
+}
+
+aln_PUBLICAPI aln_Rng
+aln_createRng(uint32_t seed) {
+    aln_Rng rng = {.state = seed, .inc = seed | 1};
+    // NOTE(khvorov) When seed is 0 the first 2 numbers are always 0 which is probably not what we want
+    aln_randomU32(&rng);
+    aln_randomU32(&rng);
+    return rng;
+}
+
+// PCG-XSH-RR
+// state_new = a * state_old + b
+// output = rotate32((state ^ (state >> 18)) >> 27, state >> 59)
+// as per `PCG: A Family of Simple Fast Space-Efficient Statistically Good Algorithms for Random Number Generation`
+aln_PUBLICAPI uint32_t
+aln_randomU32(aln_Rng* rng) {
+    uint64_t state = rng->state;
+    uint64_t xorWith = state >> 18u;
+    uint64_t xored = state ^ xorWith;
+    uint64_t shifted64 = xored >> 27u;
+    uint32_t shifted32 = (uint32_t)shifted64;
+    uint32_t rotateBy = state >> 59u;
+    uint32_t shiftRightBy = rotateBy;
+    uint32_t resultRight = shifted32 >> shiftRightBy;
+    // NOTE(khvorov) This is `32 - rotateBy` but produces 0 when rotateBy is 0
+    // Shifting a 32 bit value by 32 is apparently UB and the compiler is free to remove that code
+    // I guess, so we are avoiding it by doing this weird bit hackery
+    uint32_t shiftLeftBy = (-rotateBy) & 0x1Fu;
+    uint32_t resultLeft = shifted32 << shiftLeftBy;
+    uint32_t result = resultRight | resultLeft;
+    // NOTE(khvorov) This is just one of those magic LCG constants "in common use"
+    // https://en.wikipedia.org/wiki/Linear_congruential_generator#Parameters_in_common_use
+    rng->state = 6364136223846793005ULL * state + rng->inc;
+    return result;
+}
+
+aln_PUBLICAPI uint32_t
+aln_randomU32Bound(aln_Rng* rng, uint32_t max) {
+    // NOTE(khvorov) This is equivalent to (UINT32_MAX + 1) % max;
+    uint32_t threshold = -max % max;
+    uint32_t unbound = aln_randomU32(rng);
+    while (unbound < threshold) {
+        unbound = aln_randomU32(rng);
+    }
+    uint32_t result = unbound % max;
+    return result;
+}
+
+aln_PUBLICAPI aln_Str
+aln_randomString(aln_Rng* rng, aln_Str src, intptr_t len, aln_Arena* arena) {
+    char* ptr = aln_arenaAllocArrayNoZero(arena, char, len);
+    for (intptr_t ind = 0; ind < len; ind++) {
+        uint32_t index = aln_randomU32Bound(rng, src.len);
+        ptr[ind] = src.ptr[index];
+    }
+    aln_Str result = {ptr, len};
     return result;
 }
 

@@ -123,38 +123,59 @@ plot_alignment_matrix <- function(score, direction, ref, seq) {
     hstep <- 1 / (ncol(score) + 1)
     vstep <- 1 / (nrow(score) + 1)
 
-    createEntryText <- function(text, x, y) {
+    createEntryText <- function(text, x, y, col = "black") {
         textGrob(
             text,
             x = x, y = 1 - y, hjust = 0.5, vjust = 0.5,
-            gp = gpar(col = "black", fontsize = 20, fontfamily = "mono")
+            gp = gpar(col = col, fontsize = 20, fontfamily = "mono")
         )
     }
 
     {
-        for (row in 1:nrow(score)) {
-            for (col in 1:ncol(score)) {
+        onpath_row <- nrow(score)
+        onpath_col <- ncol(score)
+        for (row in seq(nrow(score), 1)) {
+            for (col in seq(ncol(score), 1)) {
                 topleftx = col * hstep
                 toplefty = row * vstep
 
-                scoregrob <- createEntryText(score[row, col], topleftx + hstep / 2, toplefty + vstep / 2)
-
-                {
-                    top <- 1 - toplefty
-                    left <- topleftx
-                    centerY = 1 - (toplefty + vstep / 2)
-                    centerX <- topleftx + hstep / 2
-                    dx <- hstep / 6
-                    dy <- - vstep / 6
-                    dirgrob <- switch(
-                        direction[row, col] + 1,
-                        segmentsGrob(centerX - dx, centerY - dy, left - dx, top - dy, arrow = arrow()),
-                        segmentsGrob(centerX, centerY - dy, centerX, top - dy, arrow = arrow()),
-                        segmentsGrob(centerX - dx, centerY, left - dx, centerY, arrow = arrow()),
-                    )
+                color <- "gray20"
+                dir <- direction[row, col]
+                if (row == onpath_row & col == onpath_col) {
+                    color <- "blue"
+                    if (dir == 0) {
+                        onpath_row = onpath_row - 1
+                        onpath_col = onpath_col - 1                            
+                    } else if (dir == 1) {
+                        onpath_row = onpath_row - 1
+                    } else if (dir == 2) {
+                        onpath_col = onpath_col - 1
+                    }
                 }
 
-                grobs <- gTree(children = gList(grobs, scoregrob, dirgrob))
+                scoregrob <- createEntryText(score[row, col], topleftx + hstep / 2, toplefty + vstep / 2, color)
+
+                top <- 1 - toplefty
+                left <- topleftx
+                centerY = 1 - (toplefty + vstep / 2)
+                centerX <- topleftx + hstep / 2
+                dx <- hstep / 6
+                dy <- - vstep / 6
+                arr <- arrow(length = unit(0.02, "npc"))
+                
+                pars <- gpar(col = color)
+                dirgrob <- switch(
+                    dir + 1,
+                    segmentsGrob(left + dx, top + dy, left - dx, top - dy, arrow = arr, gp = pars),
+                    segmentsGrob(centerX, top + dy, centerX, top - dy, arrow = arr, gp = pars),
+                    segmentsGrob(left + dx, centerY, left - dx, centerY, arrow = arr, gp = pars),
+                )
+
+                if (row > 1 | col > 1) {
+                    grobs <- gTree(children = gList(grobs, scoregrob, dirgrob))
+                } else {
+                    grobs <- gTree(children = gList(grobs, scoregrob))
+                }
             }
         }
     }
@@ -184,4 +205,17 @@ plot_alignment_matrix <- function(score, direction, ref, seq) {
     grid.draw(grobs)
 
     grobs
+}
+
+#' Generate random sequence
+#'
+#' @param src Source string to get characters out of
+#' @param len Length of the random sequences
+#' 
+#' @examples
+#' generate_random_sequence("ATGC", 10)
+#'
+#' @export
+generate_random_sequence <- function(src, len) {
+    .Call("generate_random_sequence_c", src, len)
 }

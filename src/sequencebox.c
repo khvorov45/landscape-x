@@ -1,5 +1,6 @@
 #include <R.h>
 #include <Rinternals.h>
+#include <R_ext/Random.h>
 
 // clang-format off
 #define aln_IMPLEMENTATION
@@ -162,5 +163,56 @@ align_c(SEXP references, SEXP sequences, SEXP mode, SEXP matrices) {
     }
 
     UNPROTECT(2 + resultEntryCount);
+    return result;
+}
+
+SEXP
+generate_random_sequence_c(SEXP src, SEXP len) {
+    if (LENGTH(len) != 1) {
+        error("length should be of length 1, not length %d", LENGTH(len));
+    }
+    if (LENGTH(src) != 1) {
+        error("src should be of length 1, not length %d", LENGTH(src));
+    }
+
+    int lenInt = 0;
+    switch (TYPEOF(len)) {
+        case REALSXP: {
+            double lenDouble = REAL_ELT(len, 0);
+            lenInt = (int)lenDouble;
+        } break;
+
+        case INTSXP: {
+            lenInt = INTEGER_ELT(len, 0);
+        } break;
+
+        default: error("length should be a number"); break;
+    }
+
+    aln_Str alnSrc = {.ptr = 0, .len = 0};
+
+    switch (TYPEOF(src)) {
+        case STRSXP: {
+            SEXP src0 = STRING_ELT(src, 0);
+            alnSrc = (aln_Str) {(char*)CHAR(src0), LENGTH(src0)};
+        } break;
+
+        case CHARSXP: {
+            alnSrc = (aln_Str) {(char*)CHAR(src), LENGTH(src)};
+        } break;
+
+        default: error("src should be a string"); break;
+    }
+
+    void*     mem = R_alloc(lenInt, 1);
+    aln_Arena arena = {mem, lenInt};
+
+    GetRNGstate();
+    aln_Rng rng = aln_createRng((uint32_t)(unif_rand() * (double)UINT32_MAX));
+    PutRNGstate();
+
+    aln_Str alnStr = aln_randomString(&rng, alnSrc, lenInt, &arena);
+    SEXP    result = allocVector(STRSXP, 1);
+    SET_STRING_ELT(result, 0, mkCharLen(alnStr.ptr, (int)alnStr.len));
     return result;
 }
