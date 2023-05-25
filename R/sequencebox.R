@@ -28,7 +28,7 @@ align <- function(reference, sequences, mode = "individual", matrices = FALSE) {
 #' ref <- generate_random_sequence("ATGC", 10)
 #' seqs <- random_sequence_mod(ref, 10)
 #' seqs_aligned <- align(ref, seqs, mode = "common")
-#' plot_sequences(ref, seqs_aligned$sequences)
+#' plot_sequences(seqs_aligned$references, seqs_aligned$sequences)
 #'
 #' @import grid
 #'
@@ -261,4 +261,21 @@ random_sequence_mod <- function(
         insertion,
         insertion_src
     )
+}
+
+#' Create tree
+#' 
+#' Create a phylogenetic tree
+#' 
+#' @param seqs Sequences
+#' 
+#' @examples
+#' ref <- generate_random_sequence("ATGC", 10)
+#' seq <- random_sequence_mod(ref, 5)
+#' align_result <- align(ref, seq, mode = "common")
+#' create_tree(align_result$sequences) 
+#' 
+#' @export
+create_tree <- function(seqs) {
+    .Call("create_tree_c", seqs)
 }

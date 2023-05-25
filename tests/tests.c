@@ -154,7 +154,7 @@ alignAndReconstruct(
         }
         aln_Alignment alignedStr = alignResult.alignments.ptr[seqInd];
 
-        bool printMats = true;
+        bool printMats = false;
         if (printMats) {
             printMatrix(arena, alignResult.matrices.ptr[seqInd], reference, ogstr);
         }
@@ -189,7 +189,7 @@ alignAndReconstructToCommon(
         aln_Str str = reconstruction.alignedStrs.ptr[strInd];
         aln_Str strExpected = expectedStrs.ptr[strInd];
 
-        bool printMats = true;
+        bool printMats = false;
         if (printMats) {
             printMatrix(arena, alignResult.matrices.ptr[strInd], ref, strs.ptr[strInd]);
         }
@@ -244,12 +244,39 @@ test_alignAndReconstruct(prb_Arena* arena) {
     }
 }
 
+function void
+test_tree(prb_Arena* arena) {
+    prb_TempMemory temp = prb_beginTempMemory(arena);
+
+    aln_Memory mem = {};
+    {
+        intptr_t size = prb_arenaFreeSize(arena) / 2;
+        mem = aln_createMemory(prb_arenaFreePtr(arena), size, size / 4);
+        prb_arenaChangeUsed(arena, size);
+    }
+
+    {
+        aln_Str stringsArr[] = {
+            aln_STR("aaaaa"),
+            aln_STR("1aaaa"),
+            aln_STR("11aaa"),
+            aln_STR("111aa"),
+            aln_STR("1111a"),
+            aln_STR("11111"),
+        };
+        aln_createTree((aln_StrArray) {stringsArr, prb_arrayCount(stringsArr)}, &mem);
+    }
+
+    prb_endTempMemory(temp);
+}
+
 int
 main() {
     prb_Arena  arena_ = prb_createArenaFromVmem(1 * prb_GIGABYTE);
     prb_Arena* arena = &arena_;
 
     test_alignAndReconstruct(arena);
+    test_tree(arena);
 
     return 0;
 }

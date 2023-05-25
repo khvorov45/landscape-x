@@ -14,6 +14,7 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stdalign.h>
+#include <float.h>
 
 #ifndef aln_PUBLICAPI
 #define aln_PUBLICAPI
@@ -71,6 +72,12 @@ typedef struct aln_Matrix2NW {
     intptr_t     height;
 } aln_Matrix2NW;
 
+typedef struct aln_Matrix2f {
+    float*   ptr;
+    intptr_t width;
+    intptr_t height;
+} aln_Matrix2f;
+
 typedef struct aln_Matrix2NWArray {
     aln_Matrix2NW* ptr;
     intptr_t       len;
@@ -122,6 +129,31 @@ typedef struct aln_StrModSpec {
     aln_Str insertionSrc;
 } aln_StrModSpec;
 
+typedef struct aln_TreeNode {
+    bool isInternal;
+} aln_TreeNode;
+
+typedef struct aln_TreeNodeArray {
+    aln_TreeNode* ptr;
+    intptr_t      len;
+} aln_TreeNodeArray;
+
+typedef struct aln_TreeBranch {
+    int32_t node1Index;
+    int32_t node2Index;
+    float   len;
+} aln_TreeBranch;
+
+typedef struct aln_TreeBranchArray {
+    aln_TreeBranch* ptr;
+    intptr_t        len;
+} aln_TreeBranchArray;
+
+typedef struct aln_Tree {
+    aln_TreeNodeArray   nodes;
+    aln_TreeBranchArray branches;
+} aln_Tree;
+
 aln_PUBLICAPI aln_Memory aln_createMemory(void* base, intptr_t totalSize, intptr_t permSize);
 aln_PUBLICAPI aln_Memory aln_createMemory2(void* permBase, intptr_t permSize, void* tempBase, intptr_t tempSize);
 
@@ -135,6 +167,8 @@ aln_PUBLICAPI uint32_t aln_randomU32Bound(aln_Rng* rng, uint32_t max);
 aln_PUBLICAPI float    aln_randomF3201(aln_Rng* rng);
 aln_PUBLICAPI aln_Str  aln_randomString(aln_Rng* rng, aln_Str src, intptr_t len, aln_Arena* arena);
 aln_PUBLICAPI aln_Str  aln_randomStringMod(aln_Rng* rng, aln_Str src, aln_StrModSpec spec, aln_Arena* arena);
+
+aln_PUBLICAPI aln_Tree aln_createTree(aln_StrArray strings, aln_Memory* memory);
 
 aln_PUBLICAPI intptr_t aln_matrix2index(intptr_t matrixWidth, intptr_t matrixHeight, intptr_t row, intptr_t col);
 
@@ -361,20 +395,6 @@ aln_align(aln_StrArray references, aln_StrArray strings, aln_Config config, aln_
             aln_matrix2get(thisGrid, rowIndex, 0) = (aln_NWEntry) {(float)(rowIndex)*edgeIndelScore, aln_CameFromDir_Top};
         }
 
-// TODO(khvorov) Diagonal iteration (start of)
-#if 0
-        for (intptr_t diagonalIndex = 2; diagonalIndex < thisGrid.width + thisGrid.height - 1; diagonalIndex++) {
-            intptr_t entriesInDiagonal = 0;
-            if (diagonalIndex < thisGrid.height) {
-                entriesInDiagonal = aln_min(diagonalIndex + 1, thisGrid.width);
-            } else {
-                entriesInDiagonal = aln_min(thisGrid.width - (diagonalIndex - thisGrid.height + 1), thisGrid.height);
-            }
-            aln_unused(entriesInDiagonal);
-        }
-#endif
-
-        // TODO(khvorov) This would need to go by diagonal rather than row/column
         for (intptr_t rowIndex = 1; rowIndex < thisGrid.height; rowIndex++) {
             for (intptr_t colIndex = 1; colIndex < thisGrid.width; colIndex++) {
                 intptr_t topleftIndex = aln_matrix2index(thisGrid.width, thisGrid.height, rowIndex - 1, colIndex - 1);
@@ -422,7 +442,6 @@ aln_align(aln_StrArray references, aln_StrArray strings, aln_Config config, aln_
             storedMatrices[strInd] = matCopy;
         }
 
-        // TODO(khvorov) This reconstruction would have to go by diagonal as well
         intptr_t      maxActionCount = (thisGrid.width - 1) + (thisGrid.height - 1);
         aln_Alignment alignedStr = {aln_arenaAllocArray(&memory->perm, aln_AlignAction, maxActionCount)};
 
@@ -626,19 +645,9 @@ aln_reconstructToCommonRef(aln_AlignmentArray alignments, aln_Str reference, aln
 
 aln_PUBLICAPI intptr_t
 aln_matrix2index(intptr_t matrixWidth, intptr_t matrixHeight, intptr_t row, intptr_t col) {
-// TODO(sen) Enable
-#if 0 
-    // NOTE(sen) Diagonal-first storage. Diagonals start in the top-left corner and are oriented bottomleft to topright.
-    intptr_t topleftRect = (row + 1) * col;
-    intptr_t toprightTriangleColCount = aln_min(row, matrixWidth - col - 1);
-    intptr_t toprightTriangle = toprightTriangleColCount * (row + (row - toprightTriangleColCount + 1)) / 2;
-    intptr_t bottomleftTriangleColCount = aln_min(col, matrixHeight - row - 1);
-    intptr_t bottomleftTriangle = bottomleftTriangleColCount * (col + (col - bottomleftTriangleColCount + 1)) / 2;
-    intptr_t result = topleftRect + toprightTriangle + bottomleftTriangle;
-#else
-    aln_unused(matrixHeight);
+    aln_assert(row >= 0 && row < matrixHeight);
+    aln_assert(col >= 0 && col < matrixWidth);
     intptr_t result = row * matrixWidth + col;
-#endif
     return result;
 }
 
@@ -743,6 +752,164 @@ aln_randomStringMod(aln_Rng* rng, aln_Str src, aln_StrModSpec spec, aln_Arena* a
 
     aln_Str result = aln_strEnd(&builder);
     return result;
+}
+
+aln_PRIVATEAPI aln_Tree
+aln_createTreeFromDistanceMatrix(aln_Matrix2f curDistMat, aln_Memory* memory) {
+    aln_assert(curDistMat.height == curDistMat.width);
+    aln_TempMemory temp = aln_beginTempMemory(&memory->temp);
+
+    intptr_t ogmatside = curDistMat.width;
+
+    aln_Tree tree = {.branches = {.ptr = 0, .len = 0}, .nodes = {.ptr = 0, .len = 0}};
+    tree.nodes.len = ogmatside + ogmatside - 2;
+    tree.nodes.ptr = aln_arenaAllocArray(&memory->perm, aln_TreeNode, tree.nodes.len);
+    for (intptr_t ind = ogmatside; ind < tree.nodes.len; ind++) {
+        tree.nodes.ptr[ind].isInternal = true;
+    }
+    tree.branches.len = (ogmatside - 2) * 2;
+    tree.branches.ptr = aln_arenaAllocArray(&memory->perm, aln_TreeBranch, tree.branches.len);
+
+    aln_Matrix2f nextDistMat = aln_arenaAllocMatrix2(aln_Matrix2f, float, &memory->temp, ogmatside, ogmatside);
+
+    int32_t* curDistMatNodeIndices = aln_arenaAllocArray(&memory->temp, int32_t, curDistMat.width);
+    for (intptr_t ind = 0; ind < curDistMat.width; ind++) {
+        curDistMatNodeIndices[ind] = ind;
+    }
+
+    for (intptr_t joinIndex = 0; joinIndex < ogmatside - 2; joinIndex++) {
+        aln_TempMemory joinTemp = aln_beginTempMemory(&memory->temp);
+
+        float* distanceRowSum = aln_arenaAllocArray(&memory->temp, float, curDistMat.height);
+        for (intptr_t row = 0; row < curDistMat.height; row++) {
+            float sum = 0;
+            for (intptr_t col = 0; col < curDistMat.width; col++) {
+                sum += aln_matrix2get(curDistMat, row, col);
+            }
+            distanceRowSum[row] = sum;
+        }
+
+        bool     minIsSet = false;
+        float    qabMin = FLT_MAX;
+        intptr_t rowQabMin = 0;
+        intptr_t colQabMin = 0;
+        for (intptr_t row = 0; row < curDistMat.height - 1; row++) {
+            for (intptr_t col = row + 1; col < curDistMat.width; col++) {
+                float dab = aln_matrix2get(curDistMat, row, col);
+                float t1 = (float)(curDistMat.width - 2) * dab;
+                float t2 = distanceRowSum[row];
+                float t3 = distanceRowSum[col];
+                float qab = t1 + t2 + t3;
+                if (qab < qabMin) {
+                    qabMin = qab;
+                    rowQabMin = row;
+                    colQabMin = col;
+                    minIsSet = true;
+                }
+            }
+        }
+        aln_assert(minIsSet);
+        aln_assert(rowQabMin != colQabMin);
+
+        {
+            intptr_t rowQabMinNodeIndex = curDistMatNodeIndices[rowQabMin];
+            intptr_t colQabMinNodeIndex = curDistMatNodeIndices[colQabMin];
+
+            aln_TreeBranch branch1 = {.node1Index = rowQabMinNodeIndex, .node2Index = ogmatside + joinIndex, .len = 0};
+            aln_TreeBranch branch2 = {.node1Index = colQabMinNodeIndex, .node2Index = ogmatside + joinIndex, .len = 0};
+
+            {
+                float dfg = aln_matrix2get(curDistMat, rowQabMin, colQabMin);
+                float t1 = 0.5 * dfg;
+                float t2 = 1 / (2 * curDistMat.width - 2);
+                float t3 = 0;
+                float t4 = 0;
+                for (intptr_t ind = 0; ind < curDistMat.width; ind++) {
+                    t3 += aln_matrix2get(curDistMat, rowQabMin, ind);
+                    t4 += aln_matrix2get(curDistMat, colQabMin, ind);
+                }
+                branch1.len = t1 + t2 * (t3 - t4);
+                branch2.len = dfg - branch1.len;
+            }
+
+            tree.branches.ptr[joinIndex] = branch1;
+            tree.branches.ptr[joinIndex + 1] = branch2;
+        }
+
+        nextDistMat.height = curDistMat.height - 1;
+        nextDistMat.width = curDistMat.width - 1;
+
+        intptr_t jstart = aln_min(rowQabMin, colQabMin);
+        intptr_t jend = aln_max(rowQabMin, colQabMin) - 1;
+        for (intptr_t row = 0; row < nextDistMat.height - 1; row++) {
+            for (intptr_t col = row; col < nextDistMat.width; col++) {
+                intptr_t curRow = row + (intptr_t)(row >= jstart) + (intptr_t)(row >= jend);
+                intptr_t curCol = col + (intptr_t)(col >= jstart) + (intptr_t)(col >= jend);
+
+                if (curCol == curDistMat.width) {
+                    float d1 = aln_matrix2get(curDistMat, rowQabMin, curRow);
+                    float d2 = aln_matrix2get(curDistMat, colQabMin, curRow);
+                    float d3 = aln_matrix2get(curDistMat, rowQabMin, colQabMin);
+                    float val = 0.5 * (d1 + d2 - d3);
+                    aln_matrix2get(nextDistMat, row, col) = val;
+                    aln_matrix2get(nextDistMat, col, row) = val;
+                } else {
+                    float val = aln_matrix2get(curDistMat, curRow, curCol);
+                    aln_matrix2get(nextDistMat, row, col) = val;
+                    aln_matrix2get(nextDistMat, col, row) = val;
+                }
+            }
+        }
+        aln_matrix2get(nextDistMat, nextDistMat.height - 1, nextDistMat.width - 1) = 0;
+
+        {
+            aln_Matrix2f temp = curDistMat;
+            curDistMat = nextDistMat;
+            nextDistMat = temp;
+        }
+
+        for (intptr_t ind = jstart; ind < jend; ind++) {
+            curDistMatNodeIndices[ind] = curDistMatNodeIndices[ind + 1];
+        }
+        for (intptr_t ind = jend; ind < curDistMat.width - 1; ind++) {
+            curDistMatNodeIndices[ind] = curDistMatNodeIndices[ind + 2];
+        }
+        curDistMatNodeIndices[curDistMat.width - 1] = ogmatside + joinIndex;
+
+        aln_endTempMemory(joinTemp);
+    }
+
+    aln_endTempMemory(temp);
+    return tree;
+}
+
+aln_PUBLICAPI aln_Tree
+aln_createTree(aln_StrArray strings, aln_Memory* memory) {
+    aln_TempMemory temp = aln_beginTempMemory(&memory->temp);
+
+    aln_Matrix2f curDistMat = aln_arenaAllocMatrix2(aln_Matrix2f, float, &memory->temp, strings.len, strings.len);
+    for (intptr_t row = 0; row < curDistMat.height; row++) {
+        for (intptr_t col = row; col < curDistMat.width; col++) {
+            aln_Str s1 = strings.ptr[row];
+            aln_Str s2 = strings.ptr[col];
+            aln_assert(s1.len == s2.len);
+            float distance = 0.0f;
+            for (intptr_t ind = 0; ind < s1.len; ind++) {
+                char c1 = s1.ptr[ind];
+                char c2 = s2.ptr[ind];
+                if (c1 != c2) {
+                    distance += 1.0f;
+                }
+            }
+            aln_matrix2get(curDistMat, row, col) = distance;
+            aln_matrix2get(curDistMat, col, row) = distance;
+        }
+    }
+
+    aln_Tree tree = aln_createTreeFromDistanceMatrix(curDistMat, memory);
+
+    aln_endTempMemory(temp);
+    return tree;
 }
 
 #endif  // aln_IMPLEMENTATION

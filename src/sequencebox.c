@@ -75,6 +75,14 @@ arenaFromR(intptr_t size) {
     return arena;
 }
 
+static aln_Memory
+memoryFromR(intptr_t size) {
+    void* ptr = R_alloc(size, 1);
+    aln_assert(ptr);
+    aln_Memory mem = aln_createMemory(ptr, size, size / 4);
+    return mem;
+}
+
 static intptr_t
 intFromRNumber(char* name, SEXP rnumber) {
     assertLen(name, rnumber, 1);
@@ -154,70 +162,64 @@ align_c(SEXP references, SEXP sequences, SEXP mode, SEXP matrices) {
     }
     setAttrib(result, R_NamesSymbol, resultNames);
 
-    intptr_t   totalMemoryBytes = 20 * 1024 * 1024;
-    aln_Memory alnMem = aln_createMemory(R_alloc(totalMemoryBytes, 1), totalMemoryBytes, totalMemoryBytes / 4);
-    if (alnMem.perm.base) {
-        aln_StrArray alnRefs = rStrArrayToAlnStrArray(&alnMem.perm, references);
-        aln_StrArray alnStrings = rStrArrayToAlnStrArray(&alnMem.perm, sequences);
+    // TODO(sen) Figure out how to work out memory size in a more robust way
+    intptr_t     totalMemoryBytes = 20 * 1024 * 1024;
+    aln_Memory   alnMem = memoryFromR(totalMemoryBytes);
+    aln_StrArray alnRefs = rStrArrayToAlnStrArray(&alnMem.perm, references);
+    aln_StrArray alnStrings = rStrArrayToAlnStrArray(&alnMem.perm, sequences);
 
-        aln_AlignResult alnResult = aln_align(
-            alnRefs,
-            alnStrings,
-            (aln_Config) {.storeFinalMatrices = returnMatrices},
-            &alnMem
-        );
+    aln_AlignResult alnResult = aln_align(
+        alnRefs,
+        alnStrings,
+        (aln_Config) {.storeFinalMatrices = returnMatrices},
+        &alnMem
+    );
+    aln_assert(alnResult.alignments.len == sequencesCount);
 
-        if (alnResult.alignments.len == sequencesCount) {
-            if (reconstructToCommon) {
-                aln_ReconstructToCommonRefResult reconstructResult = aln_reconstructToCommonRef(alnResult.alignments, alnRefs.ptr[0], alnStrings, &alnMem);
-                SET_STRING_ELT(resultRefs, 0, mkCharLen(reconstructResult.commonRef.ptr, (int)reconstructResult.commonRef.len));
-                aln_assert(reconstructResult.alignedStrs.len == sequencesCount);
-                for (int seqIndex = 0; seqIndex < sequencesCount; seqIndex++) {
-                    aln_Str alnStr = reconstructResult.alignedStrs.ptr[seqIndex];
-                    SET_STRING_ELT(resultSeqs, seqIndex, mkCharLen(alnStr.ptr, (int)alnStr.len));
-                }
-            } else {
-                for (int seqIndex = 0; seqIndex < alnResult.alignments.len; seqIndex++) {
-                    aln_Alignment alignment = alnResult.alignments.ptr[seqIndex];
-                    aln_Str       thisRef = alnRefs.ptr[0];
-                    if (referenceCount > 1) {
-                        thisRef = alnRefs.ptr[seqIndex];
-                    }
-                    aln_Str alnStr = aln_reconstruct(alignment, aln_Reconstruct_Str, thisRef, alnStrings.ptr[seqIndex], &alnMem.perm);
-                    SET_STRING_ELT(resultSeqs, seqIndex, mkCharLen(alnStr.ptr, (int)alnStr.len));
-                    aln_Str alnRef = aln_reconstruct(alignment, aln_Reconstruct_Ref, thisRef, alnStrings.ptr[seqIndex], &alnMem.perm);
-                    SET_STRING_ELT(resultRefs, seqIndex, mkCharLen(alnRef.ptr, (int)alnRef.len));
-                }
-            }
-
-            if (returnMatrices) {
-                aln_assert(alnResult.alignments.len == alnResult.matrices.len);
-                for (int matIndex = 0; matIndex < alnResult.matrices.len; matIndex++) {
-                    aln_Matrix2NW mat = alnResult.matrices.ptr[matIndex];
-                    int           rwidth = mat.height;
-                    int           rheight = mat.width;
-                    SEXP          rmatScores = PROTECT(createRMatrix(rwidth, rheight, REALSXP));
-                    SEXP          rmatDirs = PROTECT(createRMatrix(rwidth, rheight, INTSXP));
-                    for (int row = 0; row < mat.height; row++) {
-                        for (int col = 0; col < mat.width; col++) {
-                            aln_NWEntry entry = aln_matrix2get(mat, row, col);
-                            int         rrow = col;
-                            int         rcol = row;
-                            int         rindex = rrow * rwidth + rcol;
-                            SET_REAL_ELT(rmatScores, rindex, entry.score);
-                            SET_INTEGER_ELT(rmatDirs, rindex, (int)entry.cameFromDir);
-                        }
-                    }
-                    SET_VECTOR_ELT(resultScores, matIndex, rmatScores);
-                    SET_VECTOR_ELT(resultDirections, matIndex, rmatDirs);
-                    UNPROTECT(2);
-                }
-            }
-        } else {
-            error("unexpected alignment result");
+    if (reconstructToCommon) {
+        aln_ReconstructToCommonRefResult reconstructResult = aln_reconstructToCommonRef(alnResult.alignments, alnRefs.ptr[0], alnStrings, &alnMem);
+        SET_STRING_ELT(resultRefs, 0, mkCharLen(reconstructResult.commonRef.ptr, (int)reconstructResult.commonRef.len));
+        aln_assert(reconstructResult.alignedStrs.len == sequencesCount);
+        for (int seqIndex = 0; seqIndex < sequencesCount; seqIndex++) {
+            aln_Str alnStr = reconstructResult.alignedStrs.ptr[seqIndex];
+            SET_STRING_ELT(resultSeqs, seqIndex, mkCharLen(alnStr.ptr, (int)alnStr.len));
         }
     } else {
-        error("could not allocate memory");
+        for (int seqIndex = 0; seqIndex < alnResult.alignments.len; seqIndex++) {
+            aln_Alignment alignment = alnResult.alignments.ptr[seqIndex];
+            aln_Str       thisRef = alnRefs.ptr[0];
+            if (referenceCount > 1) {
+                thisRef = alnRefs.ptr[seqIndex];
+            }
+            aln_Str alnStr = aln_reconstruct(alignment, aln_Reconstruct_Str, thisRef, alnStrings.ptr[seqIndex], &alnMem.perm);
+            SET_STRING_ELT(resultSeqs, seqIndex, mkCharLen(alnStr.ptr, (int)alnStr.len));
+            aln_Str alnRef = aln_reconstruct(alignment, aln_Reconstruct_Ref, thisRef, alnStrings.ptr[seqIndex], &alnMem.perm);
+            SET_STRING_ELT(resultRefs, seqIndex, mkCharLen(alnRef.ptr, (int)alnRef.len));
+        }
+    }
+
+    if (returnMatrices) {
+        aln_assert(alnResult.alignments.len == alnResult.matrices.len);
+        for (int matIndex = 0; matIndex < alnResult.matrices.len; matIndex++) {
+            aln_Matrix2NW mat = alnResult.matrices.ptr[matIndex];
+            int           rwidth = mat.height;
+            int           rheight = mat.width;
+            SEXP          rmatScores = PROTECT(createRMatrix(rwidth, rheight, REALSXP));
+            SEXP          rmatDirs = PROTECT(createRMatrix(rwidth, rheight, INTSXP));
+            for (int row = 0; row < mat.height; row++) {
+                for (int col = 0; col < mat.width; col++) {
+                    aln_NWEntry entry = aln_matrix2get(mat, row, col);
+                    int         rrow = col;
+                    int         rcol = row;
+                    int         rindex = rrow * rwidth + rcol;
+                    SET_REAL_ELT(rmatScores, rindex, entry.score);
+                    SET_INTEGER_ELT(rmatDirs, rindex, (int)entry.cameFromDir);
+                }
+            }
+            SET_VECTOR_ELT(resultScores, matIndex, rmatScores);
+            SET_VECTOR_ELT(resultDirections, matIndex, rmatDirs);
+            UNPROTECT(2);
+        }
     }
 
     UNPROTECT(2 + resultEntryCount);
@@ -281,6 +283,80 @@ random_sequence_mod_c(
             aln_Str alnSrc = alnStrings.ptr[ind];
             aln_Str alnMod = aln_randomStringMod(&rng, alnSrc, spec, &arena);
             SET_STRING_ELT(result, ind * modsPerSeq + modInd, mkCharLen(alnMod.ptr, (int)alnMod.len));
+        }
+    }
+
+    UNPROTECT(1);
+    return result;
+}
+
+SEXP
+create_tree_c(SEXP seqs) {
+    assertType("seqs", seqs, STRSXP, "string");
+
+    aln_Memory   mem = memoryFromR(1024 * 1024);
+    aln_StrArray alnStrs = rStrArrayToAlnStrArray(&mem.perm, seqs);
+    aln_Tree     alnTree = aln_createTree(alnStrs, &mem);
+
+    SEXP result = PROTECT(allocVector(VECSXP, 2));
+    SEXP nodeDf = allocVector(VECSXP, 2);
+    SET_VECTOR_ELT(result, 0, nodeDf);
+    SEXP branchDf = allocVector(VECSXP, 3);
+    SET_VECTOR_ELT(result, 1, branchDf);
+
+    {
+        SEXP names = allocVector(STRSXP, 2);
+        setAttrib(result, R_NamesSymbol, names);
+        SET_STRING_ELT(names, 0, mkChar("node"));
+        SET_STRING_ELT(names, 1, mkChar("branch"));
+    }
+
+    {
+        SEXP names = allocVector(STRSXP, 1);
+        classgets(nodeDf, names);
+        SET_STRING_ELT(names, 0, mkChar("data.frame"));
+        classgets(branchDf, names);
+    }
+
+    {
+        SEXP names = allocVector(STRSXP, alnTree.nodes.len);
+        setAttrib(nodeDf, R_RowNamesSymbol, names);
+        for (intptr_t ind = 0; ind < alnTree.nodes.len; ind++) {
+            aln_TempMemory temp = aln_beginTempMemory(&mem.temp);
+
+            char* ptr = aln_arenaFreePtr(&mem.temp);
+            int   len = snprintf(ptr, aln_arenaFreeSize(&mem.temp), "%ld", ind + 1);
+            SET_STRING_ELT(names, ind, mkCharLen(ptr, len));
+
+            aln_endTempMemory(temp);
+        }
+    }
+
+    {
+        SEXP names = allocVector(STRSXP, 2);
+        setAttrib(nodeDf, R_NamesSymbol, names);
+        SET_STRING_ELT(names, 0, mkChar("node"));
+        SET_STRING_ELT(names, 1, mkChar("internal"));
+    }
+
+    {
+        SEXP names = allocVector(STRSXP, 3);
+        setAttrib(branchDf, R_NamesSymbol, names);
+        SET_STRING_ELT(names, 0, mkChar("node1Index"));
+        SET_STRING_ELT(names, 1, mkChar("node2Index"));
+        SET_STRING_ELT(names, 2, mkChar("len"));
+    }
+
+    {
+        SEXP nodeIndices = allocVector(INTSXP, alnTree.nodes.len);
+        SET_VECTOR_ELT(nodeDf, 0, nodeIndices);
+        SEXP nodeInternal = allocVector(LGLSXP, alnTree.nodes.len);
+        SET_VECTOR_ELT(nodeDf, 1, nodeInternal);
+
+        for (intptr_t ind = 0; ind < alnTree.nodes.len; ind++) {
+            aln_TreeNode node = alnTree.nodes.ptr[ind];
+            SET_INTEGER_ELT(nodeIndices, ind, ind);
+            SET_LOGICAL_ELT(nodeInternal, ind, node.isInternal);
         }
     }
 
