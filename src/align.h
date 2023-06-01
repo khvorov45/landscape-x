@@ -767,7 +767,7 @@ aln_createTreeFromDistanceMatrix(aln_Matrix2f curDistMat, aln_Memory* memory) {
     for (intptr_t ind = ogmatside; ind < tree.nodes.len; ind++) {
         tree.nodes.ptr[ind].isInternal = true;
     }
-    tree.branches.len = (ogmatside - 2) * 2;
+    tree.branches.len = (ogmatside - 2) * 2 + 1;
     tree.branches.ptr = aln_arenaAllocArray(&memory->perm, aln_TreeBranch, tree.branches.len);
 
     aln_Matrix2f nextDistMat = aln_arenaAllocMatrix2(aln_Matrix2f, float, &memory->temp, ogmatside, ogmatside);
@@ -799,7 +799,7 @@ aln_createTreeFromDistanceMatrix(aln_Matrix2f curDistMat, aln_Memory* memory) {
                 float t1 = (float)(curDistMat.width - 2) * dab;
                 float t2 = distanceRowSum[row];
                 float t3 = distanceRowSum[col];
-                float qab = t1 + t2 + t3;
+                float qab = t1 - t2 - t3;
                 if (qab < qabMin) {
                     qabMin = qab;
                     rowQabMin = row;
@@ -809,19 +809,20 @@ aln_createTreeFromDistanceMatrix(aln_Matrix2f curDistMat, aln_Memory* memory) {
             }
         }
         aln_assert(minIsSet);
-        aln_assert(rowQabMin != colQabMin);
+        aln_assert(rowQabMin < colQabMin);
 
         {
             intptr_t rowQabMinNodeIndex = curDistMatNodeIndices[rowQabMin];
             intptr_t colQabMinNodeIndex = curDistMatNodeIndices[colQabMin];
+            intptr_t newNodeIndex = ogmatside + joinIndex;
 
-            aln_TreeBranch branch1 = {.node1Index = rowQabMinNodeIndex, .node2Index = ogmatside + joinIndex, .len = 0};
-            aln_TreeBranch branch2 = {.node1Index = colQabMinNodeIndex, .node2Index = ogmatside + joinIndex, .len = 0};
+            aln_TreeBranch branch1 = {.node1Index = rowQabMinNodeIndex, .node2Index = newNodeIndex, .len = 0};
+            aln_TreeBranch branch2 = {.node1Index = colQabMinNodeIndex, .node2Index = newNodeIndex, .len = 0};
 
             {
                 float dfg = aln_matrix2get(curDistMat, rowQabMin, colQabMin);
                 float t1 = 0.5 * dfg;
-                float t2 = 1 / (2 * curDistMat.width - 2);
+                float t2 = 1.0f / (float)(2 * (curDistMat.width - 2));
                 float t3 = 0;
                 float t4 = 0;
                 for (intptr_t ind = 0; ind < curDistMat.width; ind++) {
@@ -832,49 +833,71 @@ aln_createTreeFromDistanceMatrix(aln_Matrix2f curDistMat, aln_Memory* memory) {
                 branch2.len = dfg - branch1.len;
             }
 
-            tree.branches.ptr[joinIndex] = branch1;
-            tree.branches.ptr[joinIndex + 1] = branch2;
-        }
+            intptr_t firstBranchIndex = joinIndex * 2;
+            tree.branches.ptr[firstBranchIndex] = branch1;
+            tree.branches.ptr[firstBranchIndex + 1] = branch2;
 
-        nextDistMat.height = curDistMat.height - 1;
-        nextDistMat.width = curDistMat.width - 1;
-
-        intptr_t jstart = aln_min(rowQabMin, colQabMin);
-        intptr_t jend = aln_max(rowQabMin, colQabMin) - 1;
-        for (intptr_t row = 0; row < nextDistMat.height - 1; row++) {
-            for (intptr_t col = row; col < nextDistMat.width; col++) {
-                intptr_t curRow = row + (intptr_t)(row >= jstart) + (intptr_t)(row >= jend);
-                intptr_t curCol = col + (intptr_t)(col >= jstart) + (intptr_t)(col >= jend);
-
-                if (curCol == curDistMat.width) {
-                    float d1 = aln_matrix2get(curDistMat, rowQabMin, curRow);
-                    float d2 = aln_matrix2get(curDistMat, colQabMin, curRow);
-                    float d3 = aln_matrix2get(curDistMat, rowQabMin, colQabMin);
-                    float val = 0.5 * (d1 + d2 - d3);
-                    aln_matrix2get(nextDistMat, row, col) = val;
-                    aln_matrix2get(nextDistMat, col, row) = val;
-                } else {
-                    float val = aln_matrix2get(curDistMat, curRow, curCol);
-                    aln_matrix2get(nextDistMat, row, col) = val;
-                    aln_matrix2get(nextDistMat, col, row) = val;
+            if (joinIndex == ogmatside - 3) {
+                aln_assert(curDistMat.width == 3 && curDistMat.height == 3);
+                intptr_t leftoverQab = 0;
+                if (rowQabMin == 0 || colQabMin == 0) {
+                    leftoverQab = 1;
                 }
+                if (rowQabMin == 1 || colQabMin == 1) {
+                    leftoverQab = 2;
+                }
+                aln_assert(rowQabMin != leftoverQab && colQabMin != leftoverQab);
+
+                intptr_t leftoverQabNodeIndex = curDistMatNodeIndices[leftoverQab];
+                float    dfg = aln_matrix2get(curDistMat, rowQabMin, leftoverQab);
+
+                aln_TreeBranch branch3 = {.node1Index = leftoverQabNodeIndex, .node2Index = newNodeIndex, .len = dfg - branch1.len};
+                aln_assert(firstBranchIndex + 2 < tree.branches.len);
+                tree.branches.ptr[firstBranchIndex + 2] = branch3;
             }
         }
-        aln_matrix2get(nextDistMat, nextDistMat.height - 1, nextDistMat.width - 1) = 0;
 
-        {
-            aln_Matrix2f temp = curDistMat;
-            curDistMat = nextDistMat;
-            nextDistMat = temp;
-        }
+        if (curDistMat.height > 3) {
+            nextDistMat.height = curDistMat.height - 1;
+            nextDistMat.width = curDistMat.width - 1;
 
-        for (intptr_t ind = jstart; ind < jend; ind++) {
-            curDistMatNodeIndices[ind] = curDistMatNodeIndices[ind + 1];
+            intptr_t jstart = aln_min(rowQabMin, colQabMin);
+            intptr_t jend = aln_max(rowQabMin, colQabMin) - 1;
+            for (intptr_t row = 0; row < nextDistMat.height - 1; row++) {
+                for (intptr_t col = row; col < nextDistMat.width; col++) {
+                    intptr_t curRow = row + (intptr_t)(row >= jstart) + (intptr_t)(row >= jend);
+                    intptr_t curCol = col + (intptr_t)(col >= jstart) + (intptr_t)(col >= jend);
+
+                    if (curCol == curDistMat.width) {
+                        float d1 = aln_matrix2get(curDistMat, rowQabMin, curRow);
+                        float d2 = aln_matrix2get(curDistMat, colQabMin, curRow);
+                        float d3 = aln_matrix2get(curDistMat, rowQabMin, colQabMin);
+                        float val = 0.5 * (d1 + d2 - d3);
+                        aln_matrix2get(nextDistMat, row, col) = val;
+                        aln_matrix2get(nextDistMat, col, row) = val;
+                    } else {
+                        float val = aln_matrix2get(curDistMat, curRow, curCol);
+                        aln_matrix2get(nextDistMat, row, col) = val;
+                        aln_matrix2get(nextDistMat, col, row) = val;
+                    }
+                }
+            }
+            aln_matrix2get(nextDistMat, nextDistMat.height - 1, nextDistMat.width - 1) = 0;
+
+            {
+                aln_Matrix2f temp = curDistMat;
+                curDistMat = nextDistMat;
+                nextDistMat = temp;
+            }
+
+            for (intptr_t ind = jstart; ind < jend; ind++) {
+                curDistMatNodeIndices[ind] = curDistMatNodeIndices[ind + 1];
+            }
+            for (intptr_t ind = jend; ind < curDistMat.width - 1; ind++) {
+                curDistMatNodeIndices[ind] = curDistMatNodeIndices[ind + 2];
+            }
+            curDistMatNodeIndices[curDistMat.width - 1] = ogmatside + joinIndex;
         }
-        for (intptr_t ind = jend; ind < curDistMat.width - 1; ind++) {
-            curDistMatNodeIndices[ind] = curDistMatNodeIndices[ind + 2];
-        }
-        curDistMatNodeIndices[curDistMat.width - 1] = ogmatside + joinIndex;
 
         aln_endTempMemory(joinTemp);
     }

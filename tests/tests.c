@@ -267,6 +267,61 @@ test_tree(prb_Arena* arena) {
         aln_createTree((aln_StrArray) {stringsArr, prb_arrayCount(stringsArr)}, &mem);
     }
 
+    {
+        // clang-format off
+        // From https://en.wikipedia.org/wiki/Neighbor_joining
+        float distanceMatValues[] = {
+            0, 5, 9, 9, 8,
+            5, 0, 10, 10, 9,
+            9, 10, 0, 8, 7,
+            9, 10, 8, 0, 3,
+            8, 9, 7, 3, 0,
+        };
+        // clang-format on
+
+        aln_Matrix2f distanceMat = {distanceMatValues, 5, 5};
+        aln_Tree     tree = aln_createTreeFromDistanceMatrix(distanceMat, &mem);
+
+        prb_assert(tree.branches.len == 7);
+        prb_assert(tree.nodes.len == 8);
+        prb_assert(!tree.nodes.ptr[0].isInternal);
+        prb_assert(!tree.nodes.ptr[1].isInternal);
+        prb_assert(!tree.nodes.ptr[2].isInternal);
+        prb_assert(!tree.nodes.ptr[3].isInternal);
+        prb_assert(!tree.nodes.ptr[4].isInternal);
+        prb_assert(tree.nodes.ptr[5].isInternal);
+        prb_assert(tree.nodes.ptr[6].isInternal);
+        prb_assert(tree.nodes.ptr[7].isInternal);
+
+        aln_TreeBranch expectedBranches[] = {
+            {0, 5, 2},
+            {1, 5, 3},
+            {2, 6, 4},
+            {5, 6, 3},
+            {3, 7, 2},
+            {4, 7, 1},
+            {6, 7, 2},
+        };
+        uint8_t expectedHits = 0b00000000;
+
+        for (int ind = 0; ind < tree.branches.len; ind++) {
+            aln_TreeBranch branch = tree.branches.ptr[ind];
+            bool           foundMatch = false;
+            for (int expectedInd = 0; expectedInd < prb_arrayCount(expectedBranches); expectedInd++) {
+                aln_TreeBranch expected = expectedBranches[expectedInd];
+                bool           sameNodes = expected.node1Index == branch.node1Index && expected.node2Index == branch.node2Index;
+                sameNodes = sameNodes || (expected.node2Index == branch.node1Index && expected.node1Index == branch.node2Index);
+                if (sameNodes && expected.len == branch.len) {
+                    expectedHits |= 1 << expectedInd;
+                    foundMatch = true;
+                    break;
+                }
+            }
+            prb_assert(foundMatch);
+        }
+        prb_assert(expectedHits == 0b01111111);
+    }
+
     prb_endTempMemory(temp);
 }
 
