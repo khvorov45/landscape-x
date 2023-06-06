@@ -57,7 +57,7 @@ plot_sequences <- function(reference, sequences) {
             textGrob(
                 letter,
                 x = x + hstep / 2, y = y + vstep / 2, hjust = 0.5, vjust = 0.5,
-                gp = gpar(col = "black", fontsize = 20, fontfamily = "mono")
+                gp = gpar(col = "black", fontsize = 20)
             )
         )
     }
@@ -130,7 +130,7 @@ plot_alignment_matrix <- function(score, direction, ref, seq) {
         textGrob(
             text,
             x = x, y = 1 - y, hjust = 0.5, vjust = 0.5,
-            gp = gpar(col = col, fontsize = 20, fontfamily = "mono")
+            gp = gpar(col = col, fontsize = 20)
         )
     }
 
@@ -278,4 +278,8 @@ random_sequence_mod <- function(
 #' @export
 create_tree <- function(seqs) {
     .Call("create_tree_c", seqs)
+}
+
+plot_tree <- function(tree) {
+    
 }

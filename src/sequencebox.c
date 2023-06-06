@@ -33,6 +33,21 @@ createRMatrix(int rows, int cols, int type) {
 }
 
 static void
+setRDfRownames(SEXP df, int len, aln_Arena* arena) {
+    SEXP names = allocVector(STRSXP, len);
+    setAttrib(df, R_RowNamesSymbol, names);
+    for (intptr_t ind = 0; ind < len; ind++) {
+        aln_TempMemory temp = aln_beginTempMemory(arena);
+
+        char* ptr = aln_arenaFreePtr(arena);
+        int   len = snprintf(ptr, aln_arenaFreeSize(arena), "%ld", ind + 1);
+        SET_STRING_ELT(names, ind, mkCharLen(ptr, len));
+
+        aln_endTempMemory(temp);
+    }
+}
+
+static void
 assertLen(char* name, SEXP obj, int len) {
     if (LENGTH(obj) != len) {
         error("%s should be length 1, not length %d", name, LENGTH(obj));
@@ -318,19 +333,8 @@ create_tree_c(SEXP seqs) {
         classgets(branchDf, names);
     }
 
-    {
-        SEXP names = allocVector(STRSXP, alnTree.nodes.len);
-        setAttrib(nodeDf, R_RowNamesSymbol, names);
-        for (intptr_t ind = 0; ind < alnTree.nodes.len; ind++) {
-            aln_TempMemory temp = aln_beginTempMemory(&mem.temp);
-
-            char* ptr = aln_arenaFreePtr(&mem.temp);
-            int   len = snprintf(ptr, aln_arenaFreeSize(&mem.temp), "%ld", ind + 1);
-            SET_STRING_ELT(names, ind, mkCharLen(ptr, len));
-
-            aln_endTempMemory(temp);
-        }
-    }
+    setRDfRownames(nodeDf, alnTree.nodes.len, &mem.temp);
+    setRDfRownames(branchDf, alnTree.branches.len, &mem.temp);
 
     {
         SEXP names = allocVector(STRSXP, 2);
@@ -357,6 +361,20 @@ create_tree_c(SEXP seqs) {
             aln_TreeNode node = alnTree.nodes.ptr[ind];
             SET_INTEGER_ELT(nodeIndices, ind, ind);
             SET_LOGICAL_ELT(nodeInternal, ind, node.isInternal);
+        }
+
+        SEXP branchNode1Indices = allocVector(INTSXP, alnTree.branches.len);
+        SET_VECTOR_ELT(branchDf, 0, branchNode1Indices);
+        SEXP branchNode2Indices = allocVector(INTSXP, alnTree.branches.len);
+        SET_VECTOR_ELT(branchDf, 1, branchNode2Indices);
+        SEXP branchLens = allocVector(REALSXP, alnTree.branches.len);
+        SET_VECTOR_ELT(branchDf, 2, branchLens);
+
+        for (intptr_t ind = 0; ind < alnTree.branches.len; ind++) {
+            aln_TreeBranch branch = alnTree.branches.ptr[ind];
+            SET_INTEGER_ELT(branchNode1Indices, ind, branch.node1Index);
+            SET_INTEGER_ELT(branchNode2Indices, ind, branch.node2Index);
+            SET_REAL_ELT(branchLens, ind, branch.len);
         }
     }
 
