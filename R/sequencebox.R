@@ -148,7 +148,7 @@ plot_alignment_matrix <- function(score, direction, ref, seq) {
                     color <- "blue"
                     if (dir == 0) {
                         onpath_row = onpath_row - 1
-                        onpath_col = onpath_col - 1                            
+                        onpath_col = onpath_col - 1
                     } else if (dir == 1) {
                         onpath_row = onpath_row - 1
                     } else if (dir == 2) {
@@ -165,7 +165,7 @@ plot_alignment_matrix <- function(score, direction, ref, seq) {
                 dx <- hstep / 6
                 dy <- - vstep / 6
                 arr <- arrow(length = unit(0.02, "npc"))
-                
+
                 pars <- gpar(col = color)
                 dirgrob <- switch(
                     dir + 1,
@@ -214,7 +214,7 @@ plot_alignment_matrix <- function(score, direction, ref, seq) {
 #'
 #' @param src Source string to get characters out of
 #' @param len Length of the random sequences
-#' 
+#'
 #' @examples
 #' generate_random_sequence("ATGC", 10)
 #'
@@ -233,7 +233,7 @@ generate_random_sequence <- function(src, len) {
 #' @param deletion Probability of deletion per site
 #' @param insertion Probability of insertion per site
 #' @param insertion_src Source of characters for insertions and substitutions
-#' 
+#'
 #' @examples
 #' seq <- generate_random_sequence("ATGC", 30)
 #' print(seq)
@@ -241,7 +241,7 @@ generate_random_sequence <- function(src, len) {
 #'
 #' @export
 random_sequence_mod <- function(
-    src, 
+    src,
     n_mods_per_seq = 1,
     trim_start_max = 0.1,
     trim_end_max = 0.1,
@@ -264,22 +264,77 @@ random_sequence_mod <- function(
 }
 
 #' Create tree
-#' 
+#'
 #' Create a phylogenetic tree
-#' 
+#'
 #' @param seqs Sequences
-#' 
+#'
 #' @examples
 #' ref <- generate_random_sequence("ATGC", 10)
 #' seq <- random_sequence_mod(ref, 5)
 #' align_result <- align(ref, seq, mode = "common")
-#' create_tree(align_result$sequences) 
-#' 
+#' create_tree(align_result$sequences)
+#'
 #' @export
 create_tree <- function(seqs) {
     .Call("create_tree_c", seqs)
 }
 
-plot_tree <- function(tree) {
-    
+#' Plot tree
+#'
+#' Plot a phylogenetic tree
+#' 
+#' @param tree Tree
+#' @param root Root node index
+#'
+#' @examples
+#' ref <- generate_random_sequence("ATGC", 10)
+#' seq <- random_sequence_mod(ref, 5)
+#' align_result <- align(ref, seq, mode = "common")
+#' tree <- create_tree(align_result$sequences)
+#' plot_tree(tree)
+#' @export
+plot_tree <- function(tree, root = 0) {
+    print(tree)
+    stopifnot(root >= min(tree$node) & root <= max(tree$node))
+    stopifnot(tree$node$internal[tree$node$node == root] == FALSE)
+
+    first_node <- NULL
+    {
+        branch_to_root1 <- tree$branch[tree$branch$node1Index == root, ]
+        if (nrow(branch_to_root1) > 0) {
+            first_node <- branch_to_root1$node2Index[1]
+        } else {
+            branch_to_root2 <- tree$branch[tree$branch$node2Index == root, ]
+            stopifnot(nrow(branch_to_root2) > 0)
+            first_node <- branch_to_root2$node1Index[1]
+        }
+    }
+    stopifnot(!is.null(first_node))
+    stopifnot(tree$node$internal[tree$node$node == first_node])
+
+    grobs <- grobTree()
+
+    nodes_to_process <- first_node
+    curx = 0
+    cury = 0
+    while (length(nodes_to_process) > 0) {
+        node <- nodes_to_process[length(nodes_to_process)]
+        nodes_to_process <- nodes_to_process[-length(nodes_to_process)]
+
+        node_grob <- rectGrob(
+            x = curx, y = cury, hjust = 0.5, vjust = 0.5,
+            width = 0.1, height = 0.1, gp = gpar(col = "gray", fill = "gray")
+        )
+
+        grobs <- gTree(children = gList(grobs, node_grob))
+
+        if (tree$node$internal[tree$node$node == node]) {
+            print("internal")
+        }
+    }
+
+    # TODO(sen) Probably hide this behind an option
+    grid.newpage()
+    grid.draw(grobs)
 }
