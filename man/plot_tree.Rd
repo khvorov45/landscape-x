@@ -4,7 +4,11 @@
 \alias{plot_tree}
 \title{Plot tree}
 \usage{
-plot_tree(tree, root = 0)
+plot_tree(
+  tree,
+  root = 0,
+  tipnames = paste0("tip", tree$node[!tree$node$internal, "node"])
+)
 }
 \arguments{
 \item{tree}{Tree}

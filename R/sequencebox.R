@@ -283,7 +283,7 @@ create_tree <- function(seqs) {
 #' Plot tree
 #'
 #' Plot a phylogenetic tree
-#' 
+#'
 #' @param tree Tree
 #' @param root Root node index
 #'
@@ -294,44 +294,65 @@ create_tree <- function(seqs) {
 #' tree <- create_tree(align_result$sequences)
 #' plot_tree(tree)
 #' @export
-plot_tree <- function(tree, root = 0) {
-    print(tree)
+plot_tree <- function(tree, root = 0, tipnames = paste0("tip", tree$node[!tree$node$internal, "node"])) {
     stopifnot(root >= min(tree$node) & root <= max(tree$node))
     stopifnot(tree$node$internal[tree$node$node == root] == FALSE)
+    stopifnot(all(tree$branch$node2Index > tree$branch$node1Index))
+    stopifnot(all(tree$node$internal[tree$node$node %in% tree$branch$node2Index]))
 
-    first_node <- NULL
-    {
-        branch_to_root1 <- tree$branch[tree$branch$node1Index == root, ]
-        if (nrow(branch_to_root1) > 0) {
-            first_node <- branch_to_root1$node2Index[1]
-        } else {
-            branch_to_root2 <- tree$branch[tree$branch$node2Index == root, ]
-            stopifnot(nrow(branch_to_root2) > 0)
-            first_node <- branch_to_root2$node1Index[1]
-        }
-    }
-    stopifnot(!is.null(first_node))
-    stopifnot(tree$node$internal[tree$node$node == first_node])
+    branch_to_root1 <- tree$branch[tree$branch$node1Index == root, ]
+    stopifnot(nrow(branch_to_root1) == 1)
+    first_node <- branch_to_root1$node2Index[1]
+
+    hstep = 0.1
+    vstep = 0.1
 
     grobs <- grobTree()
 
     nodes_to_process <- first_node
-    curx = 0
-    cury = 0
+    xcoords <- c(hstep)
+    ycoords <- c(vstep)
+    nodes_processed <- c()
     while (length(nodes_to_process) > 0) {
         node <- nodes_to_process[length(nodes_to_process)]
         nodes_to_process <- nodes_to_process[-length(nodes_to_process)]
 
-        node_grob <- rectGrob(
-            x = curx, y = cury, hjust = 0.5, vjust = 0.5,
-            width = 0.1, height = 0.1, gp = gpar(col = "gray", fill = "gray")
-        )
+        xcoord <- xcoords[length(xcoords)]
+        xcoords <- xcoords[-length(xcoords)]
 
-        grobs <- gTree(children = gList(grobs, node_grob))
+        ycoord <- ycoords[length(ycoords)]
+        ycoords <- ycoords[-length(ycoords)]
 
         if (tree$node$internal[tree$node$node == node]) {
-            print("internal")
+            branches_to_node <- tree$branch[tree$branch$node2Index == node, ]
+            branches_from_node <- tree$branch[tree$branch$node1Index == node, ]
+            children <- c(branches_to_node$node1Index, branches_from_node$node2Index)
+            new_children <- children[!children %in% nodes_processed]
+            nodes_to_process <- c(nodes_to_process, new_children)
+
+            children_ycoords <- rep(ycoord, length(new_children)) + seq(0, by = vstep, length.out = length(new_children))
+            ycoords <- c(ycoords, children_ycoords)
+
+            children_xcoords <- rep(xcoord + hstep, length(new_children))
+            xcoords <- c(xcoords, children_xcoords)
+
+            grobs <- gTree(children = gList(grobs, linesGrob(x = c(xcoord, xcoord), y = c(ycoord, children_ycoords[length(new_children)]), gp = gpar(col = "black", fill = "black"))))
+
+            ind <- 1
+            while (ind <= length(new_children)) {
+                grobs <- gTree(children = gList(grobs, linesGrob(x = c(xcoord, children_xcoords[ind]), y = c(children_ycoords[ind], children_ycoords[ind]), gp = gpar(col = "black", fill = "black"))))
+                ind = ind + 1
+            }
+        } else {
+            node_grob <- textGrob(
+                tipnames[node + 1],
+                x = xcoord, y = ycoord, hjust = 0, vjust = 0.5,
+                gp = gpar(col = "black", fontsize = 20)
+            )
+            grobs <- gTree(children = gList(grobs, node_grob))
         }
+
+        nodes_processed <- c(nodes_processed, node)
     }
 
     # TODO(sen) Probably hide this behind an option
