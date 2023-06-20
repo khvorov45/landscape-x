@@ -10,3 +10,4 @@ mafft
 *.exe
 *.fasta
 *.out
+*.tsv

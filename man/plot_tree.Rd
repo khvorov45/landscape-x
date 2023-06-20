@@ -7,7 +7,8 @@
 plot_tree(
   tree,
   root = 0,
-  tipnames = paste0("tip", tree$node[!tree$node$internal, "node"])
+  tipnames = paste0("tip", tree$node[!tree$node$internal, "node"]),
+  seqs = NULL
 )
 }
 \arguments{
@@ -23,5 +24,5 @@ ref <- generate_random_sequence("ATGC", 10)
 seq <- random_sequence_mod(ref, 5)
 align_result <- align(ref, seq, mode = "common")
 tree <- create_tree(align_result$sequences)
-plot_tree(tree)
+plot_tree(tree, seqs = align_result$sequences)
 }

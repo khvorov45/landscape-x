@@ -1,1 +1,5 @@
 Bioinformatics for DNA Sequence Analysis
+Drawing non-layered tidy trees in linear time
+Tidier Drawings of Trees
+tidy tree: A New Layout for Phylogenetic Trees
+Prediction, dynamics, and visualization of antigenic phenotypes of seasonal influenza viruses

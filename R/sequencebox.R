@@ -292,13 +292,25 @@ create_tree <- function(seqs) {
 #' seq <- random_sequence_mod(ref, 5)
 #' align_result <- align(ref, seq, mode = "common")
 #' tree <- create_tree(align_result$sequences)
-#' plot_tree(tree)
+#' plot_tree(tree, seqs = align_result$sequences)
 #' @export
-plot_tree <- function(tree, root = 0, tipnames = paste0("tip", tree$node[!tree$node$internal, "node"])) {
+plot_tree <- function(
+    tree,
+    root = 0,
+    tipnames = paste0("tip", tree$node[!tree$node$internal, "node"]),
+    seqs = NULL
+) {
     stopifnot(root >= min(tree$node) & root <= max(tree$node))
     stopifnot(tree$node$internal[tree$node$node == root] == FALSE)
     stopifnot(all(tree$branch$node2Index > tree$branch$node1Index))
     stopifnot(all(tree$node$internal[tree$node$node %in% tree$branch$node2Index]))
+
+    root_seq <- NULL
+    root_seq_split <- NULL
+    if (!is.null(seqs)) {
+        root_seq <- seqs[root + 1]
+        root_seq_split <- strsplit(root_seq, "")[[1]]
+    }
 
     branch_to_root1 <- tree$branch[tree$branch$node1Index == root, ]
     stopifnot(nrow(branch_to_root1) == 1)
@@ -350,6 +362,24 @@ plot_tree <- function(tree, root = 0, tipnames = paste0("tip", tree$node[!tree$n
                 gp = gpar(col = "black", fontsize = 20)
             )
             grobs <- gTree(children = gList(grobs, node_grob))
+
+            if (!is.null(seqs)) {
+                this_seq <- seqs[node + 1]
+                this_seq_split <- strsplit(this_seq, "")[[1]]
+                nonmatches <- root_seq_split != this_seq_split
+                diffs <- paste0(root_seq_split[nonmatches], which(nonmatches), this_seq_split[nonmatches])
+                diffs_str <- paste0(diffs, collapse = " ")
+
+                text_height <- as.numeric(convertHeight(grobHeight(node_grob), "npc"))
+                text_width <- as.numeric(convertHeight(grobWidth(node_grob), "npc"))
+
+                mut_grob <- textGrob(
+                    diffs_str,
+                    x = xcoord + text_width, y = ycoord - text_height, hjust = 1, vjust = 1,
+                    gp = gpar(col = "black", fontsize = 10)
+                )
+                grobs <- gTree(children = gList(grobs, mut_grob))
+            }            
         }
 
         nodes_processed <- c(nodes_processed, node)
