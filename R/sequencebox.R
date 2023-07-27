@@ -305,84 +305,24 @@ plot_tree <- function(
     stopifnot(all(tree$branch$node2Index > tree$branch$node1Index))
     stopifnot(all(tree$node$internal[tree$node$node %in% tree$branch$node2Index]))
 
-    root_seq <- NULL
-    root_seq_split <- NULL
-    if (!is.null(seqs)) {
-        root_seq <- seqs[root + 1]
-        root_seq_split <- strsplit(root_seq, "")[[1]]
-    }
-
-    branch_to_root1 <- tree$branch[tree$branch$node1Index == root, ]
-    stopifnot(nrow(branch_to_root1) == 1)
-    first_node <- branch_to_root1$node2Index[1]
-
-    hstep = 0.1
-    vstep = 0.1
+    layout = .Call("layout_tree_c", tree, root)
+    print(tree)
+    print(layout)
 
     grobs <- grobTree()
 
-    nodes_to_process <- first_node
-    xcoords <- c(hstep)
-    ycoords <- c(vstep)
-    nodes_processed <- c()
-    while (length(nodes_to_process) > 0) {
-        node <- nodes_to_process[length(nodes_to_process)]
-        nodes_to_process <- nodes_to_process[-length(nodes_to_process)]
-
-        xcoord <- xcoords[length(xcoords)]
-        xcoords <- xcoords[-length(xcoords)]
-
-        ycoord <- ycoords[length(ycoords)]
-        ycoords <- ycoords[-length(ycoords)]
-
-        if (tree$node$internal[tree$node$node == node]) {
-            branches_to_node <- tree$branch[tree$branch$node2Index == node, ]
-            branches_from_node <- tree$branch[tree$branch$node1Index == node, ]
-            children <- c(branches_to_node$node1Index, branches_from_node$node2Index)
-            new_children <- children[!children %in% nodes_processed]
-            nodes_to_process <- c(nodes_to_process, new_children)
-
-            children_ycoords <- rep(ycoord, length(new_children)) + seq(0, by = vstep, length.out = length(new_children))
-            ycoords <- c(ycoords, children_ycoords)
-
-            children_xcoords <- rep(xcoord + hstep, length(new_children))
-            xcoords <- c(xcoords, children_xcoords)
-
-            grobs <- gTree(children = gList(grobs, linesGrob(x = c(xcoord, xcoord), y = c(ycoord, children_ycoords[length(new_children)]), gp = gpar(col = "black", fill = "black"))))
-
-            ind <- 1
-            while (ind <= length(new_children)) {
-                grobs <- gTree(children = gList(grobs, linesGrob(x = c(xcoord, children_xcoords[ind]), y = c(children_ycoords[ind], children_ycoords[ind]), gp = gpar(col = "black", fill = "black"))))
-                ind = ind + 1
-            }
-        } else {
+    for (layout_row_index in 1:nrow(layout)) {
+        node <- layout[layout_row_index, ]
+        if (!node$internal) {
             node_grob <- textGrob(
-                tipnames[node + 1],
+                tipnames[node$index + 1],
                 x = xcoord, y = ycoord, hjust = 0, vjust = 0.5,
                 gp = gpar(col = "black", fontsize = 20)
             )
             grobs <- gTree(children = gList(grobs, node_grob))
-
-            if (!is.null(seqs)) {
-                this_seq <- seqs[node + 1]
-                this_seq_split <- strsplit(this_seq, "")[[1]]
-                nonmatches <- root_seq_split != this_seq_split
-                diffs <- paste0(root_seq_split[nonmatches], which(nonmatches), this_seq_split[nonmatches])
-                diffs_str <- paste0(diffs, collapse = " ")
-
-                text_height <- as.numeric(convertHeight(grobHeight(node_grob), "npc"))
-                text_width <- as.numeric(convertHeight(grobWidth(node_grob), "npc"))
-
-                mut_grob <- textGrob(
-                    diffs_str,
-                    x = xcoord + text_width, y = ycoord - text_height, hjust = 1, vjust = 1,
-                    gp = gpar(col = "black", fontsize = 10)
-                )
-                grobs <- gTree(children = gList(grobs, mut_grob))
-            }            
         }
-
-        nodes_processed <- c(nodes_processed, node)
+        lines <- linesGrob(x = c(node$xpos, node$parentx), y = c(node$ypos, node$parenty), gp = gpar(col = "black", fill = "black"))
+        grobs <- gTree(children = gList(grobs, lines))
     }
 
     # TODO(sen) Probably hide this behind an option

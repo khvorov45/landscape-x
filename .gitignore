@@ -11,3 +11,4 @@ mafft
 *.fasta
 *.out
 *.tsv
+compile_flags.txt

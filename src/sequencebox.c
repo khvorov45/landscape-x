@@ -76,9 +76,27 @@ alnRngFromR(void) {
 }
 
 static aln_Str
-alnStrFromRstrArray(SEXP rstr) {
-    SEXP    rstr0 = STRING_ELT(rstr, 0);
+alnStrFromRstrArray(SEXP rstr, intptr_t ind) {
+    SEXP    rstr0 = STRING_ELT(rstr, ind);
     aln_Str result = {(char*)CHAR(rstr0), LENGTH(rstr0)};
+    return result;
+}
+
+static SEXP
+getNamed(SEXP list, aln_Str name) {
+    SEXP result = R_NilValue;
+    SEXP names = getAttrib(list, R_NamesSymbol);
+    aln_assert(!isNull(names));
+
+    for (intptr_t ind = 0; ind < LENGTH(list); ind++) {
+        aln_Str thisNameStr = alnStrFromRstrArray(names, ind);
+        if (aln_streq(thisNameStr, name)) {
+            result = VECTOR_ELT(list, ind);
+            break;
+        }
+    }
+
+    aln_assert(!isNull(result));
     return result;
 }
 
@@ -246,7 +264,7 @@ generate_random_sequence_c(SEXP src, SEXP len) {
     assertLenAndType("src", src, 1, STRSXP, "string");
 
     int       lenInt = intFromRNumber("length", len);
-    aln_Str   alnSrc = alnStrFromRstrArray(src);
+    aln_Str   alnSrc = alnStrFromRstrArray(src, 0);
     aln_Arena arena = arenaFromR(lenInt);
     aln_Rng   rng = alnRngFromR();
 
@@ -279,7 +297,7 @@ random_sequence_mod_c(
     aln_Rng      rng = alnRngFromR();
     aln_Arena    arena = arenaFromR(20 * 1024 * 1024);
     aln_StrArray alnStrings = rStrArrayToAlnStrArray(&arena, src);
-    aln_Str      alnInsertionSrc = alnStrFromRstrArray(insertion_src);
+    aln_Str      alnInsertionSrc = alnStrFromRstrArray(insertion_src, 0);
 
     aln_StrModSpec spec = {
         .trimStartMaxProp = REAL_ELT(trim_start_max, 0),
@@ -380,4 +398,100 @@ create_tree_c(SEXP seqs) {
 
     UNPROTECT(1);
     return result;
+}
+
+SEXP
+layout_tree_c(SEXP tree, SEXP root) {
+    assertLen("root", root, 1);
+
+    SEXP nodeDf = getNamed(tree, aln_STR("node"));
+    SEXP branchDf = getNamed(tree, aln_STR("branch"));
+
+    aln_Memory mem = memoryFromR(1024 * 1024);
+
+    intptr_t rootIndex = intFromRNumber("root", root);
+
+    aln_Tree alntree = {
+        .nodes.len = LENGTH(VECTOR_ELT(nodeDf, 0)),
+        .branches.len = LENGTH(VECTOR_ELT(branchDf, 0)),
+    };
+
+    alntree.nodes.ptr = aln_arenaAllocArray(&mem.perm, aln_TreeNode, alntree.nodes.len);
+    alntree.branches.ptr = aln_arenaAllocArray(&mem.perm, aln_TreeBranch, alntree.branches.len);
+
+    SEXP nodeDfNode = getNamed(nodeDf, aln_STR("node"));
+    SEXP nodeDfInternal = getNamed(nodeDf, aln_STR("internal"));
+
+    for (intptr_t ind = 0; ind < alntree.nodes.len; ind++) {
+        int32_t rnode = INTEGER_ELT(nodeDfNode, ind);
+        bool rinternal = LOGICAL_ELT(nodeDfInternal, ind);
+        aln_TreeNode* node = alntree.nodes.ptr + rnode;
+        node->isInternal = rinternal;
+    }
+
+    SEXP branchDfnode1Index = getNamed(branchDf, aln_STR("node1Index"));
+    SEXP branchDfnode2Index = getNamed(branchDf, aln_STR("node2Index"));
+    SEXP branchDflen = getNamed(branchDf, aln_STR("len"));
+
+    for (intptr_t ind = 0; ind < alntree.branches.len; ind++) {
+        aln_TreeBranch* branch = alntree.branches.ptr + ind;
+        int32_t ri1 = INTEGER_ELT(branchDfnode1Index, ind);
+        int32_t ri2 = INTEGER_ELT(branchDfnode2Index, ind);
+        float len = REAL_ELT(branchDflen, ind);
+
+        branch->node1Index = ri1;
+        branch->node2Index = ri2;
+        branch->len = len;
+    }
+
+    aln_TreeLayout layout = aln_createTreeLayout(alntree, rootIndex, &mem);
+
+    SEXP resultLayout = PROTECT(allocVector(VECSXP, 6));
+
+    {
+        SEXP names = allocVector(STRSXP, 1);
+        classgets(resultLayout, names);
+        SET_STRING_ELT(names, 0, mkChar("data.frame"));
+    }
+
+    {
+        SEXP names = allocVector(STRSXP, 6);
+        setAttrib(resultLayout, R_NamesSymbol, names);
+        SET_STRING_ELT(names, 0, mkChar("index"));
+        SET_STRING_ELT(names, 1, mkChar("internal"));
+        SET_STRING_ELT(names, 2, mkChar("xpos"));
+        SET_STRING_ELT(names, 3, mkChar("ypos"));
+        SET_STRING_ELT(names, 4, mkChar("parentx"));
+        SET_STRING_ELT(names, 5, mkChar("parenty"));
+    }
+
+    setRDfRownames(resultLayout, layout.len, &mem.temp);
+
+    SEXP resultLayoutindex = allocVector(INTSXP, layout.len);
+    SEXP resultLayoutinternal = allocVector(LGLSXP, layout.len);
+    SEXP resultLayoutxpos = allocVector(REALSXP, layout.len);
+    SEXP resultLayoutypos = allocVector(REALSXP, layout.len);
+    SEXP resultLayoutparentx = allocVector(REALSXP, layout.len);
+    SEXP resultLayoutparenty = allocVector(REALSXP, layout.len);
+
+    SET_VECTOR_ELT(resultLayout, 0, resultLayoutindex);
+    SET_VECTOR_ELT(resultLayout, 1, resultLayoutinternal);
+    SET_VECTOR_ELT(resultLayout, 2, resultLayoutxpos);
+    SET_VECTOR_ELT(resultLayout, 3, resultLayoutypos);
+    SET_VECTOR_ELT(resultLayout, 4, resultLayoutparentx);
+    SET_VECTOR_ELT(resultLayout, 5, resultLayoutparenty);
+
+    for (intptr_t ind = 0; ind < layout.len; ind++) {
+        aln_TreeLayoutNode node = layout.node[ind];
+
+        SET_INTEGER_ELT(resultLayoutindex, ind, ind);
+        SET_LOGICAL_ELT(resultLayoutinternal, ind, node.node.isInternal);
+        SET_REAL_ELT(resultLayoutxpos, ind, node.xpos);
+        SET_REAL_ELT(resultLayoutypos, ind, node.ypos);
+        SET_REAL_ELT(resultLayoutparentx, ind, node.parentx);
+        SET_REAL_ELT(resultLayoutparenty, ind, node.parenty);
+    }
+
+    UNPROTECT(1);
+    return resultLayout;
 }

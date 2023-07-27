@@ -154,6 +154,17 @@ typedef struct aln_Tree {
     aln_TreeBranchArray branches;
 } aln_Tree;
 
+typedef struct aln_TreeLayoutNode {
+    aln_TreeNode node;
+    float        xpos, ypos;
+    float        parentx, parenty;
+} aln_TreeLayoutNode;
+
+typedef struct aln_TreeLayout {
+    aln_TreeLayoutNode* node;
+    intptr_t            len;
+} aln_TreeLayout;
+
 aln_PUBLICAPI aln_Memory aln_createMemory(void* base, intptr_t totalSize, intptr_t permSize);
 aln_PUBLICAPI aln_Memory aln_createMemory2(void* permBase, intptr_t permSize, void* tempBase, intptr_t tempSize);
 
@@ -190,7 +201,7 @@ aln_PUBLICAPI intptr_t aln_matrix2index(intptr_t matrixWidth, intptr_t matrixHei
 #define aln_STR(x) (aln_Str) {x, sizeof(x) - 1}
 
 #ifndef aln_assert
-#define aln_assert(condition)
+#define aln_assert(condition) (condition)
 #endif
 // clang-format on
 
@@ -933,6 +944,120 @@ aln_createTree(aln_StrArray strings, aln_Memory* memory) {
 
     aln_endTempMemory(temp);
     return tree;
+}
+
+typedef struct aln_GraphNode aln_GraphNode;
+struct aln_GraphNode {
+    int32_t        hopsFromRoot;
+    aln_GraphNode* parent;
+    aln_GraphNode* sibling;
+    aln_GraphNode* child;
+    int32_t        childCount;
+};
+
+typedef struct aln_LayoutStackEntry {
+    aln_GraphNode* node;
+    float          xpos;
+    float          ypos;
+    aln_GraphNode* currentChild;
+    int32_t        processedChildren;
+    float          nextChildYOffset;
+    float          currentHeight;
+} aln_LayoutStackEntry;
+
+aln_PUBLICAPI aln_TreeLayout
+aln_createTreeLayout(aln_Tree tree, intptr_t root, aln_Memory* mem) {
+    aln_assert(root < tree.nodes.len && root >= 0);
+
+    aln_TempMemory temp = aln_beginTempMemory(&mem->temp);
+
+    aln_TreeLayout layout = {
+        .node = aln_arenaAllocArray(&mem->perm, aln_TreeLayoutNode, tree.nodes.len),
+        .len = tree.nodes.len,
+    };
+
+    aln_GraphNode* graphNodes = aln_arenaAllocArray(&mem->temp, aln_GraphNode, tree.nodes.len);
+    for (int32_t ind = 0; ind < tree.nodes.len; ind++) {
+        graphNodes[ind].hopsFromRoot = -1;
+    }
+    graphNodes[root].hopsFromRoot = 0;
+
+    for (int32_t remaining = tree.nodes.len - 1; remaining > 0;) {
+        for (intptr_t branchInd = 0; remaining > 0 && branchInd < tree.branches.len; branchInd++) {
+            aln_TreeBranch branch = tree.branches.ptr[branchInd];
+            aln_GraphNode* graphNode1 = graphNodes + branch.node1Index;
+            aln_GraphNode* graphNode2 = graphNodes + branch.node2Index;
+            if (graphNode1->hopsFromRoot != -1 && graphNode2->hopsFromRoot == -1) {
+                graphNode2->hopsFromRoot = graphNode1->hopsFromRoot + 1;
+                remaining -= 1;
+            } else if (graphNode1->hopsFromRoot == -1 && graphNode2->hopsFromRoot != -1) {
+                graphNode1->hopsFromRoot = graphNode2->hopsFromRoot + 1;
+                remaining -= 1;
+            }
+        }
+    }
+
+    for (intptr_t branchInd = 0; branchInd < tree.branches.len; branchInd++) {
+        aln_TreeBranch branch = tree.branches.ptr[branchInd];
+        aln_GraphNode* parent = graphNodes + branch.node1Index;
+        aln_GraphNode* child = graphNodes + branch.node2Index;
+        aln_assert(parent->hopsFromRoot != -1);
+        aln_assert(child->hopsFromRoot != -1);
+        aln_assert(parent->hopsFromRoot != child->hopsFromRoot);
+        if (parent->hopsFromRoot > child->hopsFromRoot) {
+            aln_GraphNode* temp = parent;
+            parent = child;
+            child = temp;
+        }
+        aln_assert(child->parent == 0);
+        child->parent = parent;
+        aln_assert(child->sibling == 0);
+        child->sibling = parent->child;
+        parent->child = child;
+        parent->childCount += 1;
+    }
+
+    aln_LayoutStackEntry* stackEntries = aln_arenaAllocArray(&mem->temp, aln_LayoutStackEntry, tree.nodes.len);
+    stackEntries[0] = (aln_LayoutStackEntry) {.node = graphNodes + root, .currentChild = graphNodes[root].child};
+    intptr_t stackSize = 1;
+    while (stackSize > 0) {
+        aln_LayoutStackEntry* entry = stackEntries + stackSize - 1;
+        aln_GraphNode*        node = entry->node;
+
+        intptr_t            nodeIndex = node - graphNodes;
+        aln_TreeLayoutNode* nodeLayout = layout.node + nodeIndex;
+        nodeLayout->node = tree.nodes.ptr[nodeIndex];
+        nodeLayout->xpos = entry->xpos;
+        nodeLayout->ypos = entry->ypos;
+
+        // TODO(sen) Change
+        float xstep = 1;
+        float ystep = 1;
+
+        if (entry->processedChildren < node->childCount) {
+            aln_GraphNode* child = entry->currentChild;
+            entry->currentChild = entry->currentChild->sibling;
+            entry->processedChildren += 1;
+
+            intptr_t            childIndex = child - graphNodes;
+            aln_TreeLayoutNode* childLayout = layout.node + childIndex;
+            childLayout->parentx = entry->xpos;
+            childLayout->parenty = entry->ypos;
+
+            stackEntries[stackSize] = (aln_LayoutStackEntry) {child, entry->xpos + xstep, entry->ypos + entry->nextChildYOffset, child->child};
+            stackSize += 1;
+        } else {
+            if (stackSize > 1) {
+                aln_LayoutStackEntry* parent = stackEntries + stackSize - 2;
+                parent->currentHeight = (entry->ypos - parent->ypos) + entry->currentHeight;
+                parent->nextChildYOffset += entry->currentHeight + ystep;
+            }
+            stackSize -= 1;
+        }
+    }
+
+    aln_endTempMemory(temp);
+    return layout;
 }
 
 #endif  // aln_IMPLEMENTATION

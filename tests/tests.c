@@ -325,6 +325,40 @@ test_tree(prb_Arena* arena) {
     prb_endTempMemory(temp);
 }
 
+function void
+test_treeLayout(prb_Arena* arena) {
+    prb_TempMemory temp = prb_beginTempMemory(arena);
+
+    aln_Memory mem = {};
+    {
+        intptr_t size = prb_arenaFreeSize(arena) / 2;
+        mem = aln_createMemory(prb_arenaFreePtr(arena), size, size / 4);
+        prb_arenaChangeUsed(arena, size);
+    }
+
+    {
+        aln_TreeNode nodes[] = {
+            {false},
+            {false},
+            {true},
+        };
+
+        aln_TreeBranch branches[] = {
+            {0, 2, 1},
+            {1, 2, 1},
+        };
+
+        aln_Tree tree = {
+            {nodes, prb_arrayCount(nodes)},
+            {branches, prb_arrayCount(branches)},
+        };
+
+        aln_createTreeLayout(tree, 2, &mem);
+    }
+
+    prb_endTempMemory(temp);
+}
+
 int
 main() {
     prb_Arena  arena_ = prb_createArenaFromVmem(1 * prb_GIGABYTE);
@@ -332,6 +366,7 @@ main() {
 
     test_alignAndReconstruct(arena);
     test_tree(arena);
+    test_treeLayout(arena);
 
     return 0;
 }
