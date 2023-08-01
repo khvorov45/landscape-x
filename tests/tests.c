@@ -353,7 +353,26 @@ test_treeLayout(prb_Arena* arena) {
             {branches, prb_arrayCount(branches)},
         };
 
-        aln_createTreeLayout(tree, 2, &mem);
+        aln_TreeLayout layout = aln_createTreeLayout(tree, 2, &mem);
+        prb_assert(layout.len == tree.nodes.len);
+
+        prb_assert(!layout.node[0].node.isInternal);
+        prb_assert(layout.node[0].xpos == 1);
+        prb_assert(layout.node[0].ypos == 1);
+        prb_assert(layout.node[0].parentx == 0);
+        prb_assert(layout.node[0].parenty == 0);
+
+        prb_assert(!layout.node[1].node.isInternal);
+        prb_assert(layout.node[1].xpos == 1);
+        prb_assert(layout.node[1].ypos == 0);
+        prb_assert(layout.node[1].parenty == 0);
+        prb_assert(layout.node[1].parenty == 0);
+
+        prb_assert(layout.node[2].node.isInternal);
+        prb_assert(layout.node[2].xpos == 0);
+        prb_assert(layout.node[2].ypos == 0);
+        prb_assert(layout.node[2].parentx == 0);
+        prb_assert(layout.node[2].parenty == 0);
     }
 
     prb_endTempMemory(temp);
