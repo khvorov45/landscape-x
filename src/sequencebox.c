@@ -101,7 +101,7 @@ intFromRNumber(char* name, SEXP rnumber) {
 }
 
 SEXP
-align_c(SEXP references, SEXP sequences, SEXP mode, SEXP matrices) {
+align_sequences_c(SEXP references, SEXP sequences, SEXP mode, SEXP matrices) {
     assertType("references", references, STRSXP, "string");
     assertType("sequences", sequences, STRSXP, "string");
     assertLenAndType("mode", mode, 1, STRSXP, "string");

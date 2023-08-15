@@ -10,11 +10,11 @@
 #' @examples
 #' ref <- generate_random_sequence("ATGC", 10)
 #' seqs <- random_sequence_mod(ref, 10)
-#' align(ref, seqs, mode = "common")
+#' align_sequences(ref, seqs, mode = "common")
 #'
 #' @export
-align <- function(reference, sequences, mode = "individual", matrices = FALSE) {
-    .Call("align_c", reference, sequences, mode, matrices)
+align_sequences <- function(reference, sequences, mode = "individual", matrices = FALSE) {
+    .Call("align_sequences_c", reference, sequences, mode, matrices)
 }
 
 #' Plot sequences
@@ -27,7 +27,7 @@ align <- function(reference, sequences, mode = "individual", matrices = FALSE) {
 #' @examples
 #' ref <- generate_random_sequence("ATGC", 10)
 #' seqs <- random_sequence_mod(ref, 10)
-#' seqs_aligned <- align(ref, seqs, mode = "common")
+#' seqs_aligned <- align_sequences(ref, seqs, mode = "common")
 #' plot_sequences(seqs_aligned$references, seqs_aligned$sequences)
 #'
 #' @import grid
@@ -109,7 +109,7 @@ plot_sequences <- function(reference, sequences) {
 #' @examples
 #' ref <- generate_random_sequence("ATGC", 10)
 #' seq <- random_sequence_mod(ref)
-#' align_result <- align(ref, seq, matrices = TRUE)
+#' align_result <- align_sequences(ref, seq, matrices = TRUE)
 #' plot_alignment_matrix(align_result$scores[[1]], align_result$directions[[1]], ref, seq)
 #'
 #' @import grid
