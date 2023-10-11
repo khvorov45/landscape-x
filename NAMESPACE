@@ -2,6 +2,7 @@
 
 export(align_sequences)
 export(generate_random_sequence)
+export(get_sequence_diffs)
 export(plot_alignment_matrix)
 export(plot_sequences)
 export(random_sequence_mod)

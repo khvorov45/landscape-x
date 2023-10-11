@@ -17,6 +17,32 @@ align_sequences <- function(reference, sequences, mode = "individual", matrices 
     .Call("align_sequences_c", reference, sequences, mode, matrices)
 }
 
+#' Get sequence differences
+#'
+#' For sequences ABCD and AXCY the differences would be B2X and D4Y
+#'
+#' @param reference Reference sequence or an array of reference sequences. Assumed aligned.
+#' @param sequences An array of sequences to be compared to the reference
+#'
+#' @examples
+#' ref <- generate_random_sequence("ATGC", 10)
+#' seqs <- random_sequence_mod(ref, 10)
+#' aligned <- align_sequences(ref, seqs, mode = "common")
+#' get_sequence_diffs(aligned$references, aligned$sequences)
+#'
+#' @export
+get_sequence_diffs <- function(reference, sequences) {
+    ref_split <- strsplit(reference, "", fixed = TRUE)[[1]]
+    result <- list()
+    for (seq in sequences) {
+        this_split <- strsplit(seq, "", fixed = TRUE)[[1]]
+        this_diffs <- ref_split != this_split
+        this_diffs_str <- paste0(ref_split[this_diffs], which(this_diffs), this_split[this_diffs])
+        result <- c(result, list(this_diffs_str))
+    }
+    result
+}
+
 #' Plot sequences
 #'
 #' Plot a list of sequences coloring each letter accoring to the reference.
