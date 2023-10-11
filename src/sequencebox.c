@@ -10,9 +10,9 @@
 // clang-format on
 
 static aln_StrArray
-rStrArrayToAlnStrArray(aln_Arena* arena, SEXP strs) {
+rStrArrayToAlnStrArray(SEXP strs) {
     intptr_t strsCount = LENGTH(strs);
-    aln_Str* alnStrings = aln_arenaAllocArray(arena, aln_Str, strsCount);
+    aln_Str* alnStrings = (aln_Str*)R_alloc(strsCount, sizeof(aln_Str));
     for (int strIndex = 0; strIndex < strsCount; strIndex++) {
         SEXP rSeq = STRING_ELT(strs, strIndex);
         alnStrings[strIndex] = (aln_Str) {(char*)CHAR(rSeq), LENGTH(rSeq)};
@@ -73,14 +73,6 @@ arenaFromR(intptr_t size) {
     aln_assert(mem);
     aln_Arena arena = {mem, size};
     return arena;
-}
-
-static aln_Memory
-memoryFromR(intptr_t size) {
-    void* ptr = R_alloc(size, 1);
-    aln_assert(ptr);
-    aln_Memory mem = aln_createMemory(ptr, size, size / 4);
-    return mem;
 }
 
 static intptr_t
@@ -162,46 +154,58 @@ align_sequences_c(SEXP references, SEXP sequences, SEXP mode, SEXP matrices) {
     }
     setAttrib(result, R_NamesSymbol, resultNames);
 
-    // TODO(sen) Figure out how to work out memory size in a more robust way
-    intptr_t     totalMemoryBytes = 20 * 1024 * 1024;
-    aln_Memory   alnMem = memoryFromR(totalMemoryBytes);
-    aln_StrArray alnRefs = rStrArrayToAlnStrArray(&alnMem.perm, references);
-    aln_StrArray alnStrings = rStrArrayToAlnStrArray(&alnMem.perm, sequences);
+    aln_StrArray alnRefs = rStrArrayToAlnStrArray(references);
+    aln_StrArray alnStrings = rStrArrayToAlnStrArray(sequences);
 
-    aln_AlignResult alnResult = aln_align(
-        alnRefs,
-        alnStrings,
-        (aln_Config) {.storeFinalMatrices = returnMatrices},
-        &alnMem
-    );
-    aln_assert(alnResult.alignments.len == sequencesCount);
+    aln_AlignConfig alignConfig = {0};
+    aln_fillAlignConfigLens(alnRefs, alnStrings, &alignConfig);
+    alignConfig.maxGrid.ptr = R_alloc(alignConfig.maxGrid.len, 1);
+    alignConfig.alignedSeqs.arr.ptr = (aln_Alignment*)R_alloc(alignConfig.alignedSeqs.arr.len, sizeof(aln_Alignment));
+    alignConfig.alignedSeqs.data.ptr = R_alloc(alignConfig.alignedSeqs.data.len, 1);
+
+    if (returnMatrices) {
+        alignConfig.storedMatrices.arr.ptr = (aln_Matrix2NW*)R_alloc(alignConfig.storedMatrices.arr.len, sizeof(aln_Matrix2NW));
+        alignConfig.storedMatrices.data.ptr = R_alloc(alignConfig.storedMatrices.data.len, 1);
+    }
+
+    aln_align(alnRefs, alnStrings, &alignConfig);
 
     if (reconstructToCommon) {
-        aln_ReconstructToCommonRefResult reconstructResult = aln_reconstructToCommonRef(alnResult.alignments, alnRefs.ptr[0], alnStrings, &alnMem);
-        SET_STRING_ELT(resultRefs, 0, mkCharLen(reconstructResult.commonRef.ptr, (int)reconstructResult.commonRef.len));
-        aln_assert(reconstructResult.alignedStrs.len == sequencesCount);
+        aln_ReconstructToCommonConfig reconstructConfig = {0};
+        aln_Str commonRef = alnRefs.ptr[0];
+        aln_ReferenceGaps refGaps = {(intptr_t*)R_alloc(commonRef.len + 1, sizeof(intptr_t)), commonRef.len + 1};
+        aln_fillReconstructToCommonRefConfigLens(alignConfig.alignedSeqs.arr, commonRef, alnStrings, refGaps, &reconstructConfig);
+        reconstructConfig.seqs.ptr = (aln_Str*)R_alloc(reconstructConfig.seqs.len, sizeof(aln_Str));
+        reconstructConfig.data.ptr = R_alloc(reconstructConfig.data.len, 1);
+
+        aln_reconstructToCommonRef(alignConfig.alignedSeqs.arr, commonRef, alnStrings, refGaps, &reconstructConfig);
+
+        SET_STRING_ELT(resultRefs, 0, mkCharLen(reconstructConfig.commonRef.ptr, (int)reconstructConfig.commonRef.len));
         for (int seqIndex = 0; seqIndex < sequencesCount; seqIndex++) {
-            aln_Str alnStr = reconstructResult.alignedStrs.ptr[seqIndex];
+            aln_Str alnStr = reconstructConfig.seqs.ptr[seqIndex];
             SET_STRING_ELT(resultSeqs, seqIndex, mkCharLen(alnStr.ptr, (int)alnStr.len));
         }
     } else {
-        for (int seqIndex = 0; seqIndex < alnResult.alignments.len; seqIndex++) {
-            aln_Alignment alignment = alnResult.alignments.ptr[seqIndex];
-            aln_Str       thisRef = alnRefs.ptr[0];
-            if (referenceCount > 1) {
-                thisRef = alnRefs.ptr[seqIndex];
-            }
-            aln_Str alnStr = aln_reconstruct(alignment, aln_Reconstruct_Str, thisRef, alnStrings.ptr[seqIndex], &alnMem.perm);
+        aln_Arena reconstructArena = {.size = 10 * 1024 * 1024};
+        reconstructArena.base = R_alloc(reconstructArena.size, 1);
+        for (int seqIndex = 0; seqIndex < alignConfig.alignedSeqs.arr.len; seqIndex++) {
+            aln_Alignment alignment = alignConfig.alignedSeqs.arr.ptr[seqIndex];
+            aln_Str ogstr = alnStrings.ptr[seqIndex];
+            aln_Str thisRef = alnRefs.ptr[referenceCount > 1 ? seqIndex : 0];
+
+            aln_Str alnStr = aln_reconstruct(alignment, aln_Reconstruct_Str, thisRef, ogstr, &reconstructArena);
             SET_STRING_ELT(resultSeqs, seqIndex, mkCharLen(alnStr.ptr, (int)alnStr.len));
-            aln_Str alnRef = aln_reconstruct(alignment, aln_Reconstruct_Ref, thisRef, alnStrings.ptr[seqIndex], &alnMem.perm);
+            reconstructArena.used = 0;
+
+            aln_Str alnRef = aln_reconstruct(alignment, aln_Reconstruct_Ref, thisRef, ogstr, &reconstructArena);
             SET_STRING_ELT(resultRefs, seqIndex, mkCharLen(alnRef.ptr, (int)alnRef.len));
+            reconstructArena.used = 0;
         }
     }
 
     if (returnMatrices) {
-        aln_assert(alnResult.alignments.len == alnResult.matrices.len);
-        for (int matIndex = 0; matIndex < alnResult.matrices.len; matIndex++) {
-            aln_Matrix2NW mat = alnResult.matrices.ptr[matIndex];
+        for (int matIndex = 0; matIndex < alignConfig.storedMatrices.arr.len; matIndex++) {
+            aln_Matrix2NW mat = alignConfig.storedMatrices.arr.ptr[matIndex];
             int           rwidth = mat.height;
             int           rheight = mat.width;
             SEXP          rmatScores = PROTECT(createRMatrix(rwidth, rheight, REALSXP));
@@ -261,9 +265,10 @@ random_sequence_mod_c(
     assertLenAndType("insertion", insertion, 1, REALSXP, "real number");
     assertLenAndType("insertion_src", insertion_src, 1, STRSXP, "string");
 
+    // TODO(sen) Better memory determination
     aln_Rng      rng = alnRngFromR();
     aln_Arena    arena = arenaFromR(20 * 1024 * 1024);
-    aln_StrArray alnStrings = rStrArrayToAlnStrArray(&arena, src);
+    aln_StrArray alnStrings = rStrArrayToAlnStrArray(src);
     aln_Str      alnInsertionSrc = alnStrFromRstrArray(insertion_src, 0);
 
     aln_StrModSpec spec = {
